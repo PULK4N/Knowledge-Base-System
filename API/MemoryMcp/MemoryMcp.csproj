@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EventSourcing\Core\Core.csproj" />
+    <ProjectReference Include="..\EventSourcing\Persistence\Persistence.csproj" />
+    <ProjectReference Include="..\EventSourcing\Persistence.Interfaces\Persistence.Interfaces.csproj" />
+    <ProjectReference Include="..\EventSourcing\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="StateMachines\*.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

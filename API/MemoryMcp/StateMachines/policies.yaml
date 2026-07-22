@@ -1,0 +1,12 @@
+id: policies
+stateData: PolicyState
+events:
+  PolicySaved:
+    uniqueConstraints:
+      - PolicyNameConstraint
+  PolicyUpdated:
+    uniqueConstraints:
+      - PolicyNameConstraint
+  PolicyDeleted:
+    uniqueConstraints:
+      - PolicyNameConstraint
