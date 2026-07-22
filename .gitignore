@@ -56,4 +56,3 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
-API/EventSourcing
