@@ -1,0 +1,12 @@
+id: skills-state-machine
+stateData: SkillStateData
+events:
+  SkillSaved:
+    uniqueConstraints:
+      - UniqueSkillNameConstraint
+  SkillUpdated:
+    uniqueConstraints:
+      - UniqueSkillNameConstraint
+  SkillDeleted:
+    uniqueConstraints:
+      - UniqueSkillNameConstraint
