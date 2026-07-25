@@ -42,7 +42,21 @@ public sealed class ActionTests
         Assert.Equal(["IsAuthorized", "CanExecute"], action.Calls);
     }
 
-    private sealed class TestAction(
+    [Fact]
+    public async Task Execute_WhenAdditionalMappingIsOverridden_ReturnsMappedResult()
+    {
+        var action = new MappedAction("executed");
+
+        var result = await action.Execute();
+
+        Assert.Equal("executed-mapped", result);
+        Assert.Equal(
+            ["IsAuthorized", "CanExecute", "ExecuteInternal", "MapAdditionally"],
+            action.Calls
+        );
+    }
+
+    private class TestAction(
         bool isAuthorized,
         bool canExecute,
         string result
@@ -66,6 +80,18 @@ public sealed class ActionTests
         {
             Calls.Add(nameof(ExecuteInternal));
             return Task.FromResult(result);
+        }
+    }
+
+    private sealed class MappedAction(string result)
+        : TestAction(isAuthorized: true, canExecute: true, result)
+    {
+        protected override async Task<string> MapAdditionally(string result)
+        {
+            await Task.Yield();
+            Calls.Add(nameof(MapAdditionally));
+
+            return $"{result}-mapped";
         }
     }
 }

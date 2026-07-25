@@ -18,10 +18,15 @@ public abstract class Action<TResult> : IAction<TResult>
                 $"Action '{GetType().Name}' cannot be executed."
             );
 
-        return await ExecuteInternal();
+        var result = await ExecuteInternal();
+
+        return await MapAdditionally(result);
     }
 
     protected abstract Task<TResult> ExecuteInternal();
+
+    protected virtual Task<TResult> MapAdditionally(TResult result) =>
+        Task.FromResult(result);
 }
 
 public abstract class Command<TResult> : Action<TResult> { }

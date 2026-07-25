@@ -1,0 +1,3 @@
+[submodule "API/EventSourcing"]
+	path = API/EventSourcing
+	url = git@github.com:PULK4N/EventSourcing.git
