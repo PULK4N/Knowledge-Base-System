@@ -37,7 +37,7 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("old-name");
         var payload = CreatePayload(
-            new SkillUpdated
+            new SkillDetailsUpdated
             {
                 Name = "new-name",
                 Description = "Description",
@@ -63,7 +63,7 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("My-Skill");
         var payload = CreatePayload(
-            new SkillUpdated
+            new SkillDetailsUpdated
             {
                 Name = "  my-skill  ",
                 Description = "Updated description",

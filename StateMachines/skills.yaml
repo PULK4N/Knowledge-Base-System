@@ -7,6 +7,12 @@ events:
   SkillUpdated:
     uniqueConstraints:
       - UniqueSkillNameConstraint
+  SkillDetailsUpdated:
+    uniqueConstraints:
+      - UniqueSkillNameConstraint
   SkillDeleted:
     uniqueConstraints:
       - UniqueSkillNameConstraint
+  SkillReferenceAdded: {}
+  SkillReferenceUpdated: {}
+  SkillReferenceDeleted: {}

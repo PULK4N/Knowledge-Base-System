@@ -24,17 +24,36 @@ public sealed class SkillStateMachineDefinitionTests
 
         Assert.Equal(nameof(SkillStateData), definition.StateData);
         Assert.Equal(
-            [nameof(SkillSaved), nameof(SkillUpdated), nameof(SkillDeleted)],
+            [
+                nameof(SkillSaved),
+                nameof(SkillUpdated),
+                nameof(SkillDetailsUpdated),
+                nameof(SkillDeleted),
+                nameof(SkillReferenceAdded),
+                nameof(SkillReferenceUpdated),
+                nameof(SkillReferenceDeleted)
+            ],
             definition.Events.Keys
         );
-        Assert.All(
-            definition.Events.Values,
-            eventDefinition =>
-                Assert.Equal(
-                    [nameof(UniqueSkillNameConstraint)],
-                    eventDefinition.UniqueConstraints
-                )
+        Assert.Equal(
+            [nameof(UniqueSkillNameConstraint)],
+            definition.Events[nameof(SkillSaved)].UniqueConstraints
         );
+        Assert.Equal(
+            [nameof(UniqueSkillNameConstraint)],
+            definition.Events[nameof(SkillUpdated)].UniqueConstraints
+        );
+        Assert.Equal(
+            [nameof(UniqueSkillNameConstraint)],
+            definition.Events[nameof(SkillDetailsUpdated)].UniqueConstraints
+        );
+        Assert.Equal(
+            [nameof(UniqueSkillNameConstraint)],
+            definition.Events[nameof(SkillDeleted)].UniqueConstraints
+        );
+        Assert.Empty(definition.Events[nameof(SkillReferenceAdded)].UniqueConstraints);
+        Assert.Empty(definition.Events[nameof(SkillReferenceUpdated)].UniqueConstraints);
+        Assert.Empty(definition.Events[nameof(SkillReferenceDeleted)].UniqueConstraints);
     }
 
     private static void RegisterTypesOnce()
@@ -47,7 +66,11 @@ public sealed class SkillStateMachineDefinitionTests
             StateDataTypeContainer.AddStateDataType(typeof(SkillStateData));
             EventTypeContainer.AddEventType(typeof(SkillSaved));
             EventTypeContainer.AddEventType(typeof(SkillUpdated));
+            EventTypeContainer.AddEventType(typeof(SkillDetailsUpdated));
             EventTypeContainer.AddEventType(typeof(SkillDeleted));
+            EventTypeContainer.AddEventType(typeof(SkillReferenceAdded));
+            EventTypeContainer.AddEventType(typeof(SkillReferenceUpdated));
+            EventTypeContainer.AddEventType(typeof(SkillReferenceDeleted));
             ConstraintCreatorTypeContainer.AddUniqueEventConstraintCreator(
                 typeof(UniqueSkillNameConstraint)
             );

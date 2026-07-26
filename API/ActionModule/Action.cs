@@ -1,6 +1,6 @@
 namespace ActionModule;
 
-public abstract class Action<TResult> : IAction<TResult>
+public abstract class Action<TResult>() : IAction<TResult>
 {
     public abstract Task<bool> IsAuthorized();
 
@@ -9,14 +9,10 @@ public abstract class Action<TResult> : IAction<TResult>
     public async Task<TResult> Execute()
     {
         if (!await IsAuthorized())
-            throw new UnauthorizedAccessException(
-                $"Action '{GetType().Name}' is not authorized."
-            );
+            throw new UnauthorizedAccessException($"Action '{GetType().Name}' is not authorized.");
 
         if (!await CanExecute())
-            throw new InvalidOperationException(
-                $"Action '{GetType().Name}' cannot be executed."
-            );
+            throw new InvalidOperationException($"Action '{GetType().Name}' cannot be executed.");
 
         var result = await ExecuteInternal();
 
@@ -25,8 +21,7 @@ public abstract class Action<TResult> : IAction<TResult>
 
     protected abstract Task<TResult> ExecuteInternal();
 
-    protected virtual Task<TResult> MapAdditionally(TResult result) =>
-        Task.FromResult(result);
+    protected virtual Task<TResult> MapAdditionally(TResult result) => Task.FromResult(result);
 }
 
 public abstract class Command<TResult> : Action<TResult> { }
