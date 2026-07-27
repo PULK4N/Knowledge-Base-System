@@ -18,7 +18,7 @@ public sealed class UpdateSkillCommand(StateMachineHandler stateMachineHandler)
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new SkillDetailsUpdated
+            new SkillDetailsUpdatedV1
             {
                 Name = Name,
                 Description = Description,

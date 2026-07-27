@@ -10,9 +10,6 @@ public sealed class SkillCreatedSerializationTests
     [Fact]
     public void CreatedV1_RoundTripsImmutablePayload()
     {
-        var attachmentId = FileId.FromDatabaseGuid(
-            Guid.Parse("11111111-1111-1111-1111-111111111111")
-        );
         var eventData = new SkillCreatedV1(
             "skill-name",
             "Description",
@@ -24,19 +21,6 @@ public sealed class SkillCreatedSerializationTests
                 .Add(
                     "references/example.md",
                     new SkillReference("Reference content")
-                ),
-            ImmutableDictionary<FileId, Attachment>
-                .Empty
-                .Add(
-                    attachmentId,
-                    new Attachment
-                    {
-                        Id = attachmentId,
-                        Name = "example.pdf",
-                        Size = 1_024,
-                        FileType = "application/pdf",
-                        Extension = "pdf"
-                    }
                 )
         );
 
@@ -50,10 +34,6 @@ public sealed class SkillCreatedSerializationTests
         Assert.Equal(
             eventData.References["references/example.md"],
             deserialized.References["references/example.md"]
-        );
-        Assert.Equal(
-            eventData.Attachments[attachmentId],
-            deserialized.Attachments[attachmentId]
         );
         Assert.IsAssignableFrom<ISkillCreated>(deserialized);
     }

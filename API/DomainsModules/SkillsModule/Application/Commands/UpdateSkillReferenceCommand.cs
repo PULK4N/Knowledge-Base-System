@@ -16,7 +16,7 @@ public sealed class UpdateSkillReferenceCommand(StateMachineHandler stateMachine
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new SkillReferenceUpdated
+            new SkillReferenceUpdatedV1
             {
                 RelativePath = RelativePath,
                 Content = Content

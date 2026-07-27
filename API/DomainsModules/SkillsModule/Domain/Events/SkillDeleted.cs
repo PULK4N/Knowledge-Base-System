@@ -3,7 +3,9 @@ using EventSourcing.Shared.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public sealed class SkillDeleted : IEvent
+public interface ISkillDeleted : IEvent;
+
+public sealed class SkillDeletedV1 : ISkillDeleted
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

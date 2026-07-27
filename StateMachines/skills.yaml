@@ -4,21 +4,27 @@ events:
   SkillCreatedV1:
     uniqueConstraints:
       - UniqueSkillNameConstraint
-  SkillUpdated:
+  SkillUpdatedV1:
     uniqueConstraints:
       - UniqueSkillNameConstraint
-  SkillDetailsUpdated:
+  SkillDetailsUpdatedV1:
     uniqueConstraints:
       - UniqueSkillNameConstraint
-  SkillDeleted:
+  SkillDeletedV1:
     uniqueConstraints:
       - UniqueSkillNameConstraint
-  SkillReferenceAdded:
+  SkillReferenceAddedV1:
     preEventValidators:
       - SkillReferenceMustNotExistValidator
-  SkillReferenceUpdated:
+  SkillReferenceUpdatedV1:
     preEventValidators:
       - SkillReferenceMustExistValidator
-  SkillReferenceDeleted:
+  SkillReferenceDeletedV1:
     preEventValidators:
       - SkillReferenceMustExistValidator
+  SkillAttachmentAddedV1:
+    preEventValidators:
+      - SkillAttachmentMustNotExistValidator
+  SkillAttachmentDeletedV1:
+    preEventValidators:
+      - SkillAttachmentMustExistValidator

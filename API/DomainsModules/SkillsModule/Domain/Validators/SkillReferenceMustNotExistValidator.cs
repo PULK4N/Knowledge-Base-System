@@ -8,14 +8,14 @@ public sealed class SkillReferenceMustNotExistValidator : IPreEventValidator
 {
     public EventValidationResult Validate(object stateData, EventPayload payload)
     {
-        if (payload.EventData is not SkillReferenceAdded eventData)
+        if (payload.EventData is not ISkillReferenceAdded eventData)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(SkillReferenceMustNotExistValidator),
                 false,
                 $"{nameof(SkillReferenceMustNotExistValidator)} can only validate "
-                    + $"{nameof(SkillReferenceAdded)} events."
+                    + $"{nameof(ISkillReferenceAdded)} events."
             );
         }
 

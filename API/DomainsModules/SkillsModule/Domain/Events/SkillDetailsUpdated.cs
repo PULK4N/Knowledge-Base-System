@@ -3,7 +3,15 @@ using EventSourcing.Shared.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public sealed class SkillDetailsUpdated : IEvent
+public interface ISkillDetailsUpdated : IEvent
+{
+    string Name { get; }
+    string Description { get; }
+    string Content { get; }
+    List<string> Tags { get; }
+}
+
+public sealed class SkillDetailsUpdatedV1 : ISkillDetailsUpdated
 {
     public required string Name { get; init; }
     public required string Description { get; init; }

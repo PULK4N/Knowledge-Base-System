@@ -10,20 +10,9 @@ public sealed class SkillEventTests
     private static readonly EventExecutionInfo EventExecutionInfo = new();
 
     [Fact]
-    public void CreatedV1_AppliesImmutableTextAndAttachmentMetadata()
+    public void CreatedV1_AppliesImmutableTextWithoutAttachments()
     {
         var reference = new SkillReference("Reference content");
-        var attachmentId = FileId.FromDatabaseGuid(
-            Guid.Parse("11111111-1111-1111-1111-111111111111")
-        );
-        var attachment = new Attachment
-        {
-            Id = attachmentId,
-            Name = "example.pdf",
-            Size = 1_024,
-            FileType = "application/pdf",
-            Extension = "pdf"
-        };
         var eventData = new SkillCreatedV1(
             "skill-name",
             "Description",
@@ -32,10 +21,7 @@ public sealed class SkillEventTests
             ImmutableDictionary<string, SkillReference>
                 .Empty
                 .WithComparers(StringComparer.Ordinal)
-                .Add("references/example.md", reference),
-            ImmutableDictionary<FileId, Attachment>
-                .Empty
-                .Add(attachmentId, attachment)
+                .Add("references/example.md", reference)
         );
         var state = new SkillStateData();
 
@@ -53,11 +39,7 @@ public sealed class SkillEventTests
         Assert.Equal("changed-name", changedEvent.Name);
         Assert.Equal(["tag"], state.Tags);
         Assert.Same(reference, Assert.Single(state.References).Value);
-        Assert.Same(attachment, Assert.Single(state.Attachments).Value);
-        Assert.Equal(
-            "application/pdf",
-            state.Attachments[attachmentId].FileType
-        );
+        Assert.Empty(state.Attachments);
     }
 
     [Fact]
@@ -80,7 +62,7 @@ public sealed class SkillEventTests
             (attachmentId, attachment)
         );
         var tags = new List<string> { "updated" };
-        var eventData = new SkillDetailsUpdated
+        var eventData = new SkillDetailsUpdatedV1
         {
             Name = "updated-name",
             Description = "Updated description",
@@ -100,10 +82,35 @@ public sealed class SkillEventTests
     }
 
     [Fact]
+    public void Updated_ReplacesSkillTextAndPreservesAttachments()
+    {
+        var attachment = CreateAttachment(
+            "77777777-7777-7777-7777-777777777777"
+        );
+        var state = CreateState(
+            [],
+            [(attachment.Id, attachment)]
+        );
+        var eventData = new SkillUpdatedV1
+        {
+            Name = "updated-name",
+            Description = "Updated description",
+            Content = "Updated content",
+            Tags = ["updated"]
+        };
+
+        eventData.Apply(state, EventExecutionInfo);
+
+        Assert.Equal("updated-name", state.Name);
+        Assert.Equal(["updated"], state.Tags);
+        Assert.Same(attachment, Assert.Single(state.Attachments).Value);
+    }
+
+    [Fact]
     public void ReferenceAdded_AppendsReference()
     {
         var state = CreateState();
-        var eventData = new SkillReferenceAdded
+        var eventData = new SkillReferenceAddedV1
         {
             RelativePath = "references/example.md",
             Content = "Reference content"
@@ -125,7 +132,7 @@ public sealed class SkillEventTests
                 new SkillReference("Original content")
             )
         );
-        var eventData = new SkillReferenceAdded
+        var eventData = new SkillReferenceAddedV1
         {
             RelativePath = "references/example.md",
             Content = "Duplicate content"
@@ -147,7 +154,7 @@ public sealed class SkillEventTests
     {
         var originalReference = new SkillReference("Original content");
         var state = CreateState(("references/example.md", originalReference));
-        var eventData = new SkillReferenceUpdated
+        var eventData = new SkillReferenceUpdatedV1
         {
             RelativePath = "references/example.md",
             Content = "Updated content"
@@ -170,7 +177,7 @@ public sealed class SkillEventTests
                 new SkillReference("Reference content")
             )
         );
-        var eventData = new SkillReferenceDeleted
+        var eventData = new SkillReferenceDeletedV1
         {
             RelativePath = "references/example.md"
         };
@@ -178,6 +185,86 @@ public sealed class SkillEventTests
         eventData.Apply(state, EventExecutionInfo);
 
         Assert.Empty(state.References);
+    }
+
+    [Fact]
+    public void AttachmentAdded_AppendsAttachment()
+    {
+        var attachment = CreateAttachment(
+            "33333333-3333-3333-3333-333333333333"
+        );
+        var state = CreateState();
+
+        new SkillAttachmentAddedV1(attachment).Apply(
+            state,
+            EventExecutionInfo
+        );
+
+        Assert.Same(
+            attachment,
+            Assert.Single(state.Attachments).Value
+        );
+    }
+
+    [Fact]
+    public void AttachmentAdded_RemainsNonThrowingForDuplicateId()
+    {
+        var attachment = CreateAttachment(
+            "44444444-4444-4444-4444-444444444444"
+        );
+        var state = CreateState(
+            [],
+            [(attachment.Id, attachment)]
+        );
+
+        var exception = Record.Exception(
+            () =>
+                new SkillAttachmentAddedV1(
+                    attachment with { Name = "replacement.pdf" }
+                ).Apply(state, EventExecutionInfo)
+        );
+
+        Assert.Null(exception);
+        Assert.Same(attachment, Assert.Single(state.Attachments).Value);
+    }
+
+    [Fact]
+    public void AttachmentDeleted_RemovesAttachment()
+    {
+        var attachment = CreateAttachment(
+            "55555555-5555-5555-5555-555555555555"
+        );
+        var state = CreateState(
+            [],
+            [(attachment.Id, attachment)]
+        );
+
+        new SkillAttachmentDeletedV1(attachment.Id).Apply(
+            state,
+            EventExecutionInfo
+        );
+
+        Assert.Empty(state.Attachments);
+    }
+
+    [Fact]
+    public void AttachmentDeleted_RemainsNonThrowingForUnknownId()
+    {
+        var attachmentId = FileId.FromDatabaseGuid(
+            Guid.Parse("66666666-6666-6666-6666-666666666666")
+        );
+        var state = CreateState();
+
+        var exception = Record.Exception(
+            () =>
+                new SkillAttachmentDeletedV1(attachmentId).Apply(
+                    state,
+                    EventExecutionInfo
+                )
+        );
+
+        Assert.Null(exception);
+        Assert.Empty(state.Attachments);
     }
 
     [Theory]
@@ -190,7 +277,7 @@ public sealed class SkillEventTests
         var exception = update
             ? Record.Exception(
                 () =>
-                    new SkillReferenceUpdated
+                    new SkillReferenceUpdatedV1
                     {
                         RelativePath = "references/missing.md",
                         Content = "Content"
@@ -198,7 +285,7 @@ public sealed class SkillEventTests
             )
             : Record.Exception(
                 () =>
-                    new SkillReferenceDeleted
+                    new SkillReferenceDeletedV1
                     {
                         RelativePath = "references/missing.md"
                     }.Apply(state, EventExecutionInfo)
@@ -239,5 +326,15 @@ public sealed class SkillEventTests
                     attachment => attachment.Id,
                     attachment => attachment.Attachment
                 )
+        };
+
+    private static Attachment CreateAttachment(string id) =>
+        new()
+        {
+            Id = FileId.FromDatabaseGuid(Guid.Parse(id)),
+            Name = "example.pdf",
+            Size = 1_024,
+            FileType = "application/pdf",
+            Extension = "pdf"
         };
 }

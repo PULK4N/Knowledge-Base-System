@@ -12,8 +12,7 @@ public sealed record SkillCreatedV1(
     string Description,
     string Content,
     ImmutableArray<string> Tags,
-    ImmutableDictionary<string, SkillReference> References,
-    ImmutableDictionary<FileId, Attachment> Attachments
+    ImmutableDictionary<string, SkillReference> References
 ) : ISkillCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
@@ -31,11 +30,6 @@ public sealed record SkillCreatedV1(
             reference => reference.Value,
             StringComparer.Ordinal
         );
-        state.Attachments = Attachments.ToDictionary(
-            attachment => attachment.Key,
-            attachment => attachment.Value
-        );
-
         return state;
     }
 }

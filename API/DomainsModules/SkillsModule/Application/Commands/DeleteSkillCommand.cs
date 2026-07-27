@@ -8,5 +8,5 @@ public sealed class DeleteSkillCommand(StateMachineHandler stateMachineHandler)
     : ExistingSkillCommand(stateMachineHandler)
 {
     protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(executor, new SkillDeleted());
+        ExecuteEvent(executor, new SkillDeletedV1());
 }

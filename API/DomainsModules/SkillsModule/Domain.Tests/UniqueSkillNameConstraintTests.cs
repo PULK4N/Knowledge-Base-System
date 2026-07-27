@@ -19,11 +19,7 @@ public sealed class UniqueSkillNameConstraintTests
                 "Description",
                 "Content",
                 [],
-                ImmutableDictionary<string, Models.SkillReference>.Empty,
-                ImmutableDictionary<
-                    Models.FileId,
-                    Models.Attachment
-                >.Empty
+                ImmutableDictionary<string, Models.SkillReference>.Empty
             )
         );
 
@@ -42,7 +38,7 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("old-name");
         var payload = CreatePayload(
-            new SkillDetailsUpdated
+            new SkillDetailsUpdatedV1
             {
                 Name = "new-name",
                 Description = "Description",
@@ -68,7 +64,7 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("My-Skill");
         var payload = CreatePayload(
-            new SkillDetailsUpdated
+            new SkillDetailsUpdatedV1
             {
                 Name = "  my-skill  ",
                 Description = "Updated description",
@@ -87,7 +83,7 @@ public sealed class UniqueSkillNameConstraintTests
     public void Delete_RemovesConstraintWithoutAddingItBack()
     {
         var state = CreateActiveState("skill-to-delete");
-        var payload = CreatePayload(new SkillDeleted());
+        var payload = CreatePayload(new SkillDeletedV1());
 
         AddConstraintsToRemove(state, payload);
         Apply(state, payload);

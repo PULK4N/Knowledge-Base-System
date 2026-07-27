@@ -4,7 +4,13 @@ using SkillsModule.Domain.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public sealed class SkillReferenceUpdated : IEvent
+public interface ISkillReferenceUpdated : IEvent
+{
+    string RelativePath { get; }
+    string Content { get; }
+}
+
+public sealed class SkillReferenceUpdatedV1 : ISkillReferenceUpdated
 {
     public required string RelativePath { get; init; }
     public required string Content { get; init; }

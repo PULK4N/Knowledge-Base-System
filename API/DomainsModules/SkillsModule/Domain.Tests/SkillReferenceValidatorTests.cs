@@ -11,7 +11,7 @@ public sealed class SkillReferenceValidatorTests
     public void MustNotExist_FailsForDuplicateRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceAdded
+            new SkillReferenceAddedV1
             {
                 RelativePath = "references/example.md",
                 Content = "Duplicate content"
@@ -34,7 +34,7 @@ public sealed class SkillReferenceValidatorTests
     public void MustNotExist_SucceedsForNewRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceAdded
+            new SkillReferenceAddedV1
             {
                 RelativePath = "references/new.md",
                 Content = "Content"
@@ -52,7 +52,7 @@ public sealed class SkillReferenceValidatorTests
     public void MustExist_FailsForUnknownRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceDeleted
+            new SkillReferenceDeletedV1
             {
                 RelativePath = "references/missing.md"
             }
@@ -73,7 +73,7 @@ public sealed class SkillReferenceValidatorTests
     public void MustExist_SucceedsForKnownRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceUpdated
+            new SkillReferenceUpdatedV1
             {
                 RelativePath = "references/example.md",
                 Content = "Updated content"

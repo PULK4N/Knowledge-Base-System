@@ -15,6 +15,6 @@ public sealed class DeleteSkillReferenceCommand(StateMachineHandler stateMachine
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new SkillReferenceDeleted { RelativePath = RelativePath }
+            new SkillReferenceDeletedV1 { RelativePath = RelativePath }
         );
 }
