@@ -1,7 +1,7 @@
+using System.Collections.Immutable;
 using EventSourcing.Shared.Models;
 using SkillsModule.Domain.Constraints;
 using SkillsModule.Domain.Events;
-using SkillsModule.Domain.Models;
 
 namespace SkillsModule.Domain.Tests;
 
@@ -10,16 +10,18 @@ public sealed class UniqueSkillNameConstraintTests
     private readonly UniqueSkillNameConstraint _constraint = new();
 
     [Fact]
-    public void Save_AddsNormalizedSkillName()
+    public void Create_AddsNormalizedSkillName()
     {
         var state = new SkillStateData();
         var payload = CreatePayload(
-            new SkillSaved
-            {
-                Name = "  My-Skill  ",
-                Description = "Description",
-                Content = "Content"
-            }
+            new SkillCreatedV1(
+                "  My-Skill  ",
+                "Description",
+                "Content",
+                [],
+                ImmutableDictionary<string, SkillsModule.Domain.Models.SkillReference>.Empty,
+                ImmutableDictionary<string, SkillsModule.Domain.Models.SkillFile>.Empty
+            )
         );
 
         AddConstraintsToRemove(state, payload);
@@ -104,12 +106,9 @@ public sealed class UniqueSkillNameConstraintTests
     private static SkillStateData CreateActiveState(string name) =>
         new()
         {
-            Skill = new SkillDefinition
-            {
-                Name = name,
-                Description = "Description",
-                Content = "Content"
-            }
+            Name = name,
+            Description = "Description",
+            Content = "Content"
         };
 
     private static void Apply(SkillStateData state, EventPayload payload) =>

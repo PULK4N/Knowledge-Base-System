@@ -12,12 +12,12 @@ public sealed class UniqueSkillNameConstraint : IUniqueConstraintCreator<SkillSt
         EventPayload payload
     )
     {
-        var currentName = Normalize(stateBeforeEvent.Skill.Name);
+        var currentName = Normalize(stateBeforeEvent.Name);
 
         if (stateBeforeEvent.IsDeleted || currentName is null)
             return [];
 
-        if (payload.EventData is SkillSaved)
+        if (payload.EventData is ISkillCreated)
             return [];
 
         var updatedName = payload.EventData switch
@@ -44,12 +44,12 @@ public sealed class UniqueSkillNameConstraint : IUniqueConstraintCreator<SkillSt
         EventPayload payload
     )
     {
-        var currentName = Normalize(stateAfterEvent.Skill.Name);
+        var currentName = Normalize(stateAfterEvent.Name);
 
         if (stateAfterEvent.IsDeleted || currentName is null)
             return [];
 
-        if (payload.EventData is SkillSaved)
+        if (payload.EventData is ISkillCreated)
             return [CreateConstraint(currentName)];
 
         if (

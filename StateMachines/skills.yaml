@@ -1,7 +1,7 @@
 id: skills-state-machine
 stateData: SkillStateData
 events:
-  SkillSaved:
+  SkillCreatedV1:
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillUpdated:
@@ -13,6 +13,12 @@ events:
   SkillDeleted:
     uniqueConstraints:
       - UniqueSkillNameConstraint
-  SkillReferenceAdded: {}
-  SkillReferenceUpdated: {}
-  SkillReferenceDeleted: {}
+  SkillReferenceAdded:
+    preEventValidators:
+      - SkillReferenceMustNotExistValidator
+  SkillReferenceUpdated:
+    preEventValidators:
+      - SkillReferenceMustExistValidator
+  SkillReferenceDeleted:
+    preEventValidators:
+      - SkillReferenceMustExistValidator

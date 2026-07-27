@@ -1,4 +1,7 @@
+using System.Collections.Immutable;
+using ActionModule.Models;
 using EventSourcing.Core;
+using EventSourcing.Shared.Models;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Models;
 
@@ -11,26 +14,25 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
     public required string Description { get; init; }
     public required string Content { get; init; }
     public List<string> Tags { get; init; } = [];
-    public List<SkillReference> References { get; init; } = [];
+    public Dictionary<string, SkillReference> References { get; init; } =
+        new(StringComparer.Ordinal);
+    public Dictionary<string, SkillFile> Files { get; init; } =
+        new(StringComparer.Ordinal);
 
-    public override Task<bool> CanExecute() =>
+    public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(Name));
 
-    protected override Task<object> ExecuteInternal() =>
+    protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
-            new SkillSaved
-            {
-                Name = Name,
-                Description = Description,
-                Content = Content,
-                Tags = [.. Tags],
-                References = References
-                    .Select(reference => new SkillReference
-                    {
-                        RelativePath = reference.RelativePath,
-                        Content = reference.Content
-                    })
-                    .ToList()
-            }
+            executor,
+            AggregateId.New(),
+            new SkillCreatedV1(
+                Name,
+                Description,
+                Content,
+                Tags.ToImmutableArray(),
+                References.ToImmutableDictionary(StringComparer.Ordinal),
+                Files.ToImmutableDictionary(StringComparer.Ordinal)
+            )
         );
 }

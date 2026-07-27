@@ -1,4 +1,5 @@
 using ActionModule;
+using ActionModule.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
@@ -10,18 +11,21 @@ public abstract class SkillCommand(StateMachineHandler stateMachineHandler) : Co
 {
     protected const string StateMachineId = "skills-state-machine";
 
-    public required Guid ExecutorId { get; init; }
-    public required Guid SkillId { get; init; }
+    public override Task<bool> IsAuthorized(Executor executor) =>
+        Task.FromResult(true);
 
-    public override Task<bool> IsAuthorized() => Task.FromResult(true);
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(true);
 
-    public override Task<bool> CanExecute() => Task.FromResult(true);
-
-    protected async Task<object> ExecuteEvent(IEvent eventData)
+    protected async Task<object> ExecuteEvent(
+        Executor executor,
+        AggregateId skillId,
+        IEvent eventData
+    )
     {
         var payload = EventPayload.Create(
-            EventExecutor.FromDatabaseGuid(ExecutorId),
-            AggregateId.FromDatabaseGuid(SkillId),
+            executor.Id,
+            skillId,
             StateMachineId,
             eventData
         );
@@ -30,4 +34,21 @@ public abstract class SkillCommand(StateMachineHandler stateMachineHandler) : Co
 
         return SkillCommandResult.Ok;
     }
+}
+
+public abstract class ExistingSkillCommand(
+    StateMachineHandler stateMachineHandler
+) : SkillCommand(stateMachineHandler)
+{
+    public required Guid SkillId { get; init; }
+
+    protected Task<object> ExecuteEvent(
+        Executor executor,
+        IEvent eventData
+    ) =>
+        ExecuteEvent(
+            executor,
+            AggregateId.FromDatabaseGuid(SkillId),
+            eventData
+        );
 }

@@ -1,12 +1,14 @@
+using ActionModule.Models;
+
 namespace ActionModule;
 
 public interface IAction
 {
-    Task<bool> IsAuthorized();
-    Task<bool> CanExecute();
+    Task<bool> IsAuthorized(Executor executor);
+    Task<bool> CanExecute(Executor executor);
 }
 
 public interface IAction<TResult> : IAction
 {
-    Task<TResult> Execute();
+    Task<TResult> Execute(Executor executor);
 }

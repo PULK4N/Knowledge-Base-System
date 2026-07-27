@@ -13,23 +13,9 @@ public sealed class SkillReferenceAdded : IEvent
     {
         var state = (SkillStateData)stateData;
 
-        if (
-            state.Skill.References.Any(reference =>
-                string.Equals(reference.RelativePath, RelativePath, StringComparison.Ordinal)
-            )
-        )
-        {
-            throw new InvalidOperationException(
-                $"A skill reference with relative path '{RelativePath}' already exists."
-            );
-        }
-
-        state.Skill.References.Add(
-            new SkillReference
-            {
-                RelativePath = RelativePath,
-                Content = Content
-            }
+        state.References.TryAdd(
+            RelativePath,
+            new SkillReference(Content)
         );
 
         return state;

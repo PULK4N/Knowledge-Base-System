@@ -14,10 +14,10 @@ public sealed class SkillDetailsUpdated : IEvent
     {
         var state = (SkillStateData)stateData;
 
-        state.Skill.Name = Name;
-        state.Skill.Description = Description;
-        state.Skill.Content = Content;
-        state.Skill.Tags = [.. Tags];
+        state.Name = Name;
+        state.Description = Description;
+        state.Content = Content;
+        state.Tags = [.. Tags];
 
         return state;
     }

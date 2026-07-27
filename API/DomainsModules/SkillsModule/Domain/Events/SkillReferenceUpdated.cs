@@ -12,22 +12,10 @@ public sealed class SkillReferenceUpdated : IEvent
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;
-        var referenceIndex = state.Skill.References.FindIndex(reference =>
-            string.Equals(reference.RelativePath, RelativePath, StringComparison.Ordinal)
-        );
-
-        if (referenceIndex < 0)
+        if (state.References.ContainsKey(RelativePath))
         {
-            throw new InvalidOperationException(
-                $"A skill reference with relative path '{RelativePath}' does not exist."
-            );
+            state.References[RelativePath] = new SkillReference(Content);
         }
-
-        state.Skill.References[referenceIndex] = new SkillReference
-        {
-            RelativePath = RelativePath,
-            Content = Content
-        };
 
         return state;
     }

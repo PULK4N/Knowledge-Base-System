@@ -10,18 +10,7 @@ public sealed class SkillReferenceDeleted : IEvent
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;
-        var referenceIndex = state.Skill.References.FindIndex(reference =>
-            string.Equals(reference.RelativePath, RelativePath, StringComparison.Ordinal)
-        );
-
-        if (referenceIndex < 0)
-        {
-            throw new InvalidOperationException(
-                $"A skill reference with relative path '{RelativePath}' does not exist."
-            );
-        }
-
-        state.Skill.References.RemoveAt(referenceIndex);
+        state.References.Remove(RelativePath);
 
         return state;
     }
