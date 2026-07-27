@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: skill-memory-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: skill_memory
+      POSTGRES_USER: skill_memory
+      POSTGRES_PASSWORD: skill_memory
+    ports:
+      - "5432:5432"
+    volumes:
+      - skill-memory-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U skill_memory -d skill_memory
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  skill-memory-postgres-data:
