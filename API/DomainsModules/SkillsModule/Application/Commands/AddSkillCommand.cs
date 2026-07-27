@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using ActionModule.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Models;
+using SkillsModule.Application.Models;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Models;
 
@@ -17,10 +18,15 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
     public Dictionary<string, SkillReference> References { get; init; } =
         new(StringComparer.Ordinal);
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var skillId = AggregateId.New();
+
+        await ExecuteEvent(
             executor,
-            AggregateId.New(),
+            skillId,
             new SkillCreatedV1(
                 Name,
                 Description,
@@ -29,4 +35,7 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
                 References.ToImmutableDictionary(StringComparer.Ordinal)
             )
         );
+
+        return SkillCreatedCommandResult.Ok(skillId.Value);
+    }
 }
