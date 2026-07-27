@@ -10,14 +10,20 @@ public sealed class SkillEventTests
     private static readonly EventExecutionInfo EventExecutionInfo = new();
 
     [Fact]
-    public void CreatedV1_AppliesImmutableTextAndFileMetadata()
+    public void CreatedV1_AppliesImmutableTextAndAttachmentMetadata()
     {
         var reference = new SkillReference("Reference content");
-        var file = new SkillFile(
-            "application/pdf",
-            1_024,
-            "8E3C2F7A"
+        var attachmentId = FileId.FromDatabaseGuid(
+            Guid.Parse("11111111-1111-1111-1111-111111111111")
         );
+        var attachment = new Attachment
+        {
+            Id = attachmentId,
+            Name = "example.pdf",
+            Size = 1_024,
+            FileType = "application/pdf",
+            Extension = "pdf"
+        };
         var eventData = new SkillCreatedV1(
             "skill-name",
             "Description",
@@ -27,10 +33,9 @@ public sealed class SkillEventTests
                 .Empty
                 .WithComparers(StringComparer.Ordinal)
                 .Add("references/example.md", reference),
-            ImmutableDictionary<string, SkillFile>
+            ImmutableDictionary<FileId, Attachment>
                 .Empty
-                .WithComparers(StringComparer.Ordinal)
-                .Add("attachments/example.pdf", file)
+                .Add(attachmentId, attachment)
         );
         var state = new SkillStateData();
 
@@ -48,18 +53,31 @@ public sealed class SkillEventTests
         Assert.Equal("changed-name", changedEvent.Name);
         Assert.Equal(["tag"], state.Tags);
         Assert.Same(reference, Assert.Single(state.References).Value);
-        Assert.Same(file, Assert.Single(state.Files).Value);
-        Assert.Equal("application/pdf", state.Files["attachments/example.pdf"].ContentType);
+        Assert.Same(attachment, Assert.Single(state.Attachments).Value);
+        Assert.Equal(
+            "application/pdf",
+            state.Attachments[attachmentId].FileType
+        );
     }
 
     [Fact]
-    public void DetailsUpdated_ChangesDetailsAndPreservesReferencesAndFiles()
+    public void DetailsUpdated_ChangesDetailsAndPreservesReferencesAndAttachments()
     {
         var reference = new SkillReference("Reference content");
-        var file = new SkillFile("image/png", 512, "AABBCCDD");
+        var attachmentId = FileId.FromDatabaseGuid(
+            Guid.Parse("22222222-2222-2222-2222-222222222222")
+        );
+        var attachment = new Attachment
+        {
+            Id = attachmentId,
+            Name = "example.png",
+            Size = 512,
+            FileType = "image/png",
+            Extension = "png"
+        };
         var state = CreateState(
             ("references/example.md", reference),
-            ("attachments/example.png", file)
+            (attachmentId, attachment)
         );
         var tags = new List<string> { "updated" };
         var eventData = new SkillDetailsUpdated
@@ -78,7 +96,7 @@ public sealed class SkillEventTests
         Assert.Equal("Updated content", state.Content);
         Assert.Equal(["updated"], state.Tags);
         Assert.Same(reference, Assert.Single(state.References).Value);
-        Assert.Same(file, Assert.Single(state.Files).Value);
+        Assert.Same(attachment, Assert.Single(state.Attachments).Value);
     }
 
     [Fact]
@@ -198,12 +216,12 @@ public sealed class SkillEventTests
 
     private static SkillStateData CreateState(
         (string RelativePath, SkillReference Reference) reference,
-        (string RelativePath, SkillFile File) file
-    ) => CreateState([reference], [file]);
+        (FileId Id, Attachment Attachment) attachment
+    ) => CreateState([reference], [attachment]);
 
     private static SkillStateData CreateState(
         (string RelativePath, SkillReference Reference)[] references,
-        (string RelativePath, SkillFile File)[] files
+        (FileId Id, Attachment Attachment)[] attachments
     ) =>
         new()
         {
@@ -216,11 +234,10 @@ public sealed class SkillEventTests
                     reference => reference.Reference,
                     StringComparer.Ordinal
                 ),
-            Files = files
+            Attachments = attachments
                 .ToDictionary(
-                    file => file.RelativePath,
-                    file => file.File,
-                    StringComparer.Ordinal
+                    attachment => attachment.Id,
+                    attachment => attachment.Attachment
                 )
         };
 }

@@ -13,7 +13,7 @@ public sealed record SkillCreatedV1(
     string Content,
     ImmutableArray<string> Tags,
     ImmutableDictionary<string, SkillReference> References,
-    ImmutableDictionary<string, SkillFile> Files
+    ImmutableDictionary<FileId, Attachment> Attachments
 ) : ISkillCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
@@ -31,10 +31,9 @@ public sealed record SkillCreatedV1(
             reference => reference.Value,
             StringComparer.Ordinal
         );
-        state.Files = Files.ToDictionary(
-            file => file.Key,
-            file => file.Value,
-            StringComparer.Ordinal
+        state.Attachments = Attachments.ToDictionary(
+            attachment => attachment.Key,
+            attachment => attachment.Value
         );
 
         return state;

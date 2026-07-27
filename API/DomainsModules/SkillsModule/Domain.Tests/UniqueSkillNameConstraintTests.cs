@@ -19,8 +19,11 @@ public sealed class UniqueSkillNameConstraintTests
                 "Description",
                 "Content",
                 [],
-                ImmutableDictionary<string, SkillsModule.Domain.Models.SkillReference>.Empty,
-                ImmutableDictionary<string, SkillsModule.Domain.Models.SkillFile>.Empty
+                ImmutableDictionary<string, Models.SkillReference>.Empty,
+                ImmutableDictionary<
+                    Models.FileId,
+                    Models.Attachment
+                >.Empty
             )
         );
 

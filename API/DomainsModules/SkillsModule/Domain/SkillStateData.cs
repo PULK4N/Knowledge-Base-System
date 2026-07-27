@@ -13,6 +13,5 @@ public sealed class SkillStateData : ISharedStateData
     public List<string> Tags { get; set; } = [];
     public Dictionary<string, SkillReference> References { get; set; } =
         new(StringComparer.Ordinal);
-    public Dictionary<string, SkillFile> Files { get; set; } =
-        new(StringComparer.Ordinal);
+    public Dictionary<FileId, Attachment> Attachments { get; set; } = [];
 }

@@ -12,8 +12,7 @@ public sealed class SkillUpdated : IEvent
     public List<string> Tags { get; init; } = [];
     public Dictionary<string, SkillReference> References { get; init; } =
         new(StringComparer.Ordinal);
-    public Dictionary<string, SkillFile> Files { get; init; } =
-        new(StringComparer.Ordinal);
+    public Dictionary<FileId, Attachment> Attachments { get; init; } = [];
 
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
@@ -28,10 +27,9 @@ public sealed class SkillUpdated : IEvent
             reference => reference.Value,
             StringComparer.Ordinal
         );
-        state.Files = Files.ToDictionary(
-            file => file.Key,
-            file => file.Value,
-            StringComparer.Ordinal
+        state.Attachments = Attachments.ToDictionary(
+            attachment => attachment.Key,
+            attachment => attachment.Value
         );
 
         return state;

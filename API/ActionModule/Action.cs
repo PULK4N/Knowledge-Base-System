@@ -23,6 +23,9 @@ public abstract class Action<TResult>() : IAction<TResult>
 
     protected abstract Task<TResult> ExecuteInternal(Executor executor);
 
+    /// <summary>
+    /// Enriches the result with data that is not available in state data.
+    /// </summary>
     protected virtual Task<TResult> MapAdditionally(
         Executor executor,
         TResult result
