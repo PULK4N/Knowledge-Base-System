@@ -4,10 +4,7 @@ using SkillsModule.Domain.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public interface ISkillAttachmentAdded : IEvent
-{
-    Attachment Attachment { get; }
-}
+public interface ISkillAttachmentAdded : IEvent;
 
 public sealed record SkillAttachmentAddedV1(
     Attachment Attachment
@@ -26,10 +23,7 @@ public sealed record SkillAttachmentAddedV1(
     }
 }
 
-public interface ISkillAttachmentDeleted : IEvent
-{
-    FileId AttachmentId { get; }
-}
+public interface ISkillAttachmentDeleted : IEvent;
 
 public sealed record SkillAttachmentDeletedV1(
     FileId AttachmentId

@@ -3,10 +3,7 @@ using EventSourcing.Shared.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public interface ISkillReferenceDeleted : IEvent
-{
-    string RelativePath { get; }
-}
+public interface ISkillReferenceDeleted : IEvent;
 
 public sealed class SkillReferenceDeletedV1 : ISkillReferenceDeleted
 {

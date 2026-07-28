@@ -17,13 +17,13 @@ public sealed class UniqueSkillNameConstraint : IUniqueConstraintCreator<SkillSt
         if (stateBeforeEvent.IsDeleted || currentName is null)
             return [];
 
-        if (payload.EventData is ISkillCreated)
+        if (payload.EventData is SkillCreatedV1)
             return [];
 
         var updatedName = payload.EventData switch
         {
-            ISkillUpdated updated => updated.Name,
-            ISkillDetailsUpdated updated => updated.Name,
+            SkillUpdatedV1 updated => updated.Name,
+            SkillDetailsUpdatedV1 updated => updated.Name,
             _ => null
         };
 
@@ -31,9 +31,9 @@ public sealed class UniqueSkillNameConstraint : IUniqueConstraintCreator<SkillSt
             return [];
 
         return (
-            payload.EventData is ISkillUpdated
-                or ISkillDetailsUpdated
-                or ISkillDeleted
+            payload.EventData is SkillUpdatedV1
+                or SkillDetailsUpdatedV1
+                or SkillDeletedV1
         )
             ? [CreateConstraint(currentName)]
             : [];
@@ -49,13 +49,13 @@ public sealed class UniqueSkillNameConstraint : IUniqueConstraintCreator<SkillSt
         if (stateAfterEvent.IsDeleted || currentName is null)
             return [];
 
-        if (payload.EventData is ISkillCreated)
+        if (payload.EventData is SkillCreatedV1)
             return [CreateConstraint(currentName)];
 
         if (
             (
-                payload.EventData is ISkillUpdated
-                    or ISkillDetailsUpdated
+                payload.EventData is SkillUpdatedV1
+                    or SkillDetailsUpdatedV1
             )
             && payload.UniqueEventConstraintsToRemove.Any(
                 constraint => constraint.ConstraintName == ConstraintName

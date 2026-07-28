@@ -12,14 +12,14 @@ public sealed class SkillAttachmentMustNotExistValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not ISkillAttachmentAdded eventData)
+        if (payload.EventData is not SkillAttachmentAddedV1 eventData)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(SkillAttachmentMustNotExistValidator),
                 false,
                 $"{nameof(SkillAttachmentMustNotExistValidator)} can only validate "
-                    + $"{nameof(ISkillAttachmentAdded)} events."
+                    + $"{nameof(SkillAttachmentAddedV1)} events."
             );
         }
 

@@ -4,14 +4,7 @@ using SkillsModule.Domain.Models;
 
 namespace SkillsModule.Domain.Events;
 
-public interface ISkillUpdated : IEvent
-{
-    string Name { get; }
-    string Description { get; }
-    string Content { get; }
-    List<string> Tags { get; }
-    Dictionary<string, SkillReference> References { get; }
-}
+public interface ISkillUpdated : IEvent;
 
 public sealed class SkillUpdatedV1 : ISkillUpdated
 {
