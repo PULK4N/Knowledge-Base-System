@@ -1,7 +1,7 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 
-namespace ActionModule;
+namespace ActionModule.Shared;
 
 public interface IExecutorProvider
 {

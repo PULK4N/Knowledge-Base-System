@@ -1,6 +1,6 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 
-namespace ActionModule;
+namespace ActionModule.Shared;
 
 public abstract class Action<TResult>() : IAction<TResult>
 {

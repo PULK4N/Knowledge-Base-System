@@ -1,5 +1,5 @@
-using ActionModule;
-using ActionModule.Models;
+using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
@@ -40,7 +40,7 @@ public abstract class ExistingSkillCommand(
     StateMachineHandler stateMachineHandler
 ) : SkillCommand(stateMachineHandler)
 {
-    public required Guid SkillId { get; init; }
+    public required Guid SkillId { get; set; }
 
     protected Task<object> ExecuteEvent(
         Executor executor,

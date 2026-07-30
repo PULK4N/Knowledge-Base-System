@@ -1,4 +1,4 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using SkillsModule.Domain.Events;
 
@@ -7,8 +7,8 @@ namespace SkillsModule.Application.Commands;
 public sealed class AddSkillReferenceCommand(StateMachineHandler stateMachineHandler)
     : ExistingSkillCommand(stateMachineHandler)
 {
-    public required string RelativePath { get; init; }
-    public required string Content { get; init; }
+    public required string RelativePath { get; set; }
+    public required string Content { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(RelativePath));

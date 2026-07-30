@@ -1,4 +1,4 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using SkillsModule.Domain.Events;
 
@@ -7,10 +7,10 @@ namespace SkillsModule.Application.Commands;
 public sealed class UpdateSkillCommand(StateMachineHandler stateMachineHandler)
     : ExistingSkillCommand(stateMachineHandler)
 {
-    public required string Name { get; init; }
-    public required string Description { get; init; }
-    public required string Content { get; init; }
-    public List<string> Tags { get; init; } = [];
+    public required string Name { get; set; }
+    public required string Description { get; set; }
+    public required string Content { get; set; }
+    public List<string> Tags { get; set; } = [];
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(Name));

@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DomainsModules/SkillsModule/Application/SkillsModule.Application.csproj" />
-    <ProjectReference Include="../DomainsModules/SkillsModule/Persistence/SkillsModule.Persistence.csproj" />
+    <ProjectReference Include="../DomainsModules/SkillsModule/Application/Application.csproj" />
+    <ProjectReference Include="../DomainsModules/SkillsModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../EventSourcing/Persistence/Persistence.csproj" />
     <ProjectReference Include="../EventSourcing/Shared/Shared.csproj" />
   </ItemGroup>

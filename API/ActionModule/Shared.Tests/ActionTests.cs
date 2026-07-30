@@ -1,8 +1,8 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using UUIDNext;
 
-namespace ActionModule.Tests;
+namespace ActionModule.Shared.Tests;
 
 public sealed class ActionTests
 {
