@@ -20,15 +20,16 @@ public sealed class AddSkillCommandTests
     {
         DatabaseFriendlyGuidGenerator
             .SetDefaultGuidGenerationDatabase(Database.SqlServer);
-        var eventStore = new EmptyEventStore();
         var outbox = new CapturingEventStoreWithOutbox();
-        var handler = new StateMachineHandler(
-            eventStore,
-            outbox,
-            new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider(),
+        var stateCalculator = new StateCalculator(
+            new OrderNumberHelper(),
             new SkillStateDataProvider(),
-            new OrderNumberHelper()
+            new EmptyEventValidatorProvider(),
+            new EmptyUniqueEventConstraintProvider()
+        );
+        var handler = new StateMachineHandler(
+            stateCalculator,
+            outbox
         );
         var command = new AddSkillCommand(handler)
         {
@@ -57,37 +58,31 @@ public sealed class AddSkillCommandTests
         Assert.IsType<SkillCreatedV1>(payload.EventData);
     }
 
-    private sealed class EmptyEventStore : IEventStore
-    {
-        public Task<Dictionary<AggregateId, EventPayload[]>> GetEvents(
-            params AggregateId[] aggregateIds
-        ) =>
-            Task.FromResult(
-                aggregateIds.ToDictionary(
-                    aggregateId => aggregateId,
-                    _ => Array.Empty<EventPayload>()
-                )
-            );
-
-        public Task Write(List<EventPayload> payloads) =>
-            throw new NotSupportedException();
-    }
-
     private sealed class CapturingEventStoreWithOutbox
         : IEventStoreWithOutbox
     {
         public List<EventPayload> Written { get; private set; } = [];
 
-        public Task Write(List<EventPayload> payloads)
+        public Task Write(
+            Dictionary<AggregateId, StateInfo> stateInfos
+        )
         {
-            Written = [.. payloads];
+            Written = stateInfos
+                .Values
+                .SelectMany(stateInfo => stateInfo.LastExecutedPayloads)
+                .ToList();
             return Task.CompletedTask;
         }
 
-        public Task<Dictionary<AggregateId, EventPayload[]>> GetEvents(
-            params AggregateId[] aggregateIds
+        public Task<Dictionary<AggregateId, List<EventPayload>>> GetEvents(
+            List<AggregateId> aggregateIds
         ) =>
-            throw new NotSupportedException();
+            Task.FromResult(
+                aggregateIds.ToDictionary(
+                    aggregateId => aggregateId,
+                    _ => new List<EventPayload>()
+                )
+            );
     }
 
     private sealed class EmptyEventValidatorProvider

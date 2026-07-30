@@ -1,10 +1,8 @@
 using ActionModule;
-using EventSourcing.Core;
-using EventSourcing.Persistence.Interfaces;
+using ActionModule.API;
 using Microsoft.AspNetCore.Mvc;
 using SkillsModule.API.Mapping;
 using SkillsModule.API.Requests;
-using SkillsModule.Application.Attachments;
 using SkillsModule.Application.Commands;
 using SkillsModule.Application.DTOs;
 using SkillsModule.Application.Models;
@@ -15,28 +13,21 @@ namespace SkillsModule.API.Controllers;
 [ApiController]
 [Route("api/skills")]
 public sealed class SkillsController(
-    StateMachineHandler stateMachineHandler,
-    IEventStore eventStore,
-    IExecutorProvider executorProvider,
-    IAttachmentContentStorage attachmentContentStorage
-) : ControllerBase
+    IExecutorProvider executorProvider
+) : ActionController(executorProvider)
 {
     [HttpPost]
     public async Task<ActionResult<SkillCreatedCommandResult>> Add(
-        [FromBody] CreateSkillRequest request
+        [FromBody] CreateSkillRequest body,
+        [FromServices] AddSkillCommand command
     )
     {
-        var command = new AddSkillCommand(stateMachineHandler)
-        {
-            Name = request.Name,
-            Description = request.Description,
-            Content = request.Content,
-            Tags = [.. request.Tags]
-        };
-        var executor = await executorProvider.GetExecutor();
-        var result = (SkillCreatedCommandResult)await command.Execute(
-            executor
-        );
+        command.Name = body.Name;
+        command.Description = body.Description;
+        command.Content = body.Content;
+        command.Tags = [.. body.Tags];
+
+        var result = (SkillCreatedCommandResult)await Execute(command);
 
         return CreatedAtAction(
             nameof(Get),
@@ -51,25 +42,20 @@ public sealed class SkillsController(
         ActionResult<IReadOnlyCollection<AttachmentDto>>
     > AddAttachments(
         Guid skillId,
-        [FromForm] AddSkillAttachmentsRequest request
+        [FromForm] AddSkillAttachmentsRequest request,
+        [FromServices] AddSkillAttachmentCommand command
     )
     {
         var attachments = (
             await request.Files.MapToAttachments()
-        ).ToArray();
-        var executor = await executorProvider.GetExecutor();
+        ).ToList();
+        var executor = await GetExecutor();
 
         foreach (var (attachment, bytes) in attachments)
         {
-            var command = new AddSkillAttachmentCommand(
-                stateMachineHandler,
-                attachmentContentStorage
-            )
-            {
-                SkillId = skillId,
-                Attachment = attachment,
-                Bytes = bytes
-            };
+            command.SkillId = skillId;
+            command.Attachment = attachment;
+            command.Bytes = bytes;
 
             await command.Execute(executor);
         }
@@ -82,28 +68,22 @@ public sealed class SkillsController(
                             attachment.attachment
                         )
                 )
-                .ToArray()
+                .ToList()
         );
     }
 
     [HttpPost("{skillId:guid}/references")]
     public async Task<ActionResult<SkillCommandResult>> AddReference(
         Guid skillId,
-        [FromBody] AddSkillReferenceRequest request
+        [FromBody] AddSkillReferenceRequest body,
+        [FromServices] AddSkillReferenceCommand command
     )
     {
-        var command = new AddSkillReferenceCommand(
-            stateMachineHandler
-        )
-        {
-            SkillId = skillId,
-            RelativePath = request.RelativePath,
-            Content = request.Content
-        };
-        var executor = await executorProvider.GetExecutor();
-        var result = (SkillCommandResult)await command.Execute(
-            executor
-        );
+        command.SkillId = skillId;
+        command.RelativePath = body.RelativePath;
+        command.Content = body.Content;
+
+        var result = (SkillCommandResult)await Execute(command);
 
         return Ok(result);
     }
@@ -111,19 +91,14 @@ public sealed class SkillsController(
     [HttpGet("{skillId:guid}")]
     public async Task<ActionResult<SkillDto>> Get(
         Guid skillId,
-        [FromQuery] uint? orderNumber = null
+        [FromQuery] uint? orderNumber,
+        [FromServices] GetSkillQuery query
     )
     {
-        var query = new GetSkillQuery(
-            stateMachineHandler,
-            eventStore
-        )
-        {
-            SkillId = skillId,
-            OrderNumber = orderNumber ?? 0
-        };
-        var executor = await executorProvider.GetExecutor();
-        var skill = await query.Execute(executor);
+        query.SkillId = skillId;
+        query.OrderNumber = orderNumber ?? 0;
+
+        var skill = await Execute(query);
 
         return skill is null
             ? NotFound()

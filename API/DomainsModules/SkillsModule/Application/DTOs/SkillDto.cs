@@ -30,7 +30,7 @@ public sealed record SkillDto
             Name = stateData.Name,
             Description = stateData.Description,
             Content = stateData.Content,
-            Tags = stateData.Tags.ToArray(),
+            Tags = stateData.Tags.ToList(),
             References = stateData.References.ToDictionary(
                 reference => reference.Key,
                 reference => SkillReferenceDto.FromModel(

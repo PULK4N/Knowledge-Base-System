@@ -40,7 +40,7 @@ public abstract class ExistingSkillCommand(
     StateMachineHandler stateMachineHandler
 ) : SkillCommand(stateMachineHandler)
 {
-    public required Guid SkillId { get; init; }
+    public required Guid SkillId { get; set; }
 
     protected Task<object> ExecuteEvent(
         Executor executor,

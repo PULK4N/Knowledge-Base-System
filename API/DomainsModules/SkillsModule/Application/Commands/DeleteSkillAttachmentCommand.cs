@@ -11,7 +11,7 @@ public sealed class DeleteSkillAttachmentCommand(
     IAttachmentContentStorage attachmentContentStorage
 ) : ExistingSkillCommand(stateMachineHandler)
 {
-    public required FileId AttachmentId { get; init; }
+    public required FileId AttachmentId { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(AttachmentId.Value != Guid.Empty);

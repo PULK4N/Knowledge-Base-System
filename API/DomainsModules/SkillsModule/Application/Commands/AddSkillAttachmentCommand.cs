@@ -11,8 +11,8 @@ public sealed class AddSkillAttachmentCommand(
     IAttachmentContentStorage attachmentContentStorage
 ) : ExistingSkillCommand(stateMachineHandler)
 {
-    public required Attachment Attachment { get; init; }
-    public required byte[] Bytes { get; init; }
+    public required Attachment Attachment { get; set; }
+    public required byte[] Bytes { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(

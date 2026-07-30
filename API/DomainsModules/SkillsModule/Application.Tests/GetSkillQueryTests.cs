@@ -67,28 +67,26 @@ public sealed class GetSkillQueryTests
     }
 
     private static GetSkillQuery CreateQuery(
-        EventPayload[] events,
+        List<EventPayload> events,
         uint orderNumber = 0
     )
     {
         var eventStore = new StubEventStore(events);
-        var stateMachineHandler = new StateMachineHandler(
-            eventStore,
-            new StubEventStoreWithOutbox(),
-            new StubEventValidatorProvider(),
-            new StubUniqueEventConstraintProvider(),
+        var stateCalculator = new StateCalculator(
+            new OrderNumberHelper(),
             new SkillStateDataProvider(),
-            new OrderNumberHelper()
+            new StubEventValidatorProvider(),
+            new StubUniqueEventConstraintProvider()
         );
 
-        return new GetSkillQuery(stateMachineHandler, eventStore)
+        return new GetSkillQuery(stateCalculator, eventStore)
         {
             SkillId = SkillId.Value,
             OrderNumber = orderNumber
         };
     }
 
-    private static EventPayload[] CreateEvents()
+    private static List<EventPayload> CreateEvents()
     {
         var attachmentId = FileId.FromDatabaseGuid(
             Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
@@ -148,35 +146,23 @@ public sealed class GetSkillQueryTests
     }
 
     private sealed class StubEventStore(
-        EventPayload[] events
+        List<EventPayload> events
     ) : IEventStore
     {
-        public Task<Dictionary<AggregateId, EventPayload[]>> GetEvents(
-            params AggregateId[] aggregateIds
+        public Task<Dictionary<AggregateId, List<EventPayload>>> GetEvents(
+            List<AggregateId> aggregateIds
         ) =>
             Task.FromResult(
                 aggregateIds.ToDictionary(
                     aggregateId => aggregateId,
                     aggregateId =>
                         aggregateId == SkillId
-                            ? events
-                            : []
+                            ? new List<EventPayload>(events)
+                            : new List<EventPayload>()
                 )
             );
 
         public Task Write(List<EventPayload> payloads) =>
-            throw new NotSupportedException();
-    }
-
-    private sealed class StubEventStoreWithOutbox
-        : IEventStoreWithOutbox
-    {
-        public Task Write(List<EventPayload> payloads) =>
-            throw new NotSupportedException();
-
-        public Task<Dictionary<AggregateId, EventPayload[]>> GetEvents(
-            params AggregateId[] aggregateIds
-        ) =>
             throw new NotSupportedException();
     }
 
