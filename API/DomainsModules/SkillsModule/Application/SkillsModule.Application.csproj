@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="../../../ActionModules/Shared/ActionModule.csproj" />
+    <ProjectReference Include="../../../ActionModules/Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />
     <ProjectReference Include="../../../EventSourcing/Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />

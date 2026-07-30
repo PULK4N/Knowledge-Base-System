@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>ActionModule.Tests</AssemblyName>
+    <RootNamespace>ActionModule.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Shared/ActionModule.csproj" />
+    <ProjectReference Include="../Shared/Shared.csproj" />
   </ItemGroup>
 
 </Project>
