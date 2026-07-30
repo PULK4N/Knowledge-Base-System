@@ -1,5 +1,5 @@
-using ActionModule;
 using ActionModule.API;
+using ActionModule.Shared;
 using Microsoft.AspNetCore.Mvc;
 using SkillsModule.API.Mapping;
 using SkillsModule.API.Requests;

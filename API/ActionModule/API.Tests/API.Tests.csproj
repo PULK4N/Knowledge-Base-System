@@ -5,11 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>ActionModule.API.Tests</AssemblyName>
+    <RootNamespace>ActionModule.API.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -18,11 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Domain/SkillsModule.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="../../../../StateMachines/skills.yaml" Link="StateMachines/skills.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="../API/API.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
-using ActionModule.Models;
+using ActionModule.Shared;
+using ActionModule.Shared.Models;
+using Shared.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ActionModule.API;

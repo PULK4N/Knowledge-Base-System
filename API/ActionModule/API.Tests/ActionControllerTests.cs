@@ -1,4 +1,5 @@
-using ActionModule.Models;
+using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using Xunit;
 

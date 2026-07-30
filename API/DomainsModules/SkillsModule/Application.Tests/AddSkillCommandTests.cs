@@ -1,4 +1,4 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;

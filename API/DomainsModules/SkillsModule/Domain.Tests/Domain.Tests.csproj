@@ -5,12 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyName>ActionModule.Tests</AssemblyName>
-    <RootNamespace>ActionModule.Tests</RootNamespace>
+    <AssemblyName>SkillsModule.Domain.Tests</AssemblyName>
+    <RootNamespace>SkillsModule.Domain.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -19,7 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Shared/Shared.csproj" />
+    <ProjectReference Include="../Domain/Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../../../StateMachines/skills.yaml" Link="StateMachines/skills.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

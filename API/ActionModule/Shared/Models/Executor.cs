@@ -1,6 +1,6 @@
 using EventSourcing.Shared.Models;
 
-namespace ActionModule.Models;
+namespace ActionModule.Shared.Models;
 
 public sealed class Executor
 {

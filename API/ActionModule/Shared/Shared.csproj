@@ -4,14 +4,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>ActionModule.Shared</AssemblyName>
+    <RootNamespace>ActionModule.Shared</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../Shared/Shared.csproj" />
+    <ProjectReference Include="../../EventSourcing/Shared/Shared.csproj" />
   </ItemGroup>
 
 </Project>

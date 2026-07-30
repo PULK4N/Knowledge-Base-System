@@ -1,4 +1,4 @@
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Domain.Events;

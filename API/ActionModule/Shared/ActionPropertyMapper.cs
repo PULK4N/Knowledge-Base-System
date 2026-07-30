@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 
-namespace ActionModule;
+namespace ActionModule.Shared;
 
 public static class ActionPropertyMapper
 {

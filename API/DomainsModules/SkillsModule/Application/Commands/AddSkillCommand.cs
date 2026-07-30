@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using ActionModule.Models;
+using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Models;
 using SkillsModule.Application.Models;

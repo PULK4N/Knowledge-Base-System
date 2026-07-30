@@ -9,5 +9,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>SkillsModule.Domain</AssemblyName>
+    <RootNamespace>SkillsModule.Domain</RootNamespace>
   </PropertyGroup>
 </Project>
