@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using Newtonsoft.Json;
+using System.Text.Json;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Models;
 
@@ -24,9 +24,9 @@ public sealed class SkillCreatedSerializationTests
                 )
         );
 
-        var json = JsonConvert.SerializeObject(eventData);
+        var json = JsonSerializer.Serialize(eventData);
         var deserialized = Assert.IsType<SkillCreatedV1>(
-            JsonConvert.DeserializeObject<SkillCreatedV1>(json)
+            JsonSerializer.Deserialize<SkillCreatedV1>(json)
         );
 
         Assert.Equal(eventData.Name, deserialized.Name);

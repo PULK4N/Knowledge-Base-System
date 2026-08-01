@@ -19,10 +19,15 @@ public sealed class CodexPromptHookRecordedTests
     private static readonly DateTime Timestamp =
         new(2026, 7, 31, 9, 30, 0, DateTimeKind.Utc);
 
+    private static readonly AggregateId MemoryAggregateId =
+        AggregateId.FromDatabaseGuid(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        );
+
     [Fact]
     public void Apply_FirstHook_SetsThreadAndCreatesPrompt()
     {
-        var state = new MemoryStateData();
+        var state = new MemoryStateData(MemoryAggregateId);
         var payload = CreatePayload(SessionId, FirstTurnId);
         var @event = new CodexPromptHookRecordedV1(
             new ThreadId(SessionId),
@@ -56,7 +61,7 @@ public sealed class CodexPromptHookRecordedTests
     {
         var promptId = new PromptId(FirstTurnId);
         var firstTimestamp = Timestamp.AddMinutes(-1);
-        var state = new MemoryStateData
+        var state = new MemoryStateData(MemoryAggregateId)
         {
             ThreadId = new ThreadId(SessionId),
             ChatPrompts =
@@ -98,7 +103,7 @@ public sealed class CodexPromptHookRecordedTests
     public void Apply_NewTurnInExistingThread_CreatesAnotherPrompt()
     {
         var firstPromptId = new PromptId(FirstTurnId);
-        var state = new MemoryStateData
+        var state = new MemoryStateData(MemoryAggregateId)
         {
             ThreadId = new ThreadId(SessionId),
             ChatPrompts =
@@ -128,7 +133,7 @@ public sealed class CodexPromptHookRecordedTests
     [Fact]
     public void Apply_UsesIdsFromEventWithoutReadingPayload()
     {
-        var state = new MemoryStateData();
+        var state = new MemoryStateData(MemoryAggregateId);
         var @event = new CodexPromptHookRecordedV1(
             new ThreadId(SessionId),
             new PromptId(FirstTurnId),
@@ -158,9 +163,7 @@ public sealed class CodexPromptHookRecordedTests
     ) =>
         new()
         {
-            AggregateId = AggregateId.FromDatabaseGuid(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            ),
+            AggregateId = MemoryAggregateId,
             Timestamp = timestamp
         };
 }
