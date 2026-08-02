@@ -5,7 +5,7 @@ namespace PolicyModule.Domain.Events;
 
 public interface IRepositoryToProjectMapAdded : IEvent;
 
-public class RepositoryToProjectMapAddedV1(string RepositoryPath, AggregateId AggregateId)
+public readonly record struct RepositoryToProjectMapAddedV1(string RepositoryPath, AggregateId AggregateId)
     : IRepositoryToProjectMapAdded
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)

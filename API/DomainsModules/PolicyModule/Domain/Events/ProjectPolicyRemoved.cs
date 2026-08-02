@@ -6,7 +6,7 @@ namespace PolicyModule.Domain.Events;
 
 public interface IProjectPolicyRemoved : IEvent;
 
-public class ProjectPolicyRemovedV1(Policy Policy) : IProjectPolicyRemoved
+public readonly record struct ProjectPolicyRemovedV1(Policy Policy) : IProjectPolicyRemoved
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

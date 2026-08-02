@@ -6,7 +6,7 @@ namespace PolicyModule.Domain.Events;
 
 public interface IGeneralPolicyUpdated : IEvent;
 
-public class GeneralPolicyUpdatedV1(Policy Policy) : IGeneralPolicyUpdated
+public readonly record struct GeneralPolicyUpdatedV1(Policy Policy) : IGeneralPolicyUpdated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

@@ -6,7 +6,8 @@ namespace PolicyModule.Domain.Events;
 
 public interface ITopicPolicyRemoved : IEvent;
 
-public class TopicPolicyRemovedV1(TopicName TopicName, Policy Policy) : ITopicPolicyRemoved
+public readonly record struct TopicPolicyRemovedV1(TopicName TopicName, Policy Policy)
+    : ITopicPolicyRemoved
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

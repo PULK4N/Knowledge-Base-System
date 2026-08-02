@@ -6,7 +6,8 @@ namespace PolicyModule.Domain.Events;
 
 public interface ITopicRelationAddedToProject : IEvent;
 
-public class TopicRelationAddedToProjectV1(TopicName TopicName) : ITopicRelationAddedToProject
+public readonly record struct TopicRelationAddedToProjectV1(TopicName TopicName)
+    : ITopicRelationAddedToProject
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

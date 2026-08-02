@@ -5,7 +5,7 @@ namespace PolicyModule.Domain.Events;
 
 public interface IProjectForPoliciesCreated : IEvent;
 
-public class ProjectForPoliciesCreatedV1(
+public readonly record struct ProjectForPoliciesCreatedV1(
     string ProjectName,
     string ProjectDescripton,
     List<string> ProjectRepositories
