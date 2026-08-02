@@ -1,8 +1,8 @@
 namespace PolicyModule.Domain.Models;
 
-public class Policy
+public sealed record Policy
 {
-    public PolicyId PolicyId { get; set; }
-    public required string Title { get; set; }
-    public required string Description { get; set; }
+    public PolicyId PolicyId { get; init; }
+    public required string Title { get; init; }
+    public required string Description { get; init; }
 }

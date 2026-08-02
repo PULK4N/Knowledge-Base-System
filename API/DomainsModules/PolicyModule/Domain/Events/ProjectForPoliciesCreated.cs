@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 
@@ -7,16 +8,16 @@ public interface IProjectForPoliciesCreated : IEvent;
 
 public readonly record struct ProjectForPoliciesCreatedV1(
     string ProjectName,
-    string ProjectDescripton,
-    List<string> ProjectRepositories
+    string ProjectDescription,
+    ImmutableArray<string> ProjectRepositories
 ) : IProjectForPoliciesCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var projectPoliciesStateData = (ProjectPoliciesStateData)stateData;
         projectPoliciesStateData.ProjectName = ProjectName;
-        projectPoliciesStateData.ProjectDescription = ProjectDescripton;
-        projectPoliciesStateData.ProjectRepositories = ProjectRepositories;
+        projectPoliciesStateData.ProjectDescription = ProjectDescription;
+        projectPoliciesStateData.ProjectRepositories = ProjectRepositories.ToList();
 
         return projectPoliciesStateData;
     }

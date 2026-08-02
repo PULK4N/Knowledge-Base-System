@@ -6,12 +6,22 @@ namespace PolicyModule.Domain.Events;
 
 public interface ITopicCreated : IEvent;
 
-public readonly record struct TopicCreatedV1(Topic Topic) : ITopicCreated
+public readonly record struct TopicCreatedV1(
+    TopicName TopicName,
+    string Description
+) : ITopicCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
-        generalPoliciesStateData.Topics.Add(Topic.TopicName, Topic);
+        generalPoliciesStateData.Topics.Add(
+            TopicName,
+            new Topic
+            {
+                TopicName = TopicName,
+                Description = Description
+            }
+        );
 
         return generalPoliciesStateData;
     }
