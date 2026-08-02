@@ -118,8 +118,9 @@ public sealed class AddSkillCommandTests
     private sealed class SkillStateDataProvider : IStateDataProvider
     {
         public Task<object> GetStateDataByStateMachine(
-            string stateMachineId
+            string stateMachineId,
+            AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(new SkillStateData());
+            Task.FromResult<object>(new SkillStateData(aggregateId));
     }
 }

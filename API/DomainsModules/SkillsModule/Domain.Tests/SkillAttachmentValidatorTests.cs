@@ -83,7 +83,7 @@ public sealed class SkillAttachmentValidatorTests
     private static SkillStateData CreateState(
         params Attachment[] attachments
     ) =>
-        new()
+        new(AggregateId.FromDatabaseGuid(Guid.Empty))
         {
             Name = "skill-name",
             Attachments = attachments.ToDictionary(
