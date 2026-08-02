@@ -10,18 +10,28 @@ using MemoryModule.Domain.Models;
 
 namespace MemoryModule.Application.Commands;
 
-public sealed class RecordCodexPromptHookCommand(
+public sealed class MigrateCodexMemoryCommand(
     StateMachineHandler stateMachineHandler
 ) : Command<MemoryCommandResult>
 {
     public required ThreadId ThreadId { get; set; }
-    public required PromptId PromptId { get; set; }
-    public required string HookEventName { get; set; }
-    public required JsonElement Payload { get; set; }
+    public required string RawMemory { get; set; }
+    public required string RolloutSummary { get; set; }
+    public required string Source { get; set; }
+
     protected override async Task<MemoryCommandResult> ExecuteInternal(
         Executor executor
     )
     {
+        var promptId = new PromptId(Guid.NewGuid());
+        var payload = JsonSerializer.SerializeToElement(
+            new
+            {
+                raw_memory = RawMemory,
+                rollout_summary = RolloutSummary,
+                source = Source
+            }
+        );
         var mapEvent = EventPayload.Create(
             executor.Id,
             MemoryAggregateIds.SessionAggregateMap,
@@ -45,11 +55,10 @@ public sealed class RecordCodexPromptHookCommand(
                         executor.Id,
                         memoryAggregateId,
                         Constants.StateMachineIds.Memory,
-                        new CodexPromptHookRecordedV1(
+                        new CodexMemoryMigratedV1(
                             ThreadId,
-                            PromptId,
-                            HookEventName,
-                            Payload
+                            promptId,
+                            payload
                         )
                     )
                 ];

@@ -41,6 +41,9 @@ public sealed class RecordCodexPromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(CodexPromptHookRecordedV1)
         );
+        EventTypeContainer.AddEventType(
+            typeof(CodexMemoryMigratedV1)
+        );
     }
 
     [Fact]
@@ -155,23 +158,68 @@ public sealed class RecordCodexPromptHookCommandTests
         );
     }
 
+    [Fact]
+    public async Task Execute_MigrationWritesDedicatedEventAndPayload()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var command = new MigrateCodexMemoryCommand(
+            CreateHandler(eventStore)
+        )
+        {
+            ThreadId = ThreadId,
+            RawMemory = "Raw stage-one memory",
+            RolloutSummary = "Thread rollout summary",
+            Source = "codex-stage1-output"
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.Equal("OK", result.Status);
+
+        var mapState = Assert.IsType<SessionAggregateMapStateData>(
+            eventStore.LastWritten[MemoryAggregateIds.SessionAggregateMap].StateData
+        );
+        var memoryAggregateId = mapState.AggregateIdsBySession[ThreadId];
+        var memoryState = Assert.IsType<MemoryStateData>(
+            eventStore.LastWritten[memoryAggregateId].StateData
+        );
+        var prompt = Assert.Single(memoryState.ChatPrompts).Value;
+        Assert.NotEqual(Guid.Empty, prompt.PromptId.Value);
+
+        var hook = Assert.Single(prompt.PromptHookRecords);
+        Assert.Equal(
+            CodexMemoryMigratedV1.UserMigrationHookEventName,
+            hook.HookEventName
+        );
+        Assert.Equal(3, hook.Payload.EnumerateObject().Count());
+        Assert.Equal(
+            "Raw stage-one memory",
+            hook.Payload.GetProperty("raw_memory").GetString()
+        );
+        Assert.Equal(
+            "Thread rollout summary",
+            hook.Payload.GetProperty("rollout_summary").GetString()
+        );
+        Assert.Equal(
+            "codex-stage1-output",
+            hook.Payload.GetProperty("source").GetString()
+        );
+        Assert.IsType<CodexMemoryMigratedV1>(
+            Assert.Single(
+                eventStore.LastWritten[memoryAggregateId].LastExecutedPayloads
+            ).EventData
+        );
+    }
+
     private static RecordCodexPromptHookCommand CreateCommand(
         CapturingEventStoreWithOutbox eventStore,
         PromptId promptId
     )
     {
-        var stateCalculator = new StateCalculator(
-            new OrderNumberHelper(),
-            new MemoryStateDataProvider(),
-            new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider()
-        );
-        var handler = new StateMachineHandler(
-            stateCalculator,
-            eventStore
-        );
-
-        return new RecordCodexPromptHookCommand(handler)
+        return new RecordCodexPromptHookCommand(CreateHandler(eventStore))
         {
             ThreadId = ThreadId,
             PromptId = promptId,
@@ -181,6 +229,19 @@ public sealed class RecordCodexPromptHookCommandTests
             )
         };
     }
+
+    private static StateMachineHandler CreateHandler(
+        CapturingEventStoreWithOutbox eventStore
+    ) =>
+        new(
+            new StateCalculator(
+                new OrderNumberHelper(),
+                new MemoryStateDataProvider(),
+                new EmptyEventValidatorProvider(),
+                new EmptyUniqueEventConstraintProvider()
+            ),
+            eventStore
+        );
 
     private sealed class CapturingEventStoreWithOutbox
         : IEventStoreWithOutbox
