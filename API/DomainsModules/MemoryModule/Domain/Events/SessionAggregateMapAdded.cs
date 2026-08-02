@@ -18,7 +18,7 @@ public sealed record SessionAggregateMapAddedV1(
     {
         var state = (SessionAggregateMapStateData)stateData;
 
-        state.AggregateIdsBySession.TryAdd(
+        state.AggregateIdsBySession.Add(
             ThreadId,
             MemoryAggregateId
         );
