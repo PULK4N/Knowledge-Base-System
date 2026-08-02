@@ -4,9 +4,11 @@ namespace ActionModule.Shared;
 
 public abstract class Action<TResult>() : IAction<TResult>
 {
-    public abstract Task<bool> IsAuthorized(Executor executor);
+    public virtual Task<bool> IsAuthorized(Executor executor) =>
+        Task.FromResult(true);
 
-    public abstract Task<bool> CanExecute(Executor executor);
+    public virtual Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(true);
 
     public async Task<TResult> Execute(Executor executor)
     {

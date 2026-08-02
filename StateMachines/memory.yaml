@@ -1,0 +1,4 @@
+id: memory-state-machine
+stateData: MemoryStateData
+events:
+  CodexPromptHookRecordedV1: {}

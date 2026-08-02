@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyName>SkillsModule.Domain.Tests</AssemblyName>
-    <RootNamespace>SkillsModule.Domain.Tests</RootNamespace>
+    <AssemblyName>MemoryModule.API.Tests</AssemblyName>
+    <RootNamespace>MemoryModule.API.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,11 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../API/API.csproj" />
+    <ProjectReference Include="../Application/Application.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="../../../../StateMachines/skills.yaml" Link="StateMachines/skills.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
