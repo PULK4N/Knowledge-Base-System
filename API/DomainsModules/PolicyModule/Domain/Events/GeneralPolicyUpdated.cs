@@ -11,7 +11,7 @@ public readonly record struct GeneralPolicyUpdatedV1(Policy Policy) : IGeneralPo
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
-        generalPoliciesStateData.Policies.Add(Policy.PolicyId, Policy);
+        generalPoliciesStateData.Policies[Policy.PolicyId] = Policy;
 
         return generalPoliciesStateData;
     }
