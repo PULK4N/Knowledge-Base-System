@@ -19,7 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../../../StateMachines/memory-session-aggregate-map.yaml" Link="StateMachines/memory-session-aggregate-map.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
 id: memory-session-aggregate-map-state-machine
 stateData: SessionAggregateMapStateData
 events:
-  SessionAggregateMapAddedV1: {}
+  SessionAggregateMapAddedV1:
+    preEventValidators:
+      - SessionAggregateMappingMustNotExistValidator
