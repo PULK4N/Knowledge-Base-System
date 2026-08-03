@@ -22,6 +22,32 @@ public sealed class RecordCodexPromptHookCommand(
         Executor executor
     )
     {
+        var sessionMap = await stateMachineHandler.GetByAggregateId(AggregateId.FromDatabaseGuid(SharedModule.Constants.StateDataAggregateIds.SessionAggregateMap));
+
+        if (sessionMap?.StateData is SessionAggregateMapStateData sessionAggregateMapStateData &&
+                sessionAggregateMapStateData.AggregateIdsBySession.ContainsKey(ThreadId))
+        {
+            var aggregateId = sessionAggregateMapStateData.AggregateIdsBySession[ThreadId].Value;
+
+
+            var payload = EventPayload.Create(
+                executor.Id,
+                AggregateId.FromDatabaseGuid(aggregateId),
+                Constants.StateMachineIds.Memory,
+                new CodexPromptHookRecordedV1(
+                    ThreadId,
+                    PromptId,
+                    HookEventName,
+                    Payload
+                )
+            );
+
+            await stateMachineHandler.ExecuteEvents(payload);
+
+            return MemoryCommandResult.Ok;
+        }
+
+
         var mapEvent = EventPayload.Create(
             executor.Id,
             MemoryAggregateIds.SessionAggregateMap,

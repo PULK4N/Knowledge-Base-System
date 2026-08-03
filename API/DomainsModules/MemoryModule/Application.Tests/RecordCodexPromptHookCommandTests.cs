@@ -99,20 +99,20 @@ public sealed class RecordCodexPromptHookCommandTests
 
         await CreateCommand(eventStore, SecondPromptId).Execute(Executor);
 
-        var secondMapState = Assert.IsType<SessionAggregateMapStateData>(
-            eventStore.LastWritten[MemoryAggregateIds.SessionAggregateMap].StateData
-        );
-        Assert.Equal(
-            firstMemoryAggregateId,
-            secondMapState.AggregateIdsBySession[ThreadId]
-        );
-
+        var writtenAggregate = Assert.Single(eventStore.LastWritten);
+        Assert.Equal(firstMemoryAggregateId, writtenAggregate.Key);
         var memoryState = Assert.IsType<MemoryStateData>(
-            eventStore.LastWritten[firstMemoryAggregateId].StateData
+            writtenAggregate.Value.StateData
         );
         Assert.Equal(2, memoryState.ChatPrompts.Count);
         Assert.True(memoryState.ChatPrompts.ContainsKey(FirstPromptId));
         Assert.True(memoryState.ChatPrompts.ContainsKey(SecondPromptId));
+        var recordedEvent = Assert.IsType<CodexPromptHookRecordedV1>(
+            Assert.Single(
+                writtenAggregate.Value.LastExecutedPayloads
+            ).EventData
+        );
+        Assert.Equal(SecondPromptId, recordedEvent.PromptId);
     }
 
     [Fact]
