@@ -1,3 +1,4 @@
+using ActionModule.API;
 using ActionModule.Shared;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
@@ -22,6 +23,15 @@ builder.Host.UseDefaultServiceProvider(
 
 builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
     Path.Combine(AppContext.BaseDirectory, "StateMachines");
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
+builder.Services
+    .AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
+    .Configure<ActionJsonTypeInfoResolver>(
+        (options, resolver) =>
+            options.JsonSerializerOptions.TypeInfoResolver = resolver
+    );
 
 builder.Services
     .AddControllers()

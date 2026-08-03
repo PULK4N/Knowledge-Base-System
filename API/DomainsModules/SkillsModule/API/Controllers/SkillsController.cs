@@ -18,15 +18,9 @@ public sealed class SkillsController(
 {
     [HttpPost]
     public async Task<ActionResult<SkillCreatedCommandResult>> Add(
-        [FromBody] CreateSkillRequest body,
-        [FromServices] AddSkillCommand command
+        [FromBody] AddSkillCommand command
     )
     {
-        command.Name = body.Name;
-        command.Description = body.Description;
-        command.Content = body.Content;
-        command.Tags = [.. body.Tags];
-
         var result = (SkillCreatedCommandResult)await Execute(command);
 
         return CreatedAtAction(

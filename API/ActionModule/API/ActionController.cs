@@ -19,19 +19,6 @@ public abstract class ActionController(
         return await action.Execute(executor);
     }
 
-    protected Task<TResult> Execute<TResult>(
-        IAction<TResult> action,
-        IAction<TResult> body
-    )
-    {
-        ArgumentNullException.ThrowIfNull(action);
-        ArgumentNullException.ThrowIfNull(body);
-
-        ActionPropertyMapper.Map(body, action);
-
-        return Execute(action);
-    }
-
     protected Task<Executor> GetExecutor() =>
         executorProvider.GetExecutor();
 }
