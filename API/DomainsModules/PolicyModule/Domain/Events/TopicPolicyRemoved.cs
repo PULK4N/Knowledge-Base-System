@@ -6,14 +6,14 @@ namespace PolicyModule.Domain.Events;
 
 public interface ITopicPolicyRemoved : IEvent;
 
-public readonly record struct TopicPolicyRemovedV1(TopicName TopicName, Policy Policy)
+public readonly record struct TopicPolicyRemovedV1(TopicName TopicName, PolicyId PolicyId)
     : ITopicPolicyRemoved
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
 
-        generalPoliciesStateData.Topics[TopicName].Policies.Remove(Policy.PolicyId);
+        generalPoliciesStateData.Topics[TopicName].Policies.Remove(PolicyId);
 
         return generalPoliciesStateData;
     }

@@ -9,7 +9,7 @@ public interface IProjectForPoliciesCreated : IEvent;
 public readonly record struct ProjectForPoliciesCreatedV1(
     string ProjectName,
     string ProjectDescription,
-    ImmutableArray<string> ProjectRepositories
+    ImmutableArray<string> RepositoryPaths
 ) : IProjectForPoliciesCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
@@ -17,7 +17,7 @@ public readonly record struct ProjectForPoliciesCreatedV1(
         var projectPoliciesStateData = (ProjectPoliciesStateData)stateData;
         projectPoliciesStateData.ProjectName = ProjectName;
         projectPoliciesStateData.ProjectDescription = ProjectDescription;
-        projectPoliciesStateData.ProjectRepositories = ProjectRepositories.ToList();
+        projectPoliciesStateData.RepositoryPaths = RepositoryPaths.ToList();
 
         return projectPoliciesStateData;
     }
