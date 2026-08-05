@@ -9,6 +9,7 @@ using MemoryModule.Domain;
 using PolicyModule.API.Controllers;
 using PolicyModule.Application.Commands;
 using PolicyModule.Domain;
+using PolicyModule.MCP;
 using PostgreSqlModule;
 using SkillsModule.API.Controllers;
 using SkillsModule.Application.Commands;
@@ -57,6 +58,18 @@ builder.Services.RegisterActions(
     typeof(AddGeneralPolicyCommand).Assembly
 );
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
+builder.Services
+    .AddMcpServer()
+    .WithHttpTransport()
+    .WithTools(
+        PolicyMcpFunctions.Create()
+            .Select(
+                function =>
+                    ModelContextProtocol.Server.McpServerTool.Create(
+                        function
+                    )
+            )
+    );
 
 var app = builder.Build();
 
@@ -70,6 +83,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapMcp("/mcp");
 
 app.Run();
 

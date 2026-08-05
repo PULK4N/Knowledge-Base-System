@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.29" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -19,6 +20,7 @@
     <ProjectReference Include="../DomainsModules/PolicyModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/PolicyModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/PolicyModule/Domain/Domain.csproj" />
+    <ProjectReference Include="../DomainsModules/PolicyModule/MCP/MCP.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/Domain/Domain.csproj" />
