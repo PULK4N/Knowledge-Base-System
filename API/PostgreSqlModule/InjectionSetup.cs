@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PolicyModule.Persistence;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
 using UUIDNext;
@@ -66,6 +67,12 @@ public static class InjectionSetup
             AttachmentContentStorage
         >();
 
+        services.RegisterPolicyModulePersistence();
+        services.AddScoped<IPolicyModuleDbContext>(
+            serviceProvider =>
+                (IPolicyModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
             Database.PostgreSql
         );

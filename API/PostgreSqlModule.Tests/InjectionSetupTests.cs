@@ -1,10 +1,14 @@
 using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
+using EventSourcing.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PolicyModule.Persistence;
+using PolicyModule.Persistence.Interfaces;
+using PolicyModule.Persistence.Models;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
 using Xunit;
@@ -14,7 +18,7 @@ namespace PostgreSqlModule.Tests;
 public sealed class InjectionSetupTests
 {
     [Fact]
-    public void RegisterPostgreSqlModuleRegistersBothContextsAndStorage()
+    public void RegisterPostgreSqlModuleRegistersContextsAndStorage()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -36,6 +40,8 @@ public sealed class InjectionSetupTests
             scope.ServiceProvider.GetRequiredService<EventSourcingDbContext>();
         var skillsContext =
             scope.ServiceProvider.GetRequiredService<SkillsModuleDbContext>();
+        var policyContext =
+            scope.ServiceProvider.GetRequiredService<IPolicyModuleDbContext>();
 
         Assert.IsType<PostgreSqlEventSourcingDbContext>(
             eventSourcingContext
@@ -48,6 +54,10 @@ public sealed class InjectionSetupTests
             "Npgsql.EntityFrameworkCore.PostgreSQL",
             skillsContext.Database.ProviderName
         );
+        Assert.Same(
+            eventSourcingContext,
+            policyContext
+        );
         Assert.NotNull(
             scope.ServiceProvider.GetRequiredService<IEventStore>()
         );
@@ -56,6 +66,19 @@ public sealed class InjectionSetupTests
                 IAttachmentContentStorage
             >()
         );
+        Assert.IsType<PolicyTextRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IPolicyTextRepository
+            >()
+        );
+        var projectorTypes = scope.ServiceProvider
+            .GetServices<IProjector>()
+            .Select(projector => projector.GetType())
+            .ToList();
+        Assert.Contains(typeof(GeneralPolicyTextProjector), projectorTypes);
+        Assert.Contains(typeof(ProjectPolicyTextProjector), projectorTypes);
+        Assert.Contains(typeof(TopicPolicyTextProjector), projectorTypes);
+        Assert.Contains(typeof(ProjectTopicProjector), projectorTypes);
     }
 
     [Fact]
@@ -87,5 +110,40 @@ public sealed class InjectionSetupTests
         Assert.True(xmin.IsConcurrencyToken);
         Assert.Equal(ValueGenerated.OnAddOrUpdate, xmin.ValueGenerated);
         Assert.Equal("xmin", xmin.GetColumnName());
+        AssertIntPrimaryKey<GeneralPolicyText>(context);
+        AssertIntPrimaryKey<ProjectPolicyText>(context);
+        AssertIntPrimaryKey<TopicPolicyText>(context);
+        AssertIntPrimaryKey<ProjectPolicyTopic>(context);
+        AssertUniqueIndex<GeneralPolicyText>(context, 1);
+        AssertUniqueIndex<ProjectPolicyText>(context, 1);
+        AssertUniqueIndex<TopicPolicyText>(context, 1);
+        AssertUniqueIndex<ProjectPolicyTopic>(context, 2);
+    }
+
+    private static void AssertIntPrimaryKey<TEntity>(DbContext context)
+    {
+        var primaryKey = context.Model
+            .FindEntityType(typeof(TEntity))!
+            .FindPrimaryKey();
+
+        var property = Assert.Single(primaryKey!.Properties);
+        Assert.Equal(
+            typeof(int),
+            property.ClrType
+        );
+        Assert.Equal(ValueGenerated.OnAdd, property.ValueGenerated);
+    }
+
+    private static void AssertUniqueIndex<TEntity>(
+        DbContext context,
+        int propertyCount
+    )
+    {
+        Assert.Contains(
+            context.Model.FindEntityType(typeof(TEntity))!.GetIndexes(),
+            index =>
+                index.IsUnique
+                && index.Properties.Count == propertyCount
+        );
     }
 }

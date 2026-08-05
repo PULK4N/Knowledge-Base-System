@@ -12,8 +12,10 @@ using PolicyModule.Application.Queries;
 using PolicyModule.Domain;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
+using PolicyModule.Persistence.Interfaces;
 using Shared.Interfaces;
 using SharedModule.Constants;
+using SharedModule.Exceptions;
 using UUIDNext;
 
 namespace PolicyModule.Application.Tests;
@@ -416,20 +418,33 @@ public sealed class PolicyCommandTests
             ProjectId = project.ProjectId,
             TopicName = "cloud"
         }.Execute(Executor);
+        var policyTextRepository = new StubPolicyTextRepository();
+        var projectAggregateId = AggregateId.FromDatabaseGuid(
+            project.ProjectId
+        );
+        policyTextRepository.PolicyTexts[projectAggregateId] =
+            "# General policy\nApplies to every project.\n\n"
+            + "# Project policy\nApplies only to this project.\n\n"
+            + "# Cloud policy\nApplies to cloud projects.";
 
         var result = await new GetPoliciesByRepositoryQuery(
             CreateCalculator(),
-            eventStore
+            eventStore,
+            policyTextRepository
         )
         {
             RepositoryPath = repositoryPath
         }.Execute(Executor);
 
         Assert.Equal(
-            "General policy\nApplies to every project.\n\n"
-                + "Project policy\nApplies only to this project.\n\n"
-                + "Cloud policy\nApplies to cloud projects.",
+            "# General policy\nApplies to every project.\n\n"
+                + "# Project policy\nApplies only to this project.\n\n"
+                + "# Cloud policy\nApplies to cloud projects.",
             result
+        );
+        Assert.Equal(
+            projectAggregateId,
+            policyTextRepository.LastProjectId
         );
         Assert.Equal(
             "General policy",
@@ -469,13 +484,17 @@ public sealed class PolicyCommandTests
         {
             TopicName = "cloud"
         }.Execute(Executor);
+        policyTextRepository.PolicyTexts[projectAggregateId] =
+            "# General policy\nApplies to every project.\n\n"
+            + "# Project policy\nApplies only to this project.";
 
         Assert.Equal(
-            "General policy\nApplies to every project.\n\n"
-                + "Project policy\nApplies only to this project.",
+            "# General policy\nApplies to every project.\n\n"
+                + "# Project policy\nApplies only to this project.",
             await new GetPoliciesByRepositoryQuery(
                 CreateCalculator(),
-                eventStore
+                eventStore,
+                policyTextRepository
             )
             {
                 RepositoryPath = repositoryPath
@@ -487,14 +506,19 @@ public sealed class PolicyCommandTests
             ProjectId = project.ProjectId
         }.Execute(Executor);
 
-        Assert.Null(
-            await new GetPoliciesByRepositoryQuery(
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
+            () => new GetPoliciesByRepositoryQuery(
                 CreateCalculator(),
-                eventStore
+                eventStore,
+                policyTextRepository
             )
             {
                 RepositoryPath = repositoryPath
             }.Execute(Executor)
+        );
+        Assert.Equal(
+            $"Policies for repository '{repositoryPath}' were not found.",
+            exception.Message
         );
     }
 
@@ -661,6 +685,28 @@ public sealed class PolicyCommandTests
                     )
                 }
             );
+    }
+
+    private sealed class StubPolicyTextRepository
+        : IPolicyTextRepository
+    {
+        public Dictionary<AggregateId, string> PolicyTexts { get; } = [];
+        public AggregateId? LastProjectId { get; private set; }
+
+        public Task<string?> Get(AggregateId projectAggregateId)
+        {
+            LastProjectId = projectAggregateId;
+
+            return Task.FromResult(
+                PolicyTexts.TryGetValue(
+                    projectAggregateId,
+                    out var text
+                )
+                    ? text
+                    : null
+            );
+        }
+
     }
 
 }

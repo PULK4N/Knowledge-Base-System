@@ -20,10 +20,6 @@ public sealed class PoliciesController(
     {
         query.RepositoryPath = repositoryPath;
 
-        var policies = await Execute(query);
-
-        return policies is null
-            ? NotFound()
-            : Content(policies, "text/plain");
+        return Content(await Execute(query), "text/plain");
     }
 }
