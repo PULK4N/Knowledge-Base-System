@@ -3,7 +3,9 @@ using EventSourcing.Core;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
+using EventSourcing.Shared.Exceptions;
 using EventSourcing.Shared.Models;
+using Microsoft.Extensions.DependencyInjection;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
@@ -18,6 +20,9 @@ namespace PolicyModule.Application.Tests;
 
 public sealed class PolicyCommandTests
 {
+    private static readonly object RegistrationLock = new();
+    private static bool _typesRegistered;
+
     private static readonly Executor Executor =
         new()
         {
@@ -30,6 +35,7 @@ public sealed class PolicyCommandTests
     {
         DatabaseFriendlyGuidGenerator
             .SetDefaultGuidGenerationDatabase(Database.SqlServer);
+        RegisterPolicyTypesOnce();
     }
 
     [Fact]
@@ -143,8 +149,9 @@ public sealed class PolicyCommandTests
         var globalAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
         );
+        var events = eventStore.GetStoredEvents(globalAggregateId);
         Assert.Collection(
-            eventStore.GetStoredEvents(globalAggregateId),
+            events,
             payload => Assert.IsType<TopicCreatedV1>(payload.EventData),
             payload => Assert.IsType<TopicUpdatedV1>(payload.EventData),
             payload => Assert.IsType<TopicPolicyAddedV1>(payload.EventData),
@@ -233,8 +240,9 @@ public sealed class PolicyCommandTests
         }.Execute(Executor);
 
         Assert.NotEqual(Guid.Empty, created.ProjectId);
+        var projectEvents = eventStore.GetStoredEvents(projectId);
         Assert.Collection(
-            eventStore.GetStoredEvents(projectId),
+            projectEvents,
             payload => Assert.IsType<ProjectCreatedV1>(payload.EventData),
             payload => Assert.IsType<ProjectUpdatedV1>(payload.EventData),
             payload => Assert.IsType<ProjectPolicyAddedV1>(payload.EventData),
@@ -247,15 +255,13 @@ public sealed class PolicyCommandTests
         var mapAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.RepositoryToProjectMap
         );
-        Assert.All(
-            eventStore.GetStoredEvents(mapAggregateId),
-            payload =>
-            {
-                var mapping = Assert.IsType<RepositoryToProjectMapAddedV1>(
-                    payload.EventData
-                );
-                Assert.Equal(projectId, mapping.ProjectAggregateId);
-            }
+        var mapEvents = eventStore.GetStoredEvents(mapAggregateId);
+        Assert.Collection(
+            mapEvents,
+            payload => AssertMappingAdded(payload, projectId),
+            payload => AssertMappingAdded(payload, projectId),
+            payload => AssertMappingRemoved(payload, projectId),
+            payload => AssertMappingRemoved(payload, projectId)
         );
         var projectState = Assert.IsType<ProjectPoliciesStateData>(
             eventStore.LastWritten[projectId].StateData
@@ -268,6 +274,104 @@ public sealed class PolicyCommandTests
         Assert.Empty(projectState.Policies);
         Assert.Empty(projectState.RelatedTopics);
         Assert.True(projectState.IsDeleted);
+        Assert.Empty(
+            Assert.IsType<RepositoryToProjectMapStateData>(
+                eventStore.LastWritten[mapAggregateId].StateData
+            ).RepositoryToProjectMap
+        );
+    }
+
+    [Fact]
+    public async Task ProjectUpdate_AfterDeletion_IsRejectedWithoutWrite()
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        var project = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Deleted project",
+                ProjectDescription = "Validation test.",
+                RepositoryPaths = []
+            }.Execute(Executor)
+        );
+        var projectId = AggregateId.FromDatabaseGuid(
+            project.ProjectId
+        );
+
+        await new DeleteProjectCommand(handler)
+        {
+            ProjectId = project.ProjectId
+        }.Execute(Executor);
+        var eventCount = eventStore.GetStoredEvents(projectId).Count;
+
+        var exception = await Assert.ThrowsAsync<EventValidationException>(
+            () =>
+                new UpdateProjectCommand(handler)
+                {
+                    ProjectId = project.ProjectId,
+                    ProjectName = "Invalid update",
+                    ProjectDescription = "Must not be persisted."
+                }.Execute(Executor)
+        );
+
+        Assert.Contains("project is deleted", exception.Message);
+        Assert.Equal(
+            eventCount,
+            eventStore.GetStoredEvents(projectId).Count
+        );
+    }
+
+    [Fact]
+    public async Task RepositoryPath_CanBeReusedAfterProjectDeletion()
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        const string repositoryPath = "/workspace/reusable";
+        var firstProject = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "First project",
+                ProjectDescription = "Will be deleted.",
+                RepositoryPaths = [repositoryPath]
+            }.Execute(Executor)
+        );
+
+        await new DeleteProjectCommand(handler)
+        {
+            ProjectId = firstProject.ProjectId
+        }.Execute(Executor);
+
+        var secondProject = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Second project",
+                ProjectDescription = "Reuses the released path.",
+                RepositoryPaths = [repositoryPath]
+            }.Execute(Executor)
+        );
+        var mapAggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.RepositoryToProjectMap
+        );
+        var mapState = Assert.IsType<RepositoryToProjectMapStateData>(
+            eventStore.LastWritten[mapAggregateId].StateData
+        );
+
+        Assert.Equal(
+            AggregateId.FromDatabaseGuid(secondProject.ProjectId),
+            mapState.RepositoryToProjectMap[repositoryPath]
+        );
+        Assert.Collection(
+            eventStore.GetStoredEvents(mapAggregateId),
+            payload => Assert.IsType<RepositoryToProjectMapAddedV1>(
+                payload.EventData
+            ),
+            payload => Assert.IsType<RepositoryToProjectMapRemovedV1>(
+                payload.EventData
+            ),
+            payload => Assert.IsType<RepositoryToProjectMapAddedV1>(
+                payload.EventData
+            )
+        );
     }
 
     [Fact]
@@ -399,13 +503,65 @@ public sealed class PolicyCommandTests
     ) =>
         new(CreateCalculator(), eventStore);
 
+    private static void AssertMappingAdded(
+        EventPayload payload,
+        AggregateId projectId
+    )
+    {
+        var mapping = Assert.IsType<RepositoryToProjectMapAddedV1>(
+            payload.EventData
+        );
+        Assert.Equal(projectId, mapping.ProjectAggregateId);
+    }
+
+    private static void AssertMappingRemoved(
+        EventPayload payload,
+        AggregateId projectId
+    )
+    {
+        var mapping = Assert.IsType<RepositoryToProjectMapRemovedV1>(
+            payload.EventData
+        );
+        Assert.Equal(projectId, mapping.ProjectAggregateId);
+    }
+
     private static StateCalculator CreateCalculator() =>
+        CreateCalculator(CreateDefinitionProvider());
+
+    private static StateCalculator CreateCalculator(
+        YamlStateMachineDefinitionProvider definitionProvider
+    ) =>
         new(
             new OrderNumberHelper(),
             new PolicyStateDataProvider(),
-            new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider()
+            new EventValidatorProvider(definitionProvider),
+            new StateMachineUniqueEventConstraintProvider(
+                definitionProvider
+            )
         );
+
+    private static YamlStateMachineDefinitionProvider
+        CreateDefinitionProvider() =>
+            new(
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "StateMachines"
+                )
+            );
+
+    private static void RegisterPolicyTypesOnce()
+    {
+        lock (RegistrationLock)
+        {
+            if (_typesRegistered)
+                return;
+
+            new ServiceCollection().RegisterEventSourcingCore(
+                typeof(GeneralPoliciesStateData).Assembly
+            );
+            _typesRegistered = true;
+        }
+    }
 
     private sealed class CapturingEventStoreWithOutbox
         : IEventStoreWithOutbox, IEventStore
@@ -507,33 +663,4 @@ public sealed class PolicyCommandTests
             );
     }
 
-    private sealed class EmptyEventValidatorProvider
-        : IEventValidatorProvider
-    {
-        public Task<List<IPreEventValidator>> GetPreEventStateValidators(
-            EventPayload payload
-        ) =>
-            Task.FromResult(new List<IPreEventValidator>());
-
-        public Task<List<IPostEventValidator>> GetPostEventStateValidators(
-            EventPayload payload
-        ) =>
-            Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class EmptyUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData> GetConstraintsToAdd(
-            object stateData,
-            EventPayload payload
-        ) =>
-            [];
-
-        public IEnumerable<UniqueEventConstraintData> GetConstraintsToRemove(
-            object stateData,
-            EventPayload payload
-        ) =>
-            [];
-    }
 }

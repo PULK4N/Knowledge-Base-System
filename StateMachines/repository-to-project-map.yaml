@@ -1,4 +1,9 @@
 id: repository-to-project-map-state-machine
 stateData: RepositoryToProjectMapStateData
 events:
-  RepositoryToProjectMapAddedV1: {}
+  RepositoryToProjectMapAddedV1:
+    preEventValidators:
+      - RepositoryMappingMustNotExistValidator
+  RepositoryToProjectMapRemovedV1:
+    preEventValidators:
+      - RepositoryMappingMustExistValidator

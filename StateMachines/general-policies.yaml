@@ -1,12 +1,33 @@
 id: general-policies-state-machine
 stateData: GeneralPoliciesStateData
 events:
-  GeneralPolicyAddedV1: {}
-  GeneralPolicyUpdatedV1: {}
-  GeneralPolicyRemovedV1: {}
-  TopicCreatedV1: {}
-  TopicUpdatedV1: {}
-  TopicRemovedV1: {}
-  TopicPolicyAddedV1: {}
-  TopicPolicyUpdatedV1: {}
-  TopicPolicyRemovedV1: {}
+  GeneralPolicyAddedV1:
+    preEventValidators:
+      - GeneralPolicyMustNotExistValidator
+  GeneralPolicyUpdatedV1:
+    preEventValidators:
+      - GeneralPolicyMustExistValidator
+  GeneralPolicyRemovedV1:
+    preEventValidators:
+      - GeneralPolicyMustExistValidator
+  TopicCreatedV1:
+    preEventValidators:
+      - TopicMustNotExistValidator
+  TopicUpdatedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+  TopicRemovedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+  TopicPolicyAddedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustNotExistValidator
+  TopicPolicyUpdatedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustExistValidator
+  TopicPolicyRemovedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustExistValidator

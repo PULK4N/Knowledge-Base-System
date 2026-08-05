@@ -91,6 +91,15 @@ public abstract class PolicyCommand(
 
     protected Task ExecuteEvents(List<EventPayload> payloads) =>
         stateMachineHandler.ExecuteEvents(payloads);
+
+    protected Task<Dictionary<AggregateId, StateInfo>> ExecuteEvents(
+        EventPayload conditionalEvent,
+        Func<StateInfo, List<EventPayload>> conditionalEventsMethod
+    ) =>
+        stateMachineHandler.ExecuteEvents(
+            conditionalEvent,
+            conditionalEventsMethod
+        );
 }
 
 public abstract class ExistingProjectPoliciesCommand(

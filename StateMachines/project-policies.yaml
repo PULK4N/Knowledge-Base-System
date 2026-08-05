@@ -1,11 +1,32 @@
 id: project-policies-state-machine
 stateData: ProjectPoliciesStateData
 events:
-  ProjectCreatedV1: {}
-  ProjectUpdatedV1: {}
-  ProjectDeletedV1: {}
-  ProjectPolicyAddedV1: {}
-  ProjectPolicyUpdatedV1: {}
-  ProjectPolicyRemovedV1: {}
-  TopicRelationAddedToProjectV1: {}
-  TopicRelationRemovedFromProjectV1: {}
+  ProjectCreatedV1:
+    preEventValidators:
+      - ProjectMustNotExistValidator
+  ProjectUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  ProjectDeletedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  ProjectPolicyAddedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustNotExistValidator
+  ProjectPolicyUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  ProjectPolicyRemovedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  TopicRelationAddedToProjectV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustNotExistValidator
+  TopicRelationRemovedFromProjectV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustExistValidator

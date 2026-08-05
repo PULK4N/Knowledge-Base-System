@@ -3,6 +3,7 @@ using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Models;
 using PolicyModule.Application.Models;
+using PolicyModule.Domain;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 
@@ -130,13 +131,41 @@ public sealed class DeleteProjectCommand(
     StateMachineHandler stateMachineHandler
 ) : ExistingProjectPoliciesCommand(stateMachineHandler)
 {
-    protected override Task<object> ExecuteInternal(
+    protected override async Task<object> ExecuteInternal(
         Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    )
+    {
+        var projectAggregateId = AggregateId.FromDatabaseGuid(
+            ProjectId
+        );
+        var projectDeleted = CreatePayload(
             executor,
+            projectAggregateId,
+            Constants.StateMachineIds.ProjectPolicies,
             new ProjectDeletedV1()
         );
+
+        await ExecuteEvents(
+            projectDeleted,
+            projectStateInfo =>
+                ((ProjectPoliciesStateData)projectStateInfo.StateData)
+                    .RepositoryPaths
+                    .Select(
+                        repositoryPath => CreatePayload(
+                            executor,
+                            RepositoryToProjectMapAggregateId,
+                            Constants.StateMachineIds.RepositoryToProjectMap,
+                            new RepositoryToProjectMapRemovedV1(
+                                repositoryPath,
+                                projectAggregateId
+                            )
+                        )
+                    )
+                    .ToList()
+        );
+
+        return PolicyCommandResult.Ok;
+    }
 }
 
 public sealed class UpdateProjectPolicyCommand(

@@ -28,4 +28,10 @@
     <ProjectReference Include="../Domain/Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../../../../StateMachines/general-policies.yaml" Link="StateMachines/general-policies.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../StateMachines/project-policies.yaml" Link="StateMachines/project-policies.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../StateMachines/repository-to-project-map.yaml" Link="StateMachines/repository-to-project-map.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
