@@ -14,6 +14,7 @@ using PostgreSqlModule;
 using SkillsModule.API.Controllers;
 using SkillsModule.Application.Commands;
 using SkillsModule.Domain;
+using SkillsModule.MCP;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,7 @@ builder.Services
     .WithHttpTransport()
     .WithTools(
         PolicyMcpFunctions.Create()
+            .Concat(SkillMcpFunctions.Create())
             .Select(
                 function =>
                     ModelContextProtocol.Server.McpServerTool.Create(

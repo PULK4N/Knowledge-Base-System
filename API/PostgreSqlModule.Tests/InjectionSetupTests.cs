@@ -11,6 +11,8 @@ using PolicyModule.Persistence.Interfaces;
 using PolicyModule.Persistence.Models;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
+using SkillsModule.Persistence.Interfaces;
+using SkillsModule.Persistence.Models;
 using Xunit;
 
 namespace PostgreSqlModule.Tests;
@@ -42,6 +44,8 @@ public sealed class InjectionSetupTests
             scope.ServiceProvider.GetRequiredService<SkillsModuleDbContext>();
         var policyContext =
             scope.ServiceProvider.GetRequiredService<IPolicyModuleDbContext>();
+        var skillProjectionContext =
+            scope.ServiceProvider.GetRequiredService<ISkillsModuleDbContext>();
 
         Assert.IsType<PostgreSqlEventSourcingDbContext>(
             eventSourcingContext
@@ -58,6 +62,10 @@ public sealed class InjectionSetupTests
             eventSourcingContext,
             policyContext
         );
+        Assert.Same(
+            eventSourcingContext,
+            skillProjectionContext
+        );
         Assert.NotNull(
             scope.ServiceProvider.GetRequiredService<IEventStore>()
         );
@@ -71,6 +79,11 @@ public sealed class InjectionSetupTests
                 IPolicyTextRepository
             >()
         );
+        Assert.IsType<SkillSummaryRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                ISkillSummaryRepository
+            >()
+        );
         var projectorTypes = scope.ServiceProvider
             .GetServices<IProjector>()
             .Select(projector => projector.GetType())
@@ -79,6 +92,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(ProjectPolicyTextProjector), projectorTypes);
         Assert.Contains(typeof(TopicPolicyTextProjector), projectorTypes);
         Assert.Contains(typeof(ProjectTopicProjector), projectorTypes);
+        Assert.Contains(typeof(SkillSummaryProjector), projectorTypes);
     }
 
     [Fact]
@@ -114,10 +128,18 @@ public sealed class InjectionSetupTests
         AssertIntPrimaryKey<ProjectPolicyText>(context);
         AssertIntPrimaryKey<TopicPolicyText>(context);
         AssertIntPrimaryKey<ProjectPolicyTopic>(context);
+        AssertIntPrimaryKey<SkillSummaryEntry>(context);
         AssertUniqueIndex<GeneralPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyText>(context, 1);
         AssertUniqueIndex<TopicPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyTopic>(context, 2);
+        Assert.Equal(
+            2,
+            context.Model
+                .FindEntityType(typeof(SkillSummaryEntry))!
+                .GetIndexes()
+                .Count(index => index.IsUnique)
+        );
     }
 
     private static void AssertIntPrimaryKey<TEntity>(DbContext context)

@@ -10,11 +10,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.16" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.16" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Application/Application.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
+    <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
+    <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
   </ItemGroup>
 
 </Project>
