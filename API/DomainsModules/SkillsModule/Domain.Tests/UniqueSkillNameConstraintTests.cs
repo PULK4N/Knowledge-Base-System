@@ -12,7 +12,6 @@ public sealed class UniqueSkillNameConstraintTests
     [Fact]
     public void Create_AddsNormalizedSkillName()
     {
-        var state = new SkillStateData();
         var payload = CreatePayload(
             new SkillCreatedV1(
                 "  My-Skill  ",
@@ -21,6 +20,9 @@ public sealed class UniqueSkillNameConstraintTests
                 [],
                 ImmutableDictionary<string, Models.SkillReference>.Empty
             )
+        );
+        var state = new SkillStateData(
+            payload.EventExecutionInfo.AggregateId
         );
 
         AddConstraintsToRemove(state, payload);
@@ -103,7 +105,7 @@ public sealed class UniqueSkillNameConstraintTests
     }
 
     private static SkillStateData CreateActiveState(string name) =>
-        new()
+        new(AggregateId.FromDatabaseGuid(Guid.Empty))
         {
             Name = name,
             Description = "Description",

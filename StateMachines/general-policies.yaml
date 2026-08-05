@@ -1,0 +1,12 @@
+id: general-policies-state-machine
+stateData: GeneralPoliciesStateData
+events:
+  GeneralPolicyAddedV1: {}
+  GeneralPolicyUpdatedV1: {}
+  GeneralPolicyRemovedV1: {}
+  TopicCreatedV1: {}
+  TopicUpdatedV1: {}
+  TopicRemovedV1: {}
+  TopicPolicyAddedV1: {}
+  TopicPolicyUpdatedV1: {}
+  TopicPolicyRemovedV1: {}

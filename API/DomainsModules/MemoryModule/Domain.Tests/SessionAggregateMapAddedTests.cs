@@ -14,11 +14,6 @@ public sealed class SessionAggregateMapAddedTests
             Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         );
 
-    private static readonly AggregateId SecondMemoryAggregateId =
-        AggregateId.FromDatabaseGuid(
-            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
-        );
-
     [Fact]
     public void Apply_NewSession_AddsMapping()
     {
@@ -39,27 +34,48 @@ public sealed class SessionAggregateMapAddedTests
     }
 
     [Fact]
-    public void Apply_ExistingSession_PreservesOriginalMapping()
+    public void Apply_NewSession_Throws_WhenMappingExists()
     {
         var state = new SessionAggregateMapStateData(
             MemoryAggregateIds.SessionAggregateMap
-        )
-        {
-            AggregateIdsBySession =
-            {
-                [ThreadId] = FirstMemoryAggregateId
-            }
-        };
+        );
         var @event = new SessionAggregateMapAddedV1(
             ThreadId,
-            SecondMemoryAggregateId
+            FirstMemoryAggregateId
         );
 
-        @event.Apply(state, new EventExecutionInfo());
+        state.AggregateIdsBySession.Add(
+            ThreadId,
+            FirstMemoryAggregateId
+        );
 
         Assert.Equal(
             FirstMemoryAggregateId,
             state.AggregateIdsBySession[ThreadId]
         );
+        Assert.Throws<ArgumentException>(() => @event.Apply(state, new EventExecutionInfo()));
+    }
+
+    [Fact]
+    public void Apply_NewSession_Throws_ItsValidatorIsAdded()
+    {
+        var state = new SessionAggregateMapStateData(
+            MemoryAggregateIds.SessionAggregateMap
+        );
+        var @event = new SessionAggregateMapAddedV1(
+            ThreadId,
+            FirstMemoryAggregateId
+        );
+
+        state.AggregateIdsBySession.Add(
+            ThreadId,
+            FirstMemoryAggregateId
+        );
+
+        Assert.Equal(
+            FirstMemoryAggregateId,
+            state.AggregateIdsBySession[ThreadId]
+        );
+        Assert.Throws<ArgumentException>(() => @event.Apply(state, new EventExecutionInfo()));
     }
 }

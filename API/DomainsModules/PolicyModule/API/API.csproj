@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PolicyModule.API</AssemblyName>
+    <RootNamespace>PolicyModule.API</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../ActionModule/API/API.csproj" />
+    <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
+    <ProjectReference Include="../Application/Application.csproj" />
+  </ItemGroup>
+
+</Project>

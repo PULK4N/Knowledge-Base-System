@@ -23,7 +23,7 @@ public sealed class SkillEventTests
                 .WithComparers(StringComparer.Ordinal)
                 .Add("references/example.md", reference)
         );
-        var state = new SkillStateData();
+        var state = new SkillStateData(EventExecutionInfo.AggregateId);
 
         eventData.Apply(state, EventExecutionInfo);
         var changedEvent = eventData with
@@ -310,7 +310,7 @@ public sealed class SkillEventTests
         (string RelativePath, SkillReference Reference)[] references,
         (FileId Id, Attachment Attachment)[] attachments
     ) =>
-        new()
+        new(EventExecutionInfo.AggregateId)
         {
             Name = "skill-name",
             Description = "Description",

@@ -105,7 +105,7 @@ public sealed class SkillReferenceValidatorTests
         );
 
     private static SkillStateData CreateState(params string[] relativePaths) =>
-        new()
+        new(AggregateId.FromDatabaseGuid(Guid.Empty))
         {
             Name = "skill-name",
             References = relativePaths

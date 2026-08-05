@@ -19,7 +19,6 @@ public sealed record SkillCreatedV1(
     {
         var state = (SkillStateData)stateData;
 
-        state.Id = eventExecutionInfo.AggregateId;
         state.IsDeleted = false;
         state.Name = Name;
         state.Description = Description;

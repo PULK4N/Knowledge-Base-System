@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
+    <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />
+    <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+    <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
+    <ProjectReference Include="../Domain/Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PolicyModule.Application</AssemblyName>
+    <RootNamespace>PolicyModule.Application</RootNamespace>
+  </PropertyGroup>
+
+</Project>
