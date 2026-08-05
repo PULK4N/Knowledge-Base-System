@@ -14,12 +14,12 @@ public sealed record PolicyAddedCommandResult(
         new("OK", policyId);
 }
 
-public sealed record ProjectForPoliciesCreatedCommandResult(
+public sealed record ProjectCreatedCommandResult(
     string Status,
     Guid ProjectId
 )
 {
-    public static ProjectForPoliciesCreatedCommandResult Ok(
+    public static ProjectCreatedCommandResult Ok(
         Guid projectId
     ) =>
         new("OK", projectId);

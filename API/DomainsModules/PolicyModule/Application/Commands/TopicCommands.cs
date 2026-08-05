@@ -28,6 +28,46 @@ public sealed class CreateTopicCommand(
         );
 }
 
+public sealed class UpdateTopicCommand(
+    StateMachineHandler stateMachineHandler
+) : PolicyCommand(stateMachineHandler)
+{
+    public required string TopicName { get; set; }
+    public required string Description { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(!string.IsNullOrWhiteSpace(TopicName));
+
+    protected override Task<object> ExecuteInternal(
+        Executor executor
+    ) =>
+        ExecuteGeneralPoliciesEvent(
+            executor,
+            new TopicUpdatedV1(
+                new TopicName(TopicName),
+                Description
+            )
+        );
+}
+
+public sealed class RemoveTopicCommand(
+    StateMachineHandler stateMachineHandler
+) : PolicyCommand(stateMachineHandler)
+{
+    public required string TopicName { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(!string.IsNullOrWhiteSpace(TopicName));
+
+    protected override Task<object> ExecuteInternal(
+        Executor executor
+    ) =>
+        ExecuteGeneralPoliciesEvent(
+            executor,
+            new TopicRemovedV1(new TopicName(TopicName))
+        );
+}
+
 public sealed class AddTopicPolicyCommand(
     StateMachineHandler stateMachineHandler
 ) : PolicyCommand(stateMachineHandler)
@@ -86,6 +126,40 @@ public sealed class RemoveTopicPolicyCommand(
                 new TopicName(TopicName),
                 PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                     PolicyId
+                )
+            )
+        );
+}
+
+public sealed class UpdateTopicPolicyCommand(
+    StateMachineHandler stateMachineHandler
+) : PolicyCommand(stateMachineHandler)
+{
+    public required string TopicName { get; set; }
+    public required Guid PolicyId { get; set; }
+    public required string Title { get; set; }
+    public required string Description { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(
+            !string.IsNullOrWhiteSpace(TopicName)
+            && PolicyId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(Title)
+        );
+
+    protected override Task<object> ExecuteInternal(
+        Executor executor
+    ) =>
+        ExecuteGeneralPoliciesEvent(
+            executor,
+            new TopicPolicyUpdatedV1(
+                new TopicName(TopicName),
+                CreatePolicy(
+                    PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                        PolicyId
+                    ),
+                    Title,
+                    Description
                 )
             )
         );

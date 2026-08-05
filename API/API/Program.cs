@@ -6,6 +6,9 @@ using EventSourcing.Optimizations;
 using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
 using MemoryModule.Domain;
+using PolicyModule.API.Controllers;
+using PolicyModule.Application.Commands;
+using PolicyModule.Domain;
 using PostgreSqlModule;
 using SkillsModule.API.Controllers;
 using SkillsModule.Application.Commands;
@@ -36,7 +39,8 @@ builder.Services
 builder.Services
     .AddControllers()
     .AddApplicationPart(typeof(SkillsController).Assembly)
-    .AddApplicationPart(typeof(MemoryController).Assembly);
+    .AddApplicationPart(typeof(MemoryController).Assembly)
+    .AddApplicationPart(typeof(PoliciesController).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -44,15 +48,19 @@ builder.Services.RegisterPostgreSqlModule(builder.Configuration);
 builder.Services.RegisterEventSourcingOptmizations(builder.Configuration);
 builder.Services.RegisterEventSourcingCore(
     typeof(SkillStateData).Assembly,
-    typeof(MemoryStateData).Assembly
+    typeof(MemoryStateData).Assembly,
+    typeof(GeneralPoliciesStateData).Assembly
 );
 builder.Services.RegisterActions(
     typeof(AddSkillCommand).Assembly,
-    typeof(RecordCodexPromptHookCommand).Assembly
+    typeof(RecordCodexPromptHookCommand).Assembly,
+    typeof(AddGeneralPolicyCommand).Assembly
 );
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
 
 var app = builder.Build();
+
+await app.Services.ApplyPostgreSqlMigrations();
 
 if (app.Environment.IsDevelopment())
 {

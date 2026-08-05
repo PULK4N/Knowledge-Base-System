@@ -1,0 +1,4 @@
+id: repository-to-project-map-state-machine
+stateData: RepositoryToProjectMapStateData
+events:
+  RepositoryToProjectMapAddedV1: {}

@@ -16,6 +16,9 @@
     <ProjectReference Include="../DomainsModules/MemoryModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Domain/Domain.csproj" />
+    <ProjectReference Include="../DomainsModules/PolicyModule/API/API.csproj" />
+    <ProjectReference Include="../DomainsModules/PolicyModule/Application/Application.csproj" />
+    <ProjectReference Include="../DomainsModules/PolicyModule/Domain/Domain.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/Domain/Domain.csproj" />

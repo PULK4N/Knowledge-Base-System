@@ -67,3 +67,25 @@ public sealed class UpdateGeneralPolicyCommand(
             )
         );
 }
+
+public sealed class RemoveGeneralPolicyCommand(
+    StateMachineHandler stateMachineHandler
+) : PolicyCommand(stateMachineHandler)
+{
+    public required Guid PolicyId { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(PolicyId != Guid.Empty);
+
+    protected override Task<object> ExecuteInternal(
+        Executor executor
+    ) =>
+        ExecuteGeneralPoliciesEvent(
+            executor,
+            new GeneralPolicyRemovedV1(
+                PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                    PolicyId
+                )
+            )
+        );
+}
