@@ -3,15 +3,17 @@ using EventSourcing.Core;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
 using PolicyModule.Domain;
-using PolicyModule.Domain.Models;
+using PolicyModule.Persistence.Interfaces;
 using SharedModule.Constants;
+using SharedModule.Exceptions;
 
 namespace PolicyModule.Application.Queries;
 
 public sealed class GetPoliciesByRepositoryQuery(
     StateCalculator stateCalculator,
-    IEventStore eventStore
-) : PolicyQuery<string?>(stateCalculator, eventStore)
+    IEventStore eventStore,
+    IPolicyTextRepository policyTextRepository
+) : PolicyQuery<string>(stateCalculator, eventStore)
 {
     public required string RepositoryPath { get; set; }
 
@@ -20,21 +22,15 @@ public sealed class GetPoliciesByRepositoryQuery(
             !string.IsNullOrWhiteSpace(RepositoryPath)
         );
 
-    protected override async Task<string?> ExecuteInternal(
+    protected override async Task<string> ExecuteInternal(
         Executor executor
     )
     {
-        var generalPoliciesAggregateId =
-            AggregateId.FromDatabaseGuid(
-                StateDataAggregateIds.GeneralPolicies
-            );
         var repositoryMapAggregateId =
             AggregateId.FromDatabaseGuid(
                 StateDataAggregateIds.RepositoryToProjectMap
             );
-        var globalEvents = await GetEvents(
-            [generalPoliciesAggregateId, repositoryMapAggregateId]
-        );
+        var globalEvents = await GetEvents([repositoryMapAggregateId]);
         var repositoryMap = await Replay<RepositoryToProjectMapStateData>(
             globalEvents,
             repositoryMapAggregateId
@@ -47,58 +43,14 @@ public sealed class GetPoliciesByRepositoryQuery(
                 out var projectAggregateId
             )
         )
-            return null;
+            throw CreateNotFoundException();
 
-        var projectEvents = await GetEvents(
-            [projectAggregateId]
-        );
-        var projectPolicies = await Replay<ProjectPoliciesStateData>(
-            projectEvents,
-            projectAggregateId
-        );
-
-        if (projectPolicies is null || projectPolicies.IsDeleted)
-            return null;
-
-        var generalPolicies = await Replay<GeneralPoliciesStateData>(
-            globalEvents,
-            generalPoliciesAggregateId
-        );
-
-        return Compile(generalPolicies, projectPolicies);
+        return await policyTextRepository.Get(projectAggregateId)
+            ?? throw CreateNotFoundException();
     }
 
-    private static string Compile(
-        GeneralPoliciesStateData? generalPolicies,
-        ProjectPoliciesStateData projectPolicies
-    )
-    {
-        var policies = new List<Policy>();
-
-        if (generalPolicies is not null)
-            policies.AddRange(generalPolicies.Policies.Values);
-
-        policies.AddRange(projectPolicies.Policies.Values);
-
-        if (generalPolicies is not null)
-        {
-            foreach (var topicName in projectPolicies.RelatedTopics)
-            {
-                if (
-                    generalPolicies.Topics.TryGetValue(
-                        topicName,
-                        out var topic
-                    )
-                )
-                    policies.AddRange(topic.Policies.Values);
-            }
-        }
-
-        return string.Join(
-            "\n\n",
-            policies.Select(
-                policy => $"{policy.Title}\n{policy.Description}"
-            )
+    private NotFoundException CreateNotFoundException() =>
+        new(
+            $"Policies for repository '{RepositoryPath}' were not found."
         );
-    }
 }
