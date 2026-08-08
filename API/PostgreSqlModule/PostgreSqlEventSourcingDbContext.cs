@@ -29,6 +29,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasPostgresExtension("vector");
+
         var payloadMessage = modelBuilder.Entity<SerializedPayloadMessage>();
 
         payloadMessage.Ignore(message => message.Version);
@@ -99,6 +101,47 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .IsUnique();
                 skill.HasIndex(summary => summary.Name).IsUnique();
                 skill.Property(summary => summary.Name).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<MemorySearchEntry>(
+            memory =>
+            {
+                memory.ToTable("MemorySearchEntries");
+                memory.HasKey(
+                    entry =>
+                        new
+                        {
+                            entry.MemoryAggregateId,
+                            entry.PromptId,
+                            entry.HookIndex,
+                            entry.ChunkIndex
+                        }
+                );
+                memory.Property(entry => entry.HookEventName).IsRequired();
+                memory.Property(entry => entry.Text).IsRequired();
+                memory
+                    .Property(entry => entry.Embedding)
+                    .HasColumnType("vector(1024)")
+                    .IsRequired();
+                memory
+                    .HasGeneratedTsVectorColumn(
+                        entry => entry.SearchVector,
+                        "simple",
+                        entry => new
+                        {
+                            entry.HookEventName,
+                            entry.Text
+                        }
+                    )
+                    .HasIndex(entry => entry.SearchVector)
+                    .HasMethod("GIN");
+                memory
+                    .HasIndex(entry => entry.Embedding)
+                    .HasMethod("hnsw")
+                    .HasOperators("vector_cosine_ops");
+                memory.HasIndex(entry => entry.ThreadId);
+                memory.HasIndex(entry => entry.PromptStartTimestamp);
             }
         );
     }

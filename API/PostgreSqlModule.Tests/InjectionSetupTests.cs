@@ -1,11 +1,15 @@
+using System.Collections.Immutable;
 using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MemoryModule.Persistence;
+using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Interfaces;
 using PolicyModule.Persistence.Models;
@@ -84,6 +88,14 @@ public sealed class InjectionSetupTests
                 ISkillSummaryRepository
             >()
         );
+        Assert.IsType<PostgreSqlMemorySearchRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IMemorySearchRepository
+            >()
+        );
+        Assert.IsType<MemorySearch>(
+            scope.ServiceProvider.GetRequiredService<IMemorySearch>()
+        );
         var projectorTypes = scope.ServiceProvider
             .GetServices<IProjector>()
             .Select(projector => projector.GetType())
@@ -93,6 +105,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(TopicPolicyTextProjector), projectorTypes);
         Assert.Contains(typeof(ProjectTopicProjector), projectorTypes);
         Assert.Contains(typeof(SkillSummaryProjector), projectorTypes);
+        Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
     }
 
     [Fact]
@@ -140,6 +153,68 @@ public sealed class InjectionSetupTests
                 .GetIndexes()
                 .Count(index => index.IsUnique)
         );
+
+        var memorySearch = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(
+                typeof(MemorySearchEntry)
+            );
+        Assert.NotNull(memorySearch);
+        Assert.Equal(
+            "vector(1024)",
+            memorySearch!
+                .FindProperty(nameof(MemorySearchEntry.Embedding))!
+                .GetColumnType()
+        );
+        Assert.Equal(
+            "tsvector",
+            memorySearch
+                .FindProperty(nameof(MemorySearchEntry.SearchVector))!
+                .GetColumnType()
+        );
+        Assert.Contains(
+            memorySearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "gin",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+        Assert.Contains(
+            memorySearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "hnsw",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+    }
+
+    [Fact]
+    public void MemorySearchQueries_translate_to_full_text_and_cosine_search()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlMemorySearchRepository(context);
+
+        var textSql = repository.CreateTextQuery("event sourcing", 50)
+            .ToQueryString();
+        var vectorSql = repository.CreateVectorQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            50
+        ).ToQueryString();
+
+        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("@@", textSql);
+        Assert.Contains("ts_rank_cd", textSql);
+        Assert.Contains("<=>", vectorSql);
     }
 
     private static void AssertIntPrimaryKey<TEntity>(DbContext context)

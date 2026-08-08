@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MemoryModule.Persistence;
+using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
@@ -79,6 +81,11 @@ public static class InjectionSetup
                 (IPolicyModuleDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
+        services.AddScoped<
+            IMemorySearchRepository,
+            PostgreSqlMemorySearchRepository
+        >();
+        services.RegisterMemoryModulePersistence(configuration);
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
             Database.PostgreSql
         );

@@ -9,14 +9,19 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__ApplicationDatabase: Host=postgres;Port=5432;Database=skill_memory;Username=skill_memory;Password=skill_memory
+      MemoryEmbeddings__BaseUrl: http://ollama:11434
+      MemoryEmbeddings__Model: qwen3-embedding:0.6b
+      MemoryEmbeddings__Dimensions: 1024
     ports:
       - "5231:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      ollama-model-init:
+        condition: service_completed_successfully
 
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: skill-memory-postgres
     restart: unless-stopped
     environment:

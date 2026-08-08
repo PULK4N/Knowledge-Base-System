@@ -1,4 +1,9 @@
 id: memory-state-machine
 stateData: MemoryStateData
 events:
-  CodexPromptHookRecordedV1: {}
+  CodexPromptHookRecordedV1:
+    projections:
+      - MemorySearchProjector
+  CodexMemoryMigratedV1:
+    projections:
+      - MemorySearchProjector

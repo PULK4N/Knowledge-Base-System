@@ -13,9 +13,12 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.2.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../DomainsModules/MemoryModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />
+    <ProjectReference Include="../DomainsModules/MemoryModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../DomainsModules/PolicyModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../DomainsModules/PolicyModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../DomainsModules/SkillsModule/Application/Application.csproj" />
