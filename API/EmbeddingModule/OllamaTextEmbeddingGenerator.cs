@@ -1,14 +1,13 @@
 using System.Collections.Immutable;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using MemoryModule.Persistence.Interfaces;
 
-namespace MemoryModule.Persistence;
+namespace EmbeddingModule;
 
-public sealed class OllamaMemoryEmbeddingGenerator(
+public sealed class OllamaTextEmbeddingGenerator(
     HttpClient httpClient,
-    MemoryEmbeddingOptions options
-) : IMemoryEmbeddingGenerator
+    EmbeddingOptions options
+) : ITextEmbeddingGenerator
 {
     public async Task<IReadOnlyList<ImmutableArray<float>>> Generate(
         IReadOnlyList<string> inputs,

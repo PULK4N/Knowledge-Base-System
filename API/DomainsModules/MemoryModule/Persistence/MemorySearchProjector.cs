@@ -1,3 +1,4 @@
+using EmbeddingModule;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain;
@@ -7,7 +8,7 @@ using MemoryModule.Persistence.Interfaces;
 namespace MemoryModule.Persistence;
 
 public sealed class MemorySearchProjector(
-    IMemoryEmbeddingGenerator embeddingGenerator,
+    ITextEmbeddingGenerator embeddingGenerator,
     IMemorySearchRepository repository
 ) : IProjector
 {

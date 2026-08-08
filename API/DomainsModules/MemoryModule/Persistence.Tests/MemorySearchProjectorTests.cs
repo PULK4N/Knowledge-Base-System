@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using EmbeddingModule;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Models;
@@ -122,7 +123,7 @@ public sealed class MemorySearchProjectorTests
     private static StateInfo CreateStateInfo(MemoryStateData state) =>
         StateInfo.Create(state, "memory-state-machine", state.Id);
 
-    private sealed class FakeEmbeddingGenerator : IMemoryEmbeddingGenerator
+    private sealed class FakeEmbeddingGenerator : ITextEmbeddingGenerator
     {
         public IReadOnlyList<string> LastInputs { get; private set; } = [];
 

@@ -8,4 +8,8 @@
     <RootNamespace>SkillsModule.Persistence.Interfaces</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+  </ItemGroup>
+
 </Project>

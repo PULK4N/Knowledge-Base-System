@@ -63,14 +63,6 @@ public interface IMemorySearchRepository
     );
 }
 
-public interface IMemoryEmbeddingGenerator
-{
-    Task<IReadOnlyList<ImmutableArray<float>>> Generate(
-        IReadOnlyList<string> inputs,
-        CancellationToken cancellationToken = default
-    );
-}
-
 public interface IMemorySearch
 {
     Task<IReadOnlyList<MemorySearchResult>> Search(

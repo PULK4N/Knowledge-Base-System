@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../EmbeddingModule/EmbeddingModule.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../DomainsModules/PolicyModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />

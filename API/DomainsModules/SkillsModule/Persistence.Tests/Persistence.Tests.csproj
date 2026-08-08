@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../EmbeddingModule/EmbeddingModule.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
     <ProjectReference Include="../Persistence/Persistence.csproj" />

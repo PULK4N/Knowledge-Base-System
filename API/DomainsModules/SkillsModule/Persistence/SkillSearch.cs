@@ -1,24 +1,24 @@
 using EmbeddingModule;
-using MemoryModule.Persistence.Interfaces;
+using SkillsModule.Persistence.Interfaces;
 
-namespace MemoryModule.Persistence;
+namespace SkillsModule.Persistence;
 
-public sealed class MemorySearch(
+public sealed class SkillSearch(
     ITextEmbeddingGenerator embeddingGenerator,
-    IMemorySearchRepository repository
-) : IMemorySearch
+    ISkillSearchRepository repository
+) : ISkillSearch
 {
-    public async Task<IReadOnlyList<MemorySearchResult>> Search(
+    public async Task<IReadOnlyList<SkillSearchResult>> Search(
         string query,
-        HybridMemorySearchOptions? options = null,
+        HybridSkillSearchOptions? options = null,
         CancellationToken cancellationToken = default
     )
     {
         if (string.IsNullOrWhiteSpace(query))
             throw new ArgumentException("Search query is required.", nameof(query));
 
-        options ??= new HybridMemorySearchOptions();
-        HybridMemoryRanker.Validate(options);
+        options ??= new HybridSkillSearchOptions();
+        HybridSkillRanker.Validate(options);
 
         var queryEmbedding = (await embeddingGenerator.Generate(
             [query],
@@ -35,7 +35,7 @@ public sealed class MemorySearch(
             cancellationToken
         );
 
-        return HybridMemoryRanker.Fuse(
+        return HybridSkillRanker.Fuse(
             textCandidates,
             vectorCandidates,
             options
