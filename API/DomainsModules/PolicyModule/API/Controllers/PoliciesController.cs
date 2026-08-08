@@ -1,6 +1,7 @@
 using ActionModule.API;
 using ActionModule.Shared;
 using Microsoft.AspNetCore.Mvc;
+using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 
 namespace PolicyModule.API.Controllers;
@@ -12,14 +13,13 @@ public sealed class PoliciesController(
 ) : ActionController(executorProvider)
 {
     [HttpGet]
-    [Produces("text/plain")]
-    public async Task<ActionResult<string>> GetByRepository(
+    public async Task<ActionResult<GetPoliciesByRepositoryResult>> GetByRepository(
         [FromQuery] string repositoryPath,
         [FromServices] GetPoliciesByRepositoryQuery query
     )
     {
         query.RepositoryPath = repositoryPath;
 
-        return Content(await Execute(query), "text/plain");
+        return Ok(await Execute(query));
     }
 }

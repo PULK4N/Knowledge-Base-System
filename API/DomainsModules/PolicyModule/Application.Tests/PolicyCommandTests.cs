@@ -15,7 +15,6 @@ using PolicyModule.Domain.Models;
 using PolicyModule.Persistence.Interfaces;
 using Shared.Interfaces;
 using SharedModule.Constants;
-using SharedModule.Exceptions;
 using UUIDNext;
 
 namespace PolicyModule.Application.Tests;
@@ -245,7 +244,16 @@ public sealed class PolicyCommandTests
         var projectEvents = eventStore.GetStoredEvents(projectId);
         Assert.Collection(
             projectEvents,
-            payload => Assert.IsType<ProjectCreatedV1>(payload.EventData),
+            payload =>
+            {
+                Assert.IsType<ProjectCreatedV1>(payload.EventData);
+                Assert.Equal(
+                    "MCP SKILL SYSTEM",
+                    Assert.Single(
+                        payload.UniqueEventConstraintsToAdd
+                    ).ValueToHash
+                );
+            },
             payload => Assert.IsType<ProjectUpdatedV1>(payload.EventData),
             payload => Assert.IsType<ProjectPolicyAddedV1>(payload.EventData),
             payload => Assert.IsType<ProjectPolicyUpdatedV1>(payload.EventData),
@@ -377,6 +385,55 @@ public sealed class PolicyCommandTests
     }
 
     [Fact]
+    public async Task AddRepositoryToProject_UpdatesProjectAndGlobalMapTogether()
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        const string repositoryPath = "/workspace/new-repository";
+        var project = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Repository target",
+                ProjectDescription = "Starts without a repository.",
+                RepositoryPaths = []
+            }.Execute(Executor)
+        );
+        var projectAggregateId = AggregateId.FromDatabaseGuid(
+            project.ProjectId
+        );
+
+        var result = await new AddRepositoryToProjectCommand(handler)
+        {
+            ProjectId = project.ProjectId,
+            RepositoryPath = repositoryPath
+        }.Execute(Executor);
+
+        Assert.Same(PolicyCommandResult.Ok, result);
+        Assert.Collection(
+            eventStore.GetStoredEvents(projectAggregateId),
+            payload => Assert.IsType<ProjectCreatedV1>(payload.EventData),
+            payload => Assert.IsType<RepositoryAddedToProjectV1>(
+                payload.EventData
+            )
+        );
+        Assert.Equal(
+            [repositoryPath],
+            Assert.IsType<ProjectPoliciesStateData>(
+                eventStore.LastWritten[projectAggregateId].StateData
+            ).RepositoryPaths
+        );
+        var mapAggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.RepositoryToProjectMap
+        );
+        Assert.Equal(
+            projectAggregateId,
+            Assert.IsType<RepositoryToProjectMapStateData>(
+                eventStore.LastWritten[mapAggregateId].StateData
+            ).RepositoryToProjectMap[repositoryPath]
+        );
+    }
+
+    [Fact]
     public async Task GetPoliciesByRepository_MergesGeneralProjectAndTopicPolicies()
     {
         var eventStore = new CapturingEventStoreWithOutbox();
@@ -430,7 +487,8 @@ public sealed class PolicyCommandTests
         var result = await new GetPoliciesByRepositoryQuery(
             CreateCalculator(),
             eventStore,
-            policyTextRepository
+            policyTextRepository,
+            new StubPolicyProjectSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath
@@ -440,8 +498,10 @@ public sealed class PolicyCommandTests
             "# General policy\nApplies to every project.\n\n"
                 + "# Project policy\nApplies only to this project.\n\n"
                 + "# Cloud policy\nApplies to cloud projects.",
-            result
+            result.Policies
         );
+        Assert.Equal(GetPoliciesByRepositoryResult.OkStatus, result.Status);
+        Assert.False(result.RequiresUserInput);
         Assert.Equal(
             projectAggregateId,
             policyTextRepository.LastProjectId
@@ -488,17 +548,19 @@ public sealed class PolicyCommandTests
             "# General policy\nApplies to every project.\n\n"
             + "# Project policy\nApplies only to this project.";
 
+        var updatedResult = await new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            eventStore,
+            policyTextRepository,
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = repositoryPath
+        }.Execute(Executor);
         Assert.Equal(
             "# General policy\nApplies to every project.\n\n"
                 + "# Project policy\nApplies only to this project.",
-            await new GetPoliciesByRepositoryQuery(
-                CreateCalculator(),
-                eventStore,
-                policyTextRepository
-            )
-            {
-                RepositoryPath = repositoryPath
-            }.Execute(Executor)
+            updatedResult.Policies
         );
 
         await new DeleteProjectCommand(handler)
@@ -506,20 +568,35 @@ public sealed class PolicyCommandTests
             ProjectId = project.ProjectId
         }.Execute(Executor);
 
-        var exception = await Assert.ThrowsAsync<NotFoundException>(
-            () => new GetPoliciesByRepositoryQuery(
-                CreateCalculator(),
-                eventStore,
-                policyTextRepository
+        var projectSummaryRepository =
+            new StubPolicyProjectSummaryRepository();
+        projectSummaryRepository.Projects.Add(
+            new PolicyProjectSummary(
+                Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                "Available project",
+                ["/workspace/available"]
             )
-            {
-                RepositoryPath = repositoryPath
-            }.Execute(Executor)
         );
+        var missing = await new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            eventStore,
+            policyTextRepository,
+            projectSummaryRepository
+        )
+        {
+            RepositoryPath = repositoryPath
+        }.Execute(Executor);
+
         Assert.Equal(
-            $"Policies for repository '{repositoryPath}' were not found.",
-            exception.Message
+            GetPoliciesByRepositoryResult.RepositoryMappingRequiredStatus,
+            missing.Status
         );
+        Assert.True(missing.RequiresUserInput);
+        Assert.Null(missing.Policies);
+        Assert.Contains("Stop and ask the user", missing.Message);
+        var option = Assert.Single(missing.Projects);
+        Assert.Equal("Available project", option.ProjectName);
+        Assert.Equal(["/workspace/available"], option.RepositoryPaths);
     }
 
     private static StateMachineHandler CreateHandler(
@@ -707,6 +784,15 @@ public sealed class PolicyCommandTests
             );
         }
 
+    }
+
+    private sealed class StubPolicyProjectSummaryRepository
+        : IPolicyProjectSummaryRepository
+    {
+        public List<PolicyProjectSummary> Projects { get; } = [];
+
+        public Task<List<PolicyProjectSummary>> List() =>
+            Task.FromResult(Projects);
     }
 
 }

@@ -5,17 +5,33 @@ events:
     projections:
       - ProjectPolicyTextProjector
       - ProjectTopicProjector
+      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustNotExistValidator
+    uniqueConstraints:
+      - UniqueProjectNameConstraint
   ProjectUpdatedV1:
+    projections:
+      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
+    uniqueConstraints:
+      - UniqueProjectNameConstraint
   ProjectDeletedV1:
     projections:
       - ProjectPolicyTextProjector
       - ProjectTopicProjector
+      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
+    uniqueConstraints:
+      - UniqueProjectNameConstraint
+  RepositoryAddedToProjectV1:
+    projections:
+      - PolicyProjectSummaryProjector
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectRepositoryMustNotExistValidator
   ProjectPolicyAddedV1:
     projections:
       - ProjectPolicyTextProjector

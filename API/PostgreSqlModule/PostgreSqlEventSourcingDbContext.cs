@@ -18,6 +18,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         Set<GeneralPolicyText>();
     public DbSet<ProjectPolicyText> ProjectPolicyTexts =>
         Set<ProjectPolicyText>();
+    public DbSet<PolicyProjectSummaryEntry> PolicyProjectSummaries =>
+        Set<PolicyProjectSummaryEntry>();
     public DbSet<TopicPolicyText> TopicPolicyTexts =>
         Set<TopicPolicyText>();
     public DbSet<ProjectPolicyTopic> ProjectPolicyTopics =>
@@ -52,6 +54,23 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasIndex(text => text.ProjectAggregateId)
                     .IsUnique();
                 policyText.Property(text => text.Text).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<PolicyProjectSummaryEntry>(
+            summary =>
+            {
+                summary.HasKey(project => project.Id);
+                summary
+                    .HasIndex(project => project.ProjectAggregateId)
+                    .IsUnique();
+                summary
+                    .HasIndex(project => project.ProjectName)
+                    .IsUnique();
+                summary.Property(project => project.ProjectName).IsRequired();
+                summary
+                    .Property(project => project.RepositoryPathsJson)
+                    .IsRequired();
             }
         );
 

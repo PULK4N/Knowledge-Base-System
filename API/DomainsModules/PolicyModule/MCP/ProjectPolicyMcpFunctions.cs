@@ -31,6 +31,11 @@ internal static class ProjectPolicyMcpFunctions
             "Deletes a policy project and removes its repository-path mappings."
         ),
             PolicyMcpFunctions.Create(
+            AddRepository,
+            "policy_project_repository_add",
+            "Maps an absolute repository path to an existing policy project. Use the project ID selected by the user after policy_get_by_repository returns RepositoryMappingRequired."
+        ),
+            PolicyMcpFunctions.Create(
             AddPolicy,
             "policy_project_policy_add",
             "Adds a policy owned directly by a project."
@@ -102,6 +107,23 @@ internal static class ProjectPolicyMcpFunctions
         PolicyMcpActionExecutor.ExecuteCommand<DeleteProjectCommand, PolicyCommandResult>(
             services,
             command => command.ProjectId = projectId
+        );
+
+    private static Task<PolicyCommandResult> AddRepository(
+        IServiceProvider services,
+        Guid projectId,
+        string repositoryPath
+    ) =>
+        PolicyMcpActionExecutor.ExecuteCommand<
+            AddRepositoryToProjectCommand,
+            PolicyCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.ProjectId = projectId;
+                command.RepositoryPath = repositoryPath;
+            }
         );
 
     private static Task<PolicyAddedCommandResult> AddPolicy(

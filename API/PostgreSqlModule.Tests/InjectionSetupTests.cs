@@ -112,6 +112,10 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(ProjectPolicyTextProjector), projectorTypes);
         Assert.Contains(typeof(TopicPolicyTextProjector), projectorTypes);
         Assert.Contains(typeof(ProjectTopicProjector), projectorTypes);
+        Assert.Contains(
+            typeof(PolicyProjectSummaryProjector),
+            projectorTypes
+        );
         Assert.Contains(typeof(SkillSummaryProjector), projectorTypes);
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
@@ -148,6 +152,7 @@ public sealed class InjectionSetupTests
         Assert.Equal("xmin", xmin.GetColumnName());
         AssertIntPrimaryKey<GeneralPolicyText>(context);
         AssertIntPrimaryKey<ProjectPolicyText>(context);
+        AssertIntPrimaryKey<PolicyProjectSummaryEntry>(context);
         AssertIntPrimaryKey<TopicPolicyText>(context);
         AssertIntPrimaryKey<ProjectPolicyTopic>(context);
         AssertIntPrimaryKey<SkillSummaryEntry>(context);
@@ -155,6 +160,13 @@ public sealed class InjectionSetupTests
         AssertUniqueIndex<ProjectPolicyText>(context, 1);
         AssertUniqueIndex<TopicPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyTopic>(context, 2);
+        Assert.Equal(
+            2,
+            context.Model
+                .FindEntityType(typeof(PolicyProjectSummaryEntry))!
+                .GetIndexes()
+                .Count(index => index.IsUnique)
+        );
         Assert.Equal(
             2,
             context.Model

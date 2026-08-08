@@ -123,6 +123,45 @@ public sealed class PolicyTextProjectorTests
         Assert.Null(await repository.Get(ProjectId));
     }
 
+    [Fact]
+    public async Task ProjectSummaryProjection_ListsNamesAndRepositoryPaths()
+    {
+        await using var context = CreateContext();
+        var repository = new PolicyProjectSummaryRepository(context);
+        var project = CreateProject();
+        var stateInfo = CreateStateInfo(project);
+        var projector = new PolicyProjectSummaryProjector(repository);
+
+        await projector.Update([stateInfo]);
+
+        var summary = Assert.Single(await repository.List());
+        Assert.Equal(ProjectId.Value, summary.ProjectId);
+        Assert.Equal("Policy project", summary.ProjectName);
+        Assert.Equal(
+            ["/workspace/policy-project"],
+            summary.RepositoryPaths
+        );
+
+        project.ProjectName = "Renamed policy project";
+        project.RepositoryPaths.Add("/workspace/secondary");
+        await projector.Update([stateInfo]);
+
+        summary = Assert.Single(await repository.List());
+        Assert.Equal("Renamed policy project", summary.ProjectName);
+        Assert.Equal(
+            [
+                "/workspace/policy-project",
+                "/workspace/secondary"
+            ],
+            summary.RepositoryPaths
+        );
+
+        project.IsDeleted = true;
+        await projector.Update([stateInfo]);
+
+        Assert.Empty(await repository.List());
+    }
+
     private static TestPolicyDbContext CreateContext()
     {
         var context = new TestPolicyDbContext(
@@ -170,7 +209,12 @@ public sealed class PolicyTextProjectorTests
 
     private static ProjectPoliciesStateData CreateProject()
     {
-        var state = new ProjectPoliciesStateData(ProjectId);
+        var state = new ProjectPoliciesStateData(ProjectId)
+        {
+            ProjectName = "Policy project",
+            ProjectDescription = "Projection test project.",
+            RepositoryPaths = ["/workspace/policy-project"]
+        };
         AddPolicy(
             state.Policies,
             "aaaaaaaa-2222-2222-2222-222222222222",
@@ -218,6 +262,8 @@ public sealed class PolicyTextProjectorTests
             Set<GeneralPolicyText>();
         public DbSet<ProjectPolicyText> ProjectPolicyTexts =>
             Set<ProjectPolicyText>();
+        public DbSet<PolicyProjectSummaryEntry> PolicyProjectSummaries =>
+            Set<PolicyProjectSummaryEntry>();
         public DbSet<TopicPolicyText> TopicPolicyTexts =>
             Set<TopicPolicyText>();
         public DbSet<ProjectPolicyTopic> ProjectPolicyTopics =>
@@ -231,6 +277,9 @@ public sealed class PolicyTextProjectorTests
             modelBuilder
                 .Entity<ProjectPolicyText>()
                 .HasKey(text => text.Id);
+            modelBuilder
+                .Entity<PolicyProjectSummaryEntry>()
+                .HasKey(summary => summary.Id);
             modelBuilder
                 .Entity<TopicPolicyText>()
                 .HasKey(text => text.Id);

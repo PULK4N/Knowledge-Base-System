@@ -21,6 +21,7 @@ public sealed class PolicyMcpFunctionsTests
         "policy_project_create",
         "policy_project_update",
         "policy_project_delete",
+        "policy_project_repository_add",
         "policy_project_policy_add",
         "policy_project_policy_update",
         "policy_project_policy_remove",
@@ -69,5 +70,10 @@ public sealed class PolicyMcpFunctionsTests
         var property = Assert.Single(properties.EnumerateObject());
 
         Assert.Equal("repositoryPath", property.Name);
+        Assert.Contains(
+            "stop reasoning",
+            function.Description,
+            StringComparison.OrdinalIgnoreCase
+        );
     }
 }
