@@ -6,5 +6,6 @@
 .vs/
 .vscode/
 TestResults/
+API/IntegrationTests/
 *.user
 *.suo
