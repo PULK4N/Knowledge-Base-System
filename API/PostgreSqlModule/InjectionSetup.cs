@@ -66,6 +66,12 @@ public static class InjectionSetup
             IAttachmentContentStorage,
             AttachmentContentStorage
         >();
+        services.RegisterSkillsModulePersistence();
+        services.AddScoped<ISkillsModuleDbContext>(
+            serviceProvider =>
+                (ISkillsModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
 
         services.RegisterPolicyModulePersistence();
         services.AddScoped<IPolicyModuleDbContext>(

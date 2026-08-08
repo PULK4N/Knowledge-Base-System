@@ -1,0 +1,280 @@
+using Microsoft.Extensions.AI;
+using SkillsModule.Application.Commands;
+using SkillsModule.Application.DTOs;
+using SkillsModule.Application.Models;
+using SkillsModule.Application.Queries;
+using SkillsModule.Domain.Models;
+
+namespace SkillsModule.MCP;
+
+public static class SkillMcpFunctions
+{
+    public static List<AIFunction> Create() =>
+    [
+        CreateFunction(
+            (Func<IServiceProvider, Task<List<SkillSummaryDto>>>)List,
+            "skill_list",
+            "Lists active skills by name and ID so a skill can be selected before calling other skill tools."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
+            "skill_get",
+            "Gets a skill by ID. Set orderNumber to zero for the latest state or to an event order number for historical state."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, string>?, Task<SkillCreatedCommandResult>>)Add,
+            "skill_add",
+            "Creates a skill. References map relative file paths to their text content."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, string, List<string>, Task<SkillCommandResult>>)Update,
+            "skill_update",
+            "Replaces an existing skill's name, description, content, and tags."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Task<SkillCommandResult>>)Delete,
+            "skill_delete",
+            "Deletes an existing skill."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, Task<SkillCommandResult>>)AddReference,
+            "skill_reference_add",
+            "Adds a text reference at a relative path to an existing skill."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, Task<SkillCommandResult>>)UpdateReference,
+            "skill_reference_update",
+            "Updates an existing skill reference's text content."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, Task<SkillCommandResult>>)DeleteReference,
+            "skill_reference_delete",
+            "Deletes an existing text reference from a skill."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, byte[], Task<SkillAttachmentAddedMcpResult>>)AddAttachment,
+            "skill_attachment_add",
+            "Adds a binary attachment to a skill. Content is supplied as base64-encoded bytes."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, Task<SkillCommandResult>>)DeleteAttachment,
+            "skill_attachment_delete",
+            "Deletes an existing binary attachment from a skill."
+        )
+    ];
+
+    private static AIFunction CreateFunction(
+        Delegate method,
+        string name,
+        string description
+    ) =>
+        AIFunctionFactory.Create(
+            method,
+            new AIFunctionFactoryOptions
+            {
+                Name = name,
+                Description = description
+            }
+        );
+
+    private static Task<List<SkillSummaryDto>> List(
+        IServiceProvider services
+    ) =>
+        SkillMcpActionExecutor.ExecuteQuery<
+            ListSkillsQuery,
+            List<SkillSummaryDto>
+        >(services, _ => { });
+
+    private static Task<SkillDto?> Get(
+        IServiceProvider services,
+        Guid skillId,
+        uint orderNumber = 0
+    ) =>
+        SkillMcpActionExecutor.ExecuteQuery<
+            GetSkillQuery,
+            SkillDto?
+        >(
+            services,
+            query =>
+            {
+                query.SkillId = skillId;
+                query.OrderNumber = orderNumber;
+            }
+        );
+
+    private static Task<SkillCreatedCommandResult> Add(
+        IServiceProvider services,
+        string name,
+        string description,
+        string content,
+        List<string>? tags = null,
+        Dictionary<string, string>? references = null
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            AddSkillCommand,
+            SkillCreatedCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.Name = name;
+                command.Description = description;
+                command.Content = content;
+                command.Tags = tags ?? [];
+                command.References = references?.ToDictionary(
+                    reference => reference.Key,
+                    reference => new SkillReference(
+                        reference.Value
+                    ),
+                    StringComparer.Ordinal
+                ) ?? new Dictionary<string, SkillReference>(
+                    StringComparer.Ordinal
+                );
+            }
+        );
+
+    private static Task<SkillCommandResult> Update(
+        IServiceProvider services,
+        Guid skillId,
+        string name,
+        string description,
+        string content,
+        List<string> tags
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            UpdateSkillCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.Name = name;
+                command.Description = description;
+                command.Content = content;
+                command.Tags = tags;
+            }
+        );
+
+    private static Task<SkillCommandResult> Delete(
+        IServiceProvider services,
+        Guid skillId
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            DeleteSkillCommand,
+            SkillCommandResult
+        >(
+            services,
+            command => command.SkillId = skillId
+        );
+
+    private static Task<SkillCommandResult> AddReference(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath,
+        string content
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            AddSkillReferenceCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.RelativePath = relativePath;
+                command.Content = content;
+            }
+        );
+
+    private static Task<SkillCommandResult> UpdateReference(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath,
+        string content
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            UpdateSkillReferenceCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.RelativePath = relativePath;
+                command.Content = content;
+            }
+        );
+
+    private static Task<SkillCommandResult> DeleteReference(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            DeleteSkillReferenceCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.RelativePath = relativePath;
+            }
+        );
+
+    private static async Task<SkillAttachmentAddedMcpResult> AddAttachment(
+        IServiceProvider services,
+        Guid skillId,
+        string name,
+        string fileType,
+        byte[] content
+    )
+    {
+        var attachment = new Attachment
+        {
+            Id = FileId.New(),
+            Name = name,
+            Size = content.LongLength,
+            FileType = fileType,
+            Extension = Path
+                .GetExtension(name)
+                .TrimStart('.')
+        };
+        var result = await SkillMcpActionExecutor.ExecuteCommand<
+            AddSkillAttachmentCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.Attachment = attachment;
+                command.Bytes = content;
+            }
+        );
+
+        return new SkillAttachmentAddedMcpResult(
+            result.Status,
+            AttachmentDto.FromModel(attachment)
+        );
+    }
+
+    private static Task<SkillCommandResult> DeleteAttachment(
+        IServiceProvider services,
+        Guid skillId,
+        Guid attachmentId
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            DeleteSkillAttachmentCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.AttachmentId =
+                    FileId.FromDatabaseGuid(attachmentId);
+            }
+        );
+}

@@ -2,15 +2,23 @@ id: skills-state-machine
 stateData: SkillStateData
 events:
   SkillCreatedV1:
+    projections:
+      - SkillSummaryProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillUpdatedV1:
+    projections:
+      - SkillSummaryProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillDetailsUpdatedV1:
+    projections:
+      - SkillSummaryProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillDeletedV1:
+    projections:
+      - SkillSummaryProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillReferenceAddedV1:
