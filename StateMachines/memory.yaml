@@ -7,4 +7,6 @@ events:
   CodexMemoryMigratedV1:
     projections:
       - MemorySearchProjector
-  ChatSummaryAddedV1: {}
+  ChatSummaryAddedV1:
+    projections:
+      - MemorySearchProjector

@@ -1,6 +1,6 @@
 {
   "name": "mcp-skill-system",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Loads repository policies before Codex works and exposes MCP-managed skills, policies, and memory.",
   "author": {
     "name": "Nikola",

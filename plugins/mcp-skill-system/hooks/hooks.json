@@ -1,5 +1,5 @@
 {
-  "description": "Load authoritative MCP policies from trusted Codex repository context.",
+  "description": "Load authoritative MCP policies and persist useful chat memory.",
   "hooks": {
     "SessionStart": [
       {
@@ -13,6 +13,18 @@
             "additionalContextLimit": 12000
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5,
+            "statusMessage": "Preparing compacted chat summary",
+            "additionalContextLimit": 2000
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -24,6 +36,12 @@
             "timeout": 30,
             "statusMessage": "Loading MCP policies",
             "additionalContextLimit": 12000
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5,
+            "statusMessage": "Queuing chat memory"
           }
         ]
       }
@@ -42,6 +60,18 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5,
+            "statusMessage": "Queuing assistant memory"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
@@ -49,6 +79,11 @@
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 1
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 3
           }
         ]
       }

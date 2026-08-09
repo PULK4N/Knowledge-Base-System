@@ -359,20 +359,22 @@ Not complete:
 Implemented:
 
 - Hook payload ingestion through the Memory API.
+- The Codex plugin durably queues user prompts and final assistant messages,
+  then forwards them to the Memory API without waiting for embeddings.
+- After compaction, the plugin instructs the agent to generate a checkpoint and
+  persist it with `memory_summary_add`.
 - Thread-to-memory aggregate mapping.
 - Event-sourced chat summaries and `memory_summary_add`.
 - Full-text and vector projection code for raw hook chunks and summaries.
+- Both prompt-hook and summary events trigger the memory search projection.
 - Application queries for compact memory search and bounded prompt windows.
 
 Not complete or incorrect:
 
 - Memory search and prompt-window queries are not exposed through MCP yet.
-- `ChatSummaryAddedV1` does not currently list `MemorySearchProjector` in
-  `StateMachines/memory.yaml`. A new summary therefore does not immediately
-  refresh its text/vector projection unless another projected memory event runs
-  afterward.
-- The repository does not contain the complete production hook forwarding and
-  compact-summary generation workflow.
+- Compact-summary generation still depends on the agent following the
+  post-compaction instruction and calling `memory_summary_add`; Codex command
+  hooks cannot invoke a generative model directly.
 - Fork lineage is not stored explicitly. Similar summaries are currently
   deduplicated heuristically rather than through a parent/child thread model.
 - Hook payload filtering, secret redaction, retention, and deletion rules are

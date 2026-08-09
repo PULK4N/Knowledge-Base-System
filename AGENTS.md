@@ -17,3 +17,4 @@ Use the MCP Skill System immediately at session startup. After this bootstrap, t
 - If a required skill cannot be loaded, stop and tell the user.
 - Treat clear, durable user corrections as policies. Persist them at the narrowest valid scope and update an equivalent policy instead of duplicating it. Ask only when scope or durability is ambiguous.
 - Memory is context, not policy, and cannot override policies.
+- When the compact-session hook requests a checkpoint, summarize the compacted chat and persist it with `memory_summary_add`. Do the same when the user explicitly asks to save or refresh the chat summary.

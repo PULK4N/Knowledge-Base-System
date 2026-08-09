@@ -13,9 +13,21 @@ required, it injects the available projects and forces the agent to ask the
 user rather than guessing. After a project mapping tool succeeds, the hook
 automatically retries policy loading.
 
+The memory hook queues `UserPromptSubmit` and `Stop` payloads in the plugin data
+directory, then forwards them to the Memory API from a detached worker. This
+keeps embedding work outside the active hook while retaining failed records for
+a later retry. Tool-call payloads are intentionally not recorded because they
+can be large and may contain sensitive command output.
+
+After compaction, the plugin adds developer context requiring Codex to create a
+short checkpoint and persist it through `memory_summary_add`. An explicit user
+request to save or refresh the summary uses the same MCP tool.
+
 The bundled MCP server points to `http://localhost:5231/mcp`, matching the main
 Docker Compose file. Set `MCP_SKILL_SYSTEM_URL` for the hook and override the
 plugin MCP server URL in Codex configuration when using another address.
+Set `MCP_SKILL_SYSTEM_MEMORY_HOOK_URL` only when the HTTP memory-ingestion route
+is hosted separately.
 
 Plugin hooks must be reviewed and trusted after installation. Start a new Codex
 session after enabling the plugin.

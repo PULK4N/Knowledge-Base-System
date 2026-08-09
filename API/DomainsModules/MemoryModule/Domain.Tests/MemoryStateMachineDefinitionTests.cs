@@ -36,7 +36,8 @@ public sealed class MemoryStateMachineDefinitionTests
             [nameof(MemorySearchProjector)],
             definition.Events[nameof(CodexMemoryMigratedV1)].Projections
         );
-        Assert.Empty(
+        Assert.Equal(
+            [nameof(MemorySearchProjector)],
             definition.Events[nameof(ChatSummaryAddedV1)].Projections
         );
     }

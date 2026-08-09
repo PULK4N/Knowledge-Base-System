@@ -39,6 +39,10 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# Python
+__pycache__/
+*.py[cod]
+
 # Others
 ~$*
 *~
@@ -55,4 +59,3 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-
