@@ -162,6 +162,23 @@ public sealed class PolicyValidatorTests
         Assert.True(validator.Validate(state, payload).Succeded);
     }
 
+    [Fact]
+    public void RepositoryAddition_RequiresARepositoryNotAlreadyOnProject()
+    {
+        const string repositoryPath = "/workspace/project";
+        var state = CreateProjectState();
+        var payload = CreatePayload(
+            new RepositoryAddedToProjectV1(repositoryPath)
+        );
+        var validator = new ProjectRepositoryMustNotExistValidator();
+
+        Assert.True(validator.Validate(state, payload).Succeded);
+
+        state.RepositoryPaths.Add(repositoryPath);
+
+        Assert.False(validator.Validate(state, payload).Succeded);
+    }
+
     private static GeneralPoliciesStateData CreateGeneralState() =>
         new(AggregateId.FromDatabaseGuid(Guid.Empty));
 

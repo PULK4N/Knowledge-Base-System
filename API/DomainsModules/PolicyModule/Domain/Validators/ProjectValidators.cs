@@ -73,6 +73,30 @@ public sealed class ProjectPolicyMustNotExistValidator
     }
 }
 
+public sealed class ProjectRepositoryMustNotExistValidator
+    : IPreEventValidator
+{
+    public EventValidationResult Validate(
+        object stateData,
+        EventPayload payload
+    )
+    {
+        var eventData = (RepositoryAddedToProjectV1)payload.EventData;
+        var exists = ((ProjectPoliciesStateData)stateData)
+            .RepositoryPaths
+            .Contains(eventData.RepositoryPath, StringComparer.Ordinal);
+
+        return EventValidationResult.FromPayload(
+            payload,
+            nameof(ProjectRepositoryMustNotExistValidator),
+            !exists,
+            exists
+                ? $"Repository path '{eventData.RepositoryPath}' is already assigned to the project."
+                : null
+        );
+    }
+}
+
 public sealed class ProjectPolicyMustExistValidator
     : IPreEventValidator
 {

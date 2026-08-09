@@ -1,12 +1,16 @@
+using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MemoryModule.Persistence;
+using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
+using SkillsModule.Persistence.Interfaces;
 using UUIDNext;
 
 namespace PostgreSqlModule;
@@ -67,6 +71,10 @@ public static class InjectionSetup
             AttachmentContentStorage
         >();
         services.RegisterSkillsModulePersistence();
+        services.AddScoped<
+            ISkillSearchRepository,
+            PostgreSqlSkillSearchRepository
+        >();
         services.AddScoped<ISkillsModuleDbContext>(
             serviceProvider =>
                 (ISkillsModuleDbContext)serviceProvider
@@ -79,6 +87,12 @@ public static class InjectionSetup
                 (IPolicyModuleDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
+        services.AddScoped<
+            IMemorySearchRepository,
+            PostgreSqlMemorySearchRepository
+        >();
+        services.RegisterTextEmbeddings(configuration);
+        services.RegisterMemoryModulePersistence();
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
             Database.PostgreSql
         );

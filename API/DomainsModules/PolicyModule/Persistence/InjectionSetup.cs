@@ -15,10 +15,18 @@ public static class InjectionSetup
             serviceProvider =>
                 serviceProvider.GetRequiredService<PolicyTextRepository>()
         );
+        services.AddScoped<PolicyProjectSummaryRepository>();
+        services.AddScoped<IPolicyProjectSummaryRepository>(
+            serviceProvider =>
+                serviceProvider.GetRequiredService<
+                    PolicyProjectSummaryRepository
+                >()
+        );
         services.AddScoped<IProjector, GeneralPolicyTextProjector>();
         services.AddScoped<IProjector, TopicPolicyTextProjector>();
         services.AddScoped<IProjector, ProjectPolicyTextProjector>();
         services.AddScoped<IProjector, ProjectTopicProjector>();
+        services.AddScoped<IProjector, PolicyProjectSummaryProjector>();
 
         return services;
     }

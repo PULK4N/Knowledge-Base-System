@@ -102,6 +102,52 @@ public sealed class AddProjectPolicyCommand(
     }
 }
 
+public sealed class AddRepositoryToProjectCommand(
+    StateMachineHandler stateMachineHandler
+) : ExistingProjectPoliciesCommand(stateMachineHandler)
+{
+    public required string RepositoryPath { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(
+            ProjectId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(RepositoryPath)
+        );
+
+    protected override async Task<object> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var projectAggregateId = AggregateId.FromDatabaseGuid(
+            ProjectId
+        );
+        var repositoryAdded = CreatePayload(
+            executor,
+            projectAggregateId,
+            Constants.StateMachineIds.ProjectPolicies,
+            new RepositoryAddedToProjectV1(RepositoryPath)
+        );
+
+        await ExecuteEvents(
+            repositoryAdded,
+            _ =>
+                [
+                    CreatePayload(
+                        executor,
+                        RepositoryToProjectMapAggregateId,
+                        Constants.StateMachineIds.RepositoryToProjectMap,
+                        new RepositoryToProjectMapAddedV1(
+                            RepositoryPath,
+                            projectAggregateId
+                        )
+                    )
+                ]
+        );
+
+        return PolicyCommandResult.Ok;
+    }
+}
+
 public sealed class UpdateProjectCommand(
     StateMachineHandler stateMachineHandler
 ) : ExistingProjectPoliciesCommand(stateMachineHandler)

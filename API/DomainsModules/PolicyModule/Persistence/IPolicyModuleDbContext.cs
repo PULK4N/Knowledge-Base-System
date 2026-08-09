@@ -7,6 +7,7 @@ public interface IPolicyModuleDbContext
 {
     DbSet<GeneralPolicyText> GeneralPolicyTexts { get; }
     DbSet<ProjectPolicyText> ProjectPolicyTexts { get; }
+    DbSet<PolicyProjectSummaryEntry> PolicyProjectSummaries { get; }
     DbSet<TopicPolicyText> TopicPolicyTexts { get; }
     DbSet<ProjectPolicyTopic> ProjectPolicyTopics { get; }
 

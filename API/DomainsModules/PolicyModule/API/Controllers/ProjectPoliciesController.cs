@@ -58,6 +58,12 @@ public sealed class ProjectPoliciesController(
     ) =>
         Ok((PolicyCommandResult)await Execute(command));
 
+    [HttpPost("repositories")]
+    public async Task<ActionResult<PolicyCommandResult>> AddRepository(
+        [FromBody] AddRepositoryToProjectCommand command
+    ) =>
+        Ok((PolicyCommandResult)await Execute(command));
+
     [HttpPost("policies")]
     public async Task<ActionResult<PolicyAddedCommandResult>> AddPolicy(
         [FromBody] AddProjectPolicyCommand command

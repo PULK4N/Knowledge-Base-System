@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="../../../../StateMachines/memory.yaml" Link="StateMachines/memory.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/memory-session-aggregate-map.yaml" Link="StateMachines/memory-session-aggregate-map.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

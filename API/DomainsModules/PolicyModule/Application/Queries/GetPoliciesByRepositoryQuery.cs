@@ -3,6 +3,7 @@ using EventSourcing.Core;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
 using PolicyModule.Domain;
+using PolicyModule.Application.Models;
 using PolicyModule.Persistence.Interfaces;
 using SharedModule.Constants;
 using SharedModule.Exceptions;
@@ -12,8 +13,9 @@ namespace PolicyModule.Application.Queries;
 public sealed class GetPoliciesByRepositoryQuery(
     StateCalculator stateCalculator,
     IEventStore eventStore,
-    IPolicyTextRepository policyTextRepository
-) : PolicyQuery<string>(stateCalculator, eventStore)
+    IPolicyTextRepository policyTextRepository,
+    IPolicyProjectSummaryRepository projectSummaryRepository
+) : PolicyQuery<GetPoliciesByRepositoryResult>(stateCalculator, eventStore)
 {
     public required string RepositoryPath { get; set; }
 
@@ -22,7 +24,7 @@ public sealed class GetPoliciesByRepositoryQuery(
             !string.IsNullOrWhiteSpace(RepositoryPath)
         );
 
-    protected override async Task<string> ExecuteInternal(
+    protected override async Task<GetPoliciesByRepositoryResult> ExecuteInternal(
         Executor executor
     )
     {
@@ -43,10 +45,26 @@ public sealed class GetPoliciesByRepositoryQuery(
                 out var projectAggregateId
             )
         )
-            throw CreateNotFoundException();
+            return GetPoliciesByRepositoryResult.MappingRequired(
+                RepositoryPath,
+                (await projectSummaryRepository.List())
+                    .Select(
+                        project => new ProjectRepositoryOption(
+                            project.ProjectId,
+                            project.ProjectName,
+                            project.RepositoryPaths
+                        )
+                    )
+                    .ToList()
+            );
 
-        return await policyTextRepository.Get(projectAggregateId)
+        var policies = await policyTextRepository.Get(projectAggregateId)
             ?? throw CreateNotFoundException();
+
+        return GetPoliciesByRepositoryResult.Found(
+            RepositoryPath,
+            policies
+        );
     }
 
     private NotFoundException CreateNotFoundException() =>

@@ -74,6 +74,30 @@ public sealed class SkillStateMachineDefinitionTests
             definition.Events[nameof(SkillAttachmentDeletedV1)].PreEventValidators
         );
         Assert.All(
+            new[]
+            {
+                nameof(SkillCreatedV1),
+                nameof(SkillUpdatedV1),
+                nameof(SkillDetailsUpdatedV1),
+                nameof(SkillDeletedV1),
+                nameof(SkillReferenceAddedV1),
+                nameof(SkillReferenceUpdatedV1),
+                nameof(SkillReferenceDeletedV1)
+            },
+            eventName => Assert.Contains(
+                "SkillSearchProjector",
+                definition.Events[eventName].Projections
+            )
+        );
+        Assert.DoesNotContain(
+            "SkillSearchProjector",
+            definition.Events[nameof(SkillAttachmentAddedV1)].Projections
+        );
+        Assert.DoesNotContain(
+            "SkillSearchProjector",
+            definition.Events[nameof(SkillAttachmentDeletedV1)].Projections
+        );
+        Assert.All(
             definition.Events.Values,
             eventDefinition => Assert.Empty(eventDefinition.PostEventValidators)
         );

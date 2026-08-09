@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace PostgreSqlModule;
 
@@ -21,6 +22,7 @@ internal static class PostgreSqlDbContextOptions
                         .Name
                 );
                 npgsql.MigrationsHistoryTable(migrationsHistoryTable);
+                npgsql.UseVector();
             }
         );
     }

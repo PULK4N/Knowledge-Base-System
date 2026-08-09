@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>MemoryModule.Persistence</AssemblyName>
+    <RootNamespace>MemoryModule.Persistence</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../EmbeddingModule/EmbeddingModule.csproj" />
+    <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+    <ProjectReference Include="../Domain/Domain.csproj" />
+    <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
+  </ItemGroup>
+
+</Project>
