@@ -119,6 +119,66 @@ public sealed class RecordCodexPromptHookCommandTests
     }
 
     [Fact]
+    public async Task Execute_AddSummaryWritesEventToMappedMemory()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        await CreateCommand(eventStore, FirstPromptId).Execute(Executor);
+        var mapState = Assert.IsType<SessionAggregateMapStateData>(
+            eventStore.LastWritten[MemoryAggregateIds.SessionAggregateMap].StateData
+        );
+        var memoryAggregateId = mapState.AggregateIdsBySession[ThreadId];
+        var command = new AddChatSummaryCommand(CreateHandler(eventStore))
+        {
+            ThreadId = ThreadId,
+            Summary = "The user asked to persist a chat summary."
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.Equal("OK", result.Status);
+        var writtenAggregate = Assert.Single(eventStore.LastWritten);
+        Assert.Equal(memoryAggregateId, writtenAggregate.Key);
+        var memoryState = Assert.IsType<MemoryStateData>(
+            writtenAggregate.Value.StateData
+        );
+        Assert.Equal(command.Summary, memoryState.ChatSummary.Summary);
+        Assert.NotEqual(
+            default,
+            memoryState.ChatSummary.SummaryTimestamp
+        );
+        var summaryAdded = Assert.IsType<ChatSummaryAddedV1>(
+            Assert.Single(
+                writtenAggregate.Value.LastExecutedPayloads
+            ).EventData
+        );
+        Assert.Equal(command.Summary, summaryAdded.Summary);
+    }
+
+    [Fact]
+    public async Task Execute_AddSummaryForUnknownThreadFailsClearly()
+    {
+        var command = new AddChatSummaryCommand(
+            CreateHandler(new CapturingEventStoreWithOutbox())
+        )
+        {
+            ThreadId = ThreadId,
+            Summary = "Summary"
+        };
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => command.Execute(Executor)
+        );
+
+        Assert.Equal(
+            $"No memory exists for thread '{ThreadId.Value}'.",
+            exception.Message
+        );
+    }
+
+    [Fact]
     public void PersistenceRoundTrip_PreservesJsonElementPayload()
     {
         var jsonPayload = JsonSerializer.SerializeToElement(

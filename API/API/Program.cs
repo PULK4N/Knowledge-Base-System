@@ -6,6 +6,7 @@ using EventSourcing.Optimizations;
 using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
 using MemoryModule.Domain;
+using MemoryModule.MCP;
 using PolicyModule.API.Controllers;
 using PolicyModule.Application.Commands;
 using PolicyModule.Domain;
@@ -65,6 +66,7 @@ builder.Services
     .WithTools(
         PolicyMcpFunctions.Create()
             .Concat(SkillMcpFunctions.Create())
+            .Concat(MemoryMcpFunctions.Create())
             .Select(
                 function =>
                     ModelContextProtocol.Server.McpServerTool.Create(
