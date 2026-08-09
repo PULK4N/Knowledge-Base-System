@@ -4,6 +4,11 @@ using MemoryModule.Domain.Models;
 
 namespace MemoryModule.Persistence.Interfaces;
 
+public static class MemorySearchDocumentSources
+{
+    public const string ChatSummary = "chat_summary";
+}
+
 public sealed record MemorySearchDocument(
     AggregateId MemoryAggregateId,
     ThreadId ThreadId,

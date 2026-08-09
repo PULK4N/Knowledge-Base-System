@@ -24,6 +24,25 @@ public static class MemoryTextChunker
             )
         );
 
+        return Split(text);
+    }
+
+    public static IReadOnlyList<string> CompileSummaryChunks(
+        ChatSummary summary
+    )
+    {
+        var text = string.Join(
+            '\n',
+            "Chat summary",
+            $"Summary created: {summary.SummaryTimestamp:O}",
+            summary.Summary
+        );
+
+        return Split(text);
+    }
+
+    private static IReadOnlyList<string> Split(string text)
+    {
         if (text.Length <= MaximumChunkLength)
             return [text];
 

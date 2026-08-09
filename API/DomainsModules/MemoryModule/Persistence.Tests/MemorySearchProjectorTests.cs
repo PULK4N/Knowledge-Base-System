@@ -37,6 +37,50 @@ public sealed class MemorySearchProjectorTests
     }
 
     [Fact]
+    public async Task Update_projects_summary_as_searchable_text_and_embedding()
+    {
+        var state = CreateMemory();
+        state.ChatSummary = new ChatSummary
+        {
+            Summary =
+                "The chat established the event-sourcing architecture and its next steps.",
+            SummaryTimestamp = new DateTime(
+                2026,
+                8,
+                8,
+                11,
+                0,
+                0,
+                DateTimeKind.Utc
+            )
+        };
+        var embeddingGenerator = new FakeEmbeddingGenerator();
+        var repository = new FakeRepository();
+        var projector = new MemorySearchProjector(
+            embeddingGenerator,
+            repository
+        );
+
+        await projector.Update([CreateStateInfo(state)]);
+
+        Assert.Equal(2, repository.Documents.Count);
+        var document = repository.Documents.Single(
+            document =>
+                document.HookEventName
+                == MemorySearchDocumentSources.ChatSummary
+        );
+        Assert.Equal(MemoryId, document.MemoryAggregateId);
+        Assert.Equal(Guid.Empty, document.PromptId.Value);
+        Assert.Equal(
+            state.ChatSummary.SummaryTimestamp,
+            document.PromptStartTimestamp
+        );
+        Assert.Contains(state.ChatSummary.Summary, document.Text);
+        Assert.Equal([1f, 2f], document.Embedding.ToArray());
+        Assert.Contains(document.Text, embeddingGenerator.LastInputs);
+    }
+
+    [Fact]
     public async Task Update_replaces_deleted_memory_with_empty_snapshot()
     {
         var state = CreateMemory();

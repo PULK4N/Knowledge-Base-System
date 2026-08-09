@@ -18,7 +18,7 @@ public sealed class MemorySearchProjector(
             .Select(stateInfo => stateInfo.StateData)
             .OfType<MemoryStateData>()
             .ToList();
-        var chunks = memories
+        var promptChunks = memories
             .Where(memory => !memory.IsDeleted)
             .SelectMany(
                 memory => memory.ChatPrompts.Values.SelectMany(
@@ -40,6 +40,34 @@ public sealed class MemorySearchProjector(
                     )
                 )
             )
+            .ToList();
+        var summaryChunks = memories
+            .Where(
+                memory =>
+                    !memory.IsDeleted
+                    && !string.IsNullOrWhiteSpace(
+                        memory.ChatSummary.Summary
+                    )
+            )
+            .SelectMany(
+                memory => MemoryTextChunker
+                    .CompileSummaryChunks(memory.ChatSummary)
+                    .Select(
+                        (text, chunkIndex) => new PendingDocument(
+                            memory.Id,
+                            memory.ThreadId,
+                            new PromptId(Guid.Empty),
+                            0,
+                            chunkIndex,
+                            memory.ChatSummary.SummaryTimestamp,
+                            MemorySearchDocumentSources.ChatSummary,
+                            text
+                        )
+                    )
+            )
+            .ToList();
+        var chunks = promptChunks
+            .Concat(summaryChunks)
             .ToList();
         var embeddings = await embeddingGenerator.Generate(
             chunks.Select(chunk => chunk.Text).ToList()
