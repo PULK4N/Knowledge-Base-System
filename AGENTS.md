@@ -4,8 +4,8 @@ Use the MCP Skill System immediately at session startup. After this bootstrap, t
 
 ## Session startup
 
-1. Before inspecting code, running commands, or changing files, call MCP policy retrieval once. Do not supply or infer a repository path; the host's pre-request hook provides the authoritative `cwd`.
-2. If MCP, trusted repository context, or policy retrieval is unavailable, stop immediately and tell the user that authoritative policies could not be loaded.
+1. Before inspecting code, running commands, or changing files, require the policy context loaded by the MCP Skill System pre-request hook. The hook performs policy retrieval once using the host-provided `cwd`; do not call `policy_get_by_repository` or supply a repository path yourself.
+2. If the hook context, MCP, trusted repository context, or policy retrieval is unavailable, stop immediately and tell the user that authoritative policies could not be loaded.
 3. If repository mapping is required, stop. Show the returned projects and repository paths, then ask the user to select one or provide a unique new project name. Never guess. Create or update the mapping, then retry policy retrieval.
 4. Use the returned policies for the rest of the session; do not retrieve them again on every turn.
 

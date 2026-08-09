@@ -54,12 +54,12 @@ The normal workflow should be:
 
 1. A new agent session begins with the user's prompt.
 2. Before the prompt reaches the agent, a host pre-request hook reads the
-   session's authoritative `cwd` and binds it to the MCP request or session
-   context.
+   session's authoritative `cwd`, resolves the repository root, and requests
+   policies from MCP. Successful policy context is cached for the session.
 3. During session initialization, before substantive reasoning or
-   repository-changing tool use, the agent requests policies once without
-   supplying, resolving, or guessing a repository path. Policy retrieval uses
-   the hook-provided `cwd`.
+   repository-changing tool use, the agent verifies that the hook supplied the
+   policy context. The agent does not call the repository policy query or
+   supply, resolve, or guess a repository path.
 4. If the repository is not mapped to a policy project:
    1. The agent stops the requested work.
    2. It shows the user the available projects and their repository paths.
@@ -95,9 +95,9 @@ repository context and initialize its policies before work continues.
 
 Repository identity must not be a model-controlled MCP argument. A pre-request
 hook, such as Codex `UserPromptSubmit`, receives the host-provided session
-`cwd` and forwards or binds it to trusted MCP request/session context. The
-policy tool then reads that context, so the agent only asks for policies and
-cannot mistype, substitute, or invent the repository path.
+`cwd`, resolves the repository root when available, and invokes policy
+retrieval itself. The resulting policies become developer context, so the
+agent cannot mistype, substitute, or invent the repository path.
 
 The integration should fail closed. If `cwd` is missing, cannot be
 canonicalized, or is ambiguous, policy retrieval must not accept a fallback
@@ -177,12 +177,13 @@ A minimal bootstrap prompt should communicate the following contract:
 Use MCP Skill System as the only source of user-specific policies, skills, and
 durable memory.
 
-At the beginning of each agent session, request policies through MCP exactly
-once before substantive reasoning or repository-changing work. Do not supply
-or infer a repository path: a host pre-request hook provides the authoritative
-cwd to MCP. If MCP or trusted repository context is unavailable, stop. If
-repository mapping is required, ask the user to select an existing project or
-provide a unique new project name. Never guess the mapping.
+At the beginning of each agent session, require the policies loaded through MCP
+by the host pre-request hook before substantive reasoning or
+repository-changing work. Do not call the repository policy query or supply a
+repository path yourself. If MCP, hook policy context, or trusted repository
+context is unavailable, stop. If repository mapping is required, ask the user
+to select an existing project or provide a unique new project name. Never guess
+the mapping.
 
 For conflicts, follow this precedence: the current explicit user instruction,
 project policies, related topic policies, general policies, skill guidance,
@@ -326,11 +327,10 @@ Implemented:
 
 Not complete:
 
-- Policy retrieval still exposes
-  `policy_get_by_repository(repositoryPath)`. It must be replaced or wrapped by
-  context-aware retrieval with no model-supplied repository argument, plus a
-  pre-request hook that binds the host-provided `cwd` to the MCP request or
-  session.
+- The underlying MCP API still exposes
+  `policy_get_by_repository(repositoryPath)` to non-plugin clients. The Codex
+  plugin wraps it with trusted hook-provided repository context, but a
+  server-native context-aware query is not available yet.
 - Policy precedence and same-scope conflict resolution are not explicit.
 - Repository paths are matched as stored strings; canonicalization rules for
   casing, symlinks, trailing separators, containers, and multi-repository
@@ -386,6 +386,8 @@ Implemented:
 - Ollama with `qwen3-embedding:0.6b`.
 - Clean-slate Docker Compose integration tests for policy and skill MCP flows.
 - A root `AGENTS.md` with the mandatory policy-retrieval bootstrap.
+- A repo-local Codex plugin with MCP wiring, trusted-`cwd` policy loading,
+  session caching, compaction restoration, and mapping retry hooks.
 
 Not complete:
 
@@ -393,8 +395,9 @@ Not complete:
   implemented; the current executor provider is temporary.
 - Memory MCP integration scenarios are not covered yet.
 - Backup, retention, and disaster-recovery expectations are not documented.
-- The bootstrap and trusted-`cwd` policy retrieval flow are not yet covered by
-  an end-to-end hook/MCP integration test.
+- The plugin hook has unit coverage and a live unmapped-repository MCP check,
+  but the full install, hook trust, mapped-repository, and Codex agent flow is
+  not yet automated end to end.
 
 ## Established agent decisions
 
