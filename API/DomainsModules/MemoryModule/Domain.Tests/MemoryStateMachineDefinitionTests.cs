@@ -16,6 +16,7 @@ public sealed class MemoryStateMachineDefinitionTests
         );
         EventTypeContainer.AddEventType(typeof(CodexPromptHookRecordedV1));
         EventTypeContainer.AddEventType(typeof(CodexMemoryMigratedV1));
+        EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
@@ -34,6 +35,9 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.Equal(
             [nameof(MemorySearchProjector)],
             definition.Events[nameof(CodexMemoryMigratedV1)].Projections
+        );
+        Assert.Empty(
+            definition.Events[nameof(ChatSummaryAddedV1)].Projections
         );
     }
 

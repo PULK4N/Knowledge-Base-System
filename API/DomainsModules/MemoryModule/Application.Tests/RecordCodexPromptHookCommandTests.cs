@@ -44,6 +44,9 @@ public sealed class RecordCodexPromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(CodexMemoryMigratedV1)
         );
+        EventTypeContainer.AddEventType(
+            typeof(ChatSummaryAddedV1)
+        );
     }
 
     [Fact]
