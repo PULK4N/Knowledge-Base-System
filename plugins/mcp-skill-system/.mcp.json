@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "mcp-skill-system": {
+      "url": "http://localhost:5231/mcp"
+    }
+  }
+}
