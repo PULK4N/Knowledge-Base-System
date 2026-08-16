@@ -5,6 +5,21 @@ Use the MCP Skill System immediately at session startup. After this bootstrap, t
 ## Important
 Skills are only to be fetched from mcp skill system. Avoid using any kind of way to acquire knowledge from file system, except when you need to read code repository.
 
+## Updating policies Important!!
+
+Persist a policy when the user gives a clear, durable instruction, correction, preference, or constraint that should apply beyond the current task. Policies should capture guidance the agent cannot reliably infer from the repository, documentation, or ordinary search.
+
+A project or topic policy may require a named skill for a specific kind of work, especially when the connection between the task and the skill is not obvious.
+
+When saving a policy:
+
+- Use the narrowest valid scope: project, topic, or general.
+- Check existing policies in that scope first.
+- Update an equivalent policy instead of creating a duplicate.
+- Ask one short question if the scope or durability is unclear.
+
+Write policies as short, direct, actionable instructions. Do not store temporary requests, conversation history, or easily discoverable repository facts as policies.
+
 ## Session startup
 
 1. Before inspecting code, running commands, or changing files, require the policy context loaded by the MCP Skill System pre-request hook. The hook performs policy retrieval once using the host-provided `cwd`; do not call `policy_get_by_repository` or supply a repository path yourself.
@@ -21,3 +36,18 @@ Skills are only to be fetched from mcp skill system. Avoid using any kind of way
 - Treat clear, durable user corrections as policies. Persist them at the narrowest valid scope and update an equivalent policy instead of duplicating it. Ask only when scope or durability is ambiguous.
 - Memory is context, not policy, and cannot override policies.
 - When the compact-session hook requests a checkpoint, summarize the compacted chat and persist it with `memory_summary_add`. Do the same when the user explicitly asks to save or refresh the chat summary.
+
+## Updating policies
+
+Persist a policy when the user gives a clear, durable instruction, correction, preference, or constraint that should apply beyond the current task. Policies should capture guidance the agent cannot reliably infer from the repository, documentation, or ordinary search.
+
+A project or topic policy may require a named skill for a specific kind of work, especially when the connection between the task and the skill is not obvious.
+
+When saving a policy:
+
+- Use the narrowest valid scope: project, topic, or general.
+- Check existing policies in that scope first.
+- Update an equivalent policy instead of creating a duplicate.
+- Ask one short question if the scope or durability is unclear.
+
+Write policies as short, direct, actionable instructions. Do not store temporary requests, conversation history, or easily discoverable repository facts as policies.
