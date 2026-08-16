@@ -33,7 +33,10 @@
           <span class="card-action">Browse skills <span aria-hidden="true">→</span></span>
         </a>
 
-        <article class="overview-card surface-card policy-card">
+        <a
+          class="overview-card surface-card policy-card"
+          routerLink="/policies"
+        >
           <span class="card-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M12 3 5 6v5.5c0 4.4 2.9 7.6 7 9 4.1-1.4 7-4.6 7-9V6l-7-3Z" />
@@ -44,8 +47,10 @@
             <span class="count">{{ state.data.policies }}</span>
             <span class="description">Rules for agent behavior</span>
           </span>
-          <span class="card-action muted-action">Pages coming next</span>
-        </article>
+          <span class="card-action">
+            Browse policies <span aria-hidden="true">→</span>
+          </span>
+        </a>
 
         <article class="overview-card surface-card memory-card">
           <span class="card-icon" aria-hidden="true">

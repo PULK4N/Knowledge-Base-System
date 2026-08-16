@@ -33,6 +33,19 @@ public sealed class ProjectPoliciesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("{projectId:guid}")]
+    public async Task<ActionResult<PolicyProjectDetailsDto>> Get(
+        Guid projectId,
+        [FromServices] GetPolicyProjectQuery query
+    )
+    {
+        query.ProjectId = projectId;
+
+        var project = await Execute(query);
+
+        return project is null ? NotFound() : Ok(project);
+    }
+
     [HttpGet("{projectId:guid}/policies")]
     public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         Guid projectId,

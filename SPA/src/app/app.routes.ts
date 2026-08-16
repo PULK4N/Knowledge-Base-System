@@ -19,6 +19,27 @@ export const routes: Routes = [
             module => module.SKILLS_ROUTES,
           ),
       },
+      {
+        path: 'policies',
+        loadChildren: () =>
+          import('./pages/policies/policies.routes').then(
+            module => module.GENERAL_POLICIES_ROUTES,
+          ),
+      },
+      {
+        path: 'topics',
+        loadChildren: () =>
+          import('./pages/policies/policies.routes').then(
+            module => module.TOPIC_POLICIES_ROUTES,
+          ),
+      },
+      {
+        path: 'projects',
+        loadChildren: () =>
+          import('./pages/policies/policies.routes').then(
+            module => module.PROJECT_POLICIES_ROUTES,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
