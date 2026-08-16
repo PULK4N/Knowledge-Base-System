@@ -40,6 +40,13 @@ export const routes: Routes = [
             module => module.PROJECT_POLICIES_ROUTES,
           ),
       },
+      {
+        path: 'memories',
+        loadChildren: () =>
+          import('./pages/memories/memories.routes').then(
+            module => module.MEMORIES_ROUTES,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

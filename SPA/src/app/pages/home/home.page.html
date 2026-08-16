@@ -52,7 +52,10 @@
           </span>
         </a>
 
-        <article class="overview-card surface-card memory-card">
+        <a
+          class="overview-card surface-card memory-card"
+          routerLink="/memories"
+        >
           <span class="card-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <ellipse cx="12" cy="6" rx="7" ry="3" />
@@ -64,8 +67,10 @@
             <span class="count">{{ state.data.memories }}</span>
             <span class="description">Conversation knowledge</span>
           </span>
-          <span class="card-action muted-action">Pages coming next</span>
-        </article>
+          <span class="card-action">
+            Browse memories <span aria-hidden="true">→</span>
+          </span>
+        </a>
       </section>
     }
   }

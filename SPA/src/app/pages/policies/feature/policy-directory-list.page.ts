@@ -18,7 +18,7 @@ import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { PagedResult } from '../../../core/store/entity-store.service';
 import { PolicySearchRequest } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
-import { PaginationComponent } from '../ui/pagination.component';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 
 type DirectoryKind = 'topics' | 'projects';
 

@@ -76,10 +76,6 @@ a.nav-item:hover,
   stroke-width: 1.6;
 }
 
-.nav-item.unavailable {
-  cursor: default;
-}
-
 .workspace {
   min-height: 100vh;
   margin-left: 250px;

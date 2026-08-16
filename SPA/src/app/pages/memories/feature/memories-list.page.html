@@ -1,0 +1,154 @@
+<header>
+  <h1 class="page-heading">Memories</h1>
+  <p class="page-subtitle">
+    Conversation knowledge preserved for future agent sessions
+  </p>
+</header>
+
+@if (state$ | async; as state) {
+  <section class="list-panel surface-card">
+    <div class="toolbar">
+      <label class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m15.5 15.5 5 5" />
+        </svg>
+        <span class="sr-only">Search memories</span>
+        <input
+          #searchInput
+          type="search"
+          placeholder="Search memories"
+          autocomplete="off"
+          (input)="search(searchInput.value)"
+        />
+      </label>
+
+      @if (state.status === 'success') {
+        <span class="total-count">
+          {{ state.data.totalCount }}
+          {{ state.data.totalCount === 1 ? 'memory' : 'memories' }}
+        </span>
+      }
+    </div>
+
+    @switch (state.status) {
+      @case ('loading') {
+        <div class="request-message">Loading memories…</div>
+      }
+      @case ('error') {
+        <div class="request-message error">
+          <div>
+            <strong>Memories could not be loaded</strong>
+            <p>{{ state.message }}</p>
+          </div>
+        </div>
+      }
+      @case ('success') {
+        <div class="list-heading" aria-hidden="true">
+          <span>Memory</span>
+          <span>Last activity</span>
+          <span>Prompts</span>
+          <span></span>
+        </div>
+
+        <div class="memory-list" aria-label="Memories">
+          @for (memory of state.data.items; track memory.id) {
+            <details class="memory-item">
+              <summary class="memory-row">
+                <span class="memory-name">
+                  <span class="memory-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <ellipse cx="12" cy="6" rx="7" ry="3" />
+                      <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+                    </svg>
+                  </span>
+                  <span class="memory-copy">
+                    <strong>{{ memory.title }}</strong>
+                    <small [title]="memory.threadId">
+                      Thread {{ memory.threadId }}
+                    </small>
+                  </span>
+                </span>
+                <time [attr.datetime]="memory.lastActivityTimestamp">
+                  {{ memory.lastActivityTimestamp | date: 'medium' }}
+                </time>
+                <span class="prompt-count">{{ memory.promptCount }}</span>
+                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7 9 5 5 5-5" />
+                </svg>
+              </summary>
+
+              <div class="memory-details">
+                <section class="summary-content" aria-label="Memory summary">
+                  <span class="detail-label">Summary</span>
+                  @if (memory.summary) {
+                    <p>{{ memory.summary }}</p>
+                  } @else {
+                    <p class="empty-summary">No summary has been recorded.</p>
+                  }
+                </section>
+
+                <dl class="memory-metadata">
+                  <div>
+                    <dt>Memory ID</dt>
+                    <dd>{{ memory.id }}</dd>
+                  </div>
+                  <div>
+                    <dt>Thread ID</dt>
+                    <dd>{{ memory.threadId }}</dd>
+                  </div>
+                  <div>
+                    <dt>First prompt</dt>
+                    <dd>
+                      @if (memory.firstPromptTimestamp) {
+                        {{ memory.firstPromptTimestamp | date: 'medium' }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Last prompt</dt>
+                    <dd>
+                      @if (memory.lastPromptTimestamp) {
+                        {{ memory.lastPromptTimestamp | date: 'medium' }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Summary updated</dt>
+                    <dd>
+                      @if (memory.summaryTimestamp) {
+                        {{ memory.summaryTimestamp | date: 'medium' }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </details>
+          } @empty {
+            <div class="empty-state">
+              <strong>No memories found</strong>
+              <span>Try a different search term.</span>
+            </div>
+          }
+        </div>
+
+        <app-pagination
+          [page]="state.data.page"
+          [pageSize]="state.data.pageSize"
+          [totalCount]="state.data.totalCount"
+          [totalPages]="state.data.totalPages"
+          [hasPreviousPage]="state.data.hasPreviousPage"
+          [hasNextPage]="state.data.hasNextPage"
+          label="Memories"
+          (pageRequested)="goToPage($event)"
+        />
+      }
+    }
+  </section>
+}

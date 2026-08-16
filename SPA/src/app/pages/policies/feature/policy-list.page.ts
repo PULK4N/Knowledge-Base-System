@@ -22,7 +22,7 @@ import {
   PolicySearchResult,
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
-import { PaginationComponent } from '../ui/pagination.component';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 
 interface PolicyListView {
   readonly scope: PolicyScope;

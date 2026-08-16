@@ -5,7 +5,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { visiblePages } from '../../skills/ui/pagination';
+import { visiblePages } from './visible-pages';
 
 @Component({
   selector: 'app-pagination',

@@ -19,7 +19,7 @@ import {
   SkillSearchResult,
 } from '../data-access/skill.models';
 import { SkillService } from '../data-access/skill.service';
-import { visiblePages } from '../ui/pagination';
+import { visiblePages } from '../../../shared/pagination/visible-pages';
 import { ShortIdPipe } from '../ui/short-id.pipe';
 
 const PAGE_SIZE = 5;
