@@ -1,5 +1,7 @@
 using ActionModule.API;
 using ActionModule.Shared;
+using AdministrationModule.API.Controllers;
+using AdministrationModule.Application.Commands;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
 using EventSourcing.Optimizations;
@@ -41,6 +43,7 @@ builder.Services
 
 builder.Services
     .AddControllers()
+    .AddApplicationPart(typeof(AdministrationController).Assembly)
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
     .AddApplicationPart(typeof(PoliciesController).Assembly);
@@ -55,6 +58,7 @@ builder.Services.RegisterEventSourcingCore(
     typeof(GeneralPoliciesStateData).Assembly
 );
 builder.Services.RegisterActions(
+    typeof(QueueProjectionReplayCommand).Assembly,
     typeof(AddSkillCommand).Assembly,
     typeof(RecordCodexPromptHookCommand).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly
