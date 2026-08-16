@@ -1,0 +1,270 @@
+:host {
+  display: block;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.skills-panel {
+  margin-top: 32px;
+  padding: 32px 34px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  width: min(580px, 75%);
+  height: 58px;
+  padding: 0 18px;
+  border: 1px solid #d6dce7;
+  border-radius: 9px;
+  background: white;
+  box-shadow: inset 0 1px 2px rgb(18 29 54 / 3%);
+}
+
+.search-box:focus-within {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.search-box svg {
+  width: 27px;
+  flex: 0 0 27px;
+  fill: none;
+  stroke: #53617e;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.search-box input {
+  width: 100%;
+  height: 100%;
+  padding: 0 14px;
+  border: 0;
+  outline: none;
+  color: var(--navy);
+  background: transparent;
+  font-size: 18px;
+}
+
+.search-box input::placeholder {
+  color: #929bb1;
+}
+
+.total-count {
+  color: #344260;
+  font-size: 17px;
+  white-space: nowrap;
+}
+
+.list-heading,
+.skill-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) minmax(180px, 0.9fr) 40px;
+  align-items: center;
+  gap: 24px;
+}
+
+.list-heading {
+  min-height: 58px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--line);
+  color: #42506d;
+  font-size: 16px;
+}
+
+.skill-row {
+  min-height: 100px;
+  padding: 12px 2px;
+  border-bottom: 1px solid #e1e5ec;
+  color: var(--navy);
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.skill-row:hover {
+  background: #fafbff;
+}
+
+.skill-name {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+
+.skill-name strong {
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--indigo);
+  background: #f0efff;
+  font-size: 18px;
+  font-weight: 780;
+}
+
+.skill-id {
+  overflow: hidden;
+  color: #4d5b79;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  width: 26px;
+  fill: none;
+  stroke: #4f5e7c;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 260px;
+  place-content: center;
+  gap: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--navy);
+  font-size: 19px;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 92px;
+  padding-top: 18px;
+  color: #4b5a77;
+}
+
+.pagination {
+  display: flex;
+  gap: 12px;
+}
+
+.pagination button {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid #d5dbe5;
+  border-radius: 8px;
+  color: #253555;
+  background: white;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: #7f88ff;
+}
+
+.pagination button.current {
+  color: white;
+  border-color: var(--indigo);
+  background: linear-gradient(145deg, #3d47ff, #1727e8);
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.pagination button span {
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.request-message p {
+  margin: 8px 0 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .skills-panel {
+    padding: 22px 18px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .list-heading {
+    display: none;
+  }
+
+  .skill-row {
+    grid-template-columns: minmax(0, 1fr) 26px;
+    gap: 12px;
+  }
+
+  .skill-id {
+    grid-column: 1;
+    padding-left: 80px;
+    font-size: 14px;
+  }
+
+  .chevron {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+
+  .pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagination {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .pagination button {
+    width: auto;
+    min-width: 42px;
+    height: 46px;
+    flex: 1;
+  }
+}

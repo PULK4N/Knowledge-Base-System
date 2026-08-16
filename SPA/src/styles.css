@@ -1,0 +1,91 @@
+:root {
+  color-scheme: light;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #101a35;
+  background: #fbfaf7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --navy: #101a35;
+  --muted: #51607d;
+  --line: #dce1ea;
+  --canvas: #fbfaf7;
+  --card: #fff;
+  --indigo: #303cff;
+  --teal: #0199ba;
+  --amber: #d98b00;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--canvas);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 74% 0%, rgb(226 232 255 / 24%), transparent 30%),
+    var(--canvas);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(48 60 255 / 32%);
+  outline-offset: 3px;
+}
+
+.page-heading {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 42px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.page-subtitle {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.5;
+}
+
+.surface-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 0 12px 35px rgb(31 45 82 / 6%);
+}
+
+.request-message {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  background: white;
+  text-align: center;
+}
+
+.request-message.error {
+  color: #9e2f3c;
+  border-color: #edc5ca;
+  background: #fffafb;
+}
