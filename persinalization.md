@@ -5,6 +5,8 @@ Use the MCP Skill System immediately at session startup. After this bootstrap, t
 ## Important
 Skills are only to be fetched from mcp skill system. Avoid using any kind of way to acquire knowledge from file system, except when you need to read code repository.
 
+If skill is already present in your context, don't pull it from mcp again.
+
 ## Updating policies Important!!
 
 Persist a policy when the user gives a clear, durable instruction, correction, preference, or constraint that should apply beyond the current task. Policies should capture guidance the agent cannot reliably infer from the repository, documentation, or ordinary search.
