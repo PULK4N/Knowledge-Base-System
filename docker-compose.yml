@@ -1,4 +1,17 @@
+name: mcp-skill-system
+
 services:
+  frontend:
+    build:
+      context: ./SPA
+      dockerfile: Dockerfile
+    container_name: knowledge-base-spa
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
   api:
     build:
       context: .

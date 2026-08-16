@@ -1,0 +1,118 @@
+<header>
+  <h1 class="page-heading">Skills</h1>
+  <p class="page-subtitle">
+    Reusable procedures and specialized knowledge for your agents
+  </p>
+</header>
+
+<section class="skills-panel surface-card">
+  <div class="toolbar">
+    <label class="search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 5 5" />
+      </svg>
+      <span class="sr-only">Search skills</span>
+      <input
+        #searchInput
+        type="search"
+        placeholder="Search skills"
+        autocomplete="off"
+        (input)="search(searchInput.value)"
+      />
+    </label>
+
+    @if (state$ | async; as state) {
+      @if (state.status === 'success') {
+        <span class="total-count">
+          {{ state.data.result.totalCount }}
+          {{ state.data.result.totalCount === 1 ? 'skill' : 'skills' }}
+        </span>
+      }
+    }
+  </div>
+
+  @if (state$ | async; as state) {
+    @switch (state.status) {
+      @case ('loading') {
+        <div class="request-message">Loading skills…</div>
+      }
+      @case ('error') {
+        <div class="request-message error">
+          <div>
+            <strong>Skills could not be loaded</strong>
+            <p>{{ state.message }}</p>
+          </div>
+        </div>
+      }
+      @case ('success') {
+        <div class="list-heading" aria-hidden="true">
+          <span>Skill</span>
+          <span>Skill ID</span>
+          <span></span>
+        </div>
+
+        <div class="skill-list" aria-label="Skills">
+          @for (skill of state.data.result.items; track skill.id) {
+            <a class="skill-row" [routerLink]="['/skills', skill.id]">
+              <span class="skill-name">
+                <span class="skill-icon" aria-hidden="true">&lt;/&gt;</span>
+                <strong>{{ skill.name }}</strong>
+              </span>
+              <span class="skill-id" [title]="skill.id">
+                {{ skill.id | shortId }}
+              </span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 5 7 7-7 7" />
+              </svg>
+            </a>
+          } @empty {
+            <div class="empty-state">
+              <strong>No skills found</strong>
+              <span>Try a different search term.</span>
+            </div>
+          }
+        </div>
+
+        @if (state.data.result.totalCount > 0) {
+          <footer class="pagination-bar">
+            <span>
+              Showing
+              {{ state.data.firstVisibleItem }}–{{ state.data.lastVisibleItem }}
+              of {{ state.data.result.totalCount }}
+            </span>
+            <nav class="pagination" aria-label="Skills pagination">
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="!state.data.result.hasPreviousPage"
+                (click)="goToPage(state.data.result.page - 1)"
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
+              @for (page of state.data.pages; track page) {
+                <button
+                  type="button"
+                  [class.current]="page === state.data.result.page"
+                  [attr.aria-current]="page === state.data.result.page ? 'page' : null"
+                  [attr.aria-label]="'Page ' + page"
+                  (click)="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="!state.data.result.hasNextPage"
+                (click)="goToPage(state.data.result.page + 1)"
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+            </nav>
+          </footer>
+        }
+      }
+    }
+  }
+</section>

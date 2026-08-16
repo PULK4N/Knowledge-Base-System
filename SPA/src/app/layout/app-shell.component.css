@@ -1,0 +1,127 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 10;
+  width: 250px;
+  padding: 42px 15px;
+  color: white;
+  background:
+    radial-gradient(circle at 18% 14%, rgb(35 83 145 / 32%), transparent 25%),
+    linear-gradient(165deg, #061a39 0%, #00162e 55%, #03254b 100%);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 14px;
+  color: white;
+  font-size: 18px;
+  font-weight: 720;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 46px;
+  flex: 0 0 46px;
+  overflow: visible;
+  fill: #63c5ff;
+  stroke: white;
+  stroke-linecap: round;
+  stroke-width: 1.6;
+}
+
+.navigation {
+  display: grid;
+  gap: 8px;
+  margin-top: 50px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 64px;
+  padding: 0 18px;
+  border-radius: 11px;
+  color: #f7f9ff;
+  font-size: 18px;
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+a.nav-item:hover,
+.nav-item.active {
+  background: rgb(74 116 184 / 33%);
+}
+
+.nav-item svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.workspace {
+  min-height: 100vh;
+  margin-left: 250px;
+  padding: 42px clamp(28px, 3.2vw, 52px) 64px;
+}
+
+@media (max-width: 780px) {
+  .sidebar {
+    position: static;
+    width: auto;
+    padding: 14px 18px 10px;
+  }
+
+  .brand {
+    min-height: 48px;
+    padding: 0;
+    font-size: 16px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    flex-basis: 38px;
+  }
+
+  .navigation {
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    min-height: 46px;
+    gap: 8px;
+    padding: 0 13px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .nav-item svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .workspace {
+    margin-left: 0;
+    padding: 28px 18px 48px;
+  }
+}

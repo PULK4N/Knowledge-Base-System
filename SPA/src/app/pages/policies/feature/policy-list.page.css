@@ -1,0 +1,156 @@
+:host {
+  display: block;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  color: #33466f;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--indigo);
+}
+
+.page-heading {
+  overflow-wrap: anywhere;
+}
+
+.page-message {
+  margin-top: 24px;
+}
+
+.project-topics {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr);
+  align-items: center;
+  gap: 28px;
+  margin-top: 28px;
+  padding: 24px 28px;
+}
+
+.section-label {
+  margin: 0 0 5px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.project-topics h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 13px;
+}
+
+.topic-chip {
+  display: inline-flex;
+  min-height: 34px;
+  border-radius: 3px;
+  overflow: hidden;
+  color: white;
+  background: #087ed5;
+  box-shadow: 0 2px 5px rgb(12 79 137 / 14%);
+  text-decoration: none;
+}
+
+.topic-chip > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.topic-chip > span:first-child {
+  padding: 6px 11px;
+}
+
+.topic-chip > span:last-child {
+  padding: 6px 9px;
+  color: #59606a;
+  background: #f0f1f3;
+  font-size: 17px;
+}
+
+.topic-chip:hover > span:first-child {
+  background: #0069b5;
+}
+
+.no-topics {
+  color: var(--muted);
+}
+
+.policy-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  min-height: 116px;
+  padding: 24px 4px;
+  border-bottom: 1px solid #e1e5ec;
+}
+
+.policy-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--amber);
+  background: #fff5e5;
+}
+
+.policy-icon svg {
+  width: 29px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.policy-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.policy-copy strong {
+  color: var(--navy);
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.policy-copy span {
+  max-width: 900px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .project-topics {
+    grid-template-columns: 1fr;
+    padding: 22px 20px;
+  }
+
+  .policy-row {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .policy-icon {
+    width: 46px;
+    height: 46px;
+  }
+}

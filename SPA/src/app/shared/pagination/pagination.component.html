@@ -1,0 +1,37 @@
+@if (totalCount() > 0) {
+  <footer class="pagination-bar">
+    <span>
+      Showing {{ firstVisibleItem() }}–{{ lastVisibleItem() }} of
+      {{ totalCount() }} {{ label().toLowerCase() }}
+    </span>
+    <nav class="pagination" [attr.aria-label]="label() + ' pagination'">
+      <button
+        type="button"
+        aria-label="Previous page"
+        [disabled]="!hasPreviousPage()"
+        (click)="requestPage(page() - 1)"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+      @for (visiblePage of pages(); track visiblePage) {
+        <button
+          type="button"
+          [class.current]="visiblePage === page()"
+          [attr.aria-current]="visiblePage === page() ? 'page' : null"
+          [attr.aria-label]="'Page ' + visiblePage"
+          (click)="requestPage(visiblePage)"
+        >
+          {{ visiblePage }}
+        </button>
+      }
+      <button
+        type="button"
+        aria-label="Next page"
+        [disabled]="!hasNextPage()"
+        (click)="requestPage(page() + 1)"
+      >
+        <span aria-hidden="true">›</span>
+      </button>
+    </nav>
+  </footer>
+}

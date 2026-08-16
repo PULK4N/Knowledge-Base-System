@@ -1,0 +1,20 @@
+{
+  "name": "knowledge-base-local",
+  "interface": {
+    "displayName": "Knowledge Base Local"
+  },
+  "plugins": [
+    {
+      "name": "mcp-skill-system",
+      "source": {
+        "source": "local",
+        "path": "./plugins/mcp-skill-system"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

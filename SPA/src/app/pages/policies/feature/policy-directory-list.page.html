@@ -1,0 +1,95 @@
+@if (state$ | async; as state) {
+  @switch (state.status) {
+    @case ('loading') {
+      <div class="request-message page-message">Loading…</div>
+    }
+    @case ('error') {
+      <div class="request-message error page-message">
+        <div>
+          <strong>Items could not be loaded</strong>
+          <p>{{ state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <header>
+        <h1 class="page-heading">{{ state.data.title }}</h1>
+        <p class="page-subtitle">{{ state.data.subtitle }}</p>
+      </header>
+
+      <section class="list-panel surface-card">
+        <div class="toolbar">
+          <label class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m15.5 15.5 5 5" />
+            </svg>
+            <span class="sr-only">Search {{ state.data.title.toLowerCase() }}</span>
+            <input
+              #searchInput
+              type="search"
+              [placeholder]="'Search ' + state.data.title.toLowerCase()"
+              autocomplete="off"
+              (input)="search(searchInput.value)"
+            />
+          </label>
+
+          <span class="total-count">
+            {{ state.data.result.totalCount }}
+            {{
+              state.data.kind === 'topics'
+                ? state.data.result.totalCount === 1
+                  ? 'topic'
+                  : 'topics'
+                : state.data.result.totalCount === 1
+                  ? 'project'
+                  : 'projects'
+            }}
+          </span>
+        </div>
+
+        <div class="list-heading" aria-hidden="true">
+          <span>{{ state.data.kind === 'topics' ? 'Topic' : 'Project' }}</span>
+          <span>{{ state.data.kind === 'topics' ? 'Policies' : 'Repositories' }}</span>
+          <span></span>
+        </div>
+
+        <div class="directory-list" [attr.aria-label]="state.data.title">
+          @for (entry of state.data.result.items; track entry.id) {
+            <a class="directory-row" [routerLink]="entry.route">
+              <span class="entry-copy">
+                <span class="entry-icon" [class.project]="state.data.kind === 'projects'" aria-hidden="true">
+                  @if (state.data.kind === 'topics') { # } @else { ▤ }
+                </span>
+                <span>
+                  <strong>{{ entry.name }}</strong>
+                  <small>{{ entry.description }}</small>
+                </span>
+              </span>
+              <span class="metadata">{{ entry.metadata }}</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 5 7 7-7 7" />
+              </svg>
+            </a>
+          } @empty {
+            <div class="empty-state">
+              <strong>No {{ state.data.title.toLowerCase() }} found</strong>
+              <span>Try a different search term.</span>
+            </div>
+          }
+        </div>
+
+        <app-pagination
+          [page]="state.data.result.page"
+          [pageSize]="state.data.result.pageSize"
+          [totalCount]="state.data.result.totalCount"
+          [totalPages]="state.data.result.totalPages"
+          [hasPreviousPage]="state.data.result.hasPreviousPage"
+          [hasNextPage]="state.data.result.hasNextPage"
+          [label]="state.data.title"
+          (pageRequested)="goToPage($event)"
+        />
+      </section>
+    }
+  }
+}

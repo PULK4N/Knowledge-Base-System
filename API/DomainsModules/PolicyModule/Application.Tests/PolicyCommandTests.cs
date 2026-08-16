@@ -7,6 +7,7 @@ using EventSourcing.Shared.Exceptions;
 using EventSourcing.Shared.Models;
 using Microsoft.Extensions.DependencyInjection;
 using PolicyModule.Application.Commands;
+using PolicyModule.Application.DTOs;
 using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 using PolicyModule.Domain;
@@ -539,6 +540,22 @@ public sealed class PolicyCommandTests
                 }.Execute(Executor)
             )?.Title
         );
+        var projectDetails = Assert.IsType<PolicyProjectDetailsDto>(
+            await new GetPolicyProjectQuery(
+                CreateCalculator(),
+                eventStore
+            )
+            {
+                ProjectId = project.ProjectId
+            }.Execute(Executor)
+        );
+        Assert.Equal("Policy project", projectDetails.ProjectName);
+        Assert.Equal(
+            "Query test project.",
+            projectDetails.ProjectDescription
+        );
+        Assert.Equal([repositoryPath], projectDetails.RepositoryPaths);
+        Assert.Equal(["cloud"], projectDetails.TopicNames);
 
         await new RemoveTopicCommand(handler)
         {
@@ -567,6 +584,15 @@ public sealed class PolicyCommandTests
         {
             ProjectId = project.ProjectId
         }.Execute(Executor);
+        Assert.Null(
+            await new GetPolicyProjectQuery(
+                CreateCalculator(),
+                eventStore
+            )
+            {
+                ProjectId = project.ProjectId
+            }.Execute(Executor)
+        );
 
         var projectSummaryRepository =
             new StubPolicyProjectSummaryRepository();

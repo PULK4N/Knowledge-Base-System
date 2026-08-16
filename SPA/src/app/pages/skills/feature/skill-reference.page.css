@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  max-width: 1185px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  color: #33466f;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--indigo);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--indigo);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reference-heading .page-heading,
+.reference-path {
+  overflow-wrap: anywhere;
+}
+
+.reference-path {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.reference-content {
+  min-height: 390px;
+  margin-top: 26px;
+  padding: 30px;
+}
+
+.reference-message {
+  margin-top: 2px;
+}
+
+.reference-message p {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 650px) {
+  .reference-content {
+    padding: 22px 18px;
+  }
+}
