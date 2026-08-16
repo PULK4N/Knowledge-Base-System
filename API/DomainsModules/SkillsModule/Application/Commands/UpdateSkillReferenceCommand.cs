@@ -9,6 +9,7 @@ public sealed class UpdateSkillReferenceCommand(StateMachineHandler stateMachine
 {
     public required string RelativePath { get; set; }
     public required string Content { get; set; }
+    public bool LoadAutomatically { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(RelativePath));
@@ -16,10 +17,10 @@ public sealed class UpdateSkillReferenceCommand(StateMachineHandler stateMachine
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new SkillReferenceUpdatedV1
-            {
-                RelativePath = RelativePath,
-                Content = Content
-            }
+            new SkillReferenceUpdatedV2(
+                RelativePath,
+                Content,
+                LoadAutomatically
+            )
         );
 }

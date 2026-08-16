@@ -37,4 +37,34 @@ public sealed class SkillCreatedSerializationTests
         );
         Assert.IsAssignableFrom<ISkillCreated>(deserialized);
     }
+
+    [Fact]
+    public void CreatedV2_RoundTripsAutomaticReferenceLoading()
+    {
+        var eventData = new SkillCreatedV2(
+            "skill-name",
+            "Description",
+            "Content",
+            ImmutableArray<string>.Empty,
+            ImmutableDictionary<string, SkillReference2>
+                .Empty
+                .WithComparers(StringComparer.Ordinal)
+                .Add(
+                    "references/example.md",
+                    new SkillReference2("Reference content", true)
+                )
+        );
+
+        var json = JsonSerializer.Serialize(eventData);
+        var deserialized = Assert.IsType<SkillCreatedV2>(
+            JsonSerializer.Deserialize<SkillCreatedV2>(json)
+        );
+
+        Assert.True(
+            deserialized
+                .References["references/example.md"]
+                .LoadAutomatically
+        );
+        Assert.IsAssignableFrom<ISkillCreated>(deserialized);
+    }
 }

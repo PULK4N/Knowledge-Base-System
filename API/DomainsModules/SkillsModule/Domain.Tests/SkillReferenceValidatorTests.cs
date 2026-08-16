@@ -11,11 +11,10 @@ public sealed class SkillReferenceValidatorTests
     public void MustNotExist_FailsForDuplicateRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceAddedV1
-            {
-                RelativePath = "references/example.md",
-                Content = "Duplicate content"
-            }
+            new SkillReferenceAddedV1(
+                "references/example.md",
+                "Duplicate content"
+            )
         );
         var state = CreateState("references/example.md");
         var validator = new SkillReferenceMustNotExistValidator();
@@ -34,11 +33,10 @@ public sealed class SkillReferenceValidatorTests
     public void MustNotExist_SucceedsForNewRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceAddedV1
-            {
-                RelativePath = "references/new.md",
-                Content = "Content"
-            }
+            new SkillReferenceAddedV1(
+                "references/new.md",
+                "Content"
+            )
         );
         var validator = new SkillReferenceMustNotExistValidator();
 
@@ -52,10 +50,7 @@ public sealed class SkillReferenceValidatorTests
     public void MustExist_FailsForUnknownRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceDeletedV1
-            {
-                RelativePath = "references/missing.md"
-            }
+            new SkillReferenceDeletedV1("references/missing.md")
         );
         var validator = new SkillReferenceMustExistValidator();
 
@@ -73,11 +68,10 @@ public sealed class SkillReferenceValidatorTests
     public void MustExist_SucceedsForKnownRelativePath()
     {
         var payload = CreatePayload(
-            new SkillReferenceUpdatedV1
-            {
-                RelativePath = "references/example.md",
-                Content = "Updated content"
-            }
+            new SkillReferenceUpdatedV1(
+                "references/example.md",
+                "Updated content"
+            )
         );
         var validator = new SkillReferenceMustExistValidator();
 
@@ -111,7 +105,7 @@ public sealed class SkillReferenceValidatorTests
             References = relativePaths
                 .ToDictionary(
                     relativePath => relativePath,
-                    _ => new SkillReference("Content"),
+                    _ => new SkillReference2("Content"),
                     StringComparer.Ordinal
                 )
         };

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using SkillsModule.Domain.Events;
@@ -18,12 +19,11 @@ public sealed class UpdateSkillCommand(StateMachineHandler stateMachineHandler)
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new SkillDetailsUpdatedV1
-            {
-                Name = Name,
-                Description = Description,
-                Content = Content,
-                Tags = [.. Tags]
-            }
+            new SkillDetailsUpdatedV1(
+                Name,
+                Description,
+                Content,
+                Tags.ToImmutableArray()
+            )
         );
 }

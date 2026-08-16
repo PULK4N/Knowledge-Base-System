@@ -11,4 +11,5 @@ public sealed record AddSkillReferenceRequest
 {
     public required string RelativePath { get; init; }
     public required string Content { get; init; }
+    public bool LoadAutomatically { get; init; }
 }

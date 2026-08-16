@@ -95,6 +95,7 @@ public sealed class SkillsController(
         command.SkillId = skillId;
         command.RelativePath = body.RelativePath;
         command.Content = body.Content;
+        command.LoadAutomatically = body.LoadAutomatically;
 
         var result = (SkillCommandResult)await Execute(command);
 

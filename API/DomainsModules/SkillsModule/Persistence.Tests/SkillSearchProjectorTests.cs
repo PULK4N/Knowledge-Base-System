@@ -126,7 +126,7 @@ public sealed class SkillSearchProjectorTests
         };
         state.References.Add(
             "references/architecture.md",
-            new SkillReference(
+            new SkillReference2(
                 "# Architecture\nKeep domain and persistence separate."
             )
         );

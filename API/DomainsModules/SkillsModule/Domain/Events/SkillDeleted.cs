@@ -5,7 +5,7 @@ namespace SkillsModule.Domain.Events;
 
 public interface ISkillDeleted : IEvent;
 
-public sealed class SkillDeletedV1 : ISkillDeleted
+public readonly record struct SkillDeletedV1 : ISkillDeleted
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {

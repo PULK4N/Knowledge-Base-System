@@ -22,9 +22,9 @@ public static class SkillMcpFunctions
             "Gets a skill by ID. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, string>?, Task<SkillCreatedCommandResult>>)Add,
+            (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Task<SkillCreatedCommandResult>>)Add,
             "skill_add",
-            "Creates a skill. References map relative file paths to their text content."
+            "Creates a skill. References map relative file paths to content and whether they should load automatically."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, List<string>, Task<SkillCommandResult>>)Update,
@@ -37,14 +37,14 @@ public static class SkillMcpFunctions
             "Deletes an existing skill."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, Task<SkillCommandResult>>)AddReference,
+            (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)AddReference,
             "skill_reference_add",
-            "Adds a text reference at a relative path to an existing skill."
+            "Adds a text reference at a relative path. loadAutomatically defaults to false."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, Task<SkillCommandResult>>)UpdateReference,
+            (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)UpdateReference,
             "skill_reference_update",
-            "Updates an existing skill reference's text content."
+            "Updates an existing skill reference's text content and automatic-loading setting."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, Task<SkillCommandResult>>)DeleteReference,
@@ -108,7 +108,7 @@ public static class SkillMcpFunctions
         string description,
         string content,
         List<string>? tags = null,
-        Dictionary<string, string>? references = null
+        Dictionary<string, SkillReference2>? references = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             AddSkillCommand,
@@ -123,11 +123,12 @@ public static class SkillMcpFunctions
                 command.Tags = tags ?? [];
                 command.References = references?.ToDictionary(
                     reference => reference.Key,
-                    reference => new SkillReference(
-                        reference.Value
+                    reference => new SkillReference2(
+                        reference.Value.Content,
+                        reference.Value.LoadAutomatically
                     ),
                     StringComparer.Ordinal
-                ) ?? new Dictionary<string, SkillReference>(
+                ) ?? new Dictionary<string, SkillReference2>(
                     StringComparer.Ordinal
                 );
             }
@@ -172,7 +173,8 @@ public static class SkillMcpFunctions
         IServiceProvider services,
         Guid skillId,
         string relativePath,
-        string content
+        string content,
+        bool loadAutomatically = false
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             AddSkillReferenceCommand,
@@ -184,6 +186,7 @@ public static class SkillMcpFunctions
                 command.SkillId = skillId;
                 command.RelativePath = relativePath;
                 command.Content = content;
+                command.LoadAutomatically = loadAutomatically;
             }
         );
 
@@ -191,7 +194,8 @@ public static class SkillMcpFunctions
         IServiceProvider services,
         Guid skillId,
         string relativePath,
-        string content
+        string content,
+        bool loadAutomatically = false
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             UpdateSkillReferenceCommand,
@@ -203,6 +207,7 @@ public static class SkillMcpFunctions
                 command.SkillId = skillId;
                 command.RelativePath = relativePath;
                 command.Content = content;
+                command.LoadAutomatically = loadAutomatically;
             }
         );
 

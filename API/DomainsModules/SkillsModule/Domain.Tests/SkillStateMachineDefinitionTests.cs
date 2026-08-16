@@ -23,11 +23,14 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.Equal(
             [
                 nameof(SkillCreatedV1),
+                nameof(SkillCreatedV2),
                 nameof(SkillUpdatedV1),
                 nameof(SkillDetailsUpdatedV1),
                 nameof(SkillDeletedV1),
                 nameof(SkillReferenceAddedV1),
+                nameof(SkillReferenceAddedV2),
                 nameof(SkillReferenceUpdatedV1),
+                nameof(SkillReferenceUpdatedV2),
                 nameof(SkillReferenceDeletedV1),
                 nameof(SkillAttachmentAddedV1),
                 nameof(SkillAttachmentDeletedV1)
@@ -37,6 +40,10 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.Equal(
             [nameof(UniqueSkillNameConstraint)],
             definition.Events[nameof(SkillCreatedV1)].UniqueConstraints
+        );
+        Assert.Equal(
+            [nameof(UniqueSkillNameConstraint)],
+            definition.Events[nameof(SkillCreatedV2)].UniqueConstraints
         );
         Assert.Equal(
             [nameof(UniqueSkillNameConstraint)],
@@ -51,15 +58,25 @@ public sealed class SkillStateMachineDefinitionTests
             definition.Events[nameof(SkillDeletedV1)].UniqueConstraints
         );
         Assert.Empty(definition.Events[nameof(SkillReferenceAddedV1)].UniqueConstraints);
+        Assert.Empty(definition.Events[nameof(SkillReferenceAddedV2)].UniqueConstraints);
         Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV1)].UniqueConstraints);
+        Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV2)].UniqueConstraints);
         Assert.Empty(definition.Events[nameof(SkillReferenceDeletedV1)].UniqueConstraints);
         Assert.Equal(
             [nameof(SkillReferenceMustNotExistValidator)],
             definition.Events[nameof(SkillReferenceAddedV1)].PreEventValidators
         );
         Assert.Equal(
+            [nameof(SkillReferenceMustNotExistValidator)],
+            definition.Events[nameof(SkillReferenceAddedV2)].PreEventValidators
+        );
+        Assert.Equal(
             [nameof(SkillReferenceMustExistValidator)],
             definition.Events[nameof(SkillReferenceUpdatedV1)].PreEventValidators
+        );
+        Assert.Equal(
+            [nameof(SkillReferenceMustExistValidator)],
+            definition.Events[nameof(SkillReferenceUpdatedV2)].PreEventValidators
         );
         Assert.Equal(
             [nameof(SkillReferenceMustExistValidator)],
@@ -77,11 +94,14 @@ public sealed class SkillStateMachineDefinitionTests
             new[]
             {
                 nameof(SkillCreatedV1),
+                nameof(SkillCreatedV2),
                 nameof(SkillUpdatedV1),
                 nameof(SkillDetailsUpdatedV1),
                 nameof(SkillDeletedV1),
                 nameof(SkillReferenceAddedV1),
+                nameof(SkillReferenceAddedV2),
                 nameof(SkillReferenceUpdatedV1),
+                nameof(SkillReferenceUpdatedV2),
                 nameof(SkillReferenceDeletedV1)
             },
             eventName => Assert.Contains(
@@ -109,18 +129,18 @@ public sealed class SkillStateMachineDefinitionTests
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(CreateDefinitionProvider());
         var addedPayload = CreatePayload(
-            new SkillReferenceAddedV1
-            {
-                RelativePath = "references/example.md",
-                Content = "Content"
-            }
+            new SkillReferenceAddedV2(
+                "references/example.md",
+                "Content",
+                true
+            )
         );
         var updatedPayload = CreatePayload(
-            new SkillReferenceUpdatedV1
-            {
-                RelativePath = "references/example.md",
-                Content = "Updated content"
-            }
+            new SkillReferenceUpdatedV2(
+                "references/example.md",
+                "Updated content",
+                true
+            )
         );
 
         var addedValidators = await provider.GetPreEventStateValidators(addedPayload);
@@ -201,11 +221,14 @@ public sealed class SkillStateMachineDefinitionTests
 
             StateDataTypeContainer.AddStateDataType(typeof(SkillStateData));
             EventTypeContainer.AddEventType(typeof(SkillCreatedV1));
+            EventTypeContainer.AddEventType(typeof(SkillCreatedV2));
             EventTypeContainer.AddEventType(typeof(SkillUpdatedV1));
             EventTypeContainer.AddEventType(typeof(SkillDetailsUpdatedV1));
             EventTypeContainer.AddEventType(typeof(SkillDeletedV1));
             EventTypeContainer.AddEventType(typeof(SkillReferenceAddedV1));
+            EventTypeContainer.AddEventType(typeof(SkillReferenceAddedV2));
             EventTypeContainer.AddEventType(typeof(SkillReferenceUpdatedV1));
+            EventTypeContainer.AddEventType(typeof(SkillReferenceUpdatedV2));
             EventTypeContainer.AddEventType(typeof(SkillReferenceDeletedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV1));

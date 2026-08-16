@@ -7,6 +7,12 @@ events:
       - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
+  SkillCreatedV2:
+    projections:
+      - SkillSummaryProjector
+      - SkillSearchProjector
+    uniqueConstraints:
+      - UniqueSkillNameConstraint
   SkillUpdatedV1:
     projections:
       - SkillSummaryProjector
@@ -30,7 +36,17 @@ events:
       - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustNotExistValidator
+  SkillReferenceAddedV2:
+    projections:
+      - SkillSearchProjector
+    preEventValidators:
+      - SkillReferenceMustNotExistValidator
   SkillReferenceUpdatedV1:
+    projections:
+      - SkillSearchProjector
+    preEventValidators:
+      - SkillReferenceMustExistValidator
+  SkillReferenceUpdatedV2:
     projections:
       - SkillSearchProjector
     preEventValidators:

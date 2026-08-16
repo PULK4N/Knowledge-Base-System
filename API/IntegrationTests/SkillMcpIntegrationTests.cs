@@ -19,9 +19,12 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
             ("tags", new List<string> { "integration", "mcp" }),
             (
                 "references",
-                new Dictionary<string, string>
+                new Dictionary<string, SkillReference>
                 {
-                    [referencePath] = "# Architecture\nInitial reference."
+                    [referencePath] = new(
+                        "# Architecture\nInitial reference.",
+                        true
+                    )
                 }
             )
         );
@@ -47,12 +50,16 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
             "Initial reference.",
             loaded.References[referencePath].Content.Split('\n').Last()
         );
+        Assert.True(
+            loaded.References[referencePath].LoadAutomatically
+        );
 
         var updated = await CallTool<CommandResult>(
             "skill_reference_update",
             ("skillId", created.SkillId),
             ("relativePath", referencePath),
-            ("content", "# Architecture\nUpdated reference.")
+            ("content", "# Architecture\nUpdated reference."),
+            ("loadAutomatically", false)
         );
         Assert.Equal("OK", updated.Status);
 
@@ -64,6 +71,9 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
         Assert.Contains(
             "Updated reference.",
             loaded.References[referencePath].Content
+        );
+        Assert.False(
+            loaded.References[referencePath].LoadAutomatically
         );
 
         var deleted = await CallTool<CommandResult>(
@@ -88,7 +98,10 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
 
     private sealed record SkillSummary(Guid SkillId, string Name);
 
-    private sealed record SkillReference(string Content);
+    private sealed record SkillReference(
+        string Content,
+        bool LoadAutomatically
+    );
 
     private sealed record SkillDetails
     {

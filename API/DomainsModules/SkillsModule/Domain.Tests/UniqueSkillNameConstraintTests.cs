@@ -13,12 +13,12 @@ public sealed class UniqueSkillNameConstraintTests
     public void Create_AddsNormalizedSkillName()
     {
         var payload = CreatePayload(
-            new SkillCreatedV1(
+            new SkillCreatedV2(
                 "  My-Skill  ",
                 "Description",
                 "Content",
                 [],
-                ImmutableDictionary<string, Models.SkillReference>.Empty
+                ImmutableDictionary<string, Models.SkillReference2>.Empty
             )
         );
         var state = new SkillStateData(
@@ -40,12 +40,12 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("old-name");
         var payload = CreatePayload(
-            new SkillDetailsUpdatedV1
-            {
-                Name = "new-name",
-                Description = "Description",
-                Content = "Content"
-            }
+            new SkillDetailsUpdatedV1(
+                "new-name",
+                "Description",
+                "Content",
+                []
+            )
         );
 
         AddConstraintsToRemove(state, payload);
@@ -66,12 +66,12 @@ public sealed class UniqueSkillNameConstraintTests
     {
         var state = CreateActiveState("My-Skill");
         var payload = CreatePayload(
-            new SkillDetailsUpdatedV1
-            {
-                Name = "  my-skill  ",
-                Description = "Updated description",
-                Content = "Updated content"
-            }
+            new SkillDetailsUpdatedV1(
+                "  my-skill  ",
+                "Updated description",
+                "Updated content",
+                []
+            )
         );
 
         AddConstraintsToRemove(state, payload);

@@ -9,6 +9,7 @@ using SkillsModule.Application.Commands;
 using SkillsModule.Application.Models;
 using SkillsModule.Domain;
 using SkillsModule.Domain.Events;
+using SkillsModule.Domain.Models;
 using UUIDNext;
 
 namespace SkillsModule.Application.Tests;
@@ -35,7 +36,14 @@ public sealed class AddSkillCommandTests
         {
             Name = "skill-name",
             Description = "Description",
-            Content = "Content"
+            Content = "Content",
+            References = new Dictionary<string, SkillReference2>
+            {
+                ["references/example.md"] = new(
+                    "Reference content",
+                    true
+                )
+            }
         };
         var executor = new Executor
         {
@@ -55,7 +63,10 @@ public sealed class AddSkillCommandTests
             result.SkillId,
             payload.EventExecutionInfo.AggregateId.Value
         );
-        Assert.IsType<SkillCreatedV1>(payload.EventData);
+        var created = Assert.IsType<SkillCreatedV2>(payload.EventData);
+        Assert.True(
+            created.References["references/example.md"].LoadAutomatically
+        );
     }
 
     private sealed class CapturingEventStoreWithOutbox

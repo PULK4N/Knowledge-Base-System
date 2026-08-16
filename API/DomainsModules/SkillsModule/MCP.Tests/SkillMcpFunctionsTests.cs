@@ -77,6 +77,30 @@ public sealed class SkillMcpFunctionsTests
         Assert.DoesNotContain("references", required);
     }
 
+    [Theory]
+    [InlineData("skill_reference_add")]
+    [InlineData("skill_reference_update")]
+    public void Reference_write_exposes_optional_automatic_loading(
+        string functionName
+    )
+    {
+        var function = SkillMcpFunctions.Create().Single(
+            function => function.Name == functionName
+        );
+        var schema = function.JsonSchema;
+        var properties = schema.GetProperty("properties");
+        var required = schema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.True(
+            properties.TryGetProperty("loadAutomatically", out _)
+        );
+        Assert.DoesNotContain("loadAutomatically", required);
+    }
+
     [Fact]
     public void Get_exposes_order_number_as_optional()
     {

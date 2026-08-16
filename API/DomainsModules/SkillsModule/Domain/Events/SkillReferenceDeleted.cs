@@ -5,10 +5,10 @@ namespace SkillsModule.Domain.Events;
 
 public interface ISkillReferenceDeleted : IEvent;
 
-public sealed class SkillReferenceDeletedV1 : ISkillReferenceDeleted
+public readonly record struct SkillReferenceDeletedV1(
+    string RelativePath
+) : ISkillReferenceDeleted
 {
-    public required string RelativePath { get; init; }
-
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;

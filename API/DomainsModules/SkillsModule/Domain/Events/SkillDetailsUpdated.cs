@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 
@@ -5,13 +6,13 @@ namespace SkillsModule.Domain.Events;
 
 public interface ISkillDetailsUpdated : IEvent;
 
-public sealed class SkillDetailsUpdatedV1 : ISkillDetailsUpdated
+public readonly record struct SkillDetailsUpdatedV1(
+    string Name,
+    string Description,
+    string Content,
+    ImmutableArray<string> Tags
+) : ISkillDetailsUpdated
 {
-    public required string Name { get; init; }
-    public required string Description { get; init; }
-    public required string Content { get; init; }
-    public List<string> Tags { get; init; } = [];
-
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;
@@ -19,7 +20,7 @@ public sealed class SkillDetailsUpdatedV1 : ISkillDetailsUpdated
         state.Name = Name;
         state.Description = Description;
         state.Content = Content;
-        state.Tags = [.. Tags];
+        state.Tags = Tags.ToList();
 
         return state;
     }

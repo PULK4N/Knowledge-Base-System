@@ -15,7 +15,7 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
     public required string Description { get; set; }
     public required string Content { get; set; }
     public List<string> Tags { get; set; } = [ ];
-    public Dictionary<string, SkillReference> References { get; set; } =
+    public Dictionary<string, SkillReference2> References { get; set; } =
         new(StringComparer.Ordinal);
 
     protected override async Task<object> ExecuteInternal(
@@ -27,7 +27,7 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
         await ExecuteEvent(
             executor,
             skillId,
-            new SkillCreatedV1(
+            new SkillCreatedV2(
                 Name,
                 Description,
                 Content,

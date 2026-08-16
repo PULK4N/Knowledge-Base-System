@@ -8,20 +8,27 @@ public sealed class SkillReferenceMustNotExistValidator : IPreEventValidator
 {
     public EventValidationResult Validate(object stateData, EventPayload payload)
     {
-        if (payload.EventData is not SkillReferenceAddedV1 eventData)
+        var relativePath = payload.EventData switch
+        {
+            SkillReferenceAddedV1 eventData => eventData.RelativePath,
+            SkillReferenceAddedV2 eventData => eventData.RelativePath,
+            _ => null
+        };
+
+        if (relativePath is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(SkillReferenceMustNotExistValidator),
                 false,
                 $"{nameof(SkillReferenceMustNotExistValidator)} can only validate "
-                    + $"{nameof(SkillReferenceAddedV1)} events."
+                    + $"{nameof(ISkillReferenceAdded)} events."
             );
         }
 
         var state = (SkillStateData)stateData;
         var referenceExists = state.References.ContainsKey(
-            eventData.RelativePath
+            relativePath
         );
 
         return EventValidationResult.FromPayload(
@@ -29,7 +36,7 @@ public sealed class SkillReferenceMustNotExistValidator : IPreEventValidator
             nameof(SkillReferenceMustNotExistValidator),
             !referenceExists,
             referenceExists
-                ? $"A skill reference with relative path '{eventData.RelativePath}' already exists."
+                ? $"A skill reference with relative path '{relativePath}' already exists."
                 : null
         );
     }

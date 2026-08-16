@@ -47,12 +47,15 @@ public sealed record SkillDto
         };
 }
 
-public sealed record SkillReferenceDto(string Content)
+public sealed record SkillReferenceDto(
+    string Content,
+    bool LoadAutomatically
+)
 {
     public static SkillReferenceDto FromModel(
-        SkillReference reference
+        SkillReference2 reference
     ) =>
-        new(reference.Content);
+        new(reference.Content, reference.LoadAutomatically);
 }
 
 public sealed record AttachmentDto(

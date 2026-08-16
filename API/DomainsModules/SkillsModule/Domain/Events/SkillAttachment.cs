@@ -6,7 +6,7 @@ namespace SkillsModule.Domain.Events;
 
 public interface ISkillAttachmentAdded : IEvent;
 
-public sealed record SkillAttachmentAddedV1(
+public readonly record struct SkillAttachmentAddedV1(
     Attachment Attachment
 ) : ISkillAttachmentAdded
 {
@@ -25,7 +25,7 @@ public sealed record SkillAttachmentAddedV1(
 
 public interface ISkillAttachmentDeleted : IEvent;
 
-public sealed record SkillAttachmentDeletedV1(
+public readonly record struct SkillAttachmentDeletedV1(
     FileId AttachmentId
 ) : ISkillAttachmentDeleted
 {

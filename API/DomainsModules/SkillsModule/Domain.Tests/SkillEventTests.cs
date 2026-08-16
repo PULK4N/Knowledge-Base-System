@@ -38,14 +38,16 @@ public sealed class SkillEventTests
         Assert.Equal("skill-name", eventData.Name);
         Assert.Equal("changed-name", changedEvent.Name);
         Assert.Equal(["tag"], state.Tags);
-        Assert.Same(reference, Assert.Single(state.References).Value);
+        var storedReference = Assert.Single(state.References).Value;
+        Assert.Equal(reference.Content, storedReference.Content);
+        Assert.False(storedReference.LoadAutomatically);
         Assert.Empty(state.Attachments);
     }
 
     [Fact]
     public void DetailsUpdated_ChangesDetailsAndPreservesReferencesAndAttachments()
     {
-        var reference = new SkillReference("Reference content");
+        var reference = new SkillReference2("Reference content");
         var attachmentId = FileId.FromDatabaseGuid(
             Guid.Parse("22222222-2222-2222-2222-222222222222")
         );
@@ -62,13 +64,12 @@ public sealed class SkillEventTests
             (attachmentId, attachment)
         );
         var tags = new List<string> { "updated" };
-        var eventData = new SkillDetailsUpdatedV1
-        {
-            Name = "updated-name",
-            Description = "Updated description",
-            Content = "Updated content",
-            Tags = tags
-        };
+        var eventData = new SkillDetailsUpdatedV1(
+            "updated-name",
+            "Updated description",
+            "Updated content",
+            tags.ToImmutableArray()
+        );
 
         eventData.Apply(state, EventExecutionInfo);
         tags.Add("changed-after-apply");
@@ -91,13 +92,13 @@ public sealed class SkillEventTests
             [],
             [(attachment.Id, attachment)]
         );
-        var eventData = new SkillUpdatedV1
-        {
-            Name = "updated-name",
-            Description = "Updated description",
-            Content = "Updated content",
-            Tags = ["updated"]
-        };
+        var eventData = new SkillUpdatedV1(
+            "updated-name",
+            "Updated description",
+            "Updated content",
+            ["updated"],
+            ImmutableDictionary<string, SkillReference>.Empty
+        );
 
         eventData.Apply(state, EventExecutionInfo);
 
@@ -110,17 +111,34 @@ public sealed class SkillEventTests
     public void ReferenceAdded_AppendsReference()
     {
         var state = CreateState();
-        var eventData = new SkillReferenceAddedV1
-        {
-            RelativePath = "references/example.md",
-            Content = "Reference content"
-        };
+        var eventData = new SkillReferenceAddedV2(
+            "references/example.md",
+            "Reference content",
+            true
+        );
 
         eventData.Apply(state, EventExecutionInfo);
 
         var reference = Assert.Single(state.References);
         Assert.Equal("references/example.md", reference.Key);
         Assert.Equal("Reference content", reference.Value.Content);
+        Assert.True(reference.Value.LoadAutomatically);
+    }
+
+    [Fact]
+    public void ReferenceAddedV1_DefaultsAutomaticLoadingToFalse()
+    {
+        var state = CreateState();
+        var eventData = new SkillReferenceAddedV1(
+            "references/example.md",
+            "Reference content"
+        );
+
+        eventData.Apply(state, EventExecutionInfo);
+
+        Assert.False(
+            Assert.Single(state.References).Value.LoadAutomatically
+        );
     }
 
     [Fact]
@@ -129,14 +147,13 @@ public sealed class SkillEventTests
         var state = CreateState(
             (
                 "references/example.md",
-                new SkillReference("Original content")
+                new SkillReference2("Original content")
             )
         );
-        var eventData = new SkillReferenceAddedV1
-        {
-            RelativePath = "references/example.md",
-            Content = "Duplicate content"
-        };
+        var eventData = new SkillReferenceAddedV1(
+            "references/example.md",
+            "Duplicate content"
+        );
 
         var exception = Record.Exception(
             () => eventData.Apply(state, EventExecutionInfo)
@@ -152,13 +169,13 @@ public sealed class SkillEventTests
     [Fact]
     public void ReferenceUpdated_ReplacesReferenceContent()
     {
-        var originalReference = new SkillReference("Original content");
+        var originalReference = new SkillReference2("Original content");
         var state = CreateState(("references/example.md", originalReference));
-        var eventData = new SkillReferenceUpdatedV1
-        {
-            RelativePath = "references/example.md",
-            Content = "Updated content"
-        };
+        var eventData = new SkillReferenceUpdatedV2(
+            "references/example.md",
+            "Updated content",
+            true
+        );
 
         eventData.Apply(state, EventExecutionInfo);
 
@@ -166,6 +183,7 @@ public sealed class SkillEventTests
         Assert.NotSame(originalReference, updatedReference.Value);
         Assert.Equal("references/example.md", updatedReference.Key);
         Assert.Equal("Updated content", updatedReference.Value.Content);
+        Assert.True(updatedReference.Value.LoadAutomatically);
     }
 
     [Fact]
@@ -174,13 +192,12 @@ public sealed class SkillEventTests
         var state = CreateState(
             (
                 "references/example.md",
-                new SkillReference("Reference content")
+                new SkillReference2("Reference content")
             )
         );
-        var eventData = new SkillReferenceDeletedV1
-        {
-            RelativePath = "references/example.md"
-        };
+        var eventData = new SkillReferenceDeletedV1(
+            "references/example.md"
+        );
 
         eventData.Apply(state, EventExecutionInfo);
 
@@ -277,18 +294,16 @@ public sealed class SkillEventTests
         var exception = update
             ? Record.Exception(
                 () =>
-                    new SkillReferenceUpdatedV1
-                    {
-                        RelativePath = "references/missing.md",
-                        Content = "Content"
-                    }.Apply(state, EventExecutionInfo)
+                    new SkillReferenceUpdatedV1(
+                        "references/missing.md",
+                        "Content"
+                    ).Apply(state, EventExecutionInfo)
             )
             : Record.Exception(
                 () =>
-                    new SkillReferenceDeletedV1
-                    {
-                        RelativePath = "references/missing.md"
-                    }.Apply(state, EventExecutionInfo)
+                    new SkillReferenceDeletedV1(
+                        "references/missing.md"
+                    ).Apply(state, EventExecutionInfo)
             );
 
         Assert.Null(exception);
@@ -298,16 +313,16 @@ public sealed class SkillEventTests
     private static SkillStateData CreateState() => CreateState([], []);
 
     private static SkillStateData CreateState(
-        params (string RelativePath, SkillReference Reference)[] references
+        params (string RelativePath, SkillReference2 Reference)[] references
     ) => CreateState(references, []);
 
     private static SkillStateData CreateState(
-        (string RelativePath, SkillReference Reference) reference,
+        (string RelativePath, SkillReference2 Reference) reference,
         (FileId Id, Attachment Attachment) attachment
     ) => CreateState([reference], [attachment]);
 
     private static SkillStateData CreateState(
-        (string RelativePath, SkillReference Reference)[] references,
+        (string RelativePath, SkillReference2 Reference)[] references,
         (FileId Id, Attachment Attachment)[] attachments
     ) =>
         new(EventExecutionInfo.AggregateId)

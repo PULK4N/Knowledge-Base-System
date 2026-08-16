@@ -106,12 +106,12 @@ public sealed class GetSkillQueryTests
             ),
             CreatePayload(
                 2,
-                new SkillDetailsUpdatedV1
-                {
-                    Name = "updated-name",
-                    Description = "Updated description",
-                    Content = "Updated content"
-                }
+                new SkillDetailsUpdatedV1(
+                    "updated-name",
+                    "Updated description",
+                    "Updated content",
+                    []
+                )
             ),
             CreatePayload(
                 3,

@@ -11,6 +11,7 @@ public sealed class SkillReferenceMustExistValidator : IPreEventValidator
         var relativePath = payload.EventData switch
         {
             SkillReferenceUpdatedV1 eventData => eventData.RelativePath,
+            SkillReferenceUpdatedV2 eventData => eventData.RelativePath,
             SkillReferenceDeletedV1 eventData => eventData.RelativePath,
             _ => null
         };
@@ -22,7 +23,7 @@ public sealed class SkillReferenceMustExistValidator : IPreEventValidator
                 nameof(SkillReferenceMustExistValidator),
                 false,
                 $"{nameof(SkillReferenceMustExistValidator)} can only validate "
-                    + $"{nameof(SkillReferenceUpdatedV1)} or "
+                    + $"{nameof(ISkillReferenceUpdated)} or "
                     + $"{nameof(SkillReferenceDeletedV1)} events."
             );
         }
