@@ -19,7 +19,7 @@ public static class SkillMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
             "skill_get",
-            "Gets a skill by ID. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a skill by ID. References marked for automatic loading include their content; otherReferences lists the remaining paths without their content. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Task<SkillCreatedCommandResult>>)Add,
@@ -35,6 +35,11 @@ public static class SkillMcpFunctions
             (Func<IServiceProvider, Guid, Task<SkillCommandResult>>)Delete,
             "skill_delete",
             "Deletes an existing skill."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, uint, Task<SkillReferenceDto?>>)GetReference,
+            "skill_reference_get",
+            "Gets one skill reference by skill ID and exact relative path. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)AddReference,
@@ -104,6 +109,7 @@ public static class SkillMcpFunctions
             {
                 query.SkillId = skillId;
                 query.OrderNumber = orderNumber;
+                query.IncludeAllReferences = false;
             }
         );
 
@@ -173,6 +179,35 @@ public static class SkillMcpFunctions
             services,
             command => command.SkillId = skillId
         );
+
+    private static async Task<SkillReferenceDto?> GetReference(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath,
+        uint orderNumber = 0
+    )
+    {
+        var skill = await SkillMcpActionExecutor.ExecuteQuery<
+            GetSkillQuery,
+            SkillDto?
+        >(
+            services,
+            query =>
+            {
+                query.SkillId = skillId;
+                query.OrderNumber = orderNumber;
+                query.IncludeAllReferences = true;
+            }
+        );
+
+        return skill is not null
+            && skill.References.TryGetValue(
+                relativePath,
+                out var reference
+            )
+                ? reference
+                : null;
+    }
 
     private static Task<SkillCommandResult> AddReference(
         IServiceProvider services,

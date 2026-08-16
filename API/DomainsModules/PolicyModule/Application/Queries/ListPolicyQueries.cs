@@ -33,6 +33,38 @@ public sealed class ListGeneralPoliciesQuery(
     }
 }
 
+public sealed class ListPolicyTopicsQuery(
+    StateCalculator stateCalculator,
+    IEventStore eventStore
+) : PolicyQuery<List<PolicyTopicSummaryDto>>(stateCalculator, eventStore)
+{
+    protected override async Task<List<PolicyTopicSummaryDto>> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var state = await Replay<GeneralPoliciesStateData>(
+            await GetEvents([aggregateId]),
+            aggregateId
+        );
+
+        return state?.Topics.Values
+                .OrderBy(
+                    topic => topic.TopicName.Name,
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .ThenBy(
+                    topic => topic.TopicName.Name,
+                    StringComparer.Ordinal
+                )
+                .Select(PolicyTopicSummaryDto.FromModel)
+                .ToList()
+            ?? [];
+    }
+}
+
 public sealed class ListTopicPoliciesQuery(
     StateCalculator stateCalculator,
     IEventStore eventStore

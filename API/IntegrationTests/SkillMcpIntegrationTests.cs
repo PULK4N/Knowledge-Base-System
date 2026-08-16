@@ -5,6 +5,56 @@ namespace McpSkillSystem.IntegrationTests;
 public sealed class SkillMcpIntegrationTests : McpIntegrationTest
 {
     [Fact]
+    public async Task Skill_reference_can_be_read_by_id_and_path()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        const string referencePath = "references/manual.md";
+        var created = await CallTool<SkillCreatedResult>(
+            "skill_add",
+            ("name", $"reference-read-{suffix}"),
+            ("description", "Reference read integration test"),
+            ("content", "# Usage\nLoad references selectively."),
+            ("tags", new List<string>()),
+            (
+                "references",
+                new Dictionary<string, SkillReference>
+                {
+                    [referencePath] = new(
+                        "# Manual reference\nRead this by path.",
+                        false
+                    )
+                }
+            )
+        );
+
+        var skill = await CallTool<SkillDetails>(
+            "skill_get",
+            ("skillId", created.SkillId),
+            ("orderNumber", 0u)
+        );
+        Assert.Empty(skill.References);
+        Assert.Contains(referencePath, skill.OtherReferences);
+
+        var reference = await CallTool<SkillReference>(
+            "skill_reference_get",
+            ("skillId", created.SkillId),
+            ("relativePath", referencePath),
+            ("orderNumber", 0u)
+        );
+        Assert.Equal(
+            "# Manual reference\nRead this by path.",
+            reference.Content
+        );
+        Assert.False(reference.LoadAutomatically);
+
+        var deleted = await CallTool<CommandResult>(
+            "skill_delete",
+            ("skillId", created.SkillId)
+        );
+        Assert.Equal("OK", deleted.Status);
+    }
+
+    [Fact]
     public async Task Skill_can_be_created_read_updated_and_deleted()
     {
         var suffix = Guid.NewGuid().ToString("N")[..8];
@@ -53,6 +103,14 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
         Assert.True(
             loaded.References[referencePath].LoadAutomatically
         );
+        var loadedReference = await CallTool<SkillReference>(
+            "skill_reference_get",
+            ("skillId", created.SkillId),
+            ("relativePath", referencePath),
+            ("orderNumber", 0u)
+        );
+        Assert.Contains("Initial reference.", loadedReference.Content);
+        Assert.True(loadedReference.LoadAutomatically);
 
         var updated = await CallTool<CommandResult>(
             "skill_reference_update",
@@ -76,13 +134,17 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
             ("skillId", created.SkillId),
             ("orderNumber", 0u)
         );
-        Assert.Contains(
-            "Updated reference.",
-            loaded.References[referencePath].Content
+        Assert.False(loaded.References.ContainsKey(referencePath));
+        Assert.Contains(referencePath, loaded.OtherReferences);
+
+        loadedReference = await CallTool<SkillReference>(
+            "skill_reference_get",
+            ("skillId", created.SkillId),
+            ("relativePath", referencePath),
+            ("orderNumber", 0u)
         );
-        Assert.False(
-            loaded.References[referencePath].LoadAutomatically
-        );
+        Assert.Contains("Updated reference.", loadedReference.Content);
+        Assert.False(loadedReference.LoadAutomatically);
 
         var deleted = await CallTool<CommandResult>(
             "skill_delete",
@@ -119,5 +181,6 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
         public string Content { get; init; } = string.Empty;
         public List<string> Tags { get; init; } = [];
         public Dictionary<string, SkillReference> References { get; init; } = [];
+        public List<string> OtherReferences { get; init; } = [];
     }
 }

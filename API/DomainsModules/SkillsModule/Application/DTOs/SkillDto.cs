@@ -16,13 +16,21 @@ public sealed record SkillDto
         get;
         init;
     }
+    public required IReadOnlyCollection<string> OtherReferences
+    {
+        get;
+        init;
+    }
     public required IReadOnlyDictionary<Guid, AttachmentDto> Attachments
     {
         get;
         init;
     }
 
-    public static SkillDto FromStateData(SkillStateData stateData) =>
+    public static SkillDto FromStateData(
+        SkillStateData stateData,
+        bool includeAllReferences = true
+    ) =>
         new()
         {
             Id = stateData.Id.Value,
@@ -31,13 +39,29 @@ public sealed record SkillDto
             Description = stateData.Description,
             Content = stateData.Content,
             Tags = stateData.Tags.ToList(),
-            References = stateData.References.ToDictionary(
-                reference => reference.Key,
-                reference => SkillReferenceDto.FromModel(
-                    reference.Value
+            References = stateData.References
+                .Where(
+                    reference =>
+                        includeAllReferences
+                        || reference.Value.LoadAutomatically
+                )
+                .ToDictionary(
+                    reference => reference.Key,
+                    reference => SkillReferenceDto.FromModel(
+                        reference.Value
+                    ),
+                    StringComparer.Ordinal
                 ),
-                StringComparer.Ordinal
-            ),
+            OtherReferences = includeAllReferences
+                ? []
+                : stateData.References
+                    .Where(
+                        reference =>
+                            !reference.Value.LoadAutomatically
+                    )
+                    .Select(reference => reference.Key)
+                    .Order(StringComparer.Ordinal)
+                    .ToList(),
             Attachments = stateData.Attachments.ToDictionary(
                 attachment => attachment.Key.Value,
                 attachment => AttachmentDto.FromModel(

@@ -11,6 +11,11 @@ internal static class TopicPolicyMcpFunctions
     public static List<AIFunction> Create() =>
         [
             PolicyMcpFunctions.Create(
+                ListTopics,
+                "policy_topic_list",
+                "Lists all existing policy topics with their descriptions and policy counts."
+            ),
+            PolicyMcpFunctions.Create(
             ListPolicies,
             "policy_topic_policy_list",
             "Lists the policies grouped under a topic."
@@ -46,6 +51,14 @@ internal static class TopicPolicyMcpFunctions
             "Removes an existing policy from a topic."
         )
         ];
+
+    private static Task<List<PolicyTopicSummaryDto>> ListTopics(
+        IServiceProvider services
+    ) =>
+        PolicyMcpActionExecutor.ExecuteQuery<
+            ListPolicyTopicsQuery,
+            List<PolicyTopicSummaryDto>
+        >(services, _ => { });
 
     private static Task<List<PolicyDto>?> ListPolicies(
         IServiceProvider services,

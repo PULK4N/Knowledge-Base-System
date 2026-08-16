@@ -472,6 +472,11 @@ public sealed class PolicyCommandTests
             TopicName = "cloud",
             Description = "Cloud policies."
         }.Execute(Executor);
+        await new CreateTopicCommand(handler)
+        {
+            TopicName = "dotnet",
+            Description = ".NET development policies."
+        }.Execute(Executor);
         await new AddTopicPolicyCommand(handler)
         {
             TopicName = "cloud",
@@ -548,6 +553,29 @@ public sealed class PolicyCommandTests
                     TopicName = "cloud"
                 }.Execute(Executor)
             )?.Title
+        );
+        var topics =
+            await new ListPolicyTopicsQuery(
+                CreateCalculator(),
+                eventStore
+            ).Execute(Executor);
+        Assert.Collection(
+            topics,
+            topic =>
+            {
+                Assert.Equal("cloud", topic.TopicName);
+                Assert.Equal("Cloud policies.", topic.Description);
+                Assert.Equal(1, topic.PolicyCount);
+            },
+            topic =>
+            {
+                Assert.Equal("dotnet", topic.TopicName);
+                Assert.Equal(
+                    ".NET development policies.",
+                    topic.Description
+                );
+                Assert.Equal(0, topic.PolicyCount);
+            }
         );
         Assert.Equal(
             "Project policy",
