@@ -11,6 +11,7 @@ public sealed class SkillMcpFunctionsTests
         "skill_add",
         "skill_update",
         "skill_delete",
+        "skill_reference_get",
         "skill_reference_add",
         "skill_reference_update",
         "skill_reference_auto_load_update",
@@ -134,6 +135,23 @@ public sealed class SkillMcpFunctionsTests
             .ToList();
 
         Assert.Contains("skillId", required);
+        Assert.DoesNotContain("orderNumber", required);
+    }
+
+    [Fact]
+    public void Reference_get_requires_skill_id_and_path_but_not_order_number()
+    {
+        var function = SkillMcpFunctions.Create().Single(
+            function => function.Name == "skill_reference_get"
+        );
+        var required = function.JsonSchema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("skillId", required);
+        Assert.Contains("relativePath", required);
         Assert.DoesNotContain("orderNumber", required);
     }
 }

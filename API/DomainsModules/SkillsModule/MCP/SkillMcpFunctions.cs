@@ -37,6 +37,11 @@ public static class SkillMcpFunctions
             "Deletes an existing skill."
         ),
         CreateFunction(
+            (Func<IServiceProvider, Guid, string, uint, Task<SkillReferenceDto?>>)GetReference,
+            "skill_reference_get",
+            "Gets one skill reference by skill ID and exact relative path. Set orderNumber to zero for the latest state or to an event order number for historical state."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)AddReference,
             "skill_reference_add",
             "Adds a text reference at a relative path. loadAutomatically defaults to false."
@@ -174,6 +179,35 @@ public static class SkillMcpFunctions
             services,
             command => command.SkillId = skillId
         );
+
+    private static async Task<SkillReferenceDto?> GetReference(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath,
+        uint orderNumber = 0
+    )
+    {
+        var skill = await SkillMcpActionExecutor.ExecuteQuery<
+            GetSkillQuery,
+            SkillDto?
+        >(
+            services,
+            query =>
+            {
+                query.SkillId = skillId;
+                query.OrderNumber = orderNumber;
+                query.IncludeAllReferences = true;
+            }
+        );
+
+        return skill is not null
+            && skill.References.TryGetValue(
+                relativePath,
+                out var reference
+            )
+                ? reference
+                : null;
+    }
 
     private static Task<SkillCommandResult> AddReference(
         IServiceProvider services,
