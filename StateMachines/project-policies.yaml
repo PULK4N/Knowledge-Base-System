@@ -1,64 +1,46 @@
 id: project-policies-state-machine
 stateData: ProjectPoliciesStateData
+projections:
+  - ProjectPolicyTextProjector
+  - ProjectTopicProjector
+  - PolicyProjectSummaryProjector
 events:
   ProjectCreatedV1:
-    projections:
-      - ProjectPolicyTextProjector
-      - ProjectTopicProjector
-      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustNotExistValidator
     uniqueConstraints:
       - UniqueProjectNameConstraint
   ProjectUpdatedV1:
-    projections:
-      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
     uniqueConstraints:
       - UniqueProjectNameConstraint
   ProjectDeletedV1:
-    projections:
-      - ProjectPolicyTextProjector
-      - ProjectTopicProjector
-      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
     uniqueConstraints:
       - UniqueProjectNameConstraint
   RepositoryAddedToProjectV1:
-    projections:
-      - PolicyProjectSummaryProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectRepositoryMustNotExistValidator
   ProjectPolicyAddedV1:
-    projections:
-      - ProjectPolicyTextProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectPolicyMustNotExistValidator
   ProjectPolicyUpdatedV1:
-    projections:
-      - ProjectPolicyTextProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectPolicyMustExistValidator
   ProjectPolicyRemovedV1:
-    projections:
-      - ProjectPolicyTextProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectPolicyMustExistValidator
   TopicRelationAddedToProjectV1:
-    projections:
-      - ProjectTopicProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectTopicMustNotExistValidator
   TopicRelationRemovedFromProjectV1:
-    projections:
-      - ProjectTopicProjector
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectTopicMustExistValidator

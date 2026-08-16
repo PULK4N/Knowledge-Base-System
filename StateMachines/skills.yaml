@@ -1,62 +1,40 @@
 id: skills-state-machine
 stateData: SkillStateData
+projections:
+  - SkillSummaryProjector
+  - SkillSearchProjector
 events:
   SkillCreatedV1:
-    projections:
-      - SkillSummaryProjector
-      - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillCreatedV2:
-    projections:
-      - SkillSummaryProjector
-      - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillUpdatedV1:
-    projections:
-      - SkillSummaryProjector
-      - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillDetailsUpdatedV1:
-    projections:
-      - SkillSummaryProjector
-      - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillDeletedV1:
-    projections:
-      - SkillSummaryProjector
-      - SkillSearchProjector
     uniqueConstraints:
       - UniqueSkillNameConstraint
   SkillReferenceAddedV1:
-    projections:
-      - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustNotExistValidator
   SkillReferenceAddedV2:
-    projections:
-      - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustNotExistValidator
   SkillReferenceUpdatedV1:
-    projections:
-      - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustExistValidator
   SkillReferenceUpdatedV2:
-    projections:
-      - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustExistValidator
   SkillReferenceAutoLoadUpdatedV1:
     preEventValidators:
       - SkillReferenceMustExistValidator
   SkillReferenceDeletedV1:
-    projections:
-      - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustExistValidator
   SkillAttachmentAddedV1:

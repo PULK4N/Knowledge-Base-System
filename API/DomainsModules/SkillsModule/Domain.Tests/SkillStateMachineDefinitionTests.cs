@@ -21,6 +21,10 @@ public sealed class SkillStateMachineDefinitionTests
 
         Assert.Equal(nameof(SkillStateData), definition.StateData);
         Assert.Equal(
+            ["SkillSummaryProjector", "SkillSearchProjector"],
+            definition.Projections
+        );
+        Assert.Equal(
             [
                 nameof(SkillCreatedV1),
                 nameof(SkillCreatedV2),
@@ -101,36 +105,8 @@ public sealed class SkillStateMachineDefinitionTests
             definition.Events[nameof(SkillAttachmentDeletedV1)].PreEventValidators
         );
         Assert.All(
-            new[]
-            {
-                nameof(SkillCreatedV1),
-                nameof(SkillCreatedV2),
-                nameof(SkillUpdatedV1),
-                nameof(SkillDetailsUpdatedV1),
-                nameof(SkillDeletedV1),
-                nameof(SkillReferenceAddedV1),
-                nameof(SkillReferenceAddedV2),
-                nameof(SkillReferenceUpdatedV1),
-                nameof(SkillReferenceUpdatedV2),
-                nameof(SkillReferenceDeletedV1)
-            },
-            eventName => Assert.Contains(
-                "SkillSearchProjector",
-                definition.Events[eventName].Projections
-            )
-        );
-        Assert.DoesNotContain(
-            "SkillSearchProjector",
-            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV1)]
-                .Projections
-        );
-        Assert.DoesNotContain(
-            "SkillSearchProjector",
-            definition.Events[nameof(SkillAttachmentAddedV1)].Projections
-        );
-        Assert.DoesNotContain(
-            "SkillSearchProjector",
-            definition.Events[nameof(SkillAttachmentDeletedV1)].Projections
+            definition.Events.Values,
+            eventDefinition => Assert.Empty(eventDefinition.Projections)
         );
         Assert.All(
             definition.Events.Values,

@@ -8,7 +8,7 @@ namespace MemoryModule.Domain.Tests;
 public sealed class MemoryStateMachineDefinitionTests
 {
     [Fact]
-    public void Memory_events_trigger_search_projection()
+    public void Memory_events_trigger_search_and_summary_projections()
     {
         StateDataTypeContainer.AddStateDataType(typeof(MemoryStateData));
         StateDataTypeContainer.AddStateDataType(
@@ -29,18 +29,18 @@ public sealed class MemoryStateMachineDefinitionTests
 
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
         Assert.Equal(
-            [nameof(MemorySearchProjector)],
-            definition.Events[nameof(CodexPromptHookRecordedV1)].Projections
+            [
+                nameof(MemorySearchProjector),
+                nameof(MemorySummaryProjector)
+            ],
+            definition.Projections
         );
-        Assert.Equal(
-            [nameof(MemorySearchProjector)],
-            definition.Events[nameof(CodexMemoryMigratedV1)].Projections
-        );
-        Assert.Equal(
-            [nameof(MemorySearchProjector)],
-            definition.Events[nameof(ChatSummaryAddedV1)].Projections
+        Assert.All(
+            definition.Events.Values,
+            eventDefinition => Assert.Empty(eventDefinition.Projections)
         );
     }
 
     private sealed class MemorySearchProjector;
+    private sealed class MemorySummaryProjector;
 }
