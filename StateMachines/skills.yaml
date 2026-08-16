@@ -51,6 +51,9 @@ events:
       - SkillSearchProjector
     preEventValidators:
       - SkillReferenceMustExistValidator
+  SkillReferenceAutoLoadUpdatedV1:
+    preEventValidators:
+      - SkillReferenceMustExistValidator
   SkillReferenceDeletedV1:
     projections:
       - SkillSearchProjector

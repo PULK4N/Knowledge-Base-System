@@ -47,6 +47,11 @@ public static class SkillMcpFunctions
             "Updates an existing skill reference's text content and automatic-loading setting."
         ),
         CreateFunction(
+            (Func<IServiceProvider, Guid, string, bool, Task<SkillCommandResult>>)UpdateReferenceAutoLoad,
+            "skill_reference_auto_load_update",
+            "Changes whether an existing skill reference loads automatically without changing its content."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, string, Task<SkillCommandResult>>)DeleteReference,
             "skill_reference_delete",
             "Deletes an existing text reference from a skill."
@@ -225,6 +230,25 @@ public static class SkillMcpFunctions
             {
                 command.SkillId = skillId;
                 command.RelativePath = relativePath;
+            }
+        );
+
+    private static Task<SkillCommandResult> UpdateReferenceAutoLoad(
+        IServiceProvider services,
+        Guid skillId,
+        string relativePath,
+        bool loadAutomatically
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            UpdateSkillReferenceAutoLoadCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.RelativePath = relativePath;
+                command.LoadAutomatically = loadAutomatically;
             }
         );
 

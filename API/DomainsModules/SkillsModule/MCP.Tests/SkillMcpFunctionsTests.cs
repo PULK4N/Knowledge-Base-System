@@ -13,6 +13,7 @@ public sealed class SkillMcpFunctionsTests
         "skill_delete",
         "skill_reference_add",
         "skill_reference_update",
+        "skill_reference_auto_load_update",
         "skill_reference_delete",
         "skill_attachment_add",
         "skill_attachment_delete"
@@ -99,6 +100,24 @@ public sealed class SkillMcpFunctionsTests
             properties.TryGetProperty("loadAutomatically", out _)
         );
         Assert.DoesNotContain("loadAutomatically", required);
+    }
+
+    [Fact]
+    public void Auto_load_update_requires_explicit_automatic_loading_value()
+    {
+        var function = SkillMcpFunctions.Create().Single(
+            function =>
+                function.Name == "skill_reference_auto_load_update"
+        );
+        var required = function.JsonSchema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("skillId", required);
+        Assert.Contains("relativePath", required);
+        Assert.Contains("loadAutomatically", required);
     }
 
     [Fact]

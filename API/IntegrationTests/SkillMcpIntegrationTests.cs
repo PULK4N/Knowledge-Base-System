@@ -59,9 +59,17 @@ public sealed class SkillMcpIntegrationTests : McpIntegrationTest
             ("skillId", created.SkillId),
             ("relativePath", referencePath),
             ("content", "# Architecture\nUpdated reference."),
-            ("loadAutomatically", false)
+            ("loadAutomatically", true)
         );
         Assert.Equal("OK", updated.Status);
+
+        var autoLoadUpdated = await CallTool<CommandResult>(
+            "skill_reference_auto_load_update",
+            ("skillId", created.SkillId),
+            ("relativePath", referencePath),
+            ("loadAutomatically", false)
+        );
+        Assert.Equal("OK", autoLoadUpdated.Status);
 
         loaded = await CallTool<SkillDetails>(
             "skill_get",

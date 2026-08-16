@@ -31,6 +31,7 @@ public sealed class SkillStateMachineDefinitionTests
                 nameof(SkillReferenceAddedV2),
                 nameof(SkillReferenceUpdatedV1),
                 nameof(SkillReferenceUpdatedV2),
+                nameof(SkillReferenceAutoLoadUpdatedV1),
                 nameof(SkillReferenceDeletedV1),
                 nameof(SkillAttachmentAddedV1),
                 nameof(SkillAttachmentDeletedV1)
@@ -61,6 +62,10 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.Empty(definition.Events[nameof(SkillReferenceAddedV2)].UniqueConstraints);
         Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV1)].UniqueConstraints);
         Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV2)].UniqueConstraints);
+        Assert.Empty(
+            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV1)]
+                .UniqueConstraints
+        );
         Assert.Empty(definition.Events[nameof(SkillReferenceDeletedV1)].UniqueConstraints);
         Assert.Equal(
             [nameof(SkillReferenceMustNotExistValidator)],
@@ -77,6 +82,11 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.Equal(
             [nameof(SkillReferenceMustExistValidator)],
             definition.Events[nameof(SkillReferenceUpdatedV2)].PreEventValidators
+        );
+        Assert.Equal(
+            [nameof(SkillReferenceMustExistValidator)],
+            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV1)]
+                .PreEventValidators
         );
         Assert.Equal(
             [nameof(SkillReferenceMustExistValidator)],
@@ -111,6 +121,11 @@ public sealed class SkillStateMachineDefinitionTests
         );
         Assert.DoesNotContain(
             "SkillSearchProjector",
+            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV1)]
+                .Projections
+        );
+        Assert.DoesNotContain(
+            "SkillSearchProjector",
             definition.Events[nameof(SkillAttachmentAddedV1)].Projections
         );
         Assert.DoesNotContain(
@@ -142,15 +157,26 @@ public sealed class SkillStateMachineDefinitionTests
                 true
             )
         );
+        var autoLoadUpdatedPayload = CreatePayload(
+            new SkillReferenceAutoLoadUpdatedV1(
+                "references/example.md",
+                false
+            )
+        );
 
         var addedValidators = await provider.GetPreEventStateValidators(addedPayload);
         var updatedValidators = await provider.GetPreEventStateValidators(updatedPayload);
+        var autoLoadUpdatedValidators =
+            await provider.GetPreEventStateValidators(autoLoadUpdatedPayload);
 
         Assert.IsType<SkillReferenceMustNotExistValidator>(
             Assert.Single(addedValidators)
         );
         Assert.IsType<SkillReferenceMustExistValidator>(
             Assert.Single(updatedValidators)
+        );
+        Assert.IsType<SkillReferenceMustExistValidator>(
+            Assert.Single(autoLoadUpdatedValidators)
         );
         Assert.Empty(await provider.GetPostEventStateValidators(addedPayload));
     }
@@ -229,6 +255,9 @@ public sealed class SkillStateMachineDefinitionTests
             EventTypeContainer.AddEventType(typeof(SkillReferenceAddedV2));
             EventTypeContainer.AddEventType(typeof(SkillReferenceUpdatedV1));
             EventTypeContainer.AddEventType(typeof(SkillReferenceUpdatedV2));
+            EventTypeContainer.AddEventType(
+                typeof(SkillReferenceAutoLoadUpdatedV1)
+            );
             EventTypeContainer.AddEventType(typeof(SkillReferenceDeletedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV1));

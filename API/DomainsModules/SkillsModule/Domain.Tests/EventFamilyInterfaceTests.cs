@@ -17,6 +17,7 @@ public sealed class EventFamilyInterfaceTests
         typeof(SkillReferenceAddedV2),
         typeof(SkillReferenceUpdatedV1),
         typeof(SkillReferenceUpdatedV2),
+        typeof(SkillReferenceAutoLoadUpdatedV1),
         typeof(SkillReferenceDeletedV1),
         typeof(SkillAttachmentAddedV1),
         typeof(SkillAttachmentDeletedV1)
@@ -33,6 +34,7 @@ public sealed class EventFamilyInterfaceTests
             typeof(ISkillDeleted),
             typeof(ISkillReferenceAdded),
             typeof(ISkillReferenceUpdated),
+            typeof(ISkillReferenceAutoLoadUpdated),
             typeof(ISkillReferenceDeleted),
             typeof(ISkillAttachmentAdded),
             typeof(ISkillAttachmentDeleted)

@@ -187,6 +187,27 @@ public sealed class SkillEventTests
     }
 
     [Fact]
+    public void ReferenceAutoLoadUpdated_ChangesOnlyAutomaticLoading()
+    {
+        var originalReference = new SkillReference2(
+            "Original content",
+            false
+        );
+        var state = CreateState(("references/example.md", originalReference));
+        var eventData = new SkillReferenceAutoLoadUpdatedV1(
+            "references/example.md",
+            true
+        );
+
+        eventData.Apply(state, EventExecutionInfo);
+
+        var updatedReference = Assert.Single(state.References).Value;
+        Assert.NotSame(originalReference, updatedReference);
+        Assert.Equal("Original content", updatedReference.Content);
+        Assert.True(updatedReference.LoadAutomatically);
+    }
+
+    [Fact]
     public void ReferenceDeleted_RemovesReference()
     {
         var state = CreateState(

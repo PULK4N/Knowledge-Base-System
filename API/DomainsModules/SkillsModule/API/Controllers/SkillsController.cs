@@ -102,6 +102,20 @@ public sealed class SkillsController(
         return Ok(result);
     }
 
+    [HttpPost("{skillId:guid}/references/auto-load")]
+    public async Task<ActionResult<SkillCommandResult>> UpdateReferenceAutoLoad(
+        Guid skillId,
+        [FromBody] UpdateSkillReferenceAutoLoadRequest body,
+        [FromServices] UpdateSkillReferenceAutoLoadCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.RelativePath = body.RelativePath;
+        command.LoadAutomatically = body.LoadAutomatically;
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
     [HttpGet("{skillId:guid}")]
     public async Task<ActionResult<SkillDto>> Get(
         Guid skillId,

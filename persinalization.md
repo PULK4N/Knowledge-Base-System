@@ -22,10 +22,9 @@ Write policies as short, direct, actionable instructions. Do not store temporary
 
 ## Session startup
 
-1. Before inspecting code, running commands, or changing files, require the policy context loaded by the MCP Skill System pre-request hook. The hook performs policy retrieval once using the host-provided `cwd`; do not call `policy_get_by_repository` or supply a repository path yourself.
-2. If the hook context, MCP, trusted repository context, or policy retrieval is unavailable, stop immediately and tell the user that authoritative policies could not be loaded.
-3. If repository mapping is required, stop. Show the returned projects and repository paths, then ask the user to select one or provide a unique new project name. Never guess. Create or update the mapping, then retry policy retrieval.
-4. Use the returned policies for the rest of the session; do not retrieve them again on every turn.
+1. If the hook context, MCP, trusted repository context, or policy retrieval is unavailable, stop immediately and tell the user that authoritative policies could not be loaded.
+2. If repository mapping is required, stop. Show the returned projects and repository paths, then ask the user to select one or provide a unique new project name. Never guess. Create or update the mapping, then retry policy retrieval.
+3. Use the returned policies for the rest of the session; do not retrieve them again on every turn. And when compacting changes, always keep them.
 
 ## Working rules
 

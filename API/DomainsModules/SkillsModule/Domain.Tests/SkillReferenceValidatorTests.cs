@@ -84,6 +84,26 @@ public sealed class SkillReferenceValidatorTests
         Assert.Null(result.FailureReason);
     }
 
+    [Fact]
+    public void MustExist_AcceptsAutomaticLoadingUpdate()
+    {
+        var payload = CreatePayload(
+            new SkillReferenceAutoLoadUpdatedV1(
+                "references/example.md",
+                true
+            )
+        );
+        var validator = new SkillReferenceMustExistValidator();
+
+        var result = validator.Validate(
+            CreateState("references/example.md"),
+            payload
+        );
+
+        Assert.True(result.Succeded);
+        Assert.Null(result.FailureReason);
+    }
+
     private static EventPayload CreatePayload(
         EventSourcing.Shared.Interfaces.IEvent eventData
     ) =>
