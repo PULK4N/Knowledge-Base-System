@@ -40,19 +40,54 @@ services:
       timeout: 5s
       retries: 10
 
+  pgweb:
+    image: sosedoff/pgweb:latest
+    container_name: skill-memory-pgweb
+    restart: unless-stopped
+    environment:
+      PGWEB_DATABASE_URL: postgres://skill_memory:skill_memory@postgres:5432/skill_memory?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - nc
+        - -vz
+        - 127.0.0.1
+        - "8081"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   ollama:
     image: ollama/ollama:latest
     container_name: skill-memory-ollama
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    entrypoint:
+      - /bin/sh
+      - /usr/local/bin/ollama-gpu-entrypoint.sh
+    command:
+      - serve
     ports:
       - "11435:11434"
     volumes:
       - skill-memory-ollama-data:/root/.ollama
+      - ./scripts/ollama-gpu-entrypoint.sh:/usr/local/bin/ollama-gpu-entrypoint.sh:ro
     healthcheck:
       test:
-        - CMD
-        - ollama
-        - list
+        - CMD-SHELL
+        - test -f /tmp/ollama-gpu-ready && ollama list
       interval: 5s
       timeout: 5s
       retries: 10
