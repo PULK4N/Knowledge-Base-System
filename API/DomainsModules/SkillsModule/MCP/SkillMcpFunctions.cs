@@ -19,7 +19,7 @@ public static class SkillMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
             "skill_get",
-            "Gets a skill by ID. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a skill by ID. References marked for automatic loading include their content; otherReferences lists the remaining paths without their content. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Task<SkillCreatedCommandResult>>)Add,
@@ -104,6 +104,7 @@ public static class SkillMcpFunctions
             {
                 query.SkillId = skillId;
                 query.OrderNumber = orderNumber;
+                query.IncludeAllReferences = false;
             }
         );
 

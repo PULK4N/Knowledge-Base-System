@@ -13,6 +13,7 @@ public sealed class GetSkillQuery(StateCalculator stateCalculator, IEventStore e
 {
     public required Guid SkillId { get; set; }
     public uint OrderNumber { get; set; }
+    public bool IncludeAllReferences { get; set; } = true;
 
     public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(true);
 
@@ -39,6 +40,9 @@ public sealed class GetSkillQuery(StateCalculator stateCalculator, IEventStore e
 
         var stateInfo = await stateCalculator.Calculate(eventsToReplay, [ ]);
 
-        return SkillDto.FromStateData((SkillStateData)stateInfo.StateData);
+        return SkillDto.FromStateData(
+            (SkillStateData)stateInfo.StateData,
+            IncludeAllReferences
+        );
     }
 }

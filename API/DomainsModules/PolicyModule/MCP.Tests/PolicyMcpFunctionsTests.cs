@@ -10,6 +10,7 @@ public sealed class PolicyMcpFunctionsTests
         "policy_general_add",
         "policy_general_update",
         "policy_general_remove",
+        "policy_topic_list",
         "policy_topic_policy_list",
         "policy_topic_create",
         "policy_topic_update",
@@ -55,6 +56,18 @@ public sealed class PolicyMcpFunctionsTests
                 tool.ProtocolTool.InputSchema
             );
         }
+    }
+
+    [Fact]
+    public void Topic_list_does_not_require_arguments()
+    {
+        var function = PolicyMcpFunctions.Create().Single(
+            function => function.Name == "policy_topic_list"
+        );
+        var properties = function.JsonSchema
+            .GetProperty("properties");
+
+        Assert.Empty(properties.EnumerateObject());
     }
 
     [Fact]

@@ -15,7 +15,7 @@ public sealed class SkillSearchProjectorTests
         );
 
     [Fact]
-    public async Task Update_projects_main_markdown_and_references_but_not_attachments()
+    public async Task Update_projects_all_references_regardless_of_automatic_loading_but_not_attachments()
     {
         var state = CreateSkill();
         var embeddingGenerator = new FakeEmbeddingGenerator();
@@ -39,6 +39,12 @@ public sealed class SkillSearchProjectorTests
             document =>
                 document.SourcePath == "references/architecture.md"
                 && document.Text.Contains("# Architecture")
+        );
+        Assert.Contains(
+            repository.Documents,
+            document =>
+                document.SourcePath == "references/usage.md"
+                && document.Text.Contains("# Usage reference")
         );
         Assert.All(
             repository.Documents,
@@ -127,7 +133,15 @@ public sealed class SkillSearchProjectorTests
         state.References.Add(
             "references/architecture.md",
             new SkillReference2(
-                "# Architecture\nKeep domain and persistence separate."
+                "# Architecture\nKeep domain and persistence separate.",
+                false
+            )
+        );
+        state.References.Add(
+            "references/usage.md",
+            new SkillReference2(
+                "# Usage reference\nLoad this automatically.",
+                true
             )
         );
         state.Attachments.Add(

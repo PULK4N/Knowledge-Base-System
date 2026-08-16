@@ -41,6 +41,31 @@ public sealed class GetSkillQueryTests
 
         Assert.Equal("updated-name", skill.Name);
         Assert.Single(skill.Attachments);
+        Assert.Equal(2, skill.References.Count);
+        Assert.Contains("references/automatic.md", skill.References);
+        Assert.Contains("references/manual.md", skill.References);
+        Assert.Empty(skill.OtherReferences);
+    }
+
+    [Fact]
+    public async Task Execute_WithoutAllReferences_ReturnsOnlyAutomaticallyLoadedReferences()
+    {
+        var query = CreateQuery(
+            CreateEvents(),
+            includeAllReferences: false
+        );
+
+        var skill = Assert.IsType<SkillDto>(
+            await query.Execute(Executor)
+        );
+
+        var reference = Assert.Single(skill.References);
+        Assert.Equal("references/automatic.md", reference.Key);
+        Assert.True(reference.Value.LoadAutomatically);
+        Assert.Equal(
+            ["references/manual.md"],
+            skill.OtherReferences
+        );
     }
 
     [Fact]
@@ -68,7 +93,8 @@ public sealed class GetSkillQueryTests
 
     private static GetSkillQuery CreateQuery(
         List<EventPayload> events,
-        uint orderNumber = 0
+        uint orderNumber = 0,
+        bool includeAllReferences = true
     )
     {
         var eventStore = new StubEventStore(events);
@@ -82,7 +108,8 @@ public sealed class GetSkillQueryTests
         return new GetSkillQuery(stateCalculator, eventStore)
         {
             SkillId = SkillId.Value,
-            OrderNumber = orderNumber
+            OrderNumber = orderNumber,
+            IncludeAllReferences = includeAllReferences
         };
     }
 
@@ -96,12 +123,25 @@ public sealed class GetSkillQueryTests
         [
             CreatePayload(
                 1,
-                new SkillCreatedV1(
+                new SkillCreatedV2(
                     "original-name",
                     "Description",
                     "Content",
                     ImmutableArray<string>.Empty,
-                    ImmutableDictionary<string, SkillReference>.Empty
+                    ImmutableDictionary<string, SkillReference2>.Empty
+                        .Add(
+                            "references/automatic.md",
+                            new SkillReference2(
+                                "Automatically loaded reference",
+                                true
+                            )
+                        )
+                        .Add(
+                            "references/manual.md",
+                            new SkillReference2(
+                                "Manually loaded reference"
+                            )
+                        )
                 )
             ),
             CreatePayload(
