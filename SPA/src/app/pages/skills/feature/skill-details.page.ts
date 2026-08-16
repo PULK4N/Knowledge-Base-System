@@ -2,7 +2,6 @@ import { AsyncPipe, DecimalPipe, KeyValuePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  BehaviorSubject,
   Observable,
   catchError,
   combineLatest,
@@ -21,9 +20,9 @@ import {
   MarkdownBlock,
   parseMarkdownBlocks,
 } from '../ui/markdown-blocks';
+import { MarkdownContentComponent } from '../ui/markdown-content.component';
 import { ShortIdPipe } from '../ui/short-id.pipe';
-
-type SkillTab = 'content' | 'references' | 'attachments';
+import { parseSkillTab } from './skill-tabs';
 
 interface SkillDetailsView {
   readonly skill: Skill;
@@ -32,7 +31,14 @@ interface SkillDetailsView {
 
 @Component({
   selector: 'app-skill-details-page',
-  imports: [AsyncPipe, DecimalPipe, KeyValuePipe, RouterLink, ShortIdPipe],
+  imports: [
+    AsyncPipe,
+    DecimalPipe,
+    KeyValuePipe,
+    MarkdownContentComponent,
+    RouterLink,
+    ShortIdPipe,
+  ],
   templateUrl: './skill-details.page.html',
   styleUrl: './skill-details.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,7 +46,11 @@ interface SkillDetailsView {
 export class SkillDetailsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly skills = inject(SkillService);
-  private readonly activeTabSubject = new BehaviorSubject<SkillTab>('content');
+
+  private readonly activeTab$ = this.route.queryParamMap.pipe(
+    map(params => parseSkillTab(params.get('tab'))),
+    distinctUntilChanged(),
+  );
 
   private readonly skillState$: Observable<LoadState<SkillDetailsView>> =
     this.route.paramMap.pipe(
@@ -69,10 +79,6 @@ export class SkillDetailsPage {
 
   protected readonly vm$ = combineLatest({
     state: this.skillState$,
-    activeTab: this.activeTabSubject,
+    activeTab: this.activeTab$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
-
-  protected selectTab(tab: SkillTab): void {
-    this.activeTabSubject.next(tab);
-  }
 }

@@ -44,80 +44,47 @@
       </section>
 
       <div class="tabs" role="tablist" aria-label="Skill sections">
-        <button
-          type="button"
+        <a
           role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'content' }"
+          queryParamsHandling="merge"
           [attr.aria-selected]="vm.activeTab === 'content'"
           [class.active]="vm.activeTab === 'content'"
-          (click)="selectTab('content')"
         >
           Content
-        </button>
-        <button
-          type="button"
+        </a>
+        <a
           role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'references' }"
+          queryParamsHandling="merge"
           [attr.aria-selected]="vm.activeTab === 'references'"
           [class.active]="vm.activeTab === 'references'"
-          (click)="selectTab('references')"
         >
           References
           <span>{{ (vm.state.data.skill.references | keyvalue).length }}</span>
-        </button>
-        <button
-          type="button"
+        </a>
+        <a
           role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'attachments' }"
+          queryParamsHandling="merge"
           [attr.aria-selected]="vm.activeTab === 'attachments'"
           [class.active]="vm.activeTab === 'attachments'"
-          (click)="selectTab('attachments')"
         >
           Attachments
           <span>{{ (vm.state.data.skill.attachments | keyvalue).length }}</span>
-        </button>
+        </a>
       </div>
 
       <section class="tab-panel surface-card">
         @switch (vm.activeTab) {
           @case ('content') {
-            <div class="markdown-content">
-              @for (block of vm.state.data.blocks; track $index) {
-                @switch (block.kind) {
-                  @case ('heading') {
-                    @switch (block.level) {
-                      @case (1) { <h2>{{ block.text }}</h2> }
-                      @case (2) { <h3>{{ block.text }}</h3> }
-                      @default { <h4>{{ block.text }}</h4> }
-                    }
-                  }
-                  @case ('paragraph') {
-                    <p>{{ block.text }}</p>
-                  }
-                  @case ('unordered-list') {
-                    <ul>
-                      @for (item of block.items ?? []; track $index) {
-                        <li>{{ item }}</li>
-                      }
-                    </ul>
-                  }
-                  @case ('ordered-list') {
-                    <ol>
-                      @for (item of block.items ?? []; track $index) {
-                        <li>{{ item }}</li>
-                      }
-                    </ol>
-                  }
-                  @case ('code') {
-                    <div class="code-block">
-                      @if (block.language) {
-                        <span>{{ block.language }}</span>
-                      }
-                      <pre><code>{{ block.text }}</code></pre>
-                    </div>
-                  }
-                }
-              } @empty {
-                <div class="empty-tab">This skill has no content.</div>
-              }
-            </div>
+            <app-markdown-content
+              [blocks]="vm.state.data.blocks"
+              emptyMessage="This skill has no content."
+            />
           }
           @case ('references') {
             <div class="reference-list">
@@ -125,10 +92,19 @@
                 reference of vm.state.data.skill.references | keyvalue;
                 track reference.key
               ) {
-                <article class="reference-item">
-                  <h3>{{ reference.key }}</h3>
-                  <pre>{{ reference.value.content }}</pre>
-                </article>
+                <a
+                  class="reference-item"
+                  [routerLink]="[
+                    '/skills',
+                    vm.state.data.skill.id,
+                    'references',
+                  ]"
+                  [queryParams]="{ path: reference.key }"
+                >
+                  <span class="reference-icon" aria-hidden="true">§</span>
+                  <span>{{ reference.key }}</span>
+                  <span class="open-reference" aria-hidden="true">→</span>
+                </a>
               } @empty {
                 <div class="empty-tab">This skill has no references.</div>
               }

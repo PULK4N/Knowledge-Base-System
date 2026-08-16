@@ -10,6 +10,13 @@ export const SKILLS_ROUTES: Routes = [
       ),
   },
   {
+    path: ':skillId/references',
+    loadComponent: () =>
+      import('./feature/skill-reference.page').then(
+        module => module.SkillReferencePage,
+      ),
+  },
+  {
     path: ':skillId',
     loadComponent: () =>
       import('./feature/skill-details.page').then(

@@ -1,0 +1,44 @@
+@if (state$ | async; as state) {
+  @switch (state.status) {
+    @case ('loading') {
+      <a class="back-link" routerLink="/skills">
+        <span aria-hidden="true">←</span> Back to skills
+      </a>
+      <div class="request-message reference-message">Loading reference…</div>
+    }
+    @case ('error') {
+      <a class="back-link" routerLink="/skills">
+        <span aria-hidden="true">←</span> Back to skills
+      </a>
+      <div class="request-message error reference-message">
+        <div>
+          <strong>Reference could not be loaded</strong>
+          <p>{{ state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <a
+        class="back-link"
+        [routerLink]="['/skills', state.data.skill.id]"
+        [queryParams]="{ tab: 'references' }"
+      >
+        <span aria-hidden="true">←</span>
+        Back to {{ state.data.skill.name }}
+      </a>
+
+      <header class="reference-heading">
+        <p class="eyebrow">Skill reference</p>
+        <h1 class="page-heading">{{ state.data.name }}</h1>
+        <p class="reference-path">{{ state.data.relativePath }}</p>
+      </header>
+
+      <section class="reference-content surface-card">
+        <app-markdown-content
+          [blocks]="state.data.blocks"
+          emptyMessage="This reference has no content."
+        />
+      </section>
+    }
+  }
+}

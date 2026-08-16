@@ -86,7 +86,7 @@
   border-bottom: 1px solid #d9dee8;
 }
 
-.tabs button {
+.tabs a {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -98,14 +98,15 @@
   background: transparent;
   cursor: pointer;
   font-size: 17px;
+  text-decoration: none;
 }
 
-.tabs button.active {
+.tabs a.active {
   color: var(--indigo);
   border-bottom-color: var(--indigo);
 }
 
-.tabs button span {
+.tabs a span {
   display: grid;
   min-width: 26px;
   height: 26px;
@@ -122,85 +123,6 @@
   padding: 30px;
 }
 
-.markdown-content {
-  max-width: 920px;
-  color: #172039;
-  font-size: 17px;
-  line-height: 1.7;
-}
-
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4 {
-  margin: 28px 0 10px;
-  line-height: 1.25;
-}
-
-.markdown-content h2:first-child,
-.markdown-content h3:first-child,
-.markdown-content h4:first-child {
-  margin-top: 0;
-}
-
-.markdown-content h2 {
-  font-size: 28px;
-}
-
-.markdown-content h3 {
-  font-size: 22px;
-}
-
-.markdown-content h4 {
-  font-size: 18px;
-}
-
-.markdown-content p {
-  margin: 12px 0;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0 22px;
-  padding-left: 28px;
-}
-
-.markdown-content li::marker {
-  color: #354ea1;
-}
-
-.code-block {
-  position: relative;
-  margin: 20px 0;
-  overflow: hidden;
-  border: 1px solid #263b5e;
-  border-radius: 10px;
-  color: #eaf1ff;
-  background: #0b1830;
-}
-
-.code-block > span {
-  display: block;
-  padding: 8px 16px;
-  border-bottom: 1px solid #263b5e;
-  color: #9cafcf;
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.code-block pre,
-.reference-item pre {
-  margin: 0;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.code-block pre {
-  padding: 18px;
-}
-
 .reference-list,
 .attachment-list {
   display: grid;
@@ -214,19 +136,44 @@
   background: #fcfcfd;
 }
 
-.reference-item h3 {
-  margin: 0;
-  padding: 16px 18px;
-  border-bottom: 1px solid #e0e4eb;
-  font-size: 17px;
+.reference-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 14px 18px;
+  color: #172039;
+  font-size: 16px;
+  font-weight: 650;
+  text-decoration: none;
   overflow-wrap: anywhere;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
-.reference-item pre {
-  max-height: 360px;
-  padding: 18px;
-  color: #2d3852;
-  font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+.reference-item:hover {
+  border-color: #aab2ff;
+  box-shadow: 0 10px 24px rgb(43 57 112 / 9%);
+  transform: translateY(-1px);
+}
+
+.reference-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--indigo);
+  background: #f0efff;
+  font-size: 20px;
+}
+
+.open-reference {
+  color: var(--indigo);
+  font-size: 21px;
 }
 
 .attachment-item {
@@ -295,7 +242,7 @@
     overflow-x: auto;
   }
 
-  .tabs button {
+  .tabs a {
     padding: 0 14px;
     white-space: nowrap;
   }
