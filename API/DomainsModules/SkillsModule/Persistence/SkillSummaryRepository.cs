@@ -22,6 +22,40 @@ public sealed class SkillSummaryRepository(
             )
             .ToListAsync();
 
+    public async Task<SkillSummarySearchResult> Search(
+        int page,
+        int pageSize,
+        string? search,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = dbContext.SkillSummaries.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalizedSearch = search.Trim().ToLowerInvariant();
+            query = query.Where(
+                summary => summary.Name.ToLower().Contains(normalizedSearch)
+            );
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(summary => summary.Name)
+            .ThenBy(summary => summary.SkillAggregateId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(
+                summary => new SkillsModule.Persistence.Interfaces.SkillSummary(
+                    summary.SkillAggregateId,
+                    summary.Name
+                )
+            )
+            .ToListAsync(cancellationToken);
+
+        return new SkillSummarySearchResult(items, totalCount);
+    }
+
     public async Task Write(List<SkillStateData> skills)
     {
         var context = dbContext as DbContext

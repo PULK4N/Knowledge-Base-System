@@ -96,6 +96,11 @@ public sealed class InjectionSetupTests
         Assert.IsType<MemorySearch>(
             scope.ServiceProvider.GetRequiredService<IMemorySearch>()
         );
+        Assert.IsType<PostgreSqlMemorySummaryRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IMemorySummaryRepository
+            >()
+        );
         Assert.IsType<PostgreSqlSkillSearchRepository>(
             scope.ServiceProvider.GetRequiredService<
                 ISkillSearchRepository
@@ -118,6 +123,7 @@ public sealed class InjectionSetupTests
         );
         Assert.Contains(typeof(SkillSummaryProjector), projectorTypes);
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
+        Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
     }
 
@@ -173,6 +179,25 @@ public sealed class InjectionSetupTests
                 .FindEntityType(typeof(SkillSummaryEntry))!
                 .GetIndexes()
                 .Count(index => index.IsUnique)
+        );
+
+        var memorySummary = context.Model.FindEntityType(
+            typeof(MemorySummaryEntry)
+        );
+        Assert.NotNull(memorySummary);
+        Assert.Equal(
+            nameof(MemorySummaryEntry.MemoryAggregateId),
+            Assert.Single(memorySummary!.FindPrimaryKey()!.Properties).Name
+        );
+        Assert.Contains(
+            memorySummary.GetIndexes(),
+            index => index.Properties.Single().Name
+                == nameof(MemorySummaryEntry.ThreadId)
+        );
+        Assert.Contains(
+            memorySummary.GetIndexes(),
+            index => index.Properties.Single().Name
+                == nameof(MemorySummaryEntry.LastActivityTimestamp)
         );
 
         var memorySearch = context.GetService<IDesignTimeModel>()

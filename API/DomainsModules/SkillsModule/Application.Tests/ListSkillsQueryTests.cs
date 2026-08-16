@@ -42,11 +42,56 @@ public sealed class ListSkillsQueryTests
         );
     }
 
+    [Fact]
+    public async Task Search_returns_pagination_metadata_and_mapped_summaries()
+    {
+        var skillId = Guid.Parse(
+            "11111111-1111-1111-1111-111111111111"
+        );
+        var repository = new StubSkillSummaryRepository(
+            [new SkillSummary(skillId, "event-sourcing")]
+        );
+        var query = new SearchSkillsQuery(repository)
+        {
+            Page = 2,
+            PageSize = 5,
+            Search = "event"
+        };
+
+        var result = await query.Execute(
+            new Executor { Id = EventExecutor.New() }
+        );
+
+        Assert.Equal(2, result.Page);
+        Assert.Equal(5, result.PageSize);
+        Assert.Equal(6, result.TotalCount);
+        Assert.Equal(
+            new SkillSummaryDto(skillId, "event-sourcing"),
+            Assert.Single(result.Items)
+        );
+        Assert.Equal((2, 5, "event"), repository.LastSearchRequest);
+    }
+
     private sealed class StubSkillSummaryRepository(
         List<SkillSummary> skills
     ) : ISkillSummaryRepository
     {
+        public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
+
         public Task<List<SkillSummary>> List() =>
             Task.FromResult(skills);
+
+        public Task<SkillSummarySearchResult> Search(
+            int page,
+            int pageSize,
+            string? search,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastSearchRequest = (page, pageSize, search);
+            return Task.FromResult(
+                new SkillSummarySearchResult(skills, 6)
+            );
+        }
     }
 }

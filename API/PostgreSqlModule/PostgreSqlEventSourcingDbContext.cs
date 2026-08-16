@@ -164,6 +164,20 @@ internal sealed class PostgreSqlEventSourcingDbContext(
             }
         );
 
+        modelBuilder.Entity<MemorySummaryEntry>(
+            memory =>
+            {
+                memory.ToTable("MemorySummaryEntries");
+                memory.HasKey(summary => summary.MemoryAggregateId);
+                memory
+                    .Property(summary => summary.MemoryAggregateId)
+                    .ValueGeneratedNever();
+                memory.Property(summary => summary.Summary).IsRequired();
+                memory.HasIndex(summary => summary.ThreadId);
+                memory.HasIndex(summary => summary.LastActivityTimestamp);
+            }
+        );
+
         modelBuilder.Entity<SkillSearchEntry>(
             skill =>
             {

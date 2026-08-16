@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using SkillsModule.API.Mapping;
 using SkillsModule.API.Requests;
@@ -16,6 +18,23 @@ public sealed class SkillsController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<SkillSummaryDto>>> List(
+        [FromServices] SearchSkillsQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
+    )
+    {
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
+
+        return Ok(await Execute(query));
+    }
+
     [HttpPost]
     public async Task<ActionResult<SkillCreatedCommandResult>> Add(
         [FromBody] AddSkillCommand command

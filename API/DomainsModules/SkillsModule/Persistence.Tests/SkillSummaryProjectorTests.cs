@@ -75,6 +75,34 @@ public sealed class SkillSummaryProjectorTests
         Assert.Empty(await repository.List());
     }
 
+    [Fact]
+    public async Task Search_filters_orders_and_returns_total_count()
+    {
+        await using var context = CreateContext();
+        var repository = new SkillSummaryRepository(context);
+        await repository.Write(
+            [
+                CreateSkill(
+                    "11111111-1111-1111-1111-111111111111",
+                    "zeta"
+                ),
+                CreateSkill(
+                    "22222222-2222-2222-2222-222222222222",
+                    "event-alpha"
+                ),
+                CreateSkill(
+                    "33333333-3333-3333-3333-333333333333",
+                    "event-beta"
+                )
+            ]
+        );
+
+        var result = await repository.Search(2, 1, "EVENT");
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("event-beta", Assert.Single(result.Items).Name);
+    }
+
     private static TestSkillsDbContext CreateContext()
     {
         var context = new TestSkillsDbContext(

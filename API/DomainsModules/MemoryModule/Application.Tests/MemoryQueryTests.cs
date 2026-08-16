@@ -26,6 +26,48 @@ public sealed class MemoryQueryTests
         };
 
     [Fact]
+    public async Task Search_returns_memory_summaries_and_pagination_metadata()
+    {
+        var memoryId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("11111111-1111-1111-1111-111111111111")
+        );
+        var threadId = new ThreadId(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        );
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult(
+                [
+                    new MemorySummary(
+                        memoryId,
+                        threadId,
+                        "Session summary",
+                        3,
+                        DateTime.UnixEpoch,
+                        DateTime.UnixEpoch.AddMinutes(2),
+                        DateTime.UnixEpoch.AddMinutes(3),
+                        DateTime.UnixEpoch.AddMinutes(3)
+                    )
+                ],
+                6
+            )
+        );
+        var query = new SearchMemoriesQuery(repository)
+        {
+            Page = 2,
+            PageSize = 5,
+            Search = "session"
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(2, result.Page);
+        Assert.Equal(5, result.PageSize);
+        Assert.Equal(6, result.TotalCount);
+        Assert.Equal(memoryId.Value, Assert.Single(result.Items).MemoryId);
+        Assert.Equal((2, 5, "session"), repository.LastSearchRequest);
+    }
+
+    [Fact]
     public async Task Search_returns_two_distinct_sessions_from_one_search()
     {
         var first = CreateMemory(
@@ -269,6 +311,30 @@ public sealed class MemoryQueryTests
             LastOptions = options;
             return Task.FromResult(results);
         }
+    }
+
+    private sealed class FakeMemorySummaryRepository(
+        MemorySummarySearchResult result
+    ) : IMemorySummaryRepository
+    {
+        public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
+
+        public Task<MemorySummarySearchResult> Search(
+            int page,
+            int pageSize,
+            string? search,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastSearchRequest = (page, pageSize, search);
+            return Task.FromResult(result);
+        }
+
+        public Task Write(
+            IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            IReadOnlyCollection<MemorySummary> summaries,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
     }
 
     private sealed class FakeEventStore(

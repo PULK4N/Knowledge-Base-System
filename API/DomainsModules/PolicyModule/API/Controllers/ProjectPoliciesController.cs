@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
@@ -14,13 +16,38 @@ public sealed class ProjectPoliciesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<PolicyProjectSummaryDto>>> List(
+        [FromServices] SearchPolicyProjectsQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
+    )
+    {
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
+
+        return Ok(await Execute(query));
+    }
+
     [HttpGet("{projectId:guid}/policies")]
-    public async Task<ActionResult<List<PolicyDto>>> ListPolicies(
+    public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         Guid projectId,
-        [FromServices] ListProjectPoliciesQuery query
+        [FromServices] SearchProjectPoliciesQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
     )
     {
         query.ProjectId = projectId;
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
 
         var policies = await Execute(query);
 

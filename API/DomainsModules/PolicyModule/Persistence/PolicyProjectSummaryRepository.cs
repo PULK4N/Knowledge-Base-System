@@ -30,6 +30,39 @@ public sealed class PolicyProjectSummaryRepository(IPolicyModuleDbContext dbCont
             .ToList();
     }
 
+    public async Task<PolicyProjectSummarySearchResult> Search(
+        int page,
+        int pageSize,
+        string? search,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = dbContext.PolicyProjectSummaries.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalizedSearch = search.Trim().ToLowerInvariant();
+            query = query.Where(
+                summary =>
+                    summary.ProjectName.ToLower().Contains(normalizedSearch)
+                    || summary.RepositoryPathsJson.ToLower().Contains(normalizedSearch)
+            );
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var entries = await query
+            .OrderBy(summary => summary.ProjectName)
+            .ThenBy(summary => summary.ProjectAggregateId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        var items = entries
+            .Select(ToReadModel)
+            .ToList();
+
+        return new PolicyProjectSummarySearchResult(items, totalCount);
+    }
+
     public async Task Write(List<ProjectPoliciesStateData> projects)
     {
         var context =
@@ -69,4 +102,15 @@ public sealed class PolicyProjectSummaryRepository(IPolicyModuleDbContext dbCont
         if (transaction is not null)
             await transaction.CommitAsync();
     }
+
+    private static PolicyProjectSummary ToReadModel(
+        PolicyProjectSummaryEntry summary
+    ) =>
+        new(
+            summary.ProjectAggregateId,
+            summary.ProjectName,
+            JsonSerializer.Deserialize<List<string>>(
+                summary.RepositoryPathsJson
+            ) ?? []
+        );
 }

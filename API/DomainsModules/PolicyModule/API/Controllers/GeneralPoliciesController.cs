@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
@@ -15,10 +17,21 @@ public sealed class GeneralPoliciesController(
 ) : ActionController(executorProvider)
 {
     [HttpGet]
-    public async Task<ActionResult<List<PolicyDto>>> List(
-        [FromServices] ListGeneralPoliciesQuery query
-    ) =>
-        Ok(await Execute(query));
+    public async Task<ActionResult<PagedResult<PolicyDto>>> List(
+        [FromServices] SearchGeneralPoliciesQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
+    )
+    {
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
+
+        return Ok(await Execute(query));
+    }
 
     [HttpPost]
     public async Task<ActionResult<PolicyAddedCommandResult>> Add(

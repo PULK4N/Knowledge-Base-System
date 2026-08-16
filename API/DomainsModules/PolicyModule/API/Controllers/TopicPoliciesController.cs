@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
@@ -14,13 +16,38 @@ public sealed class TopicPoliciesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<PolicyTopicSummaryDto>>> List(
+        [FromServices] SearchPolicyTopicsQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
+    )
+    {
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
+
+        return Ok(await Execute(query));
+    }
+
     [HttpGet("{topicName}/policies")]
-    public async Task<ActionResult<List<PolicyDto>>> ListPolicies(
+    public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         string topicName,
-        [FromServices] ListTopicPoliciesQuery query
+        [FromServices] SearchTopicPoliciesQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
     )
     {
         query.TopicName = topicName;
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
 
         var policies = await Execute(query);
 

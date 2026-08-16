@@ -91,6 +91,10 @@ public static class InjectionSetup
             IMemorySearchRepository,
             PostgreSqlMemorySearchRepository
         >();
+        services.AddScoped<
+            IMemorySummaryRepository,
+            PostgreSqlMemorySummaryRepository
+        >();
         services.RegisterTextEmbeddings(configuration);
         services.RegisterMemoryModulePersistence();
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(

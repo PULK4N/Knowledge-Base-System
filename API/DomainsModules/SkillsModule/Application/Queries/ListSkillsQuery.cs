@@ -16,3 +16,35 @@ public sealed class ListSkillsQuery(
             .Select(SkillSummaryDto.FromReadModel)
             .ToList();
 }
+
+public sealed class SearchSkillsQuery(
+    ISkillSummaryRepository skillSummaryRepository
+) : Query<PagedResult<SkillSummaryDto>>
+{
+    public int Page { get; set; } = Pagination.DefaultPage;
+    public int PageSize { get; set; } = Pagination.DefaultPageSize;
+    public string? Search { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(Pagination.IsValid(Page, PageSize));
+
+    protected override async Task<PagedResult<SkillSummaryDto>> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var result = await skillSummaryRepository.Search(
+            Page,
+            PageSize,
+            Search
+        );
+
+        return new PagedResult<SkillSummaryDto>(
+            result.Items
+                .Select(SkillSummaryDto.FromReadModel)
+                .ToList(),
+            Page,
+            PageSize,
+            result.TotalCount
+        );
+    }
+}
