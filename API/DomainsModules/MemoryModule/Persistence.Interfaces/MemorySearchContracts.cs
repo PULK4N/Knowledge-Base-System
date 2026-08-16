@@ -49,7 +49,7 @@ public sealed record HybridMemorySearchOptions
 
 public interface IMemorySearchRepository
 {
-    Task Replace(
+    Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,
         IReadOnlyCollection<MemorySearchDocument> documents,
         CancellationToken cancellationToken = default

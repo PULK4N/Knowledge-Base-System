@@ -9,7 +9,7 @@ public sealed class SkillSummaryProjector(
 ) : IProjector
 {
     public Task Update(List<StateInfo> stateInfos) =>
-        repository.Replace(
+        repository.Write(
             stateInfos
                 .Select(stateInfo => stateInfo.StateData)
                 .OfType<SkillStateData>()

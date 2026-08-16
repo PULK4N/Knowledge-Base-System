@@ -22,8 +22,15 @@ public sealed class SkillSummaryRepository(
             )
             .ToListAsync();
 
-    public async Task Replace(List<SkillStateData> skills)
+    public async Task Write(List<SkillStateData> skills)
     {
+        var context = dbContext as DbContext
+            ?? throw new InvalidOperationException(
+                $"{nameof(ISkillsModuleDbContext)} must be implemented by a {nameof(DbContext)}."
+            );
+        await using var transaction = context.Database.CurrentTransaction is null
+            ? await context.Database.BeginTransactionAsync()
+            : null;
         var skillIds = skills
             .Select(skill => skill.Id.Value)
             .ToList();
@@ -48,5 +55,8 @@ public sealed class SkillSummaryRepository(
                 )
         );
         await dbContext.SaveChangesAsync();
+
+        if (transaction is not null)
+            await transaction.CommitAsync();
     }
 }

@@ -49,7 +49,7 @@ public sealed class SkillSearchProjector(
             )
             .ToList();
 
-        await repository.Replace(
+        await repository.Write(
             skills.Select(skill => skill.Id).Distinct().ToList(),
             documents
         );

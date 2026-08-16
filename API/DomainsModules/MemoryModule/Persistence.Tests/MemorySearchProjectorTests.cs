@@ -190,7 +190,7 @@ public sealed class MemorySearchProjectorTests
         public IReadOnlyCollection<AggregateId> AggregateIds { get; private set; } = [];
         public IReadOnlyCollection<MemorySearchDocument> Documents { get; private set; } = [];
 
-        public Task Replace(
+        public Task Write(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
             IReadOnlyCollection<MemorySearchDocument> documents,
             CancellationToken cancellationToken = default

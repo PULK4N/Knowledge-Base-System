@@ -54,6 +54,27 @@ public sealed class SkillSummaryProjectorTests
         );
     }
 
+    [Fact]
+    public async Task Write_joins_existing_transaction_without_committing_it()
+    {
+        await using var context = CreateContext();
+        var repository = new SkillSummaryRepository(context);
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        var skill = CreateSkill(
+            "11111111-1111-1111-1111-111111111111",
+            "transactional-skill"
+        );
+
+        await repository.Write([skill]);
+
+        Assert.Same(transaction, context.Database.CurrentTransaction);
+
+        await transaction.RollbackAsync();
+        context.ChangeTracker.Clear();
+
+        Assert.Empty(await repository.List());
+    }
+
     private static TestSkillsDbContext CreateContext()
     {
         var context = new TestSkillsDbContext(

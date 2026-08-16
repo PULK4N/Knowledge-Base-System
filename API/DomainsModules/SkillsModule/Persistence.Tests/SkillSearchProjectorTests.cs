@@ -173,7 +173,7 @@ public sealed class SkillSearchProjectorTests
         public IReadOnlyCollection<AggregateId> AggregateIds { get; private set; } = [];
         public IReadOnlyCollection<SkillSearchDocument> Documents { get; private set; } = [];
 
-        public Task Replace(
+        public Task Write(
             IReadOnlyCollection<AggregateId> skillAggregateIds,
             IReadOnlyCollection<SkillSearchDocument> documents,
             CancellationToken cancellationToken = default

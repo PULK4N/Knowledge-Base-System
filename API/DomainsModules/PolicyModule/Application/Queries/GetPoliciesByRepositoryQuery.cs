@@ -59,7 +59,7 @@ public sealed class GetPoliciesByRepositoryQuery(
             );
 
         var policies = await policyTextRepository.Get(projectAggregateId)
-            ?? throw CreateNotFoundException();
+            ?? throw await CreateNotFoundException();
 
         return GetPoliciesByRepositoryResult.Found(
             RepositoryPath,
@@ -67,8 +67,11 @@ public sealed class GetPoliciesByRepositoryQuery(
         );
     }
 
-    private NotFoundException CreateNotFoundException() =>
-        new(
-            $"Policies for repository '{RepositoryPath}' were not found."
+    private async Task<NotFoundException> CreateNotFoundException() =>
+        new($"""
+            Policies for repository '{RepositoryPath}' were not found. 
+            Create a project for this repository or connect the repository path to the one of the existing projects.
+            Existing project names: {string.Join(", ", (await projectSummaryRepository.List()).Select(p => p.ProjectName))}
+        """
         );
 }

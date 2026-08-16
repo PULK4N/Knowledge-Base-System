@@ -88,7 +88,7 @@ public sealed class MemorySearchProjector(
             )
             .ToList();
 
-        await repository.Replace(
+        await repository.Write(
             memories.Select(memory => memory.Id).Distinct().ToList(),
             documents
         );

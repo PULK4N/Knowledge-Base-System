@@ -12,7 +12,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
     EventSourcingDbContext dbContext
 ) : IMemorySearchRepository
 {
-    public async Task Replace(
+    public async Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,
         IReadOnlyCollection<MemorySearchDocument> documents,
         CancellationToken cancellationToken = default
@@ -26,6 +26,10 @@ internal sealed class PostgreSqlMemorySearchRepository(
         if (aggregateIds.Count == 0)
             return;
 
+        await using var transaction = dbContext.Database.CurrentTransaction is null
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+
         await dbContext.Set<MemorySearchEntry>()
             .Where(entry => aggregateIds.Contains(entry.MemoryAggregateId))
             .ExecuteDeleteAsync(cancellationToken);
@@ -35,6 +39,9 @@ internal sealed class PostgreSqlMemorySearchRepository(
             cancellationToken
         );
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<MemorySearchCandidate>> SearchText(

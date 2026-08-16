@@ -12,7 +12,7 @@ internal sealed class PostgreSqlSkillSearchRepository(
     EventSourcingDbContext dbContext
 ) : ISkillSearchRepository
 {
-    public async Task Replace(
+    public async Task Write(
         IReadOnlyCollection<AggregateId> skillAggregateIds,
         IReadOnlyCollection<SkillSearchDocument> documents,
         CancellationToken cancellationToken = default
@@ -26,6 +26,10 @@ internal sealed class PostgreSqlSkillSearchRepository(
         if (aggregateIds.Count == 0)
             return;
 
+        await using var transaction = dbContext.Database.CurrentTransaction is null
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+
         await dbContext.Set<SkillSearchEntry>()
             .Where(entry => aggregateIds.Contains(entry.SkillAggregateId))
             .ExecuteDeleteAsync(cancellationToken);
@@ -35,6 +39,9 @@ internal sealed class PostgreSqlSkillSearchRepository(
             cancellationToken
         );
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<SkillSearchCandidate>> SearchText(

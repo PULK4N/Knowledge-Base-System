@@ -37,7 +37,7 @@ public sealed record HybridSkillSearchOptions
 
 public interface ISkillSearchRepository
 {
-    Task Replace(
+    Task Write(
         IReadOnlyCollection<AggregateId> skillAggregateIds,
         IReadOnlyCollection<SkillSearchDocument> documents,
         CancellationToken cancellationToken = default
