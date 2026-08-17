@@ -47,6 +47,13 @@ export const routes: Routes = [
             module => module.MEMORIES_ROUTES,
           ),
       },
+      {
+        path: 'administration',
+        loadChildren: () =>
+          import('./pages/administration/administration.routes').then(
+            module => module.ADMINISTRATION_ROUTES,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

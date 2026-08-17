@@ -1,0 +1,106 @@
+<header>
+  <p class="eyebrow">Operations</p>
+  <h1 class="page-heading">Administration</h1>
+  <p class="page-subtitle">
+    Run projection processing from the latest event of each aggregate
+  </p>
+</header>
+
+@if (vm$ | async; as vm) {
+  @switch (vm.projections.status) {
+    @case ('loading') {
+      <section class="request-message administration-message">
+        Loading projections…
+      </section>
+    }
+    @case ('error') {
+      <section class="request-message error administration-message">
+        <div>
+          <strong>Projections could not be loaded</strong>
+          <p>{{ vm.projections.message }}</p>
+        </div>
+      </section>
+    }
+    @case ('success') {
+      <section class="projection-panel surface-card">
+        <div class="panel-heading">
+          <div>
+            <h2>Projection groups</h2>
+            <p>Each run queues the latest event for every aggregate.</p>
+          </div>
+          <span class="group-count">
+            {{ vm.projections.data.length }}
+            {{ vm.projections.data.length === 1 ? 'group' : 'groups' }}
+          </span>
+        </div>
+
+        <div class="projection-list" aria-label="Projection groups">
+          @for (
+            group of vm.projections.data;
+            track group.stateMachineId
+          ) {
+            <article class="projection-group">
+              <div class="group-copy">
+                <span class="state-machine-label">State machine</span>
+                <h3>{{ group.stateMachineId }}</h3>
+                <ul class="projection-names" aria-label="Projections">
+                  @for (projection of group.projectionNames; track projection) {
+                    <li>{{ projection }}</li>
+                  }
+                </ul>
+              </div>
+
+              <div class="group-action">
+                <button
+                  type="button"
+                  [disabled]="vm.execution.status === 'executing'"
+                  (click)="execute(group.stateMachineId)"
+                >
+                  @if (
+                    vm.execution.status === 'executing' &&
+                    vm.execution.stateMachineId === group.stateMachineId
+                  ) {
+                    Queuing…
+                  } @else {
+                    Run projections
+                  }
+                </button>
+
+                @if (
+                  vm.execution.status === 'success' &&
+                  vm.execution.stateMachineId === group.stateMachineId
+                ) {
+                  <p class="execution-status success" role="status">
+                    Queued {{ vm.execution.queuedAggregateCount }}
+                    {{
+                      vm.execution.queuedAggregateCount === 1
+                        ? 'aggregate'
+                        : 'aggregates'
+                    }}.
+                  </p>
+                }
+
+                @if (
+                  vm.execution.status === 'error' &&
+                  vm.execution.stateMachineId === group.stateMachineId
+                ) {
+                  <p class="execution-status error" role="alert">
+                    {{ vm.execution.message }}
+                  </p>
+                }
+              </div>
+            </article>
+          } @empty {
+            <div class="empty-state">
+              <strong>No projections configured</strong>
+              <span>
+                Projection groups will appear when state machines declare
+                projectors.
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+}
