@@ -7,6 +7,7 @@ export interface SkillSummary {
 
 export interface SkillReference {
   readonly content: string;
+  readonly loadAutomatically: boolean;
 }
 
 export interface SkillAttachment {
@@ -48,4 +49,21 @@ export interface SkillDto {
   readonly tags: readonly string[];
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
+}
+
+export interface UpdateSkillRequest {
+  readonly name: string;
+  readonly description: string;
+  readonly content: string;
+  readonly tags: readonly string[];
+}
+
+export interface UpdateSkillReferenceRequest {
+  readonly relativePath: string;
+  readonly content: string;
+  readonly loadAutomatically: boolean;
+}
+
+export interface SkillCommandResult {
+  readonly status: string;
 }

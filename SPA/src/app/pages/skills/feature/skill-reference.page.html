@@ -28,9 +28,28 @@
       </a>
 
       <header class="reference-heading">
-        <p class="eyebrow">Skill reference</p>
-        <h1 class="page-heading">{{ state.data.name }}</h1>
-        <p class="reference-path">{{ state.data.relativePath }}</p>
+        <div>
+          <p class="eyebrow">Skill reference</p>
+          <h1 class="page-heading">{{ state.data.name }}</h1>
+          <p class="reference-path">{{ state.data.relativePath }}</p>
+          <span class="auto-load-status">
+            {{ state.data.loadAutomatically ? 'Loads automatically' : 'Manual load' }}
+          </span>
+        </div>
+        @if (!state.data.skill.isDeleted) {
+          <a
+            class="edit-link"
+            [routerLink]="[
+              '/skills',
+              state.data.skill.id,
+              'references',
+              'edit',
+            ]"
+            [queryParams]="{ path: state.data.relativePath }"
+          >
+            Edit reference
+          </a>
+        }
       </header>
 
       <section class="reference-content surface-card">

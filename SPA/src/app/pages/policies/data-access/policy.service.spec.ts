@@ -6,6 +6,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { PolicyService } from './policy.service';
+import { PolicyScope } from './policy.models';
 
 describe('PolicyService', () => {
   let service: PolicyService;
@@ -80,5 +81,79 @@ describe('PolicyService', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular', 'Event sourcing'],
     });
+  });
+
+  it.each<{
+    scope: PolicyScope;
+    path: string;
+    identity: Readonly<Record<string, string>>;
+  }>([
+    {
+      scope: { kind: 'general' },
+      path: '/api/policies/general/update',
+      identity: {},
+    },
+    {
+      scope: { kind: 'topic', topicName: 'Angular' },
+      path: '/api/policies/topics/policies/update',
+      identity: { topicName: 'Angular' },
+    },
+    {
+      scope: { kind: 'project', projectId: 'project-1' },
+      path: '/api/policies/projects/policies/update',
+      identity: { projectId: 'project-1' },
+    },
+  ])('updates a $scope.kind policy', async ({ scope, path, identity }) => {
+    const policy = {
+      policyId: 'policy-1',
+      title: 'Use immutable state',
+      description: 'Replace state instead of mutating it.',
+    };
+    const resultPromise = firstValueFrom(
+      service.updatePolicy(scope, policy),
+    );
+    const request = http.expectOne(path);
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ ...identity, ...policy });
+    request.flush({ status: 'OK' });
+
+    await expect(resultPromise).resolves.toEqual({ status: 'OK' });
+  });
+
+  it.each<{
+    scope: PolicyScope;
+    path: string;
+    identity: Readonly<Record<string, string>>;
+  }>([
+    {
+      scope: { kind: 'general' },
+      path: '/api/policies/general/remove',
+      identity: {},
+    },
+    {
+      scope: { kind: 'topic', topicName: 'Angular' },
+      path: '/api/policies/topics/policies/remove',
+      identity: { topicName: 'Angular' },
+    },
+    {
+      scope: { kind: 'project', projectId: 'project-1' },
+      path: '/api/policies/projects/policies/remove',
+      identity: { projectId: 'project-1' },
+    },
+  ])('removes a $scope.kind policy', async ({ scope, path, identity }) => {
+    const resultPromise = firstValueFrom(
+      service.removePolicy(scope, 'policy-1'),
+    );
+    const request = http.expectOne(path);
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      ...identity,
+      policyId: 'policy-1',
+    });
+    request.flush({ status: 'OK' });
+
+    await expect(resultPromise).resolves.toEqual({ status: 'OK' });
   });
 });

@@ -82,4 +82,30 @@ describe('EntityStore', () => {
     );
     expect(result?.items).toEqual([existing]);
   });
+
+  it('removes an entity from detail state and every cached search', async () => {
+    const removed = { id: 'skill-1', name: 'Angular' };
+    const retained = { id: 'skill-2', name: 'Event sourcing' };
+    store.replaceSearch('skills:all', 'skill', page([removed, retained]));
+    store.replaceSearch('skills:angular', 'skill', page([removed]));
+
+    store.remove('skill', 'SKILL-1');
+
+    const detail = await firstValueFrom(
+      store.entity$<TestEntity>('skill', removed.id),
+    );
+    const all = await firstValueFrom(
+      store.search$<TestEntity>('skills:all'),
+    );
+    const angular = await firstValueFrom(
+      store.search$<TestEntity>('skills:angular'),
+    );
+
+    expect(detail).toBeUndefined();
+    expect(all?.items).toEqual([retained]);
+    expect(all?.totalCount).toBe(1);
+    expect(angular?.items).toEqual([]);
+    expect(angular?.totalCount).toBe(0);
+    expect(angular?.totalPages).toBe(0);
+  });
 });

@@ -61,3 +61,13 @@ export interface PolicyProjectDetailsDto extends PolicyProjectSummaryDto {
   readonly projectDescription: string;
   readonly topicNames: readonly string[];
 }
+
+export interface PolicyCommandResult {
+  readonly status: string;
+}
+
+export interface UpdatePolicyRequest {
+  readonly policyId: string;
+  readonly title: string;
+  readonly description: string;
+}

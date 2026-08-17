@@ -17,13 +17,23 @@
     }
     @case ('success') {
       <header class="details-heading">
-        <h1 class="page-heading">{{ vm.state.data.skill.name }}</h1>
-        <p class="skill-id">
-          Skill ID ·
-          <span [title]="vm.state.data.skill.id">
-            {{ vm.state.data.skill.id | shortId: 8 }}
-          </span>
-        </p>
+        <div>
+          <h1 class="page-heading">{{ vm.state.data.skill.name }}</h1>
+          <p class="skill-id">
+            Skill ID ·
+            <span [title]="vm.state.data.skill.id">
+              {{ vm.state.data.skill.id | shortId: 8 }}
+            </span>
+          </p>
+        </div>
+        @if (!vm.state.data.skill.isDeleted) {
+          <a
+            class="edit-link"
+            [routerLink]="['/skills', vm.state.data.skill.id, 'edit']"
+          >
+            Edit skill
+          </a>
+        }
       </header>
 
       <section class="skill-summary surface-card">

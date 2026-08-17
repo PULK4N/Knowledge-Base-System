@@ -1,6 +1,17 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, concat, map, of, switchMap, take, tap } from 'rxjs';
+import {
+  Observable,
+  concat,
+  filter,
+  ignoreElements,
+  map,
+  merge,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import {
   BaseEntity,
   EntityStore,
@@ -8,6 +19,7 @@ import {
 } from '../../../core/store/entity-store.service';
 import {
   Policy,
+  PolicyCommandResult,
   PolicyDto,
   PolicyProjectDetails,
   PolicyProjectDetailsDto,
@@ -20,6 +32,7 @@ import {
   PolicyTopicSearchResult,
   PolicyTopicSummary,
   PolicyTopicSummaryDto,
+  UpdatePolicyRequest,
 } from './policy.models';
 
 const TOPIC_ENTITY_TYPE = 'policy-topic';
@@ -135,6 +148,40 @@ export class PolicyService {
       );
   }
 
+  updatePolicy(
+    scope: PolicyScope,
+    request: UpdatePolicyRequest,
+  ): Observable<PolicyCommandResult> {
+    return this.http
+      .post<PolicyCommandResult>(this.mutationPath(scope, 'update'), {
+        ...this.scopeIdentity(scope),
+        ...request,
+      })
+      .pipe(
+        tap(() =>
+          this.store.upsert(policyEntityType(scope), {
+            id: request.policyId,
+            title: request.title,
+            description: request.description,
+          } satisfies Policy),
+        ),
+      );
+  }
+
+  removePolicy(
+    scope: PolicyScope,
+    policyId: string,
+  ): Observable<PolicyCommandResult> {
+    return this.http
+      .post<PolicyCommandResult>(this.mutationPath(scope, 'remove'), {
+        ...this.scopeIdentity(scope),
+        policyId,
+      })
+      .pipe(
+        tap(() => this.store.remove(policyEntityType(scope), policyId)),
+      );
+  }
+
   private cachedSearch<TDto, TEntity extends BaseEntity>(
     path: string,
     entityType: string,
@@ -166,11 +213,40 @@ export class PolicyService {
         tap(result =>
           this.store.replaceSearch(queryKey, entityType, result),
         ),
+        ignoreElements(),
       );
 
-    return this.store.search$<TEntity>(queryKey).pipe(
-      take(1),
-      switchMap(cached => (cached ? concat(of(cached), refresh$) : refresh$)),
+    const cached$ = this.store.search$<TEntity>(queryKey).pipe(
+      filter(
+        (result): result is PagedResult<TEntity> => result !== undefined,
+      ),
     );
+
+    return merge(cached$, refresh$);
+  }
+
+  private mutationPath(
+    scope: PolicyScope,
+    action: 'update' | 'remove',
+  ): string {
+    switch (scope.kind) {
+      case 'general':
+        return `/api/policies/general/${action}`;
+      case 'topic':
+        return `/api/policies/topics/policies/${action}`;
+      case 'project':
+        return `/api/policies/projects/policies/${action}`;
+    }
+  }
+
+  private scopeIdentity(scope: PolicyScope): Readonly<Record<string, string>> {
+    switch (scope.kind) {
+      case 'general':
+        return {};
+      case 'topic':
+        return { topicName: scope.topicName };
+      case 'project':
+        return { projectId: scope.projectId };
+    }
   }
 }

@@ -92,12 +92,104 @@
 
 .policy-row {
   display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
+  grid-template-columns: 62px minmax(0, 1fr) auto;
   align-items: start;
   gap: 20px;
   min-height: 116px;
   padding: 24px 4px;
   border-bottom: 1px solid #e1e5ec;
+}
+
+.policy-actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 9px;
+}
+
+.policy-actions > span {
+  color: #842936;
+  font-size: 14px;
+}
+
+.policy-actions button,
+.policy-form-actions button {
+  padding: 9px 13px;
+  border: 1px solid #cbd2df;
+  border-radius: 7px;
+  color: #344260;
+  background: white;
+  cursor: pointer;
+  font-weight: 640;
+}
+
+.policy-actions button:disabled,
+.policy-form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.policy-actions .danger-link {
+  color: #a6293b;
+  border-color: #e0b1b8;
+}
+
+.policy-actions .danger-action {
+  color: white;
+  border-color: #b52f42;
+  background: #b52f42;
+}
+
+.policy-form {
+  display: grid;
+  grid-column: 2 / -1;
+  gap: 16px;
+}
+
+.policy-form label {
+  display: grid;
+  gap: 7px;
+  color: #263550;
+  font-weight: 680;
+}
+
+.policy-form input,
+.policy-form textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: white;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.policy-form input:focus,
+.policy-form textarea:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.policy-form-actions {
+  display: flex;
+  gap: 9px;
+}
+
+.policy-form-actions .primary-action {
+  color: white;
+  border-color: var(--indigo);
+  background: var(--indigo);
+}
+
+.policy-error {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 7px;
+  color: #9e2f3c !important;
+  background: #fff1f3;
+  font-size: 14px !important;
 }
 
 .policy-icon {
@@ -147,6 +239,16 @@
   .policy-row {
     grid-template-columns: 48px minmax(0, 1fr);
     gap: 14px;
+  }
+
+  .policy-actions,
+  .policy-form {
+    grid-column: 2;
+    justify-content: start;
+  }
+
+  .policy-actions {
+    flex-wrap: wrap;
   }
 
   .policy-icon {

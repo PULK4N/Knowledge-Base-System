@@ -85,6 +85,33 @@ public sealed class SkillsController(
         );
     }
 
+    [HttpPost("{skillId:guid}/update")]
+    public async Task<ActionResult<SkillCommandResult>> Update(
+        Guid skillId,
+        [FromBody] UpdateSkillRequest body,
+        [FromServices] UpdateSkillCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.Name = body.Name;
+        command.Description = body.Description;
+        command.Content = body.Content;
+        command.Tags = body.Tags;
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{skillId:guid}/delete")]
+    public async Task<ActionResult<SkillCommandResult>> Delete(
+        Guid skillId,
+        [FromServices] DeleteSkillCommand command
+    )
+    {
+        command.SkillId = skillId;
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
     [HttpPost("{skillId:guid}/references")]
     public async Task<ActionResult<SkillCommandResult>> AddReference(
         Guid skillId,
@@ -112,6 +139,34 @@ public sealed class SkillsController(
         command.SkillId = skillId;
         command.RelativePath = body.RelativePath;
         command.LoadAutomatically = body.LoadAutomatically;
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{skillId:guid}/references/update")]
+    public async Task<ActionResult<SkillCommandResult>> UpdateReference(
+        Guid skillId,
+        [FromBody] UpdateSkillReferenceRequest body,
+        [FromServices] UpdateSkillReferenceCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.RelativePath = body.RelativePath;
+        command.Content = body.Content;
+        command.LoadAutomatically = body.LoadAutomatically;
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{skillId:guid}/references/delete")]
+    public async Task<ActionResult<SkillCommandResult>> DeleteReference(
+        Guid skillId,
+        [FromBody] DeleteSkillReferenceRequest body,
+        [FromServices] DeleteSkillReferenceCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.RelativePath = body.RelativePath;
 
         return Ok((SkillCommandResult)await Execute(command));
     }

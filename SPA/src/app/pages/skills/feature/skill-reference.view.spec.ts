@@ -11,6 +11,7 @@ const skill: Skill = {
   references: {
     'references/architecture.md': {
       content: '# Architecture\n\nObservable-first pages.',
+      loadAutomatically: false,
     },
   },
   attachments: {},

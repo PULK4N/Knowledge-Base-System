@@ -134,6 +134,55 @@ export class EntityStore {
     });
   }
 
+  remove(entityType: string, id: string): void {
+    const state = this.stateSubject.value;
+    const typeKey = normalize(entityType);
+    const idKey = normalize(id);
+    const entitiesForType = { ...(state.entities[typeKey] ?? {}) };
+    delete entitiesForType[idKey];
+
+    const searches = Object.fromEntries(
+      Object.entries(state.searches).map(([queryKey, entry]) => {
+        if (entry.entityType !== typeKey) return [queryKey, entry];
+
+        const items = entry.result.items.filter(
+          item => normalize(item.id) !== idKey,
+        );
+        if (items.length === entry.result.items.length) {
+          return [queryKey, entry];
+        }
+
+        const totalCount = Math.max(0, entry.result.totalCount - 1);
+        const totalPages =
+          totalCount === 0
+            ? 0
+            : Math.ceil(totalCount / entry.result.pageSize);
+
+        return [
+          queryKey,
+          {
+            ...entry,
+            result: {
+              ...entry.result,
+              items,
+              totalCount,
+              totalPages,
+              hasNextPage: entry.result.page < totalPages,
+            },
+          },
+        ];
+      }),
+    );
+
+    this.stateSubject.next({
+      entities: {
+        ...state.entities,
+        [typeKey]: entitiesForType,
+      },
+      searches,
+    });
+  }
+
   reset(): void {
     this.stateSubject.next(initialState);
   }

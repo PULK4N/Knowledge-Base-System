@@ -1,5 +1,5 @@
-@if (state$ | async; as state) {
-  @switch (state.status) {
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
     @case ('loading') {
       <div class="request-message page-message">Loading policies…</div>
     }
@@ -7,30 +7,30 @@
       <div class="request-message error page-message">
         <div>
           <strong>Policies could not be loaded</strong>
-          <p>{{ state.message }}</p>
+          <p>{{ vm.state.message }}</p>
         </div>
       </div>
     }
     @case ('success') {
-      @if (state.data.backLink && state.data.backLabel) {
-        <a class="back-link" [routerLink]="state.data.backLink">
-          <span aria-hidden="true">←</span> {{ state.data.backLabel }}
+      @if (vm.state.data.backLink && vm.state.data.backLabel) {
+        <a class="back-link" [routerLink]="vm.state.data.backLink">
+          <span aria-hidden="true">←</span> {{ vm.state.data.backLabel }}
         </a>
       }
 
       <header>
-        <h1 class="page-heading">{{ state.data.title }}</h1>
-        <p class="page-subtitle">{{ state.data.subtitle }}</p>
+        <h1 class="page-heading">{{ vm.state.data.title }}</h1>
+        <p class="page-subtitle">{{ vm.state.data.subtitle }}</p>
       </header>
 
-      @if (state.data.scope.kind === 'project') {
+      @if (vm.state.data.scope.kind === 'project') {
         <section class="project-topics surface-card" aria-labelledby="project-topics-title">
           <div>
             <p class="section-label">Connected knowledge</p>
             <h2 id="project-topics-title">Topics used by this project</h2>
           </div>
           <div class="topic-chips">
-            @for (topicName of state.data.topicNames; track topicName) {
+            @for (topicName of vm.state.data.topicNames; track topicName) {
               <a class="topic-chip" [routerLink]="['/topics', topicName]">
                 <span>{{ topicName }}</span>
                 <span aria-hidden="true">→</span>
@@ -60,13 +60,13 @@
           </label>
 
           <span class="total-count">
-            {{ state.data.result.totalCount }}
-            {{ state.data.result.totalCount === 1 ? 'policy' : 'policies' }}
+            {{ vm.state.data.result.totalCount }}
+            {{ vm.state.data.result.totalCount === 1 ? 'policy' : 'policies' }}
           </span>
         </div>
 
         <div class="policy-list" aria-label="Policies">
-          @for (policy of state.data.result.items; track policy.id) {
+          @for (policy of vm.state.data.result.items; track policy.id) {
             <article class="policy-row">
               <span class="policy-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
@@ -74,10 +74,118 @@
                   <path d="m9 12 2 2 4-5" />
                 </svg>
               </span>
-              <span class="policy-copy">
-                <strong>{{ policy.title }}</strong>
-                <span>{{ policy.description }}</span>
-              </span>
+              @if (editingPolicyId() === policy.id) {
+                <form
+                  #policyForm="ngForm"
+                  class="policy-form"
+                  (ngSubmit)="
+                    updatePolicy(
+                      vm.state.data.scope,
+                      policy.id,
+                      title.value,
+                      description.value
+                    )
+                  "
+                >
+                  <label>
+                    <span>Title</span>
+                    <input
+                      #title="ngModel"
+                      name="title"
+                      type="text"
+                      required
+                      [ngModel]="policy.title"
+                    />
+                  </label>
+                  <label>
+                    <span>Description</span>
+                    <textarea
+                      #description="ngModel"
+                      name="description"
+                      rows="5"
+                      [ngModel]="policy.description"
+                    ></textarea>
+                  </label>
+                  @if (
+                    vm.mutation.status === 'error' &&
+                    vm.mutation.policyId === policy.id
+                  ) {
+                    <p class="policy-error" role="alert">
+                      {{ vm.mutation.message }}
+                    </p>
+                  }
+                  <div class="policy-form-actions">
+                    <button
+                      class="primary-action"
+                      type="submit"
+                      [disabled]="
+                        policyForm.invalid ||
+                        vm.mutation.status === 'saving' ||
+                        vm.mutation.status === 'deleting'
+                      "
+                    >
+                      {{
+                        vm.mutation.status === 'saving' &&
+                        vm.mutation.policyId === policy.id
+                          ? 'Saving…'
+                          : 'Save'
+                      }}
+                    </button>
+                    <button type="button" (click)="cancelEditing()">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <span class="policy-copy">
+                  <strong>{{ policy.title }}</strong>
+                  <span>{{ policy.description }}</span>
+                  @if (
+                    vm.mutation.status === 'error' &&
+                    vm.mutation.policyId === policy.id
+                  ) {
+                    <span class="policy-error" role="alert">
+                      {{ vm.mutation.message }}
+                    </span>
+                  }
+                </span>
+
+                <div class="policy-actions">
+                  @if (confirmingPolicyId() === policy.id) {
+                    <span>Delete this policy?</span>
+                    <button
+                      class="danger-action"
+                      type="button"
+                      [disabled]="
+                        vm.mutation.status === 'saving' ||
+                        vm.mutation.status === 'deleting'
+                      "
+                      (click)="removePolicy(vm.state.data.scope, policy.id)"
+                    >
+                      {{
+                        vm.mutation.status === 'deleting' &&
+                        vm.mutation.policyId === policy.id
+                          ? 'Deleting…'
+                          : 'Confirm'
+                      }}
+                    </button>
+                    <button type="button" (click)="cancelRemoving()">
+                      Cancel
+                    </button>
+                  } @else {
+                    <button type="button" (click)="startEditing(policy)">
+                      Edit
+                    </button>
+                    <button
+                      class="danger-link"
+                      type="button"
+                      (click)="startRemoving(policy.id)"
+                    >
+                      Delete
+                    </button>
+                  }
+                </div>
+              }
             </article>
           } @empty {
             <div class="empty-state">
@@ -88,12 +196,12 @@
         </div>
 
         <app-pagination
-          [page]="state.data.result.page"
-          [pageSize]="state.data.result.pageSize"
-          [totalCount]="state.data.result.totalCount"
-          [totalPages]="state.data.result.totalPages"
-          [hasPreviousPage]="state.data.result.hasPreviousPage"
-          [hasNextPage]="state.data.result.hasNextPage"
+          [page]="vm.state.data.result.page"
+          [pageSize]="vm.state.data.result.pageSize"
+          [totalCount]="vm.state.data.result.totalCount"
+          [totalPages]="vm.state.data.result.totalPages"
+          [hasPreviousPage]="vm.state.data.result.hasPreviousPage"
+          [hasNextPage]="vm.state.data.result.hasNextPage"
           label="Policies"
           (pageRequested)="goToPage($event)"
         />

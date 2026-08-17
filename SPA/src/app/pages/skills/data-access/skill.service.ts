@@ -1,23 +1,34 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, concat, map, of, switchMap, take, tap } from 'rxjs';
+import {
+  Observable,
+  filter,
+  ignoreElements,
+  map,
+  merge,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   EntityStore,
   PagedResult,
 } from '../../../core/store/entity-store.service';
 import {
   Skill,
+  SkillCommandResult,
   SkillDto,
   SkillSearchRequest,
   SkillSearchResult,
   SkillSummary,
   SkillSummaryDto,
+  UpdateSkillReferenceRequest,
+  UpdateSkillRequest,
 } from './skill.models';
 
 const SKILL_ENTITY_TYPE = 'skill';
 
-function isSkill(entity: SkillSummary): entity is Skill {
-  return 'description' in entity && 'content' in entity;
+function isSkill(entity: SkillSummary | undefined): entity is Skill {
+  return !!entity && 'description' in entity && 'content' in entity;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -55,29 +66,75 @@ export class SkillService {
         tap(result =>
           this.store.replaceSearch(queryKey, SKILL_ENTITY_TYPE, result),
         ),
+        ignoreElements(),
       );
 
-    return this.store.search$<SkillSummary>(queryKey).pipe(
-      take(1),
-      switchMap(cached => (cached ? concat(of(cached), refresh$) : refresh$)),
+    const cached$ = this.store.search$<SkillSummary>(queryKey).pipe(
+      filter(
+        (result): result is SkillSearchResult => result !== undefined,
+      ),
     );
+
+    return merge(cached$, refresh$);
   }
 
   watch(id: string): Observable<Skill> {
-    const refresh$ = this.http
+    const refresh$ = this.refresh(id).pipe(ignoreElements());
+    const cached$ = this.store
+      .entity$<SkillSummary>(SKILL_ENTITY_TYPE, id)
+      .pipe(filter(isSkill));
+
+    return merge(cached$, refresh$);
+  }
+
+  update(id: string, request: UpdateSkillRequest): Observable<Skill> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/update`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  delete(id: string): Observable<SkillCommandResult> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/delete`,
+        null,
+      )
+      .pipe(tap(() => this.store.remove(SKILL_ENTITY_TYPE, id)));
+  }
+
+  updateReference(
+    id: string,
+    request: UpdateSkillReferenceRequest,
+  ): Observable<Skill> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/references/update`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  deleteReference(
+    id: string,
+    relativePath: string,
+  ): Observable<Skill> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/references/delete`,
+        { relativePath },
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  private refresh(id: string): Observable<Skill> {
+    return this.http
       .get<SkillDto>(`${this.controllerPath}/${encodeURIComponent(id)}`)
       .pipe(
         map(skill => ({ ...skill })),
         tap(skill => this.store.upsert(SKILL_ENTITY_TYPE, skill)),
       );
-
-    return this.store.entity$<SkillSummary>(SKILL_ENTITY_TYPE, id).pipe(
-      take(1),
-      switchMap(cached =>
-        cached && isSkill(cached)
-          ? concat(of(cached), refresh$)
-          : refresh$,
-      ),
-    );
   }
 }

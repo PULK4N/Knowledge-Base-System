@@ -1,22 +1,32 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import {
   BehaviorSubject,
   Observable,
+  Subject,
   catchError,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
+  exhaustMap,
   map,
   of,
   shareReplay,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import {
   PolicyProjectDetails,
+  Policy,
   PolicyScope,
   PolicySearchRequest,
   PolicySearchResult,
@@ -33,6 +43,30 @@ interface PolicyListView {
   readonly topicNames: readonly string[];
   readonly result: PolicySearchResult;
 }
+
+type PolicyAction =
+  | {
+      readonly kind: 'update';
+      readonly scope: PolicyScope;
+      readonly policy: Policy;
+    }
+  | {
+      readonly kind: 'remove';
+      readonly scope: PolicyScope;
+      readonly policyId: string;
+    };
+
+type PolicyMutationState =
+  | { readonly status: 'idle' }
+  | {
+      readonly status: 'saving' | 'deleting';
+      readonly policyId: string;
+    }
+  | {
+      readonly status: 'error';
+      readonly policyId: string;
+      readonly message: string;
+    };
 
 const PAGE_SIZE = 5;
 
@@ -57,7 +91,7 @@ export function policyScopeFromRoute(
 
 @Component({
   selector: 'app-policy-list-page',
-  imports: [AsyncPipe, PaginationComponent, RouterLink],
+  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink],
   templateUrl: './policy-list.page.html',
   styleUrls: ['./policy-list.page.css', '../ui/knowledge-list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +104,10 @@ export class PolicyListPage {
     pageSize: PAGE_SIZE,
     search: '',
   });
+  private readonly actions = new Subject<PolicyAction>();
+
+  protected readonly editingPolicyId = signal<string | null>(null);
+  protected readonly confirmingPolicyId = signal<string | null>(null);
 
   private readonly scope$ = combineLatest([
     this.route.data,
@@ -81,7 +119,7 @@ export class PolicyListPage {
     ),
   );
 
-  protected readonly state$: Observable<LoadState<PolicyListView>> =
+  private readonly state$: Observable<LoadState<PolicyListView>> =
     combineLatest({ scope: this.scope$, request: this.querySubject }).pipe(
       debounceTime(200),
       switchMap(({ scope, request }) => {
@@ -106,6 +144,55 @@ export class PolicyListPage {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
+  private readonly mutation$: Observable<PolicyMutationState> =
+    this.actions.pipe(
+      exhaustMap(action => {
+        if (action.kind === 'update') {
+          return this.policies.updatePolicy(action.scope, {
+            policyId: action.policy.id,
+            title: action.policy.title,
+            description: action.policy.description,
+          }).pipe(
+            tap(() => this.editingPolicyId.set(null)),
+            map(() => ({ status: 'idle' }) as const),
+            startWith({
+              status: 'saving',
+              policyId: action.policy.id,
+            } as const),
+            catchError(error =>
+              of({
+                status: 'error',
+                policyId: action.policy.id,
+                message: toUserMessage(error),
+              } as const),
+            ),
+          );
+        }
+
+        return this.policies.removePolicy(action.scope, action.policyId).pipe(
+          tap(() => this.confirmingPolicyId.set(null)),
+          map(() => ({ status: 'idle' }) as const),
+          startWith({
+            status: 'deleting',
+            policyId: action.policyId,
+          } as const),
+          catchError(error =>
+            of({
+              status: 'error',
+              policyId: action.policyId,
+              message: toUserMessage(error),
+            } as const),
+          ),
+        );
+      }),
+      startWith({ status: 'idle' } as const),
+    );
+
+  protected readonly vm$ = combineLatest({
+    state: this.state$,
+    mutation: this.mutation$,
+  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
   protected search(search: string): void {
     this.querySubject.next({
       ...this.querySubject.value,
@@ -116,6 +203,45 @@ export class PolicyListPage {
 
   protected goToPage(page: number): void {
     this.querySubject.next({ ...this.querySubject.value, page });
+  }
+
+  protected startEditing(policy: Policy): void {
+    this.confirmingPolicyId.set(null);
+    this.editingPolicyId.set(policy.id);
+  }
+
+  protected cancelEditing(): void {
+    this.editingPolicyId.set(null);
+  }
+
+  protected updatePolicy(
+    scope: PolicyScope,
+    policyId: string,
+    title: string,
+    description: string,
+  ): void {
+    this.actions.next({
+      kind: 'update',
+      scope,
+      policy: {
+        id: policyId,
+        title: title.trim(),
+        description,
+      },
+    });
+  }
+
+  protected startRemoving(policyId: string): void {
+    this.editingPolicyId.set(null);
+    this.confirmingPolicyId.set(policyId);
+  }
+
+  protected cancelRemoving(): void {
+    this.confirmingPolicyId.set(null);
+  }
+
+  protected removePolicy(scope: PolicyScope, policyId: string): void {
+    this.actions.next({ kind: 'remove', scope, policyId });
   }
 
   private load(

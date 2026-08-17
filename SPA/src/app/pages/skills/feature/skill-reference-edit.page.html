@@ -1,0 +1,137 @@
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message editor-message">Loading reference…</div>
+    }
+    @case ('error') {
+      <a class="back-link" routerLink="/skills">
+        <span aria-hidden="true">←</span> Back to skills
+      </a>
+      <div class="request-message error editor-message">
+        <div>
+          <strong>Reference could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <a
+        class="back-link"
+        [routerLink]="['/skills', vm.state.data.skill.id, 'references']"
+        [queryParams]="{ path: vm.state.data.relativePath }"
+      >
+        <span aria-hidden="true">←</span> Back to reference
+      </a>
+
+      <header>
+        <p class="eyebrow">Reference management</p>
+        <h1 class="page-heading">Edit {{ vm.state.data.name }}</h1>
+        <p class="page-subtitle path-copy">{{ vm.state.data.relativePath }}</p>
+      </header>
+
+      <form
+        #referenceForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="
+          save(
+            {
+              skillId: vm.state.data.skill.id,
+              relativePath: vm.state.data.relativePath,
+            },
+            content.value,
+            loadAutomatically.value
+          )
+        "
+      >
+        <label>
+          <span>Relative path</span>
+          <input type="text" readonly [value]="vm.state.data.relativePath" />
+          <small>The path identifies this reference and cannot be changed.</small>
+        </label>
+
+        <label>
+          <span>Content</span>
+          <textarea
+            #content="ngModel"
+            class="content-input"
+            name="content"
+            rows="20"
+            [ngModel]="vm.state.data.content"
+          ></textarea>
+        </label>
+
+        <label class="checkbox-field">
+          <input
+            #loadAutomatically="ngModel"
+            name="loadAutomatically"
+            type="checkbox"
+            [ngModel]="vm.state.data.loadAutomatically"
+          />
+          <span>Load this reference automatically with the skill</span>
+        </label>
+
+        @if (vm.mutation.status === 'error') {
+          <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+        }
+
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="
+              referenceForm.invalid ||
+              vm.mutation.status === 'saving' ||
+              vm.mutation.status === 'deleting'
+            "
+          >
+            {{ vm.mutation.status === 'saving' ? 'Saving…' : 'Save reference' }}
+          </button>
+          <a
+            [routerLink]="['/skills', vm.state.data.skill.id, 'references']"
+            [queryParams]="{ path: vm.state.data.relativePath }"
+          >
+            Cancel
+          </a>
+        </div>
+      </form>
+
+      <section class="danger-zone surface-card">
+        <div>
+          <h2>Delete reference</h2>
+          <p>This removes the reference from the skill.</p>
+        </div>
+        @if (confirmingDelete()) {
+          <div class="confirmation-actions">
+            <button
+              class="danger-action"
+              type="button"
+              [disabled]="
+                vm.mutation.status === 'saving' ||
+                vm.mutation.status === 'deleting'
+              "
+              (click)="
+                delete({
+                  skillId: vm.state.data.skill.id,
+                  relativePath: vm.state.data.relativePath,
+                })
+              "
+            >
+              {{ vm.mutation.status === 'deleting' ? 'Deleting…' : 'Confirm delete' }}
+            </button>
+            <button type="button" (click)="confirmingDelete.set(false)">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          <button
+            class="danger-action outline"
+            type="button"
+            (click)="confirmingDelete.set(true)"
+          >
+            Delete reference
+          </button>
+        }
+      </section>
+    }
+  }
+}

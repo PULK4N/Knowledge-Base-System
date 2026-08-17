@@ -1,0 +1,136 @@
+<a class="back-link" routerLink="/skills">
+  <span aria-hidden="true">←</span> Back to skills
+</a>
+
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message editor-message">Loading skill…</div>
+    }
+    @case ('error') {
+      <div class="request-message error editor-message">
+        <div>
+          <strong>Skill could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <header>
+        <p class="eyebrow">Skill management</p>
+        <h1 class="page-heading">Edit {{ vm.state.data.name }}</h1>
+        <p class="page-subtitle">Update the skill guidance available to agents</p>
+      </header>
+
+      <form
+        #skillForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="
+          save(
+            vm.state.data.id,
+            name.value,
+            description.value,
+            content.value,
+            tags.value
+          )
+        "
+      >
+        <label>
+          <span>Name</span>
+          <input
+            #name="ngModel"
+            name="name"
+            type="text"
+            required
+            [ngModel]="vm.state.data.name"
+          />
+        </label>
+
+        <label>
+          <span>Description</span>
+          <textarea
+            #description="ngModel"
+            name="description"
+            rows="4"
+            [ngModel]="vm.state.data.description"
+          ></textarea>
+        </label>
+
+        <label>
+          <span>Content</span>
+          <textarea
+            #content="ngModel"
+            class="content-input"
+            name="content"
+            rows="18"
+            [ngModel]="vm.state.data.content"
+          ></textarea>
+        </label>
+
+        <label>
+          <span>Tags</span>
+          <input
+            #tags="ngModel"
+            name="tags"
+            type="text"
+            [ngModel]="vm.state.data.tags.join(', ')"
+            placeholder="angular, frontend, rxjs"
+          />
+          <small>Separate tags with commas.</small>
+        </label>
+
+        @if (vm.mutation.status === 'error') {
+          <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+        }
+
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="
+              skillForm.invalid ||
+              vm.mutation.status === 'saving' ||
+              vm.mutation.status === 'deleting'
+            "
+          >
+            {{ vm.mutation.status === 'saving' ? 'Saving…' : 'Save skill' }}
+          </button>
+          <a [routerLink]="['/skills', vm.state.data.id]">Cancel</a>
+        </div>
+      </form>
+
+      <section class="danger-zone surface-card">
+        <div>
+          <h2>Delete skill</h2>
+          <p>The skill will no longer appear in active skill searches.</p>
+        </div>
+        @if (confirmingDelete()) {
+          <div class="confirmation-actions">
+            <button
+              class="danger-action"
+              type="button"
+              [disabled]="
+                vm.mutation.status === 'saving' ||
+                vm.mutation.status === 'deleting'
+              "
+              (click)="delete(vm.state.data.id)"
+            >
+              {{ vm.mutation.status === 'deleting' ? 'Deleting…' : 'Confirm delete' }}
+            </button>
+            <button type="button" (click)="confirmingDelete.set(false)">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          <button
+            class="danger-action outline"
+            type="button"
+            (click)="confirmingDelete.set(true)"
+          >
+            Delete skill
+          </button>
+        }
+      </section>
+    }
+  }
+}

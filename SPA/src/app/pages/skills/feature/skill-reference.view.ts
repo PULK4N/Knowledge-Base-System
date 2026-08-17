@@ -5,6 +5,8 @@ export interface SkillReferenceView {
   readonly skill: Skill;
   readonly relativePath: string;
   readonly name: string;
+  readonly content: string;
+  readonly loadAutomatically: boolean;
   readonly blocks: readonly MarkdownBlock[];
 }
 
@@ -21,6 +23,8 @@ export function createSkillReferenceView(
     skill,
     relativePath,
     name: pathParts.at(-1) ?? relativePath,
+    content: reference.content,
+    loadAutomatically: reference.loadAutomatically,
     blocks: parseMarkdownBlocks(reference.content),
   };
 }
