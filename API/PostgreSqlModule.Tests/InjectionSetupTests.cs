@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using AdministrationModule.Application.Persistence;
+using AdministrationModule.Persistence;
 using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
@@ -72,6 +74,11 @@ public sealed class InjectionSetupTests
         );
         Assert.NotNull(
             scope.ServiceProvider.GetRequiredService<IEventStore>()
+        );
+        Assert.IsType<ProjectionReplayRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IProjectionReplayRepository
+            >()
         );
         Assert.IsType<AttachmentContentStorage>(
             scope.ServiceProvider.GetRequiredService<

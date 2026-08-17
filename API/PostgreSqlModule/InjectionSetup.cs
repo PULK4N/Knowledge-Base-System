@@ -1,3 +1,4 @@
+using AdministrationModule.Persistence;
 using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
@@ -36,6 +37,7 @@ public static class InjectionSetup
         services.RegisterEventSourcingPersistence(
             CreateProviderNeutralConfiguration(configuration)
         );
+        services.RegisterAdministrationModulePersistence();
 
         services.AddDbContext<EventSourcingDbContext>(
             options =>
