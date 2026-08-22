@@ -35,6 +35,23 @@ public sealed class SkillsController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("search")]
+    public async Task<ActionResult<List<SkillSearchMatchDto>>> Search(
+        [FromServices] SearchSkillContentQuery searchQuery,
+        [FromQuery, Required] string query,
+        [FromQuery, Range(
+            SearchSkillContentQuery.MinimumResultCount,
+            SearchSkillContentQuery.MaximumResultCount
+        )]
+            int resultCount = SearchSkillContentQuery.DefaultResultCount
+    )
+    {
+        searchQuery.SearchText = query;
+        searchQuery.ResultCount = resultCount;
+
+        return Ok(await Execute(searchQuery));
+    }
+
     [HttpPost]
     public async Task<ActionResult<SkillCreatedCommandResult>> Add(
         [FromBody] AddSkillCommand command

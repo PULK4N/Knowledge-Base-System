@@ -7,6 +7,7 @@ public sealed class SkillMcpFunctionsTests
     private static readonly string[] ExpectedFunctionNames =
     [
         "skill_list",
+        "skill_search",
         "skill_get",
         "skill_add",
         "skill_update",
@@ -77,6 +78,25 @@ public sealed class SkillMcpFunctionsTests
         Assert.True(properties.TryGetProperty("references", out _));
         Assert.DoesNotContain("tags", required);
         Assert.DoesNotContain("references", required);
+    }
+
+    [Fact]
+    public void Search_requires_query_and_exposes_optional_result_count()
+    {
+        var function = SkillMcpFunctions.Create().Single(
+            function => function.Name == "skill_search"
+        );
+        var properties = function.JsonSchema.GetProperty("properties");
+        var required = function.JsonSchema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.True(properties.TryGetProperty("query", out _));
+        Assert.True(properties.TryGetProperty("resultCount", out _));
+        Assert.Contains("query", required);
+        Assert.DoesNotContain("resultCount", required);
     }
 
     [Theory]

@@ -17,6 +17,11 @@ public static class SkillMcpFunctions
             "Lists active skills by name and ID so a skill can be selected before calling other skill tools."
         ),
         CreateFunction(
+            (Func<IServiceProvider, string, int, Task<List<SkillSearchMatchDto>>>)Search,
+            "skill_search",
+            "Searches active skill content and references using hybrid semantic vector and full-text ranking. Returns matching content chunks and skill IDs; use skill_get or skill_reference_get to load the selected source."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
             "skill_get",
             "Gets a skill by ID. References marked for automatic loading include their content; otherReferences lists the remaining paths without their content. Set orderNumber to zero for the latest state or to an event order number for historical state."
@@ -94,6 +99,23 @@ public static class SkillMcpFunctions
             ListSkillsQuery,
             List<SkillSummaryDto>
         >(services, _ => { });
+
+    private static Task<List<SkillSearchMatchDto>> Search(
+        IServiceProvider services,
+        string query,
+        int resultCount = SearchSkillContentQuery.DefaultResultCount
+    ) =>
+        SkillMcpActionExecutor.ExecuteQuery<
+            SearchSkillContentQuery,
+            List<SkillSearchMatchDto>
+        >(
+            services,
+            search =>
+            {
+                search.SearchText = query;
+                search.ResultCount = resultCount;
+            }
+        );
 
     private static Task<SkillDto?> Get(
         IServiceProvider services,
