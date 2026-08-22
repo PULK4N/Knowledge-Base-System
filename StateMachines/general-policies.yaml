@@ -1,49 +1,36 @@
 id: general-policies-state-machine
 stateData: GeneralPoliciesStateData
+projections:
+  - GeneralPolicyTextProjector
+  - TopicPolicyTextProjector
 events:
   GeneralPolicyAddedV1:
-    projections:
-      - GeneralPolicyTextProjector
     preEventValidators:
       - GeneralPolicyMustNotExistValidator
   GeneralPolicyUpdatedV1:
-    projections:
-      - GeneralPolicyTextProjector
     preEventValidators:
       - GeneralPolicyMustExistValidator
   GeneralPolicyRemovedV1:
-    projections:
-      - GeneralPolicyTextProjector
     preEventValidators:
       - GeneralPolicyMustExistValidator
   TopicCreatedV1:
-    projections:
-      - TopicPolicyTextProjector
     preEventValidators:
       - TopicMustNotExistValidator
   TopicUpdatedV1:
     preEventValidators:
       - TopicMustExistValidator
   TopicRemovedV1:
-    projections:
-      - TopicPolicyTextProjector
     preEventValidators:
       - TopicMustExistValidator
   TopicPolicyAddedV1:
-    projections:
-      - TopicPolicyTextProjector
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustNotExistValidator
   TopicPolicyUpdatedV1:
-    projections:
-      - TopicPolicyTextProjector
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustExistValidator
   TopicPolicyRemovedV1:
-    projections:
-      - TopicPolicyTextProjector
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustExistValidator

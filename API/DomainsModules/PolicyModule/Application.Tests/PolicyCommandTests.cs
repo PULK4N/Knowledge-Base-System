@@ -62,6 +62,26 @@ public sealed class PolicyCommandTests
     }
 
     [Fact]
+    public void GeneralPolicyEvents_UseSharedProjections()
+    {
+        var definition = CreateDefinitionProvider().Get(
+            PolicyModule.Application.Constants.StateMachineIds.GeneralPolicies
+        );
+
+        Assert.Equal(
+            [
+                "GeneralPolicyTextProjector",
+                "TopicPolicyTextProjector"
+            ],
+            definition.Projections
+        );
+        Assert.All(
+            definition.Events.Values,
+            eventDefinition => Assert.Empty(eventDefinition.Projections)
+        );
+    }
+
+    [Fact]
     public async Task GeneralPolicyCommands_UseFixedGlobalStream()
     {
         var eventStore = new CapturingEventStoreWithOutbox();
