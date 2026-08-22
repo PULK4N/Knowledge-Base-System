@@ -40,6 +40,9 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureRecordAddedV1),
                 nameof(FeatureRecordUpdatedV1),
                 nameof(FeatureRecordRemovedV1),
+                nameof(FeatureResearchDiscoveryAddedV1),
+                nameof(FeatureResearchDiscoveryUpdatedV1),
+                nameof(FeatureResearchDiscoveryRemovedV1),
                 nameof(FeaturePlanAddedV1),
                 nameof(CurrentFeaturePlanUpdatedV1),
                 nameof(CurrentFeaturePlanChangedV1),
@@ -132,6 +135,35 @@ public sealed class FeatureStateMachineDefinitionTests
         );
     }
 
+    [Fact]
+    public async Task ResolvesResearchDiscoveryValidatorsFromYaml()
+    {
+        RegisterTypesOnce();
+        var provider = new EventValidatorProvider(
+            CreateDefinitionProvider()
+        );
+        var payload = CreatePayload(
+            new FeatureResearchDiscoveryUpdatedV1(
+                FeatureResearchDiscoveryId.FromDatabaseGuid(Guid.NewGuid()),
+                "A research discovery",
+                FeatureResearchDiscoverySourceType.Web,
+                "https://example.com"
+            )
+        );
+
+        var validators = await provider.GetPreEventStateValidators(payload);
+
+        Assert.Collection(
+            validators,
+            validator =>
+                Assert.IsType<FeatureMustBeActiveValidator>(validator),
+            validator =>
+                Assert.IsType<FeatureResearchDiscoveryMustExistValidator>(
+                    validator
+                )
+        );
+    }
+
     private static YamlStateMachineDefinitionProvider
         CreateDefinitionProvider() =>
             new(
@@ -185,6 +217,9 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureRecordAddedV1),
         typeof(FeatureRecordUpdatedV1),
         typeof(FeatureRecordRemovedV1),
+        typeof(FeatureResearchDiscoveryAddedV1),
+        typeof(FeatureResearchDiscoveryUpdatedV1),
+        typeof(FeatureResearchDiscoveryRemovedV1),
         typeof(FeaturePlanAddedV1),
         typeof(CurrentFeaturePlanUpdatedV1),
         typeof(CurrentFeaturePlanChangedV1),
@@ -198,6 +233,8 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureSkillMustExistValidator),
         typeof(FeatureRecordMustNotExistValidator),
         typeof(FeatureRecordMustExistValidator),
+        typeof(FeatureResearchDiscoveryMustNotExistValidator),
+        typeof(FeatureResearchDiscoveryMustExistValidator),
         typeof(FeaturePlanMustNotExistValidator),
         typeof(FeaturePlanMustExistValidator),
         typeof(CurrentFeaturePlanMustExistValidator)

@@ -33,6 +33,31 @@ public sealed record RemoveFeatureRecordRequest
     public required Guid RecordId { get; init; }
 }
 
+public sealed record FeatureResearchDiscoveryContentRequest
+{
+    public required string Content { get; init; }
+
+    public FeatureResearchDiscoverySourceType SourceType { get; init; }
+
+    public string SourceReference { get; init; } = string.Empty;
+}
+
+public sealed record UpdateFeatureResearchDiscoveryRequest
+{
+    public required Guid DiscoveryId { get; init; }
+
+    public required string Content { get; init; }
+
+    public FeatureResearchDiscoverySourceType SourceType { get; init; }
+
+    public string SourceReference { get; init; } = string.Empty;
+}
+
+public sealed record RemoveFeatureResearchDiscoveryRequest
+{
+    public required Guid DiscoveryId { get; init; }
+}
+
 public sealed record FeaturePlanContentRequest
 {
     public required string Title { get; init; }

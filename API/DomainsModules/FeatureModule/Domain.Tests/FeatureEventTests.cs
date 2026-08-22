@@ -19,6 +19,10 @@ public sealed class FeatureEventTests
         FeatureRecordId.FromDatabaseGuid(
             Guid.Parse("44444444-4444-4444-4444-444444444444")
         );
+    private static readonly FeatureResearchDiscoveryId DiscoveryId =
+        FeatureResearchDiscoveryId.FromDatabaseGuid(
+            Guid.Parse("77777777-7777-7777-7777-777777777777")
+        );
     private static readonly FeaturePlanId FirstPlanId =
         FeaturePlanId.FromDatabaseGuid(
             Guid.Parse("55555555-5555-5555-5555-555555555555")
@@ -66,6 +70,18 @@ public sealed class FeatureEventTests
             "Why keep and switch previous plans?",
             "They preserve reasoning and allow an earlier approach to become current again."
         ).Apply(state, executionInfo);
+        new FeatureResearchDiscoveryAddedV1(
+            DiscoveryId,
+            "Feature events are selected by YAML.",
+            FeatureResearchDiscoverySourceType.Code,
+            "StateMachines/features.yaml"
+        ).Apply(state, executionInfo);
+        new FeatureResearchDiscoveryUpdatedV1(
+            DiscoveryId,
+            "Feature events and validators are selected by YAML.",
+            FeatureResearchDiscoverySourceType.Code,
+            "StateMachines/features.yaml"
+        ).Apply(state, executionInfo);
         new FeaturePlanAddedV1(
             FirstPlanId,
             "First plan",
@@ -94,6 +110,19 @@ public sealed class FeatureEventTests
         Assert.Equal(SkillId, Assert.Single(state.RelatedSkillIds));
         var record = Assert.Single(state.Records);
         Assert.Equal("Why keep and switch previous plans?", record.UserMessage);
+        var discovery = Assert.Single(state.ResearchDiscoveries);
+        Assert.Equal(
+            "Feature events and validators are selected by YAML.",
+            discovery.Content
+        );
+        Assert.Equal(
+            FeatureResearchDiscoverySourceType.Code,
+            discovery.SourceType
+        );
+        Assert.Equal(
+            "StateMachines/features.yaml",
+            discovery.SourceReference
+        );
         Assert.Equal(FirstPlanId, state.CurrentPlanId);
         Assert.Equal(2, state.Plans.Count);
         Assert.Equal(
@@ -102,12 +131,17 @@ public sealed class FeatureEventTests
         );
 
         new FeaturePlanRemovedV1(FirstPlanId).Apply(state, executionInfo);
+        new FeatureResearchDiscoveryRemovedV1(DiscoveryId).Apply(
+            state,
+            executionInfo
+        );
         new FeatureRecordRemovedV1(RecordId).Apply(state, executionInfo);
         new FeatureSkillRemovedV1(SkillId).Apply(state, executionInfo);
         new FeatureRemovedV1().Apply(state, executionInfo);
 
         Assert.Null(state.CurrentPlanId);
         Assert.Equal(SecondPlanId, Assert.Single(state.Plans).Id);
+        Assert.Empty(state.ResearchDiscoveries);
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
         Assert.True(state.IsDeleted);

@@ -24,7 +24,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureDto?>>)Get,
             "feature_get",
-            "Gets a feature, including its progress description, related skills, conversation records, plans, and current plan. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a feature, including its progress description, related skills, conversation records, research discoveries, plans, and current plan. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, Task<FeatureCreatedCommandResult>>)Add,
@@ -65,6 +65,21 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveRecord,
             "feature_record_remove",
             "Removes a feature record from the current feature state."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, FeatureResearchDiscoverySourceType, string, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
+            "feature_research_discovery_add",
+            "Stores a research discovery for a feature. The optional source reference can be a code path, URL, MCP tool name, or other provenance."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, string, FeatureResearchDiscoverySourceType, string, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
+            "feature_research_discovery_update",
+            "Updates a stored feature research discovery and its provenance."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveResearchDiscovery,
+            "feature_research_discovery_remove",
+            "Removes a research discovery from the current feature state while retaining event history."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, FeaturePlanContentType, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
@@ -274,6 +289,71 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.RecordId = recordId;
+            }
+        );
+
+    private static Task<
+        FeatureResearchDiscoveryCreatedCommandResult
+    > AddResearchDiscovery(
+        IServiceProvider services,
+        Guid featureId,
+        string content,
+        FeatureResearchDiscoverySourceType sourceType =
+            FeatureResearchDiscoverySourceType.Other,
+        string sourceReference = ""
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            AddFeatureResearchDiscoveryCommand,
+            FeatureResearchDiscoveryCreatedCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.Content = content;
+                command.SourceType = sourceType;
+                command.SourceReference = sourceReference;
+            }
+        );
+
+    private static Task<FeatureCommandResult> UpdateResearchDiscovery(
+        IServiceProvider services,
+        Guid featureId,
+        Guid discoveryId,
+        string content,
+        FeatureResearchDiscoverySourceType sourceType =
+            FeatureResearchDiscoverySourceType.Other,
+        string sourceReference = ""
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            UpdateFeatureResearchDiscoveryCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.DiscoveryId = discoveryId;
+                command.Content = content;
+                command.SourceType = sourceType;
+                command.SourceReference = sourceReference;
+            }
+        );
+
+    private static Task<FeatureCommandResult> RemoveResearchDiscovery(
+        IServiceProvider services,
+        Guid featureId,
+        Guid discoveryId
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            RemoveFeatureResearchDiscoveryCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.DiscoveryId = discoveryId;
             }
         );
 

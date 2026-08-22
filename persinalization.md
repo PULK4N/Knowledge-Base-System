@@ -22,6 +22,9 @@ When saving a policy:
 
 Write policies as short, direct, actionable instructions. Do not store temporary requests, conversation history, or easily discoverable repository facts as policies.
 
+## Working on a feature
+- MCP has "feature" service, which serves as a knowledge base about feature implementations. If you start working on a feature or researching one, use it to store data.
+
 ## Session startup
 
 1. If the hook context, MCP, trusted repository context, or policy retrieval is unavailable, stop immediately and tell the user that authoritative policies could not be loaded.

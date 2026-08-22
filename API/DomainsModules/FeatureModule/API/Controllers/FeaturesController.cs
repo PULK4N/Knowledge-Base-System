@@ -151,6 +151,57 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
+    [HttpPost("{featureId:guid}/research-discoveries")]
+    public async Task<
+        ActionResult<FeatureResearchDiscoveryCreatedCommandResult>
+    > AddResearchDiscovery(
+        Guid featureId,
+        [FromBody] FeatureResearchDiscoveryContentRequest request,
+        [FromServices] AddFeatureResearchDiscoveryCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.Content = request.Content;
+        command.SourceType = request.SourceType;
+        command.SourceReference = request.SourceReference;
+        return Ok(
+            (FeatureResearchDiscoveryCreatedCommandResult)await Execute(
+                command
+            )
+        );
+    }
+
+    [HttpPost("{featureId:guid}/research-discoveries/update")]
+    public async Task<
+        ActionResult<FeatureCommandResult>
+    > UpdateResearchDiscovery(
+        Guid featureId,
+        [FromBody] UpdateFeatureResearchDiscoveryRequest request,
+        [FromServices] UpdateFeatureResearchDiscoveryCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.DiscoveryId = request.DiscoveryId;
+        command.Content = request.Content;
+        command.SourceType = request.SourceType;
+        command.SourceReference = request.SourceReference;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/research-discoveries/remove")]
+    public async Task<
+        ActionResult<FeatureCommandResult>
+    > RemoveResearchDiscovery(
+        Guid featureId,
+        [FromBody] RemoveFeatureResearchDiscoveryRequest request,
+        [FromServices] RemoveFeatureResearchDiscoveryCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.DiscoveryId = request.DiscoveryId;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
     [HttpPost("{featureId:guid}/plans")]
     public async Task<ActionResult<FeaturePlanCreatedCommandResult>> AddPlan(
         Guid featureId,

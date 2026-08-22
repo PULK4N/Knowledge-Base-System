@@ -17,6 +17,9 @@ public sealed class FeatureMcpFunctionsTests
         "feature_record_add",
         "feature_record_update",
         "feature_record_remove",
+        "feature_research_discovery_add",
+        "feature_research_discovery_update",
+        "feature_research_discovery_remove",
         "feature_plan_add",
         "feature_plan_current_update",
         "feature_plan_current_change",
@@ -101,6 +104,44 @@ public sealed class FeatureMcpFunctionsTests
                 .Select(element => element.GetString())
         );
         Assert.DoesNotContain("contentType", required);
+    }
+
+    [Theory]
+    [InlineData("feature_research_discovery_add")]
+    [InlineData("feature_research_discovery_update")]
+    public void ResearchDiscoveryWrite_ExposesOptionalProvenance(
+        string functionName
+    )
+    {
+        var function = FeatureMcpFunctions.Create().Single(
+            item => item.Name == functionName
+        );
+        var schema = function.JsonSchema;
+        var properties = schema.GetProperty("properties");
+        var sourceType = properties.GetProperty("sourceType");
+        var sourceReference = properties.GetProperty("sourceReference");
+        var required = schema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Equal("Other", sourceType.GetProperty("default").GetString());
+        Assert.Equal(
+            ["Other", "Code", "Web", "Mcp"],
+            sourceType
+                .GetProperty("enum")
+                .EnumerateArray()
+                .Select(element => element.GetString())
+        );
+        Assert.Equal(
+            string.Empty,
+            sourceReference.GetProperty("default").GetString()
+        );
+        Assert.Contains("featureId", required);
+        Assert.Contains("content", required);
+        Assert.DoesNotContain("sourceType", required);
+        Assert.DoesNotContain("sourceReference", required);
     }
 
     [Fact]

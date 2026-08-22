@@ -21,6 +21,9 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeatureRecordDto> Records { get; init; }
 
+    public required IReadOnlyCollection<FeatureResearchDiscoveryDto>
+        ResearchDiscoveries { get; init; }
+
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
     public Guid? CurrentPlanId { get; init; }
@@ -39,6 +42,9 @@ public sealed record FeatureDto
                 .ToList(),
             Records = state.Records
                 .Select(FeatureRecordDto.FromModel)
+                .ToList(),
+            ResearchDiscoveries = state.ResearchDiscoveries
+                .Select(FeatureResearchDiscoveryDto.FromModel)
                 .ToList(),
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
@@ -69,6 +75,34 @@ public sealed record FeatureRecordDto
             AiAnswer = record.AiAnswer,
             CreatedAt = record.CreatedAt,
             UpdatedAt = record.UpdatedAt
+        };
+}
+
+public sealed record FeatureResearchDiscoveryDto
+{
+    public required Guid Id { get; init; }
+
+    public required string Content { get; init; }
+
+    public required FeatureResearchDiscoverySourceType SourceType { get; init; }
+
+    public required string SourceReference { get; init; }
+
+    public required DateTime CreatedAt { get; init; }
+
+    public required DateTime UpdatedAt { get; init; }
+
+    public static FeatureResearchDiscoveryDto FromModel(
+        FeatureResearchDiscovery discovery
+    ) =>
+        new()
+        {
+            Id = discovery.Id.Value,
+            Content = discovery.Content,
+            SourceType = discovery.SourceType,
+            SourceReference = discovery.SourceReference,
+            CreatedAt = discovery.CreatedAt,
+            UpdatedAt = discovery.UpdatedAt
         };
 }
 

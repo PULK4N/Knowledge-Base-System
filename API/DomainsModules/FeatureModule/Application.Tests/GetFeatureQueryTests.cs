@@ -26,11 +26,12 @@ public sealed class GetFeatureQueryTests
     private static readonly Executor Executor = new() { Id = EventExecutor };
 
     [Theory]
-    [InlineData(0U, "Backend implementation is complete.")]
-    [InlineData(2U, "Backend implementation has started.")]
+    [InlineData(0U, "Backend implementation is complete.", 1)]
+    [InlineData(2U, "Backend implementation has started.", 0)]
     public async Task Execute_ReturnsFeatureAtRequestedOrder(
         uint orderNumber,
-        string expectedStatus
+        string expectedStatus,
+        int expectedDiscoveryCount
     )
     {
         var query = CreateQuery(CreateEvents(), orderNumber);
@@ -45,6 +46,22 @@ public sealed class GetFeatureQueryTests
             feature.CurrentPlanId
         );
         Assert.Single(feature.Plans);
+        Assert.Equal(
+            expectedDiscoveryCount,
+            feature.ResearchDiscoveries.Count
+        );
+        if (expectedDiscoveryCount > 0)
+        {
+            var discovery = Assert.Single(feature.ResearchDiscoveries);
+            Assert.Equal(
+                FeatureResearchDiscoverySourceType.Code,
+                discovery.SourceType
+            );
+            Assert.Equal(
+                "StateMachines/features.yaml",
+                discovery.SourceReference
+            );
+        }
     }
 
     [Fact]
@@ -102,6 +119,17 @@ public sealed class GetFeatureQueryTests
             3,
             new FeatureStatusUpdatedV1(
                 "Backend implementation is complete."
+            )
+        ),
+        CreatePayload(
+            4,
+            new FeatureResearchDiscoveryAddedV1(
+                FeatureResearchDiscoveryId.FromDatabaseGuid(
+                    Guid.Parse("44444444-4444-4444-4444-444444444444")
+                ),
+                "Feature transitions are configured in YAML.",
+                FeatureResearchDiscoverySourceType.Code,
+                "StateMachines/features.yaml"
             )
         )
     ];
