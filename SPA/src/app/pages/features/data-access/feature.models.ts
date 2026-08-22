@@ -1,6 +1,11 @@
 import { PagedResult } from '../../../core/store/entity-store.service';
 
 export type FeaturePlanContentType = 'Markdown' | 'Html';
+export type FeatureResearchDiscoverySourceType =
+  | 'Other'
+  | 'Code'
+  | 'Web'
+  | 'Mcp';
 
 export interface FeatureSummary {
   readonly id: string;
@@ -21,6 +26,15 @@ export interface FeatureRecord {
   readonly updatedAt: string;
 }
 
+export interface FeatureResearchDiscovery {
+  readonly id: string;
+  readonly content: string;
+  readonly sourceType: FeatureResearchDiscoverySourceType;
+  readonly sourceReference: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export interface FeaturePlan {
   readonly id: string;
   readonly title: string;
@@ -34,6 +48,7 @@ export interface Feature extends FeatureSummary {
   readonly isDeleted: boolean;
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
+  readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
 }
 
@@ -65,6 +80,7 @@ export interface FeatureDto {
   readonly status: string;
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
+  readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
   readonly currentPlanId: string | null;
 }
@@ -89,6 +105,11 @@ export interface FeatureRecordCreatedCommandResult extends FeatureCommandResult 
   readonly recordId: string;
 }
 
+export interface FeatureResearchDiscoveryCreatedCommandResult
+  extends FeatureCommandResult {
+  readonly discoveryId: string;
+}
+
 export interface FeaturePlanCreatedCommandResult extends FeatureCommandResult {
   readonly planId: string;
 }
@@ -100,6 +121,17 @@ export interface FeatureRecordContentRequest {
 
 export interface UpdateFeatureRecordRequest extends FeatureRecordContentRequest {
   readonly recordId: string;
+}
+
+export interface FeatureResearchDiscoveryContentRequest {
+  readonly content: string;
+  readonly sourceType: FeatureResearchDiscoverySourceType;
+  readonly sourceReference: string;
+}
+
+export interface UpdateFeatureResearchDiscoveryRequest
+  extends FeatureResearchDiscoveryContentRequest {
+  readonly discoveryId: string;
 }
 
 export interface FeaturePlanContentRequest {

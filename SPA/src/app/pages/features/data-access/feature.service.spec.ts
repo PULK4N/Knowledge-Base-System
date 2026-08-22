@@ -25,6 +25,16 @@ const feature: FeatureDto = {
       updatedAt: '2026-08-22T10:00:00Z',
     },
   ],
+  researchDiscoveries: [
+    {
+      id: 'discovery-1',
+      content: 'Feature transitions are configured in YAML.',
+      sourceType: 'Code',
+      sourceReference: 'StateMachines/features.yaml',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T11:00:00Z',
+    },
+  ],
   plans: [
     {
       id: 'plan-1',
@@ -166,6 +176,47 @@ describe('FeatureService', () => {
       path: 'records/remove',
       body: { recordId: 'record-1' },
       action: (api: FeatureService) => api.removeRecord(feature.id, 'record-1'),
+    },
+    {
+      name: 'adds a research discovery',
+      path: 'research-discoveries',
+      body: {
+        content: 'Feature transitions are configured in YAML.',
+        sourceType: 'Code',
+        sourceReference: 'StateMachines/features.yaml',
+      },
+      action: (api: FeatureService) =>
+        api.addResearchDiscovery(feature.id, {
+          content: 'Feature transitions are configured in YAML.',
+          sourceType: 'Code',
+          sourceReference: 'StateMachines/features.yaml',
+        }),
+      result: { status: 'OK', discoveryId: 'discovery-2' },
+    },
+    {
+      name: 'updates a research discovery',
+      path: 'research-discoveries/update',
+      body: {
+        discoveryId: 'discovery-1',
+        content: 'Feature transitions and validators are configured in YAML.',
+        sourceType: 'Code',
+        sourceReference: 'StateMachines/features.yaml',
+      },
+      action: (api: FeatureService) =>
+        api.updateResearchDiscovery(feature.id, {
+          discoveryId: 'discovery-1',
+          content:
+            'Feature transitions and validators are configured in YAML.',
+          sourceType: 'Code',
+          sourceReference: 'StateMachines/features.yaml',
+        }),
+    },
+    {
+      name: 'removes a research discovery',
+      path: 'research-discoveries/remove',
+      body: { discoveryId: 'discovery-1' },
+      action: (api: FeatureService) =>
+        api.removeResearchDiscovery(feature.id, 'discovery-1'),
     },
     {
       name: 'adds a plan',

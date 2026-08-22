@@ -27,13 +27,21 @@ import {
   FeaturePlanCreatedCommandResult,
   FeatureRecordContentRequest,
   FeatureRecordCreatedCommandResult,
+  FeatureResearchDiscoveryContentRequest,
+  FeatureResearchDiscoveryCreatedCommandResult,
   UpdateFeatureRecordRequest,
+  UpdateFeatureResearchDiscoveryRequest,
 } from './feature.models';
 
 const FEATURE_ENTITY_TYPE = 'feature';
 
 function isFeature(entity: FeatureSummary | undefined): entity is Feature {
-  return !!entity && 'records' in entity && 'plans' in entity;
+  return (
+    !!entity &&
+    'records' in entity &&
+    'researchDiscoveries' in entity &&
+    'plans' in entity
+  );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -146,6 +154,38 @@ export class FeatureService {
 
   removeRecord(id: string, recordId: string): Observable<Feature> {
     return this.postAndRefresh(id, 'records/remove', { recordId });
+  }
+
+  addResearchDiscovery(
+    id: string,
+    request: FeatureResearchDiscoveryContentRequest,
+  ): Observable<Feature> {
+    return this.http
+      .post<FeatureResearchDiscoveryCreatedCommandResult>(
+        `${this.featurePath(id)}/research-discoveries`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  updateResearchDiscovery(
+    id: string,
+    request: UpdateFeatureResearchDiscoveryRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(
+      id,
+      'research-discoveries/update',
+      request,
+    );
+  }
+
+  removeResearchDiscovery(
+    id: string,
+    discoveryId: string,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, 'research-discoveries/remove', {
+      discoveryId,
+    });
   }
 
   addPlan(

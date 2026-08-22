@@ -27,7 +27,10 @@ import { SkillSearchResult } from '../../skills/data-access/skill.models';
 import { SkillService } from '../../skills/data-access/skill.service';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
-import { Feature } from '../data-access/feature.models';
+import {
+  Feature,
+  FeatureResearchDiscoverySourceType,
+} from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 
 type FeatureAction =
@@ -48,6 +51,26 @@ type FeatureAction =
       readonly aiAnswer: string;
     }
   | { readonly kind: 'remove-record'; readonly featureId: string; readonly recordId: string }
+  | {
+      readonly kind: 'add-research-discovery';
+      readonly featureId: string;
+      readonly content: string;
+      readonly sourceType: FeatureResearchDiscoverySourceType;
+      readonly sourceReference: string;
+    }
+  | {
+      readonly kind: 'update-research-discovery';
+      readonly featureId: string;
+      readonly discoveryId: string;
+      readonly content: string;
+      readonly sourceType: FeatureResearchDiscoverySourceType;
+      readonly sourceReference: string;
+    }
+  | {
+      readonly kind: 'remove-research-discovery';
+      readonly featureId: string;
+      readonly discoveryId: string;
+    }
   | { readonly kind: 'remove-feature'; readonly featureId: string };
 
 type MutationState =
@@ -77,6 +100,7 @@ export class FeatureDetailsPage {
   private readonly actions = new Subject<FeatureAction>();
 
   protected readonly editingRecordId = signal<string | null>(null);
+  protected readonly editingResearchDiscoveryId = signal<string | null>(null);
   protected readonly confirmingFeatureRemoval = signal(false);
 
   protected readonly emptyBlocks = [];
@@ -115,6 +139,9 @@ export class FeatureDetailsPage {
         tap(() => {
           if (action.kind === 'update-record') {
             this.editingRecordId.set(null);
+          }
+          if (action.kind === 'update-research-discovery') {
+            this.editingResearchDiscoveryId.set(null);
           }
           if (action.kind === 'remove-feature') {
             void this.router.navigate(['/features']);
@@ -180,6 +207,49 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'remove-record', featureId, recordId });
   }
 
+  protected addResearchDiscovery(
+    featureId: string,
+    content: string,
+    sourceType: FeatureResearchDiscoverySourceType,
+    sourceReference: string,
+  ): void {
+    this.actions.next({
+      kind: 'add-research-discovery',
+      featureId,
+      content: content.trim(),
+      sourceType,
+      sourceReference: sourceReference.trim(),
+    });
+  }
+
+  protected updateResearchDiscovery(
+    featureId: string,
+    discoveryId: string,
+    content: string,
+    sourceType: FeatureResearchDiscoverySourceType,
+    sourceReference: string,
+  ): void {
+    this.actions.next({
+      kind: 'update-research-discovery',
+      featureId,
+      discoveryId,
+      content: content.trim(),
+      sourceType,
+      sourceReference: sourceReference.trim(),
+    });
+  }
+
+  protected removeResearchDiscovery(
+    featureId: string,
+    discoveryId: string,
+  ): void {
+    this.actions.next({
+      kind: 'remove-research-discovery',
+      featureId,
+      discoveryId,
+    });
+  }
+
   protected removeFeature(featureId: string): void {
     this.actions.next({ kind: 'remove-feature', featureId });
   }
@@ -205,6 +275,24 @@ export class FeatureDetailsPage {
         });
       case 'remove-record':
         return this.features.removeRecord(action.featureId, action.recordId);
+      case 'add-research-discovery':
+        return this.features.addResearchDiscovery(action.featureId, {
+          content: action.content,
+          sourceType: action.sourceType,
+          sourceReference: action.sourceReference,
+        });
+      case 'update-research-discovery':
+        return this.features.updateResearchDiscovery(action.featureId, {
+          discoveryId: action.discoveryId,
+          content: action.content,
+          sourceType: action.sourceType,
+          sourceReference: action.sourceReference,
+        });
+      case 'remove-research-discovery':
+        return this.features.removeResearchDiscovery(
+          action.featureId,
+          action.discoveryId,
+        );
       case 'remove-feature':
         return this.features.remove(action.featureId);
     }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using EventSourcing.Shared.Models;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
@@ -145,6 +146,25 @@ public sealed class FeatureEventTests
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
         Assert.True(state.IsDeleted);
+    }
+
+    [Theory]
+    [InlineData(FeatureResearchDiscoverySourceType.Other, "\"Other\"")]
+    [InlineData(FeatureResearchDiscoverySourceType.Code, "\"Code\"")]
+    [InlineData(FeatureResearchDiscoverySourceType.Web, "\"Web\"")]
+    [InlineData(FeatureResearchDiscoverySourceType.Mcp, "\"Mcp\"")]
+    public void ResearchDiscoverySourceType_SerializesAsApiName(
+        FeatureResearchDiscoverySourceType sourceType,
+        string expectedJson
+    )
+    {
+        Assert.Equal(expectedJson, JsonSerializer.Serialize(sourceType));
+        Assert.Equal(
+            sourceType,
+            JsonSerializer.Deserialize<FeatureResearchDiscoverySourceType>(
+                expectedJson
+            )
+        );
     }
 
     private static AggregateId Id(string value) =>

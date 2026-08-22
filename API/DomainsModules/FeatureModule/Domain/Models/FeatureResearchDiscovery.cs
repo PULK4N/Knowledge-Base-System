@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using EventSourcing.Shared.Models;
 
 namespace FeatureModule.Domain.Models;
@@ -11,6 +12,7 @@ public readonly record struct FeatureResearchDiscoveryId(Guid Value)
         new(value);
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum FeatureResearchDiscoverySourceType
 {
     Other,

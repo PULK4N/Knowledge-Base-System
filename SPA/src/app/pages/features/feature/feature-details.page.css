@@ -84,7 +84,11 @@
 
 .status-block textarea,
 .inline-editor textarea,
+.inline-editor input,
+.inline-editor select,
 .record-editor textarea,
+.record-editor input,
+.record-editor select,
 .skill-picker select {
   width: 100%;
   padding: 10px 12px;
@@ -104,7 +108,11 @@
 
 .status-block textarea:focus,
 .inline-editor textarea:focus,
+.inline-editor input:focus,
+.inline-editor select:focus,
 .record-editor textarea:focus,
+.record-editor input:focus,
+.record-editor select:focus,
 .skill-picker select:focus {
   border-color: #8790ff;
   box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
@@ -306,6 +314,109 @@ button:disabled {
   margin-top: 22px;
 }
 
+.section-description {
+  max-width: 760px;
+  margin: 13px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.research-discovery-editor {
+  grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
+}
+
+.research-discovery-editor .discovery-content-field,
+.research-discovery-editor > button,
+.research-discovery-editor .discovery-editor-actions {
+  grid-column: 1 / -1;
+}
+
+.research-discovery-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.research-discovery-item {
+  overflow: hidden;
+  border: 1px solid #dfe4ed;
+  border-radius: 11px;
+}
+
+.research-discovery-item > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  color: #66718a;
+  background: #f7f8fb;
+  font-size: 12px;
+}
+
+.discovery-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.source-type {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #46526a;
+  background: #e9edf4;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.source-type[data-source='Code'] {
+  color: #315c62;
+  background: #dff4f3;
+}
+
+.source-type[data-source='Web'] {
+  color: #3946a4;
+  background: #e8eaff;
+}
+
+.source-type[data-source='Mcp'] {
+  color: #72441c;
+  background: #fff0d9;
+}
+
+.research-discovery-body {
+  padding: 18px 20px;
+}
+
+.research-discovery-body > p {
+  margin: 0;
+  color: #222c45;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.discovery-source {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #e8eaf0;
+  color: #59647a;
+  font-size: 13px;
+}
+
+.discovery-source span {
+  font-weight: 760;
+}
+
+.discovery-source code {
+  overflow-wrap: anywhere;
+  color: #37425c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .record-item {
   overflow: hidden;
   border: 1px solid #dfe4ed;
@@ -405,6 +516,22 @@ button:disabled {
 
   .message {
     grid-template-columns: 1fr;
+  }
+
+  .research-discovery-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .research-discovery-editor .discovery-content-field,
+  .research-discovery-editor > button,
+  .research-discovery-editor .discovery-editor-actions {
+    grid-column: auto;
+  }
+
+  .research-discovery-item > header,
+  .discovery-meta {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .skill-picker,
