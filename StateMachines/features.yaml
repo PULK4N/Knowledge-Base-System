@@ -1,0 +1,48 @@
+id: features-state-machine
+stateData: FeatureStateData
+initializationEvents:
+  - FeatureAddedV1
+events:
+  FeatureAddedV1: {}
+  FeatureRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+  FeatureStatusUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+  FeatureSkillAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureSkillMustNotExistValidator
+  FeatureSkillRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureSkillMustExistValidator
+  FeatureRecordAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRecordMustNotExistValidator
+  FeatureRecordUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRecordMustExistValidator
+  FeatureRecordRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRecordMustExistValidator
+  FeaturePlanAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustNotExistValidator
+  CurrentFeaturePlanUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - CurrentFeaturePlanMustExistValidator
+  CurrentFeaturePlanChangedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+  FeaturePlanRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
