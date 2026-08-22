@@ -11,6 +11,16 @@ internal static class ProjectPolicyMcpFunctions
     public static List<AIFunction> Create() =>
         [
             PolicyMcpFunctions.Create(
+            ListProjects,
+            "policy_project_list",
+            "Lists all active policy projects by name and ID."
+        ),
+            PolicyMcpFunctions.Create(
+            GetProjectByName,
+            "policy_project_get_by_name",
+            "Gets an active policy project summary by its exact case-insensitive name."
+        ),
+            PolicyMcpFunctions.Create(
             ListPolicies,
             "policy_project_policy_list",
             "Lists the policies owned directly by a project."
@@ -61,6 +71,26 @@ internal static class ProjectPolicyMcpFunctions
             "Removes a policy topic association from a project."
         )
         ];
+
+    private static Task<List<PolicyProjectSummaryDto>> ListProjects(
+        IServiceProvider services
+    ) =>
+        PolicyMcpActionExecutor.ExecuteQuery<
+            ListPolicyProjectsQuery,
+            List<PolicyProjectSummaryDto>
+        >(services, _ => { });
+
+    private static Task<PolicyProjectSummaryDto?> GetProjectByName(
+        IServiceProvider services,
+        string name
+    ) =>
+        PolicyMcpActionExecutor.ExecuteQuery<
+            GetPolicyProjectByNameQuery,
+            PolicyProjectSummaryDto?
+        >(
+            services,
+            query => query.Name = name
+        );
 
     private static Task<List<PolicyDto>?> ListPolicies(IServiceProvider services, Guid projectId) =>
         PolicyMcpActionExecutor.ExecuteQuery<ListProjectPoliciesQuery, List<PolicyDto>?>(

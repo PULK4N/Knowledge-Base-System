@@ -919,6 +919,20 @@ public sealed class PolicyCommandTests
         public Task<List<PolicyProjectSummary>> List() =>
             Task.FromResult(Projects);
 
+        public Task<PolicyProjectSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(
+                Projects.SingleOrDefault(
+                    project => string.Equals(
+                        project.ProjectName,
+                        name.Trim(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            );
+
         public Task<PolicyProjectSummarySearchResult> Search(
             int page,
             int pageSize,

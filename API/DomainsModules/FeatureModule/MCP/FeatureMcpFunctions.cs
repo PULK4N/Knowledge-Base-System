@@ -12,6 +12,16 @@ public static class FeatureMcpFunctions
     public static List<AIFunction> Create() =>
     [
         CreateFunction(
+            (Func<IServiceProvider, Task<List<FeatureSummaryDto>>>)List,
+            "feature_list",
+            "Lists active features by name and ID."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, string, Task<FeatureSummaryDto?>>)GetByName,
+            "feature_get_by_name",
+            "Gets an active feature summary by its exact case-insensitive name."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureDto?>>)Get,
             "feature_get",
             "Gets a feature, including its progress description, related skills, conversation records, plans, and current plan. Set orderNumber to zero for the latest state or to an event order number for historical state."
@@ -90,6 +100,26 @@ public static class FeatureMcpFunctions
                 Name = name,
                 Description = description
             }
+        );
+
+    private static Task<List<FeatureSummaryDto>> List(
+        IServiceProvider services
+    ) =>
+        FeatureMcpActionExecutor.ExecuteQuery<
+            ListFeaturesQuery,
+            List<FeatureSummaryDto>
+        >(services, _ => { });
+
+    private static Task<FeatureSummaryDto?> GetByName(
+        IServiceProvider services,
+        string name
+    ) =>
+        FeatureMcpActionExecutor.ExecuteQuery<
+            GetFeatureByNameQuery,
+            FeatureSummaryDto?
+        >(
+            services,
+            query => query.Name = name
         );
 
     private static Task<FeatureDto?> Get(

@@ -5,10 +5,14 @@ initializationEvents:
 projections:
   - FeatureSummaryProjector
 events:
-  FeatureAddedV1: {}
+  FeatureAddedV1:
+    uniqueConstraints:
+      - UniqueFeatureNameConstraint
   FeatureRemovedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
+    uniqueConstraints:
+      - UniqueFeatureNameConstraint
   FeatureStatusUpdatedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator

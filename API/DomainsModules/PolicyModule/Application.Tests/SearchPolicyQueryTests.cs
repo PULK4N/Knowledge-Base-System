@@ -47,6 +47,52 @@ public sealed class SearchPolicyQueryTests
         Assert.Equal((2, 5, "skill"), repository.LastSearchRequest);
     }
 
+    [Fact]
+    public async Task Project_list_and_get_by_name_map_summary_results()
+    {
+        var projectId = Guid.Parse(
+            "11111111-1111-1111-1111-111111111111"
+        );
+        var repository = new FakeProjectSummaryRepository(
+            new PolicyProjectSummarySearchResult(
+                [
+                    new PolicyProjectSummary(
+                        projectId,
+                        "KnowledgeBaseSystem",
+                        ["/workspace/knowledge-base"]
+                    )
+                ],
+                1
+            )
+        );
+        var executor = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            )
+        };
+
+        var projects = await new ListPolicyProjectsQuery(repository)
+            .Execute(executor);
+        var project = await new GetPolicyProjectByNameQuery(repository)
+        {
+            Name = "  KNOWLEDGEBASESYSTEM "
+        }.Execute(executor);
+
+        AssertSummary(Assert.Single(projects));
+        AssertSummary(Assert.IsType<PolicyProjectSummaryDto>(project));
+
+        void AssertSummary(PolicyProjectSummaryDto summary)
+        {
+            Assert.Equal(projectId, summary.ProjectId);
+            Assert.Equal("KnowledgeBaseSystem", summary.ProjectName);
+            Assert.Equal(
+                ["/workspace/knowledge-base"],
+                summary.RepositoryPaths
+            );
+        }
+    }
+
     private sealed class FakeProjectSummaryRepository(
         PolicyProjectSummarySearchResult result
     ) : IPolicyProjectSummaryRepository
@@ -55,6 +101,20 @@ public sealed class SearchPolicyQueryTests
 
         public Task<List<PolicyProjectSummary>> List() =>
             Task.FromResult(result.Items);
+
+        public Task<PolicyProjectSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(
+                result.Items.SingleOrDefault(
+                    project => string.Equals(
+                        project.ProjectName,
+                        name.Trim(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            );
 
         public Task<PolicyProjectSummarySearchResult> Search(
             int page,

@@ -3,11 +3,13 @@ using EventSourcing.Core;
 using EventSourcing.Shared.Models;
 using FeatureModule.Application.Models;
 using FeatureModule.Domain.Events;
+using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Application.Commands;
 
 public sealed class AddFeatureCommand(
-    StateMachineHandler stateMachineHandler
+    StateMachineHandler stateMachineHandler,
+    IFeatureSummaryRepository featureSummaryRepository
 ) : FeatureCommand(stateMachineHandler)
 {
     public required Guid ProjectId { get; set; }
@@ -18,12 +20,17 @@ public sealed class AddFeatureCommand(
 
     public required string Status { get; set; }
 
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(
-            ProjectId != Guid.Empty
-            && !string.IsNullOrWhiteSpace(Name)
-            && !string.IsNullOrWhiteSpace(Status)
-        );
+    public override async Task<bool> CanExecute(Executor executor)
+    {
+        if (
+            ProjectId == Guid.Empty
+            || string.IsNullOrWhiteSpace(Name)
+            || string.IsNullOrWhiteSpace(Status)
+        )
+            return false;
+
+        return await featureSummaryRepository.GetByName(Name) is null;
+    }
 
     protected override async Task<object> ExecuteInternal(
         Executor executor

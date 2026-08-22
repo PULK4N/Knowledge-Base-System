@@ -17,6 +17,27 @@ public sealed class ListSkillsQuery(
             .ToList();
 }
 
+public sealed class GetSkillByNameQuery(
+    ISkillSummaryRepository skillSummaryRepository
+) : Query<SkillSummaryDto?>
+{
+    public required string Name { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(!string.IsNullOrWhiteSpace(Name));
+
+    protected override async Task<SkillSummaryDto?> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var skill = await skillSummaryRepository.GetByName(Name);
+
+        return skill is null
+            ? null
+            : SkillSummaryDto.FromReadModel(skill);
+    }
+}
+
 public sealed class SearchSkillsQuery(
     ISkillSummaryRepository skillSummaryRepository
 ) : Query<PagedResult<SkillSummaryDto>>

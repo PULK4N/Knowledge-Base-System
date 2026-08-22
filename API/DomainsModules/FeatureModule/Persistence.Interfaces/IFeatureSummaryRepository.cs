@@ -2,6 +2,15 @@ namespace FeatureModule.Persistence.Interfaces;
 
 public interface IFeatureSummaryRepository
 {
+    Task<List<FeatureSummary>> List(
+        CancellationToken cancellationToken = default
+    );
+
+    Task<FeatureSummary?> GetByName(
+        string name,
+        CancellationToken cancellationToken = default
+    );
+
     Task<FeatureSummarySearchResult> Search(
         int page,
         int pageSize,

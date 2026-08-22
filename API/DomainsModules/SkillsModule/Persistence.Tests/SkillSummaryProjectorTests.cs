@@ -32,6 +32,11 @@ public sealed class SkillSummaryProjectorTests
                 .Select(skill => skill.Name)
                 .ToList()
         );
+        Assert.Equal(
+            second.Id.Value,
+            (await repository.GetByName("  ALPHA "))?.SkillId
+        );
+        Assert.Null(await repository.GetByName("missing"));
 
         first.Name = "gamma";
         await projector.Update([CreateStateInfo(first)]);

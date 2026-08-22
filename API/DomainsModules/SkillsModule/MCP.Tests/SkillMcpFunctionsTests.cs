@@ -7,6 +7,7 @@ public sealed class SkillMcpFunctionsTests
     private static readonly string[] ExpectedFunctionNames =
     [
         "skill_list",
+        "skill_get_by_name",
         "skill_search",
         "skill_get",
         "skill_add",
@@ -31,6 +32,23 @@ public sealed class SkillMcpFunctionsTests
             .GetProperty("properties");
 
         Assert.Empty(properties.EnumerateObject());
+    }
+
+    [Fact]
+    public void Get_by_name_requires_only_name()
+    {
+        var function = SkillMcpFunctions.Create().Single(
+            function => function.Name == "skill_get_by_name"
+        );
+
+        Assert.Equal(
+            ["name"],
+            function.JsonSchema
+                .GetProperty("required")
+                .EnumerateArray()
+                .Select(element => element.GetString())
+                .ToList()
+        );
     }
 
     [Fact]

@@ -9,6 +9,30 @@ public sealed class FeatureSummaryRepository(
     IFeatureModuleDbContext dbContext
 ) : IFeatureSummaryRepository
 {
+    public Task<List<FeatureSummary>> List(
+        CancellationToken cancellationToken = default
+    ) =>
+        dbContext.FeatureSummaries
+            .AsNoTracking()
+            .OrderBy(feature => feature.Name)
+            .ThenBy(feature => feature.FeatureAggregateId)
+            .Select(ToReadModelExpression)
+            .ToListAsync(cancellationToken);
+
+    public Task<FeatureSummary?> GetByName(
+        string name,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var normalizedName = name.Trim().ToUpperInvariant();
+
+        return dbContext.FeatureSummaries
+            .AsNoTracking()
+            .Where(feature => feature.Name.ToUpper() == normalizedName)
+            .Select(ToReadModelExpression)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<FeatureSummarySearchResult> Search(
         int page,
         int pageSize,
@@ -34,18 +58,7 @@ public sealed class FeatureSummaryRepository(
             .ThenBy(feature => feature.FeatureAggregateId)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(
-                feature => new FeatureSummary(
-                    feature.FeatureAggregateId,
-                    feature.ProjectId,
-                    feature.Name,
-                    feature.Summary,
-                    feature.Status,
-                    feature.CurrentPlanId,
-                    feature.PlanCount,
-                    feature.RecordCount
-                )
-            )
+            .Select(ToReadModelExpression)
             .ToListAsync(cancellationToken);
 
         return new FeatureSummarySearchResult(items, totalCount);
@@ -94,4 +107,18 @@ public sealed class FeatureSummaryRepository(
         if (transaction is not null)
             await transaction.CommitAsync();
     }
+
+    private static System.Linq.Expressions.Expression<
+        Func<FeatureSummaryEntry, FeatureSummary>
+    > ToReadModelExpression =>
+        feature => new FeatureSummary(
+            feature.FeatureAggregateId,
+            feature.ProjectId,
+            feature.Name,
+            feature.Summary,
+            feature.Status,
+            feature.CurrentPlanId,
+            feature.PlanCount,
+            feature.RecordCount
+        );
 }

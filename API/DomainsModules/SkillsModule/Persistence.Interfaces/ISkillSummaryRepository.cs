@@ -4,6 +4,11 @@ public interface ISkillSummaryRepository
 {
     Task<List<SkillSummary>> List();
 
+    Task<SkillSummary?> GetByName(
+        string name,
+        CancellationToken cancellationToken = default
+    );
+
     Task<SkillSummarySearchResult> Search(
         int page,
         int pageSize,

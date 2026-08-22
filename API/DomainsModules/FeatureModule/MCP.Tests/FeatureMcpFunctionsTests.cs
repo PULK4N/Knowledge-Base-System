@@ -6,6 +6,8 @@ public sealed class FeatureMcpFunctionsTests
 {
     private static readonly List<string> ExpectedFunctionNames =
     [
+        "feature_list",
+        "feature_get_by_name",
         "feature_get",
         "feature_add",
         "feature_remove",
@@ -45,6 +47,29 @@ public sealed class FeatureMcpFunctionsTests
                 tool.ProtocolTool.InputSchema
             );
         }
+    }
+
+    [Fact]
+    public void List_requires_no_arguments_and_get_by_name_requires_name()
+    {
+        var functions = FeatureMcpFunctions.Create();
+        var listProperties = functions
+            .Single(function => function.Name == "feature_list")
+            .JsonSchema
+            .GetProperty("properties");
+        var getByName = functions.Single(
+            function => function.Name == "feature_get_by_name"
+        );
+
+        Assert.Empty(listProperties.EnumerateObject());
+        Assert.Equal(
+            ["name"],
+            getByName.JsonSchema
+                .GetProperty("required")
+                .EnumerateArray()
+                .Select(element => element.GetString())
+                .ToList()
+        );
     }
 
     [Theory]

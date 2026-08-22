@@ -145,6 +145,11 @@ public sealed class PolicyTextProjectorTests
             ["/workspace/policy-project"],
             summary.RepositoryPaths
         );
+        Assert.Equal(
+            ProjectId.Value,
+            (await repository.GetByName("  POLICY PROJECT "))?.ProjectId
+        );
+        Assert.Null(await repository.GetByName("missing"));
 
         project.ProjectName = "Renamed policy project";
         project.RepositoryPaths.Add("/workspace/secondary");

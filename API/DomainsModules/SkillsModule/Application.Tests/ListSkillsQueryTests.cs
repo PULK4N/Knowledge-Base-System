@@ -72,14 +72,62 @@ public sealed class ListSkillsQueryTests
         Assert.Equal((2, 5, "event"), repository.LastSearchRequest);
     }
 
+    [Fact]
+    public async Task Get_by_name_returns_the_matching_summary()
+    {
+        var skillId = Guid.Parse(
+            "11111111-1111-1111-1111-111111111111"
+        );
+        var repository = new StubSkillSummaryRepository(
+            [new SkillSummary(skillId, "event-sourcing")]
+        );
+        var query = new GetSkillByNameQuery(repository)
+        {
+            Name = "  EVENT-SOURCING  "
+        };
+
+        var result = await query.Execute(
+            new Executor
+            {
+                Id = EventExecutor.FromDatabaseGuid(
+                    Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                )
+            }
+        );
+
+        Assert.Equal(
+            new SkillSummaryDto(skillId, "event-sourcing"),
+            result
+        );
+        Assert.Equal("  EVENT-SOURCING  ", repository.LastNameRequest);
+    }
+
     private sealed class StubSkillSummaryRepository(
         List<SkillSummary> skills
     ) : ISkillSummaryRepository
     {
         public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
+        public string? LastNameRequest { get; private set; }
 
         public Task<List<SkillSummary>> List() =>
             Task.FromResult(skills);
+
+        public Task<SkillSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastNameRequest = name;
+            return Task.FromResult(
+                skills.SingleOrDefault(
+                    skill => string.Equals(
+                        skill.Name,
+                        name.Trim(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            );
+        }
 
         public Task<SkillSummarySearchResult> Search(
             int page,

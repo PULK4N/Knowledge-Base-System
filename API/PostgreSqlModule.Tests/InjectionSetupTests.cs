@@ -5,6 +5,7 @@ using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Interfaces;
+using FeatureModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -169,6 +170,7 @@ public sealed class InjectionSetupTests
         AssertIntPrimaryKey<TopicPolicyText>(context);
         AssertIntPrimaryKey<ProjectPolicyTopic>(context);
         AssertIntPrimaryKey<SkillSummaryEntry>(context);
+        AssertIntPrimaryKey<FeatureSummaryEntry>(context);
         AssertUniqueIndex<GeneralPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyText>(context, 1);
         AssertUniqueIndex<TopicPolicyText>(context, 1);
@@ -177,6 +179,13 @@ public sealed class InjectionSetupTests
             2,
             context.Model
                 .FindEntityType(typeof(PolicyProjectSummaryEntry))!
+                .GetIndexes()
+                .Count(index => index.IsUnique)
+        );
+        Assert.Equal(
+            2,
+            context.Model
+                .FindEntityType(typeof(FeatureSummaryEntry))!
                 .GetIndexes()
                 .Count(index => index.IsUnique)
         );

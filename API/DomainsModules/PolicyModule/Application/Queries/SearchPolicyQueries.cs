@@ -11,6 +11,39 @@ using SharedModule.Constants;
 
 namespace PolicyModule.Application.Queries;
 
+public sealed class ListPolicyProjectsQuery(
+    IPolicyProjectSummaryRepository repository
+) : Query<List<PolicyProjectSummaryDto>>
+{
+    protected override async Task<List<PolicyProjectSummaryDto>> ExecuteInternal(
+        Executor executor
+    ) =>
+        (await repository.List())
+            .Select(PolicyProjectSummaryDto.FromReadModel)
+            .ToList();
+}
+
+public sealed class GetPolicyProjectByNameQuery(
+    IPolicyProjectSummaryRepository repository
+) : Query<PolicyProjectSummaryDto?>
+{
+    public required string Name { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(!string.IsNullOrWhiteSpace(Name));
+
+    protected override async Task<PolicyProjectSummaryDto?> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var project = await repository.GetByName(Name);
+
+        return project is null
+            ? null
+            : PolicyProjectSummaryDto.FromReadModel(project);
+    }
+}
+
 public sealed class SearchGeneralPoliciesQuery(
     StateCalculator stateCalculator,
     IEventStore eventStore

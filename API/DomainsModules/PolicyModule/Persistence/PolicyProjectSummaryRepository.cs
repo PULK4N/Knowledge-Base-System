@@ -30,6 +30,20 @@ public sealed class PolicyProjectSummaryRepository(IPolicyModuleDbContext dbCont
             .ToList();
     }
 
+    public async Task<PolicyProjectSummary?> GetByName(
+        string name,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var normalizedName = name.Trim().ToUpperInvariant();
+        var summary = await dbContext.PolicyProjectSummaries
+            .AsNoTracking()
+            .Where(project => project.ProjectName.ToUpper() == normalizedName)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return summary is null ? null : ToReadModel(summary);
+    }
+
     public async Task<PolicyProjectSummarySearchResult> Search(
         int page,
         int pageSize,

@@ -22,6 +22,25 @@ public sealed class SkillSummaryRepository(
             )
             .ToListAsync();
 
+    public Task<SkillSummary?> GetByName(
+        string name,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var normalizedName = name.Trim().ToUpperInvariant();
+
+        return dbContext.SkillSummaries
+            .AsNoTracking()
+            .Where(summary => summary.Name.ToUpper() == normalizedName)
+            .Select(
+                summary => new SkillSummary(
+                    summary.SkillAggregateId,
+                    summary.Name
+                )
+            )
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<SkillSummarySearchResult> Search(
         int page,
         int pageSize,

@@ -136,6 +136,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasIndex(summary => summary.FeatureAggregateId)
                     .IsUnique();
                 feature.HasIndex(summary => summary.ProjectId);
+                feature.HasIndex(summary => summary.Name).IsUnique();
                 feature.Property(summary => summary.Name).IsRequired();
                 feature.Property(summary => summary.Summary).IsRequired();
                 feature.Property(summary => summary.Status).IsRequired();

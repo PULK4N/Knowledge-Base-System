@@ -34,6 +34,17 @@ public sealed class FeatureSummaryProjectorTests
         Assert.Equal(first.Id.Value, summary.FeatureId);
         Assert.Equal(1, summary.PlanCount);
         Assert.Equal(1, summary.RecordCount);
+        Assert.Equal(
+            ["Feature journal", "Search page"],
+            (await repository.List())
+                .Select(feature => feature.Name)
+                .ToList()
+        );
+        Assert.Equal(
+            second.Id.Value,
+            (await repository.GetByName("  SEARCH PAGE "))?.FeatureId
+        );
+        Assert.Null(await repository.GetByName("missing"));
 
         first.IsDeleted = true;
         await projector.Update([CreateStateInfo(first)]);
@@ -126,6 +137,10 @@ public sealed class FeatureSummaryProjectorTests
             modelBuilder
                 .Entity<FeatureSummaryEntry>()
                 .HasIndex(summary => summary.FeatureAggregateId)
+                .IsUnique();
+            modelBuilder
+                .Entity<FeatureSummaryEntry>()
+                .HasIndex(summary => summary.Name)
                 .IsUnique();
         }
     }
