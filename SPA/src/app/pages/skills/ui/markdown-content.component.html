@@ -1,40 +1,52 @@
 <div class="markdown-content">
-  @for (block of blocks(); track $index) {
-    @switch (block.kind) {
-      @case ('heading') {
-        @switch (block.level) {
-          @case (1) { <h2>{{ block.text }}</h2> }
-          @case (2) { <h3>{{ block.text }}</h3> }
-          @default { <h4>{{ block.text }}</h4> }
+  @if (markdown() !== undefined) {
+    @if (hasMarkdown()) {
+      <markdown
+        class="markdown-document"
+        mermaid
+        [data]="markdown() ?? ''"
+      />
+    } @else {
+      <div class="empty-content">{{ emptyMessage() }}</div>
+    }
+  } @else {
+    @for (block of blocks(); track $index) {
+      @switch (block.kind) {
+        @case ('heading') {
+          @switch (block.level) {
+            @case (1) { <h2>{{ block.text }}</h2> }
+            @case (2) { <h3>{{ block.text }}</h3> }
+            @default { <h4>{{ block.text }}</h4> }
+          }
+        }
+        @case ('paragraph') {
+          <p>{{ block.text }}</p>
+        }
+        @case ('unordered-list') {
+          <ul>
+            @for (item of block.items ?? []; track $index) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        }
+        @case ('ordered-list') {
+          <ol>
+            @for (item of block.items ?? []; track $index) {
+              <li>{{ item }}</li>
+            }
+          </ol>
+        }
+        @case ('code') {
+          <div class="code-block">
+            @if (block.language) {
+              <span class="code-language">{{ block.language }}</span>
+            }
+            <pre><code>{{ block.text }}</code></pre>
+          </div>
         }
       }
-      @case ('paragraph') {
-        <p>{{ block.text }}</p>
-      }
-      @case ('unordered-list') {
-        <ul>
-          @for (item of block.items ?? []; track $index) {
-            <li>{{ item }}</li>
-          }
-        </ul>
-      }
-      @case ('ordered-list') {
-        <ol>
-          @for (item of block.items ?? []; track $index) {
-            <li>{{ item }}</li>
-          }
-        </ol>
-      }
-      @case ('code') {
-        <div class="code-block">
-          @if (block.language) {
-            <span>{{ block.language }}</span>
-          }
-          <pre><code>{{ block.text }}</code></pre>
-        </div>
-      }
+    } @empty {
+      <div class="empty-content">{{ emptyMessage() }}</div>
     }
-  } @empty {
-    <div class="empty-content">{{ emptyMessage() }}</div>
   }
 </div>
