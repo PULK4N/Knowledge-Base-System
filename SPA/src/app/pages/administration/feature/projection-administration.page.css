@@ -1,21 +1,10 @@
 :host {
   display: block;
-  max-width: 1205px;
-  margin: 0 auto;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--indigo);
-  font-size: 13px;
-  font-weight: 760;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .administration-message,
 .projection-panel {
-  margin-top: 32px;
+  margin-top: 0;
 }
 
 .administration-message p {

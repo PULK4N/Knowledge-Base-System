@@ -13,6 +13,10 @@ public static class InjectionSetup
             IProjectionReplayRepository,
             ProjectionReplayRepository
         >();
+        services.AddScoped<
+            IOutboxAdministrationRepository,
+            OutboxAdministrationRepository
+        >();
 
         return services;
     }

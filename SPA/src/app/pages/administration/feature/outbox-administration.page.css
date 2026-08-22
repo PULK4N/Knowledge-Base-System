@@ -1,0 +1,275 @@
+:host {
+  display: block;
+}
+
+.administration-message p {
+  margin: 8px 0 0;
+}
+
+.outbox-panel {
+  padding: 30px 32px 12px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+}
+
+.panel-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 23px;
+}
+
+.panel-heading p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.payload-count {
+  flex: 0 0 auto;
+  color: #344260;
+}
+
+.panel-tools {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.incomplete-filter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #344260;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.incomplete-filter input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--indigo);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+}
+
+table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 17px 14px;
+  border-bottom: 1px solid #e1e5ec;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: #5a6780;
+  background: #fafbfc;
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+td {
+  color: #243250;
+  font-size: 14px;
+}
+
+.payload-row {
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.payload-row:hover,
+.payload-row:focus-visible,
+.payload-row.expanded {
+  outline: none;
+  background: #f6f7ff;
+}
+
+.payload-row:focus-visible {
+  box-shadow: inset 0 0 0 2px #8991f5;
+}
+
+td strong,
+td span,
+td code {
+  display: block;
+}
+
+td span,
+td code {
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+td code {
+  max-width: 245px;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state-badge {
+  display: inline-block;
+  margin: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #754f08;
+  background: #fff2ce;
+  font-size: 12px;
+  font-weight: 740;
+}
+
+.state-badge.state-new {
+  color: #176240;
+  background: #dcf6e8;
+}
+
+.error-copy {
+  max-width: 260px;
+  color: #7d3942;
+  line-height: 1.45;
+}
+
+.row-action {
+  min-width: 132px;
+  text-align: right;
+}
+
+.row-action button {
+  min-width: 112px;
+  padding: 9px 13px;
+  border: 1px solid #b9c0ff;
+  border-radius: 8px;
+  color: #2632d9;
+  background: white;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.row-action button:hover:not(:disabled) {
+  background: #f4f5ff;
+}
+
+.row-action button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.row-status {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.row-status.success {
+  color: #197044;
+}
+
+.row-status.error {
+  color: #9e2f3c;
+}
+
+.payload-details td {
+  padding: 0 14px 22px;
+  background: #f6f7ff;
+}
+
+.json-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.json-grid section {
+  min-width: 0;
+}
+
+.json-grid h3 {
+  margin: 0 0 8px;
+  color: #344260;
+  font-size: 13px;
+}
+
+.json-grid pre {
+  max-height: 380px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  color: #e8ebff;
+  background: #182037;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+.json-grid code {
+  display: inline;
+  max-width: none;
+  margin: 0;
+  overflow: visible;
+  color: inherit;
+  font-size: inherit;
+  text-overflow: clip;
+  white-space: inherit;
+}
+
+.empty-state {
+  height: 230px;
+  color: var(--muted);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.empty-state strong {
+  color: var(--navy);
+  font-size: 18px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .outbox-panel {
+    padding: 24px 18px 8px;
+  }
+
+  .panel-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .panel-tools {
+    align-items: flex-start;
+  }
+
+  .json-grid {
+    grid-template-columns: 1fr;
+  }
+}
