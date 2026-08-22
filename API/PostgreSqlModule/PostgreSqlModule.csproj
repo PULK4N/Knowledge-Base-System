@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
+    <ProjectReference Include="../DomainsModules/FeatureModule/Persistence/Persistence.csproj" />
+    <ProjectReference Include="../DomainsModules/FeatureModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../EmbeddingModule/EmbeddingModule.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../DomainsModules/MemoryModule/Persistence/Persistence.csproj" />

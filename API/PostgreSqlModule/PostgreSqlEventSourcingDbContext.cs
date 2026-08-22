@@ -1,5 +1,7 @@
 using EventSourcing.Persistence;
 using EventSourcing.Persistence.Models;
+using FeatureModule.Persistence;
+using FeatureModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
@@ -11,9 +13,12 @@ namespace PostgreSqlModule;
 internal sealed class PostgreSqlEventSourcingDbContext(
     DbContextOptions<EventSourcingDbContext> options
 ) : EventSourcingDbContext(options),
+    IFeatureModuleDbContext,
     IPolicyModuleDbContext,
     ISkillsModuleDbContext
 {
+    public DbSet<FeatureSummaryEntry> FeatureSummaries =>
+        Set<FeatureSummaryEntry>();
     public DbSet<GeneralPolicyText> GeneralPolicyTexts =>
         Set<GeneralPolicyText>();
     public DbSet<ProjectPolicyText> ProjectPolicyTexts =>
@@ -120,6 +125,20 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .IsUnique();
                 skill.HasIndex(summary => summary.Name).IsUnique();
                 skill.Property(summary => summary.Name).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<FeatureSummaryEntry>(
+            feature =>
+            {
+                feature.HasKey(summary => summary.Id);
+                feature
+                    .HasIndex(summary => summary.FeatureAggregateId)
+                    .IsUnique();
+                feature.HasIndex(summary => summary.ProjectId);
+                feature.Property(summary => summary.Name).IsRequired();
+                feature.Property(summary => summary.Summary).IsRequired();
+                feature.Property(summary => summary.Status).IsRequired();
             }
         );
 

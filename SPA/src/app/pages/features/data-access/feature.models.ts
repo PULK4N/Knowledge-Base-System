@@ -1,0 +1,109 @@
+import { PagedResult } from '../../../core/store/entity-store.service';
+
+export type FeaturePlanContentType = 'Markdown' | 'Html';
+
+export interface FeatureSummary {
+  readonly id: string;
+  readonly projectId: string;
+  readonly name: string;
+  readonly summary: string;
+  readonly status: string;
+  readonly currentPlanId: string | null;
+  readonly planCount: number;
+  readonly recordCount: number;
+}
+
+export interface FeatureRecord {
+  readonly id: string;
+  readonly userMessage: string;
+  readonly aiAnswer: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface FeaturePlan {
+  readonly id: string;
+  readonly title: string;
+  readonly content: string;
+  readonly contentType: FeaturePlanContentType;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface Feature extends FeatureSummary {
+  readonly isDeleted: boolean;
+  readonly relatedSkillIds: readonly string[];
+  readonly records: readonly FeatureRecord[];
+  readonly plans: readonly FeaturePlan[];
+}
+
+export interface FeatureSearchRequest {
+  readonly page: number;
+  readonly pageSize: number;
+  readonly search: string;
+}
+
+export type FeatureSearchResult = PagedResult<FeatureSummary>;
+
+export interface FeatureSummaryDto {
+  readonly featureId: string;
+  readonly projectId: string;
+  readonly name: string;
+  readonly summary: string;
+  readonly status: string;
+  readonly currentPlanId: string | null;
+  readonly planCount: number;
+  readonly recordCount: number;
+}
+
+export interface FeatureDto {
+  readonly id: string;
+  readonly isDeleted: boolean;
+  readonly projectId: string;
+  readonly name: string;
+  readonly summary: string;
+  readonly status: string;
+  readonly relatedSkillIds: readonly string[];
+  readonly records: readonly FeatureRecord[];
+  readonly plans: readonly FeaturePlan[];
+  readonly currentPlanId: string | null;
+}
+
+export interface AddFeatureRequest {
+  readonly projectId: string;
+  readonly name: string;
+  readonly summary: string;
+  readonly status: string;
+}
+
+export interface FeatureCreatedCommandResult {
+  readonly status: string;
+  readonly featureId: string;
+}
+
+export interface FeatureCommandResult {
+  readonly status: string;
+}
+
+export interface FeatureRecordCreatedCommandResult extends FeatureCommandResult {
+  readonly recordId: string;
+}
+
+export interface FeaturePlanCreatedCommandResult extends FeatureCommandResult {
+  readonly planId: string;
+}
+
+export interface FeatureRecordContentRequest {
+  readonly userMessage: string;
+  readonly aiAnswer: string;
+}
+
+export interface UpdateFeatureRecordRequest extends FeatureRecordContentRequest {
+  readonly recordId: string;
+}
+
+export interface FeaturePlanContentRequest {
+  readonly title: string;
+  readonly content: string;
+  readonly contentType: FeaturePlanContentType;
+}

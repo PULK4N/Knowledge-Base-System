@@ -2,6 +2,8 @@ id: features-state-machine
 stateData: FeatureStateData
 initializationEvents:
   - FeatureAddedV1
+projections:
+  - FeatureSummaryProjector
 events:
   FeatureAddedV1: {}
   FeatureRemovedV1:

@@ -1,0 +1,96 @@
+<a class="back-link" routerLink="/features">
+  <span aria-hidden="true">←</span> Back to features
+</a>
+
+<header>
+  <p class="eyebrow">Feature tracking</p>
+  <h1 class="page-heading">Add feature</h1>
+  <p class="page-subtitle">
+    Initialize a feature so its progress, decisions, and plans can be recorded
+  </p>
+</header>
+
+@if (vm$ | async; as vm) {
+  @switch (vm.projects.status) {
+    @case ('loading') {
+      <div class="request-message editor-message">Loading projects…</div>
+    }
+    @case ('error') {
+      <div class="request-message error editor-message">
+        <div>
+          <strong>Projects could not be loaded</strong>
+          <p>{{ vm.projects.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      @if (vm.projects.data.length > 0) {
+        <form
+          #featureForm="ngForm"
+          class="editor-card surface-card"
+          (ngSubmit)="create(project.value, name.value, summary.value, status.value)"
+        >
+          <label>
+            <span>Project</span>
+            <select #project="ngModel" name="projectId" required ngModel>
+              <option value="" disabled>Select a project</option>
+              @for (item of vm.projects.data; track item.id) {
+                <option [value]="item.id">{{ item.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>Name</span>
+            <input #name="ngModel" name="name" type="text" required ngModel />
+          </label>
+
+          <label>
+            <span>Summary</span>
+            <textarea
+              #summary="ngModel"
+              name="summary"
+              rows="4"
+              placeholder="What is this feature intended to accomplish?"
+              ngModel
+            ></textarea>
+          </label>
+
+          <label>
+            <span>Initial status</span>
+            <textarea
+              #status="ngModel"
+              name="status"
+              rows="4"
+              placeholder="Describe the current progress in plain language"
+              required
+              ngModel
+            ></textarea>
+            <small>This is free-form progress context, not a workflow state.</small>
+          </label>
+
+          @if (vm.createState.status === 'error') {
+            <p class="form-error" role="alert">{{ vm.createState.message }}</p>
+          }
+
+          <div class="form-actions">
+            <button
+              class="primary-action"
+              type="submit"
+              [disabled]="featureForm.invalid || vm.createState.status === 'saving'"
+            >
+              {{ vm.createState.status === 'saving' ? 'Creating…' : 'Create feature' }}
+            </button>
+            <a routerLink="/features">Cancel</a>
+          </div>
+        </form>
+      } @else {
+        <section class="no-projects surface-card">
+          <strong>Create a project first</strong>
+          <p>Every feature belongs to a project.</p>
+          <a routerLink="/projects/new">Add project</a>
+        </section>
+      }
+    }
+  }
+}

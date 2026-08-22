@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.html-plan {
+  color: #202a43;
+  font-size: 17px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.empty-content {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  color: var(--muted);
+}

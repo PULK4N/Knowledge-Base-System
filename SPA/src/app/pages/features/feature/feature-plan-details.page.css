@@ -1,0 +1,160 @@
+.plan-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.heading-labels {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.heading-labels span {
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #52617d;
+  background: #eef0f5;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.heading-labels .current-badge {
+  color: #2933bc;
+  background: #efefff;
+}
+
+.heading-labels .previous-badge {
+  color: #6e5876;
+  background: #f5eff6;
+}
+
+.plan-heading > div > p {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.plan-heading > .resource-id {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  background: #f2f3f7;
+  font-size: 13px;
+}
+
+.plan-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.plan-controls button {
+  padding: 9px 12px;
+  border: 1px solid #ccd3df;
+  border-radius: 7px;
+  color: #33415e;
+  background: white;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.plan-controls .danger-link {
+  color: #a6293b;
+  border-color: #e2b5bc;
+}
+
+.plan-controls .danger-button {
+  color: white;
+  border-color: #b52f42;
+  background: #b52f42;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.plan-editor {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+  padding: clamp(24px, 4vw, 42px);
+}
+
+.plan-editor label {
+  display: grid;
+  gap: 7px;
+}
+
+.plan-editor label > span {
+  color: #263550;
+  font-weight: 680;
+}
+
+.plan-editor input,
+.plan-editor select,
+.plan-editor textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: white;
+  font: inherit;
+  line-height: 1.55;
+}
+
+.plan-editor textarea {
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.plan-editor input:focus,
+.plan-editor select:focus,
+.plan-editor textarea:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.plan-editor > button {
+  justify-self: start;
+  min-height: 43px;
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  cursor: pointer;
+  font-weight: 680;
+}
+
+.form-error {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #9e2f3c;
+  background: #fff1f3;
+}
+
+.plan-document {
+  min-height: 450px;
+  margin-top: 28px;
+  padding: clamp(24px, 4vw, 48px);
+}
+
+@media (max-width: 620px) {
+  .plan-heading {
+    flex-direction: column;
+  }
+
+  .plan-controls {
+    justify-content: flex-start;
+  }
+}

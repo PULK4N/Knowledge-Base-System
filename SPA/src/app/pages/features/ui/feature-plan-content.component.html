@@ -1,0 +1,15 @@
+<div class="feature-plan-content">
+  @if (plan().contentType === 'Markdown') {
+    <app-markdown-content
+      [blocks]="emptyBlocks"
+      [markdown]="plan().content"
+      emptyMessage="This plan has no content."
+    />
+  } @else {
+    @if (plan().content.trim()) {
+      <article class="html-plan" [innerHTML]="plan().content"></article>
+    } @else {
+      <div class="empty-content">This plan has no content.</div>
+    }
+  }
+</div>

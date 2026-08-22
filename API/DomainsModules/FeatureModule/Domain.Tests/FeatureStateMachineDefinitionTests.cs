@@ -25,7 +25,10 @@ public sealed class FeatureStateMachineDefinitionTests
             [nameof(FeatureAddedV1)],
             definition.InitializationEvents
         );
-        Assert.Empty(definition.Projections);
+        Assert.Equal(
+            ["FeatureSummaryProjector"],
+            definition.Projections
+        );
         Assert.Equal(
             [
                 nameof(FeatureAddedV1),

@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
+using ActionModule.Shared.Models;
 using FeatureModule.API.Requests;
 using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
@@ -15,6 +17,23 @@ public sealed class FeaturesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<FeatureSummaryDto>>> List(
+        [FromServices] SearchFeaturesQuery query,
+        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
+            int page = Pagination.DefaultPage,
+        [FromQuery, Range(1, Pagination.MaximumPageSize)]
+            int pageSize = Pagination.DefaultPageSize,
+        [FromQuery] string? search = null
+    )
+    {
+        query.Page = page;
+        query.PageSize = pageSize;
+        query.Search = search;
+
+        return Ok(await Execute(query));
+    }
+
     [HttpPost]
     public async Task<ActionResult<FeatureCreatedCommandResult>> Add(
         [FromBody] AddFeatureCommand command

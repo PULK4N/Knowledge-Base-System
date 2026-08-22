@@ -1,0 +1,45 @@
+.editor-card select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: white;
+  line-height: 1.55;
+}
+
+.editor-card select:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.no-projects {
+  display: grid;
+  min-height: 260px;
+  margin-top: 28px;
+  place-content: center;
+  gap: 9px;
+  padding: 30px;
+  text-align: center;
+}
+
+.no-projects strong {
+  font-size: 20px;
+}
+
+.no-projects p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.no-projects a {
+  justify-self: center;
+  margin-top: 8px;
+  padding: 11px 17px;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
