@@ -20,7 +20,7 @@ public sealed class PolicyTextRepository(
                 policyText =>
                     new
                     {
-                        Group = 1,
+                        Group = 0,
                         Order = 0,
                         policyText.Text
                     }
@@ -31,7 +31,7 @@ public sealed class PolicyTextRepository(
                     (_, policyText) =>
                         new
                         {
-                            Group = 0,
+                            Group = 2,
                             Order = 0,
                             policyText.Text
                         }
@@ -45,7 +45,7 @@ public sealed class PolicyTextRepository(
                     on relation.TopicName equals topicPolicyText.TopicName
                 select new
                 {
-                    Group = 2,
+                    Group = 1,
                     Order = relation.TopicOrder,
                     topicPolicyText.Text
                 }

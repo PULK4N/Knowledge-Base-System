@@ -14,7 +14,7 @@ public sealed class PolicyTextProjectorTests
         );
 
     [Fact]
-    public async Task Projections_AreJoinedInGeneralProjectTopicOrder()
+    public async Task Projections_AreJoinedInProjectTopicGeneralOrder()
     {
         await using var context = CreateContext();
         var repository = new PolicyTextRepository(context);
@@ -49,9 +49,12 @@ public sealed class PolicyTextProjectorTests
         );
 
         Assert.Equal(
-            "# General policy\nGeneral text.\n\n"
-                + "# Project policy\nProject text.\n\n"
-                + "# Topic policy\nTopic text.",
+            "# Project \"Policy project\" policies\n\n"
+                + "## Project policy\nProject text.\n\n"
+                + "# Topic \"cloud\" policies\n\n"
+                + "## Topic policy\nTopic text.\n\n"
+                + "# General policies\n\n"
+                + "## General policy\nGeneral text.",
             await repository.Get(ProjectId)
         );
         Assert.Single(context.GeneralPolicyTexts);
@@ -96,7 +99,8 @@ public sealed class PolicyTextProjectorTests
         );
 
         Assert.Equal(
-            "# Updated general policy\nUpdated general text.",
+            "# General policies\n\n"
+                + "## Updated general policy\nUpdated general text.",
             context.GeneralPolicyTexts.Single().Text
         );
         Assert.Equal(projectText, context.ProjectPolicyTexts.Single().Text);

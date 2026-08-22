@@ -160,9 +160,9 @@ When two policies at the same scope conflict, the agent should not silently
 choose whichever text appeared last. It should identify the conflict, ask the
 user which rule is intended, and update or remove the obsolete policy.
 
-The implementation does not yet encode this precedence explicitly. The current
-compiled policy text is ordered as general, project, then related topics. That
-ordering must not be mistaken for a reliable conflict-resolution mechanism.
+The compiled policy text groups policies under named project, topic, and general
+scope headings in that precedence order. The headings expose provenance; agents
+must still identify same-scope conflicts instead of resolving them by text order.
 
 ## Required bootstrap instruction
 
