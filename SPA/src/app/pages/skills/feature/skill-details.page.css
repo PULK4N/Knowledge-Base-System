@@ -146,6 +146,21 @@
   padding: 30px;
 }
 
+.tab-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.add-link {
+  padding: 10px 15px;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
 .reference-list,
 .attachment-list {
   display: grid;

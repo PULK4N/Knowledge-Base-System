@@ -4,6 +4,23 @@
   margin: 0 auto;
 }
 
+.page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.primary-link {
+  flex: 0 0 auto;
+  padding: 12px 18px;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -53,6 +70,61 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px 13px;
+}
+
+.connection-management,
+.repository-list {
+  display: grid;
+  gap: 12px;
+}
+
+.repository-list code {
+  padding: 8px 10px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  color: #27335a;
+  background: #f3f5f8;
+}
+
+.connection-form {
+  display: flex;
+  gap: 9px;
+}
+
+.connection-form label {
+  min-width: 0;
+  flex: 1;
+}
+
+.connection-form input {
+  width: 100%;
+  min-height: 41px;
+  padding: 9px 11px;
+  border: 1px solid #ccd3df;
+  border-radius: 7px;
+  color: var(--navy);
+  background: white;
+}
+
+.connection-form button {
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 7px;
+  color: white;
+  background: var(--indigo);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.connection-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.connection-error {
+  margin: 0;
+  color: #9e2f3c;
+  font-size: 14px;
 }
 
 .topic-chip {
@@ -231,9 +303,18 @@
 }
 
 @media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+  }
+
   .project-topics {
     grid-template-columns: 1fr;
     padding: 22px 20px;
+  }
+
+  .connection-form {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .policy-row {

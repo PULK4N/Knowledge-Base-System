@@ -1,0 +1,54 @@
+@if (vm$ | async; as vm) {
+  @if (vm.context; as context) {
+    <a class="back-link" [routerLink]="context.backLink">
+      <span aria-hidden="true">←</span> Back to policies
+    </a>
+
+    <header>
+      <p class="eyebrow">Policy management</p>
+      <h1 class="page-heading">{{ context.title }}</h1>
+      <p class="page-subtitle">{{ context.subtitle }}</p>
+    </header>
+
+    <form
+      #policyForm="ngForm"
+      class="editor-card surface-card"
+      (ngSubmit)="create(context, title.value, description.value)"
+    >
+      <label>
+        <span>Title</span>
+        <input #title="ngModel" name="title" type="text" required ngModel />
+      </label>
+
+      <label>
+        <span>Description</span>
+        <textarea
+          #description="ngModel"
+          class="content-input"
+          name="description"
+          rows="14"
+          ngModel
+        ></textarea>
+      </label>
+
+      @if (vm.mutation.status === 'error') {
+        <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+      }
+
+      <div class="form-actions">
+        <button
+          class="primary-action"
+          type="submit"
+          [disabled]="policyForm.invalid || vm.mutation.status === 'saving'"
+        >
+          {{ vm.mutation.status === 'saving' ? 'Adding…' : 'Add policy' }}
+        </button>
+        <a [routerLink]="context.backLink">Cancel</a>
+      </div>
+    </form>
+  } @else {
+    <div class="request-message error editor-message">
+      The requested policy collection could not be found.
+    </div>
+  }
+}

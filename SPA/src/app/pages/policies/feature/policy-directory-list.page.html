@@ -12,9 +12,14 @@
       </div>
     }
     @case ('success') {
-      <header>
-        <h1 class="page-heading">{{ state.data.title }}</h1>
-        <p class="page-subtitle">{{ state.data.subtitle }}</p>
+      <header class="page-header">
+        <div>
+          <h1 class="page-heading">{{ state.data.title }}</h1>
+          <p class="page-subtitle">{{ state.data.subtitle }}</p>
+        </div>
+        <a class="primary-link" [routerLink]="state.data.addRoute">
+          Add {{ state.data.kind === 'topics' ? 'topic' : 'project' }}
+        </a>
       </header>
 
       <section class="list-panel surface-card">

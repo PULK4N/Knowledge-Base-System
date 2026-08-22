@@ -97,6 +97,21 @@
             />
           }
           @case ('references') {
+            @if (!vm.state.data.skill.isDeleted) {
+              <div class="tab-toolbar">
+                <a
+                  class="add-link"
+                  [routerLink]="[
+                    '/skills',
+                    vm.state.data.skill.id,
+                    'references',
+                    'new',
+                  ]"
+                >
+                  Add reference
+                </a>
+              </div>
+            }
             <div class="reference-list">
               @for (
                 reference of vm.state.data.skill.references | keyvalue;
@@ -121,6 +136,21 @@
             </div>
           }
           @case ('attachments') {
+            @if (!vm.state.data.skill.isDeleted) {
+              <div class="tab-toolbar">
+                <a
+                  class="add-link"
+                  [routerLink]="[
+                    '/skills',
+                    vm.state.data.skill.id,
+                    'attachments',
+                    'new',
+                  ]"
+                >
+                  Add attachments
+                </a>
+              </div>
+            }
             <div class="attachment-list">
               @for (
                 attachment of vm.state.data.skill.attachments | keyvalue;

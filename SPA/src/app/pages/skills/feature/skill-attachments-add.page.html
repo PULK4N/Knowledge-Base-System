@@ -1,0 +1,64 @@
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message editor-message">Loading skill…</div>
+    }
+    @case ('error') {
+      <a class="back-link" routerLink="/skills">
+        <span aria-hidden="true">←</span> Back to skills
+      </a>
+      <div class="request-message error editor-message">
+        <div><strong>Skill could not be loaded</strong><p>{{ vm.state.message }}</p></div>
+      </div>
+    }
+    @case ('success') {
+      <a
+        class="back-link"
+        [routerLink]="['/skills', vm.state.data.id]"
+        [queryParams]="{ tab: 'attachments' }"
+      >
+        <span aria-hidden="true">←</span> Back to {{ vm.state.data.name }}
+      </a>
+
+      <header>
+        <p class="eyebrow">Attachment management</p>
+        <h1 class="page-heading">Add attachments</h1>
+        <p class="page-subtitle">Upload files that support {{ vm.state.data.name }}</p>
+      </header>
+
+      <form
+        #attachmentForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="upload(vm.state.data.id, files.files)"
+      >
+        <label>
+          <span>Files</span>
+          <input #files name="files" type="file" multiple required />
+          <small>Select one or more files to attach.</small>
+        </label>
+
+        @if (vm.mutation.status === 'error') {
+          <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+        }
+
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="
+              attachmentForm.invalid ||
+              !files.files?.length ||
+              vm.mutation.status === 'saving'
+            "
+          >
+            {{ vm.mutation.status === 'saving' ? 'Uploading…' : 'Upload files' }}
+          </button>
+          <a
+            [routerLink]="['/skills', vm.state.data.id]"
+            [queryParams]="{ tab: 'attachments' }"
+          >Cancel</a>
+        </div>
+      </form>
+    }
+  }
+}

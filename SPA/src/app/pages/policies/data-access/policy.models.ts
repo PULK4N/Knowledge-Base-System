@@ -66,6 +66,30 @@ export interface PolicyCommandResult {
   readonly status: string;
 }
 
+export interface PolicyAddedCommandResult extends PolicyCommandResult {
+  readonly policyId: string;
+}
+
+export interface ProjectCreatedCommandResult extends PolicyCommandResult {
+  readonly projectId: string;
+}
+
+export interface AddPolicyRequest {
+  readonly title: string;
+  readonly description: string;
+}
+
+export interface CreateTopicRequest {
+  readonly topicName: string;
+  readonly description: string;
+}
+
+export interface CreateProjectRequest {
+  readonly projectName: string;
+  readonly projectDescription: string;
+  readonly repositoryPaths: readonly string[];
+}
+
 export interface UpdatePolicyRequest {
   readonly policyId: string;
   readonly title: string;
