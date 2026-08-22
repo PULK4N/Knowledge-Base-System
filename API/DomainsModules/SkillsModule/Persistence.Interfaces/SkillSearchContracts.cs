@@ -29,7 +29,9 @@ public sealed record SkillSearchResult(
 
 public sealed record HybridSkillSearchOptions
 {
-    public int ResultCount { get; init; } = 10;
+    public const int DefaultResultCount = 5;
+
+    public int ResultCount { get; init; } = DefaultResultCount;
     public int CandidateCount { get; init; } = 50;
     public double TextWeight { get; init; } = 1;
     public double VectorWeight { get; init; } = 1;

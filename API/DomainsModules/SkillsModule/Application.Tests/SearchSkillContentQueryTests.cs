@@ -40,14 +40,13 @@ public sealed class SearchSkillContentQueryTests
         );
         var query = new SearchSkillContentQuery(search)
         {
-            SearchText = "PostgreSQL event projections",
-            ResultCount = 4
+            SearchText = "PostgreSQL event projections"
         };
 
         var results = await query.Execute(Executor);
 
         Assert.Equal("PostgreSQL event projections", search.LastQuery);
-        Assert.Equal(4, search.LastOptions!.ResultCount);
+        Assert.Equal(5, search.LastOptions!.ResultCount);
         Assert.Equal(50, search.LastOptions.CandidateCount);
         Assert.Equal(
             new SkillSearchMatchDto(

@@ -9,7 +9,8 @@ public sealed class SearchSkillContentQuery(
     ISkillSearch skillSearch
 ) : Query<List<SkillSearchMatchDto>>
 {
-    public const int DefaultResultCount = 10;
+    public const int DefaultResultCount =
+        HybridSkillSearchOptions.DefaultResultCount;
     public const int MinimumResultCount = 1;
     public const int MaximumResultCount = 20;
 

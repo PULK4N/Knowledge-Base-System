@@ -34,6 +34,7 @@ public static class HybridSkillRanker
             .ThenBy(result => result.Skill.SkillName, StringComparer.Ordinal)
             .ThenBy(result => result.Skill.SourcePath, StringComparer.Ordinal)
             .ThenBy(result => result.Skill.ChunkIndex)
+            .DistinctBy(result => SourceKey.From(result.Skill))
             .Take(options.ResultCount)
             .Select(
                 result => new SkillSearchResult(
@@ -106,6 +107,15 @@ public static class HybridSkillRanker
                 candidate.SourcePath,
                 candidate.ChunkIndex
             );
+    }
+
+    private readonly record struct SourceKey(
+        AggregateId SkillAggregateId,
+        string SourcePath
+    )
+    {
+        public static SourceKey From(SkillSearchCandidate candidate) =>
+            new(candidate.SkillAggregateId, candidate.SourcePath);
     }
 
     private sealed class MutableResult(SkillSearchCandidate skill)

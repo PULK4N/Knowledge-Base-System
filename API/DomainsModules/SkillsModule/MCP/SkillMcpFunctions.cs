@@ -19,7 +19,7 @@ public static class SkillMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, string, int, Task<List<SkillSearchMatchDto>>>)Search,
             "skill_search",
-            "Searches active skill content and references using hybrid semantic vector and full-text ranking. Returns matching content chunks and skill IDs; use skill_get or skill_reference_get to load the selected source."
+            "Searches active skill content and references using hybrid semantic vector and full-text ranking. Returns the highest-ranked chunk from each unique skill source; use skill_get or skill_reference_get to load the selected source."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,

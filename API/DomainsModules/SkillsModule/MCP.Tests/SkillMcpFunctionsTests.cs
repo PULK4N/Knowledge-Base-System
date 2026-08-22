@@ -94,7 +94,13 @@ public sealed class SkillMcpFunctionsTests
             .ToList();
 
         Assert.True(properties.TryGetProperty("query", out _));
-        Assert.True(properties.TryGetProperty("resultCount", out _));
+        Assert.True(
+            properties.TryGetProperty(
+                "resultCount",
+                out var resultCount
+            )
+        );
+        Assert.Equal(5, resultCount.GetProperty("default").GetInt32());
         Assert.Contains("query", required);
         Assert.DoesNotContain("resultCount", required);
     }

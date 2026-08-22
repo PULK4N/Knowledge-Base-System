@@ -20,7 +20,7 @@ public sealed class SkillsControllerTests
         };
 
     [Fact]
-    public async Task Search_maps_query_parameters_and_returns_matches()
+    public async Task Search_maps_query_and_uses_default_result_count()
     {
         var skillId = AggregateId.FromDatabaseGuid(
             Guid.Parse("11111111-1111-1111-1111-111111111111")
@@ -51,8 +51,7 @@ public sealed class SkillsControllerTests
 
         var result = await controller.Search(
             searchQuery,
-            "event sourced modules",
-            3
+            "event sourced modules"
         );
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -60,7 +59,7 @@ public sealed class SkillsControllerTests
         var match = Assert.Single(matches);
         Assert.Equal(skillId.Value, match.SkillId);
         Assert.Equal("event sourced modules", skillSearch.LastQuery);
-        Assert.Equal(3, skillSearch.LastOptions!.ResultCount);
+        Assert.Equal(5, skillSearch.LastOptions!.ResultCount);
         Assert.Equal(50, skillSearch.LastOptions.CandidateCount);
     }
 
