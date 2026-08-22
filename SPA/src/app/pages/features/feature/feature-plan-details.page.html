@@ -40,9 +40,11 @@
         </div>
         <div class="plan-controls">
           @if (vm.state.data.isCurrent) {
-            <button type="button" (click)="editing.set(!editing())">
-              {{ editing() ? 'Cancel editing' : 'Edit current plan' }}
-            </button>
+            @if (editing()) {
+              <button type="button" (click)="editing.set(false)">Cancel editing</button>
+            } @else {
+              <button type="button" (click)="editing.set(true)">Edit current plan</button>
+            }
           } @else {
             <button
               type="button"

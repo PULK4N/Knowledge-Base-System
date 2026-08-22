@@ -30,15 +30,21 @@
           class="editor-card surface-card"
           (ngSubmit)="create(project.value, name.value, summary.value, status.value)"
         >
-          <label>
-            <span>Project</span>
-            <select #project="ngModel" name="projectId" required ngModel>
+          <div class="project-field">
+            <label for="feature-project">Project</label>
+            <select
+              #project="ngModel"
+              id="feature-project"
+              name="projectId"
+              required
+              ngModel
+            >
               <option value="" disabled>Select a project</option>
               @for (item of vm.projects.data; track item.id) {
                 <option [value]="item.id">{{ item.name }}</option>
               }
             </select>
-          </label>
+          </div>
 
           <label>
             <span>Name</span>

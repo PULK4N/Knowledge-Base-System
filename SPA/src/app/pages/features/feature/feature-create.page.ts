@@ -7,6 +7,8 @@ import {
   Subject,
   catchError,
   combineLatest,
+  debounceTime,
+  distinctUntilChanged,
   exhaustMap,
   map,
   of,
@@ -46,6 +48,11 @@ export class FeatureCreatePage {
   > = this.policies
     .searchProjects({ page: 1, pageSize: 100, search: '' })
     .pipe(
+      debounceTime(100),
+      distinctUntilChanged(
+        (previous, current) =>
+          JSON.stringify(previous.items) === JSON.stringify(current.items),
+      ),
       map(result => ({ status: 'success', data: result.items }) as const),
       startWith({ status: 'loading' } as const),
       catchError(error =>
