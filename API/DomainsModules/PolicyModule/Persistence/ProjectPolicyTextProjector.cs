@@ -18,7 +18,8 @@ public sealed class ProjectPolicyTextProjector(
             .Where(project => !project.IsDeleted)
             .ToDictionary(
                 project => project.Id,
-                project => PolicyTextCompiler.Compile(
+                project => PolicyTextCompiler.CompileProject(
+                    project.ProjectName,
                     project.Policies.Values
                 )
             );

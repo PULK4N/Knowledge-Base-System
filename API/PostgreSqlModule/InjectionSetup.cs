@@ -2,6 +2,7 @@ using AdministrationModule.Persistence;
 using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
+using FeatureModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,7 @@ public static class InjectionSetup
             CreateProviderNeutralConfiguration(configuration)
         );
         services.RegisterAdministrationModulePersistence();
+        services.RegisterFeatureModulePersistence();
 
         services.AddDbContext<EventSourcingDbContext>(
             options =>
@@ -87,6 +89,11 @@ public static class InjectionSetup
         services.AddScoped<IPolicyModuleDbContext>(
             serviceProvider =>
                 (IPolicyModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
+        services.AddScoped<IFeatureModuleDbContext>(
+            serviceProvider =>
+                (IFeatureModuleDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
         services.AddScoped<

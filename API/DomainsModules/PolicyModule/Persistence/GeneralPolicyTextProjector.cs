@@ -17,7 +17,7 @@ public sealed class GeneralPolicyTextProjector(
 
         await repository.ReplaceGeneral(
             generalPolicies.Id,
-            PolicyTextCompiler.Compile(
+            PolicyTextCompiler.CompileGeneral(
                 generalPolicies.Policies.Values
             )
         );

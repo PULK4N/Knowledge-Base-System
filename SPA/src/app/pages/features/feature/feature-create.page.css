@@ -1,0 +1,59 @@
+.project-field {
+  display: grid;
+  gap: 8px;
+}
+
+.project-field label {
+  color: #263550;
+  font-weight: 680;
+}
+
+.project-field select {
+  position: static;
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 13px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  color: var(--navy);
+  background: white;
+  font: inherit;
+  transform: none;
+}
+
+.project-field select:focus {
+  outline: 0;
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.no-projects {
+  display: grid;
+  min-height: 260px;
+  margin-top: 28px;
+  place-content: center;
+  gap: 9px;
+  padding: 30px;
+  text-align: center;
+}
+
+.no-projects strong {
+  font-size: 20px;
+}
+
+.no-projects p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.no-projects a {
+  justify-self: center;
+  margin-top: 8px;
+  padding: 11px 17px;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}

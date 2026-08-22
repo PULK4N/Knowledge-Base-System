@@ -1,0 +1,116 @@
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message">Loading plan…</div>
+    }
+    @case ('error') {
+      <a class="back-link" routerLink="/features">
+        <span aria-hidden="true">←</span> Back to features
+      </a>
+      <div class="request-message error">
+        <div>
+          <strong>Plan could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <a
+        class="back-link"
+        [routerLink]="['/features', vm.state.data.feature.id, 'plans']"
+      >
+        <span aria-hidden="true">←</span> Back to plans
+      </a>
+
+      <header class="plan-heading">
+        <div>
+          <div class="heading-labels">
+            @if (vm.state.data.isCurrent) {
+              <span class="current-badge">Current plan</span>
+            } @else {
+              <span class="previous-badge">Previous plan</span>
+            }
+            <span>{{ vm.state.data.plan.contentType }}</span>
+          </div>
+          <h1 class="page-heading">{{ vm.state.data.plan.title }}</h1>
+          <p>
+            {{ vm.state.data.feature.name }} · Updated
+            {{ vm.state.data.plan.updatedAt | date: 'medium' }}
+          </p>
+        </div>
+        <div class="plan-controls">
+          @if (vm.state.data.isCurrent) {
+            @if (editing()) {
+              <button type="button" (click)="editing.set(false)">Cancel editing</button>
+            } @else {
+              <button type="button" (click)="editing.set(true)">Edit current plan</button>
+            }
+          } @else {
+            <button
+              type="button"
+              [disabled]="vm.mutation.status === 'saving'"
+              (click)="selectPlan(vm.state.data.feature.id, vm.state.data.plan.id)"
+            >
+              Make current
+            </button>
+          }
+          @if (confirmingRemoval()) {
+            <button
+              type="button"
+              class="danger-button"
+              [disabled]="vm.mutation.status === 'saving'"
+              (click)="removePlan(vm.state.data.feature.id, vm.state.data.plan.id)"
+            >
+              Confirm delete
+            </button>
+          } @else {
+            <button type="button" class="danger-link" (click)="confirmingRemoval.set(true)">
+              Delete
+            </button>
+          }
+          <span class="resource-id" [title]="vm.state.data.plan.id">
+            {{ vm.state.data.plan.id | shortId: 8 }}
+          </span>
+        </div>
+      </header>
+
+      @if (editing() && vm.state.data.isCurrent) {
+        <form
+          class="plan-editor surface-card"
+          #planForm="ngForm"
+          (ngSubmit)="updatePlan(vm.state.data.feature.id, title.value, content.value, contentType.value)"
+        >
+          <label>
+            <span>Title</span>
+            <input #title="ngModel" name="title" type="text" required [ngModel]="vm.state.data.plan.title" />
+          </label>
+          <label>
+            <span>Content type</span>
+            <select #contentType="ngModel" name="contentType" required [ngModel]="vm.state.data.plan.contentType">
+              <option value="Markdown">Markdown</option>
+              <option value="Html">HTML</option>
+            </select>
+          </label>
+          <label>
+            <span>Plan content</span>
+            <textarea #content="ngModel" name="content" rows="20" required [ngModel]="vm.state.data.plan.content"></textarea>
+          </label>
+          <button
+            type="submit"
+            [disabled]="planForm.invalid || vm.mutation.status === 'saving'"
+          >
+            Save current plan
+          </button>
+        </form>
+      } @else {
+        <section class="plan-document surface-card">
+          <app-feature-plan-content [plan]="vm.state.data.plan" />
+        </section>
+      }
+
+      @if (vm.mutation.status === 'error') {
+        <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+      }
+    }
+  }
+}

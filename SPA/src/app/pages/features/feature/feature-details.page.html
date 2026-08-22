@@ -1,0 +1,276 @@
+<a class="back-link" routerLink="/features">
+  <span aria-hidden="true">←</span> Back to features
+</a>
+
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message details-message">Loading feature…</div>
+    }
+    @case ('error') {
+      <div class="request-message error details-message">
+        <div>
+          <strong>Feature could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <header class="details-heading">
+        <div>
+          <h1 class="page-heading">{{ vm.state.data.name }}</h1>
+          <p class="resource-id">
+            Feature ID ·
+            <span [title]="vm.state.data.id">{{ vm.state.data.id | shortId: 8 }}</span>
+          </p>
+        </div>
+        <a class="plans-link" [routerLink]="['/features', vm.state.data.id, 'plans']">
+          View all plans
+          <span>{{ vm.state.data.plans.length }}</span>
+        </a>
+      </header>
+
+      <section class="feature-overview surface-card">
+        <div class="overview-main">
+          <span class="feature-icon large" aria-hidden="true">◇</span>
+          <div>
+            <p class="summary-text">{{ vm.state.data.summary }}</p>
+            <a class="project-link" [routerLink]="['/projects', vm.state.data.projectId]">
+              Project · {{ vm.state.data.projectId | shortId: 8 }}
+            </a>
+          </div>
+        </div>
+        <form
+          class="status-block"
+          #statusForm="ngForm"
+          (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
+        >
+          <label for="feature-status">Current status</label>
+          <textarea
+            #status="ngModel"
+            id="feature-status"
+            name="status"
+            rows="4"
+            required
+            [ngModel]="vm.state.data.status"
+          ></textarea>
+          <button
+            type="submit"
+            [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
+          >
+            Update status
+          </button>
+        </form>
+      </section>
+
+      @if (vm.state.data.currentPlanId; as currentPlanId) {
+        @for (plan of vm.state.data.plans; track plan.id) {
+          @if (plan.id === currentPlanId) {
+            <section class="section-card surface-card current-plan">
+              <div class="section-heading">
+                <div>
+                  <span class="eyebrow">Current plan</span>
+                  <h2>{{ plan.title }}</h2>
+                </div>
+                <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
+                  Open plan →
+                </a>
+              </div>
+              <app-markdown-content
+                [blocks]="emptyBlocks"
+                [markdown]="plan.contentType === 'Markdown' ? plan.content : ''"
+                emptyMessage="Open the plan to view its HTML content."
+              />
+            </section>
+          }
+        }
+      }
+
+      <section class="section-card surface-card">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Decision trail</span>
+            <h2>Conversation records</h2>
+          </div>
+          <span class="count-badge">{{ vm.state.data.records.length }}</span>
+        </div>
+
+        <form
+          class="inline-editor"
+          #newRecordForm="ngForm"
+          (ngSubmit)="addRecord(vm.state.data.id, newUserMessage.value, newAiAnswer.value)"
+        >
+          <label>
+            <span>User message</span>
+            <textarea #newUserMessage="ngModel" name="userMessage" rows="3" required ngModel></textarea>
+          </label>
+          <label>
+            <span>AI answer</span>
+            <textarea #newAiAnswer="ngModel" name="aiAnswer" rows="4" required ngModel></textarea>
+          </label>
+          <button
+            type="submit"
+            [disabled]="newRecordForm.invalid || vm.mutation.status === 'saving'"
+          >
+            Add record
+          </button>
+        </form>
+
+        <div class="record-list">
+          @for (record of vm.state.data.records; track record.id) {
+            <article class="record-item">
+              <header>
+                <span>Recorded {{ record.updatedAt | date: 'medium' }}</span>
+                <div class="record-actions">
+                  <button type="button" (click)="editingRecordId.set(record.id)">Edit</button>
+                  <button
+                    type="button"
+                    class="danger-text"
+                    [disabled]="vm.mutation.status === 'saving'"
+                    (click)="removeRecord(vm.state.data.id, record.id)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </header>
+              @if (editingRecordId() === record.id) {
+                <form
+                  class="record-editor"
+                  #editRecordForm="ngForm"
+                  (ngSubmit)="updateRecord(vm.state.data.id, record.id, editUser.value, editAi.value)"
+                >
+                  <label>
+                    <span>User message</span>
+                    <textarea #editUser="ngModel" name="editUser" rows="3" required [ngModel]="record.userMessage"></textarea>
+                  </label>
+                  <label>
+                    <span>AI answer</span>
+                    <textarea #editAi="ngModel" name="editAi" rows="4" required [ngModel]="record.aiAnswer"></textarea>
+                  </label>
+                  <div class="editor-actions">
+                    <button
+                      type="submit"
+                      [disabled]="editRecordForm.invalid || vm.mutation.status === 'saving'"
+                    >
+                      Save record
+                    </button>
+                    <button type="button" class="secondary-button" (click)="editingRecordId.set(null)">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <div class="message user-message">
+                  <span>User</span>
+                  <p>{{ record.userMessage }}</p>
+                </div>
+                <div class="message ai-message">
+                  <span>AI</span>
+                  <p>{{ record.aiAnswer }}</p>
+                </div>
+              }
+            </article>
+          } @empty {
+            <div class="empty-section">No conversation records have been saved.</div>
+          }
+        </div>
+      </section>
+
+      <section class="section-card surface-card">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Implementation clues</span>
+            <h2>Related skills</h2>
+          </div>
+          <span class="count-badge">{{ vm.state.data.relatedSkillIds.length }}</span>
+        </div>
+
+        @switch (vm.skills.status) {
+          @case ('loading') {
+            <p class="subtle-message">Loading available skills…</p>
+          }
+          @case ('error') {
+            <p class="form-error">{{ vm.skills.message }}</p>
+          }
+          @case ('success') {
+            <form
+              class="skill-picker"
+              #skillForm="ngForm"
+              (ngSubmit)="addSkill(vm.state.data.id, skill.value)"
+            >
+              <select #skill="ngModel" name="skillId" required ngModel>
+                <option value="" disabled>Select a skill</option>
+                @for (item of vm.skills.data.items; track item.id) {
+                  <option
+                    [value]="item.id"
+                    [disabled]="vm.state.data.relatedSkillIds.includes(item.id)"
+                  >
+                    {{ item.name }}
+                  </option>
+                }
+              </select>
+              <button
+                type="submit"
+                [disabled]="skillForm.invalid || vm.mutation.status === 'saving'"
+              >
+                Add skill
+              </button>
+            </form>
+          }
+        }
+
+        <div class="skill-links">
+          @for (skillId of vm.state.data.relatedSkillIds; track skillId) {
+            <div class="skill-link-item">
+              <a [routerLink]="['/skills', skillId]">
+                <span aria-hidden="true">&lt;/&gt;</span>
+                <strong>{{ skillId | shortId: 8 }}</strong>
+                <span aria-hidden="true">→</span>
+              </a>
+              <button
+                type="button"
+                aria-label="Remove related skill"
+                [disabled]="vm.mutation.status === 'saving'"
+                (click)="removeSkill(vm.state.data.id, skillId)"
+              >
+                ×
+              </button>
+            </div>
+          } @empty {
+            <div class="empty-section">No related skills have been added.</div>
+          }
+        </div>
+      </section>
+
+      @if (vm.mutation.status === 'error') {
+        <p class="form-error mutation-error" role="alert">{{ vm.mutation.message }}</p>
+      }
+
+      <section class="danger-zone surface-card">
+        <div>
+          <h2>Delete feature</h2>
+          <p>Remove this feature and its trace data from active views.</p>
+        </div>
+        @if (confirmingFeatureRemoval()) {
+          <div class="editor-actions">
+            <button
+              type="button"
+              class="danger-button"
+              [disabled]="vm.mutation.status === 'saving'"
+              (click)="removeFeature(vm.state.data.id)"
+            >
+              Confirm delete
+            </button>
+            <button type="button" class="secondary-button" (click)="confirmingFeatureRemoval.set(false)">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          <button type="button" class="danger-button outline" (click)="confirmingFeatureRemoval.set(true)">
+            Delete feature
+          </button>
+        }
+      </section>
+    }
+  }
+}

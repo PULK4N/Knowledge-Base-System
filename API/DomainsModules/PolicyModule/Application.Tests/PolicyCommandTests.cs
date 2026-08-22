@@ -495,7 +495,7 @@ public sealed class PolicyCommandTests
     }
 
     [Fact]
-    public async Task GetPoliciesByRepository_MergesGeneralProjectAndTopicPolicies()
+    public async Task GetPoliciesByRepository_ReturnsProjectTopicAndGeneralPolicies()
     {
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
@@ -546,9 +546,12 @@ public sealed class PolicyCommandTests
             project.ProjectId
         );
         policyTextRepository.PolicyTexts[projectAggregateId] =
-            "# General policy\nApplies to every project.\n\n"
-            + "# Project policy\nApplies only to this project.\n\n"
-            + "# Cloud policy\nApplies to cloud projects.";
+            "# Project \"Policy project\" policies\n\n"
+            + "## Project policy\nApplies only to this project.\n\n"
+            + "# Topic \"cloud\" policies\n\n"
+            + "## Cloud policy\nApplies to cloud projects.\n\n"
+            + "# General policies\n\n"
+            + "## General policy\nApplies to every project.";
 
         var result = await new GetPoliciesByRepositoryQuery(
             CreateCalculator(),
@@ -561,9 +564,12 @@ public sealed class PolicyCommandTests
         }.Execute(Executor);
 
         Assert.Equal(
-            "# General policy\nApplies to every project.\n\n"
-                + "# Project policy\nApplies only to this project.\n\n"
-                + "# Cloud policy\nApplies to cloud projects.",
+            "# Project \"Policy project\" policies\n\n"
+                + "## Project policy\nApplies only to this project.\n\n"
+                + "# Topic \"cloud\" policies\n\n"
+                + "## Cloud policy\nApplies to cloud projects.\n\n"
+                + "# General policies\n\n"
+                + "## General policy\nApplies to every project.",
             result.Policies
         );
         Assert.Equal(GetPoliciesByRepositoryResult.OkStatus, result.Status);
@@ -650,8 +656,10 @@ public sealed class PolicyCommandTests
             TopicName = "cloud"
         }.Execute(Executor);
         policyTextRepository.PolicyTexts[projectAggregateId] =
-            "# General policy\nApplies to every project.\n\n"
-            + "# Project policy\nApplies only to this project.";
+            "# Project \"Policy project\" policies\n\n"
+            + "## Project policy\nApplies only to this project.\n\n"
+            + "# General policies\n\n"
+            + "## General policy\nApplies to every project.";
 
         var updatedResult = await new GetPoliciesByRepositoryQuery(
             CreateCalculator(),
@@ -663,8 +671,10 @@ public sealed class PolicyCommandTests
             RepositoryPath = repositoryPath
         }.Execute(Executor);
         Assert.Equal(
-            "# General policy\nApplies to every project.\n\n"
-                + "# Project policy\nApplies only to this project.",
+            "# Project \"Policy project\" policies\n\n"
+                + "## Project policy\nApplies only to this project.\n\n"
+                + "# General policies\n\n"
+                + "## General policy\nApplies to every project.",
             updatedResult.Policies
         );
 

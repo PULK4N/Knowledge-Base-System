@@ -16,7 +16,10 @@ public sealed class TopicPolicyTextProjector(
             .Single();
         var policyTexts = generalPolicies.Topics.Values.ToDictionary(
             topic => topic.TopicName.Name,
-            topic => PolicyTextCompiler.Compile(topic.Policies.Values)
+            topic => PolicyTextCompiler.CompileTopic(
+                topic.TopicName.Name,
+                topic.Policies.Values
+            )
         );
 
         return repository.ReplaceTopics(policyTexts);

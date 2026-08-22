@@ -121,6 +121,51 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("UniqueEventConstraints", (string)null);
                 });
 
+            modelBuilder.Entity("FeatureModule.Persistence.Models.FeatureSummaryEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("CurrentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FeatureAggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PlanCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeatureAggregateId")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("FeatureSummaries");
+                });
+
             modelBuilder.Entity("PolicyModule.Persistence.Models.GeneralPolicyText", b =>
                 {
                     b.Property<int>("Id")

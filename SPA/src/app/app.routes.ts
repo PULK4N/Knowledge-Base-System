@@ -41,6 +41,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'features',
+        loadChildren: () =>
+          import('./pages/features/features.routes').then(
+            module => module.FEATURES_ROUTES,
+          ),
+      },
+      {
         path: 'memories',
         loadChildren: () =>
           import('./pages/memories/memories.routes').then(
