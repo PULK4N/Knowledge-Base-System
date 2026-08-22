@@ -24,11 +24,11 @@ export class HomePage {
 
   protected readonly state$: Observable<LoadState<OverviewCounts>> =
     this.overview.getCounts().pipe(
-    map(data => ({ status: 'success', data }) as const),
-    startWith({ status: 'loading' } as const),
-    catchError(error =>
-      of({ status: 'error', message: toUserMessage(error) } as const),
-    ),
-    shareReplay({ bufferSize: 1, refCount: true }),
+      map(data => ({ status: 'success', data }) as const),
+      startWith({ status: 'loading' } as const),
+      catchError(error =>
+        of({ status: 'error', message: toUserMessage(error) } as const),
+      ),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
 }
