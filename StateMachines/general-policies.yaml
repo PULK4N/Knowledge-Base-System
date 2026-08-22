@@ -1,5 +1,8 @@
 id: general-policies-state-machine
 stateData: GeneralPoliciesStateData
+initializationEvents:
+  - GeneralPolicyAddedV1
+  - TopicCreatedV1
 projections:
   - GeneralPolicyTextProjector
   - TopicPolicyTextProjector

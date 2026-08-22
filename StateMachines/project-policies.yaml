@@ -1,5 +1,7 @@
 id: project-policies-state-machine
 stateData: ProjectPoliciesStateData
+initializationEvents:
+  - ProjectCreatedV1
 projections:
   - ProjectPolicyTextProjector
   - ProjectTopicProjector

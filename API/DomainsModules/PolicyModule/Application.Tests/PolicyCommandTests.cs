@@ -55,9 +55,21 @@ public sealed class PolicyCommandTests
             ],
             definition.Projections
         );
+        Assert.Equal(
+            [nameof(ProjectCreatedV1)],
+            definition.InitializationEvents
+        );
         Assert.All(
             definition.Events.Values,
             eventDefinition => Assert.Empty(eventDefinition.Projections)
+        );
+
+        var repositoryMapDefinition = CreateDefinitionProvider().Get(
+            PolicyModule.Application.Constants.StateMachineIds.RepositoryToProjectMap
+        );
+        Assert.Equal(
+            [nameof(RepositoryToProjectMapAddedV1)],
+            repositoryMapDefinition.InitializationEvents
         );
     }
 
@@ -74,6 +86,13 @@ public sealed class PolicyCommandTests
                 "TopicPolicyTextProjector"
             ],
             definition.Projections
+        );
+        Assert.Equal(
+            [
+                nameof(GeneralPolicyAddedV1),
+                nameof(TopicCreatedV1)
+            ],
+            definition.InitializationEvents
         );
         Assert.All(
             definition.Events.Values,
@@ -733,7 +752,8 @@ public sealed class PolicyCommandTests
             new EventValidatorProvider(definitionProvider),
             new StateMachineUniqueEventConstraintProvider(
                 definitionProvider
-            )
+            ),
+            definitionProvider
         );
 
     private static YamlStateMachineDefinitionProvider

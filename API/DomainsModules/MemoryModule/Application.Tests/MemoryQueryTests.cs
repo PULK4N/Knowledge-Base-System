@@ -284,7 +284,8 @@ public sealed class MemoryQueryTests
             new OrderNumberHelper(),
             new MemoryStateDataProvider(),
             new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider()
+            new EmptyUniqueEventConstraintProvider(),
+            new TestStateMachineDefinitionProvider()
         );
 
     private sealed record MemoryFixture(

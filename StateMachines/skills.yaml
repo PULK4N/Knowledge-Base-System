@@ -1,5 +1,8 @@
 id: skills-state-machine
 stateData: SkillStateData
+initializationEvents:
+  - SkillCreatedV1
+  - SkillCreatedV2
 projections:
   - SkillSummaryProjector
   - SkillSearchProjector

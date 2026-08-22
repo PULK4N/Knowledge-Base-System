@@ -102,7 +102,8 @@ public sealed class GetSkillQueryTests
             new OrderNumberHelper(),
             new SkillStateDataProvider(),
             new StubEventValidatorProvider(),
-            new StubUniqueEventConstraintProvider()
+            new StubUniqueEventConstraintProvider(),
+            new TestStateMachineDefinitionProvider()
         );
 
         return new GetSkillQuery(stateCalculator, eventStore)

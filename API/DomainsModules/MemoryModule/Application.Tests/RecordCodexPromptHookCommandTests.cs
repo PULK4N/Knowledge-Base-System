@@ -301,7 +301,8 @@ public sealed class RecordCodexPromptHookCommandTests
                 new OrderNumberHelper(),
                 new MemoryStateDataProvider(),
                 new EmptyEventValidatorProvider(),
-                new EmptyUniqueEventConstraintProvider()
+                new EmptyUniqueEventConstraintProvider(),
+                new TestStateMachineDefinitionProvider()
             ),
             eventStore
         );

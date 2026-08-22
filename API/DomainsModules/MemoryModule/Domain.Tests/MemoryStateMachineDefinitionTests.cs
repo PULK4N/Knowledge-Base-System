@@ -30,6 +30,13 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
         Assert.Equal(
             [
+                nameof(CodexPromptHookRecordedV1),
+                nameof(CodexMemoryMigratedV1)
+            ],
+            definition.InitializationEvents
+        );
+        Assert.Equal(
+            [
                 nameof(MemorySearchProjector),
                 nameof(MemorySummaryProjector)
             ],
@@ -38,6 +45,14 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.All(
             definition.Events.Values,
             eventDefinition => Assert.Empty(eventDefinition.Projections)
+        );
+
+        var sessionMapDefinition = provider.Get(
+            "memory-session-aggregate-map-state-machine"
+        );
+        Assert.Equal(
+            [nameof(SessionAggregateMapAddedV1)],
+            sessionMapDefinition.InitializationEvents
         );
     }
 

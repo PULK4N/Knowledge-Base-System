@@ -26,7 +26,8 @@ public sealed class AddSkillCommandTests
             new OrderNumberHelper(),
             new SkillStateDataProvider(),
             new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider()
+            new EmptyUniqueEventConstraintProvider(),
+            new TestStateMachineDefinitionProvider()
         );
         var handler = new StateMachineHandler(
             stateCalculator,

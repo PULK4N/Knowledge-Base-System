@@ -21,6 +21,10 @@ public sealed class SkillStateMachineDefinitionTests
 
         Assert.Equal(nameof(SkillStateData), definition.StateData);
         Assert.Equal(
+            [nameof(SkillCreatedV1), nameof(SkillCreatedV2)],
+            definition.InitializationEvents
+        );
+        Assert.Equal(
             ["SkillSummaryProjector", "SkillSearchProjector"],
             definition.Projections
         );
