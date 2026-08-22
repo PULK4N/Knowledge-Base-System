@@ -93,6 +93,7 @@
           @case ('content') {
             <app-markdown-content
               [blocks]="vm.state.data.blocks"
+              [markdown]="vm.state.data.skill.content"
               emptyMessage="This skill has no content."
             />
           }
