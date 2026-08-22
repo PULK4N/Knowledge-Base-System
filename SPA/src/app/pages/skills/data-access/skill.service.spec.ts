@@ -38,6 +38,30 @@ describe('SkillService mutations', () => {
 
   afterEach(() => http.verify());
 
+  it('creates and refreshes a skill', async () => {
+    const request = {
+      name: 'Event sourcing writer',
+      description: 'Writes event-sourced modules.',
+      content: '# Event sourcing',
+      tags: ['event-sourcing'],
+    };
+    const resultPromise = firstValueFrom(service.create(request));
+    const creation = http.expectOne('/api/skills');
+
+    expect(creation.request.method).toBe('POST');
+    expect(creation.request.body).toEqual(request);
+    creation.flush({ status: 'OK', skillId: 'skill-2' });
+
+    const refresh = http.expectOne('/api/skills/skill-2');
+    refresh.flush({ ...skill, ...request, id: 'skill-2' });
+
+    await expect(resultPromise).resolves.toEqual({
+      ...skill,
+      ...request,
+      id: 'skill-2',
+    });
+  });
+
   it('updates and refreshes a skill', async () => {
     const request = {
       name: 'Angular code writer',
@@ -100,6 +124,66 @@ describe('SkillService mutations', () => {
       content: request.content,
       loadAutomatically: true,
     });
+  });
+
+  it('adds and refreshes a reference', async () => {
+    const request = {
+      relativePath: 'references/testing.md',
+      content: '# Testing',
+      loadAutomatically: false,
+    };
+    const resultPromise = firstValueFrom(
+      service.addReference(skill.id, request),
+    );
+    const creation = http.expectOne('/api/skills/skill-1/references');
+
+    expect(creation.request.method).toBe('POST');
+    expect(creation.request.body).toEqual(request);
+    creation.flush({ status: 'OK' });
+
+    const refresh = http.expectOne('/api/skills/skill-1');
+    refresh.flush({
+      ...skill,
+      references: {
+        ...skill.references,
+        [request.relativePath]: {
+          content: request.content,
+          loadAutomatically: request.loadAutomatically,
+        },
+      },
+    });
+
+    const result = await resultPromise;
+    expect(result.references[request.relativePath]).toEqual({
+      content: request.content,
+      loadAutomatically: false,
+    });
+  });
+
+  it('uploads attachments and refreshes the skill', async () => {
+    const file = new File(['content'], 'testing.md', { type: 'text/markdown' });
+    const resultPromise = firstValueFrom(
+      service.addAttachments(skill.id, [file]),
+    );
+    const upload = http.expectOne('/api/skills/skill-1/attachments');
+
+    expect(upload.request.method).toBe('POST');
+    expect(upload.request.body).toBeInstanceOf(FormData);
+    expect((upload.request.body as FormData).getAll('files')).toEqual([file]);
+    upload.flush([
+      {
+        id: 'attachment-1',
+        name: 'testing.md',
+        size: file.size,
+        fileType: file.type,
+        extension: '.md',
+      },
+    ]);
+
+    const refresh = http.expectOne('/api/skills/skill-1');
+    refresh.flush(skill);
+
+    await expect(resultPromise).resolves.toEqual(skill);
   });
 
   it('deletes and refreshes a reference', async () => {

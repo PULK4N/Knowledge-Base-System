@@ -1,0 +1,65 @@
+<a class="back-link" routerLink="/skills">
+  <span aria-hidden="true">←</span> Back to skills
+</a>
+
+<header>
+  <p class="eyebrow">Skill management</p>
+  <h1 class="page-heading">Add skill</h1>
+  <p class="page-subtitle">Create reusable guidance for agents</p>
+</header>
+
+@if (state$ | async; as state) {
+  <form
+    #skillForm="ngForm"
+    class="editor-card surface-card"
+    (ngSubmit)="create(name.value, description.value, content.value, tags.value)"
+  >
+    <label>
+      <span>Name</span>
+      <input #name="ngModel" name="name" type="text" required ngModel />
+    </label>
+
+    <label>
+      <span>Description</span>
+      <textarea #description="ngModel" name="description" rows="4" ngModel></textarea>
+    </label>
+
+    <label>
+      <span>Content</span>
+      <textarea
+        #content="ngModel"
+        class="content-input"
+        name="content"
+        rows="18"
+        ngModel
+      ></textarea>
+    </label>
+
+    <label>
+      <span>Tags</span>
+      <input
+        #tags="ngModel"
+        name="tags"
+        type="text"
+        placeholder="angular, frontend, rxjs"
+        ngModel
+      />
+      <small>Separate tags with commas.</small>
+    </label>
+
+    @if (state.status === 'error') {
+      <p class="form-error" role="alert">{{ state.message }}</p>
+    }
+
+    <div class="form-actions">
+      <button
+        class="primary-action"
+        type="submit"
+        [disabled]="skillForm.invalid || state.status === 'saving'"
+      >
+        {{ state.status === 'saving' ? 'Creating…' : 'Create skill' }}
+      </button>
+      <a routerLink="/skills">Cancel</a>
+    </div>
+  </form>
+}

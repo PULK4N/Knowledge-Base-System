@@ -46,6 +46,7 @@
 }
 
 .editor-card input[type='text'],
+.editor-card input[type='file'],
 .editor-card textarea {
   width: 100%;
   padding: 12px 14px;

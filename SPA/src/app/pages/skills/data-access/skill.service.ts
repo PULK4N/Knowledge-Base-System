@@ -14,8 +14,12 @@ import {
   PagedResult,
 } from '../../../core/store/entity-store.service';
 import {
+  AddSkillReferenceRequest,
+  AddSkillRequest,
   Skill,
+  SkillAttachment,
   SkillCommandResult,
+  SkillCreatedCommandResult,
   SkillDto,
   SkillSearchRequest,
   SkillSearchResult,
@@ -87,6 +91,12 @@ export class SkillService {
     return merge(cached$, refresh$);
   }
 
+  create(request: AddSkillRequest): Observable<Skill> {
+    return this.http
+      .post<SkillCreatedCommandResult>(this.controllerPath, request)
+      .pipe(switchMap(result => this.refresh(result.skillId)));
+  }
+
   update(id: string, request: UpdateSkillRequest): Observable<Skill> {
     return this.http
       .post<SkillCommandResult>(
@@ -113,6 +123,30 @@ export class SkillService {
       .post<SkillCommandResult>(
         `${this.controllerPath}/${encodeURIComponent(id)}/references/update`,
         request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  addReference(
+    id: string,
+    request: AddSkillReferenceRequest,
+  ): Observable<Skill> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/references`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  addAttachments(id: string, files: readonly File[]): Observable<Skill> {
+    const body = new FormData();
+    files.forEach(file => body.append('files', file, file.name));
+
+    return this.http
+      .post<readonly SkillAttachment[]>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/attachments`,
+        body,
       )
       .pipe(switchMap(() => this.refresh(id)));
   }

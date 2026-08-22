@@ -18,9 +18,14 @@
         </a>
       }
 
-      <header>
-        <h1 class="page-heading">{{ vm.state.data.title }}</h1>
-        <p class="page-subtitle">{{ vm.state.data.subtitle }}</p>
+      <header class="page-header">
+        <div>
+          <h1 class="page-heading">{{ vm.state.data.title }}</h1>
+          <p class="page-subtitle">{{ vm.state.data.subtitle }}</p>
+        </div>
+        <a class="primary-link" [routerLink]="vm.state.data.addRoute">
+          Add policy
+        </a>
       </header>
 
       @if (vm.state.data.scope.kind === 'project') {
@@ -29,14 +34,118 @@
             <p class="section-label">Connected knowledge</p>
             <h2 id="project-topics-title">Topics used by this project</h2>
           </div>
-          <div class="topic-chips">
-            @for (topicName of vm.state.data.topicNames; track topicName) {
-              <a class="topic-chip" [routerLink]="['/topics', topicName]">
-                <span>{{ topicName }}</span>
-                <span aria-hidden="true">→</span>
-              </a>
-            } @empty {
-              <span class="no-topics">No topics connected.</span>
+          <div class="connection-management">
+            <div class="topic-chips">
+              @for (topicName of vm.state.data.topicNames; track topicName) {
+                <a class="topic-chip" [routerLink]="['/topics', topicName]">
+                  <span>{{ topicName }}</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              } @empty {
+                <span class="no-topics">No topics connected.</span>
+              }
+            </div>
+            <form
+              #topicForm="ngForm"
+              class="connection-form"
+              (ngSubmit)="addProjectTopic(vm.state.data.scope.projectId, topicName.value)"
+            >
+              <label>
+                <span class="sr-only">Topic name</span>
+                <input
+                  #topicName="ngModel"
+                  name="topicName"
+                  type="text"
+                  required
+                  placeholder="Topic name"
+                  ngModel
+                />
+              </label>
+              <button
+                type="submit"
+                [disabled]="
+                  topicForm.invalid ||
+                  vm.connectionMutation.status === 'saving'
+                "
+              >
+                {{
+                  vm.connectionMutation.status === 'saving' &&
+                  vm.connectionMutation.kind === 'topic'
+                    ? 'Adding…'
+                    : 'Add topic'
+                }}
+              </button>
+            </form>
+            @if (
+              vm.connectionMutation.status === 'error' &&
+              vm.connectionMutation.kind === 'topic'
+            ) {
+              <p class="connection-error" role="alert">
+                {{ vm.connectionMutation.message }}
+              </p>
+            }
+          </div>
+        </section>
+
+        <section
+          class="project-topics surface-card"
+          aria-labelledby="project-repositories-title"
+        >
+          <div>
+            <p class="section-label">Repository mapping</p>
+            <h2 id="project-repositories-title">Repositories in this project</h2>
+          </div>
+          <div class="connection-management">
+            <div class="repository-list">
+              @for (repositoryPath of vm.state.data.repositoryPaths; track repositoryPath) {
+                <code>{{ repositoryPath }}</code>
+              } @empty {
+                <span class="no-topics">No repositories connected.</span>
+              }
+            </div>
+            <form
+              #repositoryForm="ngForm"
+              class="connection-form"
+              (ngSubmit)="
+                addProjectRepository(
+                  vm.state.data.scope.projectId,
+                  repositoryPath.value
+                )
+              "
+            >
+              <label>
+                <span class="sr-only">Repository path</span>
+                <input
+                  #repositoryPath="ngModel"
+                  name="repositoryPath"
+                  type="text"
+                  required
+                  placeholder="/workspace/repository"
+                  ngModel
+                />
+              </label>
+              <button
+                type="submit"
+                [disabled]="
+                  repositoryForm.invalid ||
+                  vm.connectionMutation.status === 'saving'
+                "
+              >
+                {{
+                  vm.connectionMutation.status === 'saving' &&
+                  vm.connectionMutation.kind === 'repository'
+                    ? 'Adding…'
+                    : 'Add repository'
+                }}
+              </button>
+            </form>
+            @if (
+              vm.connectionMutation.status === 'error' &&
+              vm.connectionMutation.kind === 'repository'
+            ) {
+              <p class="connection-error" role="alert">
+                {{ vm.connectionMutation.message }}
+              </p>
             }
           </div>
         </section>

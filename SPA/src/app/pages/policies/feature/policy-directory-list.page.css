@@ -4,6 +4,23 @@
   margin: 0 auto;
 }
 
+.page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.primary-link {
+  flex: 0 0 auto;
+  padding: 12px 18px;
+  border-radius: 8px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
 .page-message {
   margin-top: 24px;
 }
@@ -96,6 +113,10 @@
 }
 
 @media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+  }
+
   .list-heading {
     display: none;
   }

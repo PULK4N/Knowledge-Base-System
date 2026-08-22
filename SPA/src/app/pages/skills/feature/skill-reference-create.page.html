@@ -1,0 +1,95 @@
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message editor-message">Loading skill…</div>
+    }
+    @case ('error') {
+      <a class="back-link" routerLink="/skills">
+        <span aria-hidden="true">←</span> Back to skills
+      </a>
+      <div class="request-message error editor-message">
+        <div><strong>Skill could not be loaded</strong><p>{{ vm.state.message }}</p></div>
+      </div>
+    }
+    @case ('success') {
+      <a
+        class="back-link"
+        [routerLink]="['/skills', vm.state.data.id]"
+        [queryParams]="{ tab: 'references' }"
+      >
+        <span aria-hidden="true">←</span> Back to {{ vm.state.data.name }}
+      </a>
+
+      <header>
+        <p class="eyebrow">Reference management</p>
+        <h1 class="page-heading">Add reference</h1>
+        <p class="page-subtitle">Add supporting knowledge to {{ vm.state.data.name }}</p>
+      </header>
+
+      <form
+        #referenceForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="
+          create(
+            vm.state.data.id,
+            relativePath.value,
+            content.value,
+            loadAutomatically.value
+          )
+        "
+      >
+        <label>
+          <span>Relative path</span>
+          <input
+            #relativePath="ngModel"
+            name="relativePath"
+            type="text"
+            required
+            placeholder="references/architecture.md"
+            ngModel
+          />
+          <small>Use a unique path within this skill.</small>
+        </label>
+
+        <label>
+          <span>Content</span>
+          <textarea
+            #content="ngModel"
+            class="content-input"
+            name="content"
+            rows="20"
+            ngModel
+          ></textarea>
+        </label>
+
+        <label class="checkbox-field">
+          <input
+            #loadAutomatically="ngModel"
+            name="loadAutomatically"
+            type="checkbox"
+            ngModel
+          />
+          <span>Load this reference automatically with the skill</span>
+        </label>
+
+        @if (vm.mutation.status === 'error') {
+          <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+        }
+
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="referenceForm.invalid || vm.mutation.status === 'saving'"
+          >
+            {{ vm.mutation.status === 'saving' ? 'Adding…' : 'Add reference' }}
+          </button>
+          <a
+            [routerLink]="['/skills', vm.state.data.id]"
+            [queryParams]="{ tab: 'references' }"
+          >Cancel</a>
+        </div>
+      </form>
+    }
+  }
+}

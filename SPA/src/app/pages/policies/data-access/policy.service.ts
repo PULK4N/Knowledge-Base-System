@@ -2,14 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
   Observable,
-  concat,
   filter,
   ignoreElements,
   map,
   merge,
-  of,
   switchMap,
-  take,
   tap,
 } from 'rxjs';
 import {
@@ -18,7 +15,11 @@ import {
   PagedResult,
 } from '../../../core/store/entity-store.service';
 import {
+  AddPolicyRequest,
+  CreateProjectRequest,
+  CreateTopicRequest,
   Policy,
+  PolicyAddedCommandResult,
   PolicyCommandResult,
   PolicyDto,
   PolicyProjectDetails,
@@ -32,6 +33,7 @@ import {
   PolicyTopicSearchResult,
   PolicyTopicSummary,
   PolicyTopicSummaryDto,
+  ProjectCreatedCommandResult,
   UpdatePolicyRequest,
 } from './policy.models';
 
@@ -39,9 +41,9 @@ const TOPIC_ENTITY_TYPE = 'policy-topic';
 const PROJECT_ENTITY_TYPE = 'policy-project';
 
 function isProjectDetails(
-  project: PolicyProjectSummary,
+  project: PolicyProjectSummary | undefined,
 ): project is PolicyProjectDetails {
-  return 'topicNames' in project && 'description' in project;
+  return !!project && 'topicNames' in project && 'description' in project;
 }
 
 export function policyControllerPath(scope: PolicyScope): string {
@@ -119,7 +121,90 @@ export class PolicyService {
   }
 
   watchProject(projectId: string): Observable<PolicyProjectDetails> {
-    const refresh$ = this.http
+    const refresh$ = this.refreshProject(projectId).pipe(ignoreElements());
+    const cached$ = this.store
+      .entity$<PolicyProjectSummary>(PROJECT_ENTITY_TYPE, projectId)
+      .pipe(filter(isProjectDetails));
+
+    return merge(cached$, refresh$);
+  }
+
+  addPolicy(
+    scope: PolicyScope,
+    request: AddPolicyRequest,
+  ): Observable<Policy> {
+    return this.http
+      .post<PolicyAddedCommandResult>(this.addPolicyPath(scope), {
+        ...this.scopeIdentity(scope),
+        ...request,
+      })
+      .pipe(
+        map(result => ({
+          id: result.policyId,
+          title: request.title,
+          description: request.description,
+        })),
+        tap(policy => this.store.upsert(policyEntityType(scope), policy)),
+      );
+  }
+
+  createTopic(request: CreateTopicRequest): Observable<PolicyTopicSummary> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/topics', request)
+      .pipe(
+        map(() => ({
+          id: request.topicName,
+          name: request.topicName,
+          description: request.description,
+          policyCount: 0,
+        })),
+        tap(topic => this.store.upsert(TOPIC_ENTITY_TYPE, topic)),
+      );
+  }
+
+  createProject(
+    request: CreateProjectRequest,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<ProjectCreatedCommandResult>('/api/policies/projects', request)
+      .pipe(
+        map(result => ({
+          id: result.projectId,
+          name: request.projectName,
+          description: request.projectDescription,
+          repositoryPaths: request.repositoryPaths,
+          topicNames: [],
+        })),
+        tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),
+      );
+  }
+
+  addProjectRepository(
+    projectId: string,
+    repositoryPath: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/repositories', {
+        projectId,
+        repositoryPath,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  addProjectTopic(
+    projectId: string,
+    topicName: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/topics', {
+        projectId,
+        topicName,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  private refreshProject(projectId: string): Observable<PolicyProjectDetails> {
+    return this.http
       .get<PolicyProjectDetailsDto>(
         `/api/policies/projects/${encodeURIComponent(projectId)}`,
       )
@@ -134,17 +219,6 @@ export class PolicyService {
           }),
         ),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),
-      );
-
-    return this.store
-      .entity$<PolicyProjectSummary>(PROJECT_ENTITY_TYPE, projectId)
-      .pipe(
-        take(1),
-        switchMap(cached =>
-          cached && isProjectDetails(cached)
-            ? concat(of(cached), refresh$)
-            : refresh$,
-        ),
       );
   }
 
@@ -236,6 +310,17 @@ export class PolicyService {
         return `/api/policies/topics/policies/${action}`;
       case 'project':
         return `/api/policies/projects/policies/${action}`;
+    }
+  }
+
+  private addPolicyPath(scope: PolicyScope): string {
+    switch (scope.kind) {
+      case 'general':
+        return '/api/policies/general';
+      case 'topic':
+        return '/api/policies/topics/policies';
+      case 'project':
+        return '/api/policies/projects/policies';
     }
   }
 

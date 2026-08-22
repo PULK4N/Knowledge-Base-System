@@ -1,0 +1,102 @@
+@if (kind$ | async; as kind) {
+  @if (state$ | async; as state) {
+    <a class="back-link" [routerLink]="kind === 'topics' ? '/topics' : '/projects'">
+      <span aria-hidden="true">←</span>
+      Back to {{ kind }}
+    </a>
+
+    <header>
+      <p class="eyebrow">{{ kind === 'topics' ? 'Topic' : 'Project' }} management</p>
+      <h1 class="page-heading">Add {{ kind === 'topics' ? 'topic' : 'project' }}</h1>
+      <p class="page-subtitle">
+        {{
+          kind === 'topics'
+            ? 'Create a policy group that projects can reuse'
+            : 'Create a project knowledge scope and connect its repositories'
+        }}
+      </p>
+    </header>
+
+    @if (kind === 'topics') {
+      <form
+        #topicForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="createTopic(topicName.value, topicDescription.value)"
+      >
+        <label>
+          <span>Name</span>
+          <input #topicName="ngModel" name="topicName" type="text" required ngModel />
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea
+            #topicDescription="ngModel"
+            name="topicDescription"
+            rows="10"
+            ngModel
+          ></textarea>
+        </label>
+        @if (state.status === 'error') {
+          <p class="form-error" role="alert">{{ state.message }}</p>
+        }
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="topicForm.invalid || state.status === 'saving'"
+          >
+            {{ state.status === 'saving' ? 'Creating…' : 'Create topic' }}
+          </button>
+          <a routerLink="/topics">Cancel</a>
+        </div>
+      </form>
+    } @else {
+      <form
+        #projectForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="
+          createProject(projectName.value, projectDescription.value, repositoryPaths.value)
+        "
+      >
+        <label>
+          <span>Name</span>
+          <input #projectName="ngModel" name="projectName" type="text" required ngModel />
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea
+            #projectDescription="ngModel"
+            name="projectDescription"
+            rows="7"
+            ngModel
+          ></textarea>
+        </label>
+        <label>
+          <span>Repository paths</span>
+          <textarea
+            #repositoryPaths="ngModel"
+            class="content-input"
+            name="repositoryPaths"
+            rows="7"
+            placeholder="/workspace/knowledge-base-system"
+            ngModel
+          ></textarea>
+          <small>Enter one repository path per line. You can add more later.</small>
+        </label>
+        @if (state.status === 'error') {
+          <p class="form-error" role="alert">{{ state.message }}</p>
+        }
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="projectForm.invalid || state.status === 'saving'"
+          >
+            {{ state.status === 'saving' ? 'Creating…' : 'Create project' }}
+          </button>
+          <a routerLink="/projects">Cancel</a>
+        </div>
+      </form>
+    }
+  }
+}

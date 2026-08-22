@@ -34,6 +34,7 @@ interface DirectoryListView {
   readonly kind: DirectoryKind;
   readonly title: string;
   readonly subtitle: string;
+  readonly addRoute: readonly string[];
   readonly result: PagedResult<DirectoryEntry>;
 }
 
@@ -109,6 +110,7 @@ export class PolicyDirectoryListPage {
           kind,
           title: 'Topics',
           subtitle: 'Policy groups shared across projects',
+          addRoute: ['/topics', 'new'],
           result: {
             ...result,
             items: result.items.map(topic => ({
@@ -128,6 +130,7 @@ export class PolicyDirectoryListPage {
         kind,
         title: 'Projects',
         subtitle: 'Project-specific policies and topic relationships',
+        addRoute: ['/projects', 'new'],
         result: {
           ...result,
           items: result.items.map(project => ({

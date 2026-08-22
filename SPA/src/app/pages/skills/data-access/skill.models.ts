@@ -58,11 +58,19 @@ export interface UpdateSkillRequest {
   readonly tags: readonly string[];
 }
 
+export type AddSkillRequest = UpdateSkillRequest;
+
+export interface SkillCreatedCommandResult extends SkillCommandResult {
+  readonly skillId: string;
+}
+
 export interface UpdateSkillReferenceRequest {
   readonly relativePath: string;
   readonly content: string;
   readonly loadAutomatically: boolean;
 }
+
+export type AddSkillReferenceRequest = UpdateSkillReferenceRequest;
 
 export interface SkillCommandResult {
   readonly status: string;

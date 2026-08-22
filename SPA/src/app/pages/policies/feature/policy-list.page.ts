@@ -40,7 +40,9 @@ interface PolicyListView {
   readonly subtitle: string;
   readonly backLink: string | null;
   readonly backLabel: string | null;
+  readonly addRoute: readonly string[];
   readonly topicNames: readonly string[];
+  readonly repositoryPaths: readonly string[];
   readonly result: PolicySearchResult;
 }
 
@@ -65,6 +67,27 @@ type PolicyMutationState =
   | {
       readonly status: 'error';
       readonly policyId: string;
+      readonly message: string;
+    };
+
+type ProjectConnectionAction =
+  | {
+      readonly kind: 'repository';
+      readonly projectId: string;
+      readonly value: string;
+    }
+  | {
+      readonly kind: 'topic';
+      readonly projectId: string;
+      readonly value: string;
+    };
+
+type ProjectConnectionState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'saving'; readonly kind: 'repository' | 'topic' }
+  | {
+      readonly status: 'error';
+      readonly kind: 'repository' | 'topic';
       readonly message: string;
     };
 
@@ -105,6 +128,7 @@ export class PolicyListPage {
     search: '',
   });
   private readonly actions = new Subject<PolicyAction>();
+  private readonly connectionRequests = new Subject<ProjectConnectionAction>();
 
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly confirmingPolicyId = signal<string | null>(null);
@@ -188,9 +212,33 @@ export class PolicyListPage {
       startWith({ status: 'idle' } as const),
     );
 
+  private readonly connectionMutation$: Observable<ProjectConnectionState> =
+    this.connectionRequests.pipe(
+      exhaustMap(action => {
+        const request$ =
+          action.kind === 'repository'
+            ? this.policies.addProjectRepository(action.projectId, action.value)
+            : this.policies.addProjectTopic(action.projectId, action.value);
+
+        return request$.pipe(
+          map(() => ({ status: 'idle' }) as const),
+          startWith({ status: 'saving', kind: action.kind } as const),
+          catchError(error =>
+            of({
+              status: 'error',
+              kind: action.kind,
+              message: toUserMessage(error),
+            } as const),
+          ),
+        );
+      }),
+      startWith({ status: 'idle' } as const),
+    );
+
   protected readonly vm$ = combineLatest({
     state: this.state$,
     mutation: this.mutation$,
+    connectionMutation: this.connectionMutation$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected search(search: string): void {
@@ -244,6 +292,20 @@ export class PolicyListPage {
     this.actions.next({ kind: 'remove', scope, policyId });
   }
 
+  protected addProjectRepository(projectId: string, repositoryPath: string): void {
+    const value = repositoryPath.trim();
+    if (!value) return;
+
+    this.connectionRequests.next({ kind: 'repository', projectId, value });
+  }
+
+  protected addProjectTopic(projectId: string, topicName: string): void {
+    const value = topicName.trim();
+    if (!value) return;
+
+    this.connectionRequests.next({ kind: 'topic', projectId, value });
+  }
+
   private load(
     scope: PolicyScope,
     request: PolicySearchRequest,
@@ -258,7 +320,9 @@ export class PolicyListPage {
           subtitle: 'Rules that apply across every project and topic',
           backLink: null,
           backLabel: null,
+          addRoute: ['/policies', 'new'],
           topicNames: [],
+          repositoryPaths: [],
           result,
         })),
       );
@@ -272,7 +336,9 @@ export class PolicyListPage {
           subtitle: 'Policies shared through this topic',
           backLink: '/topics',
           backLabel: 'Back to topics',
+          addRoute: ['/topics', scope.topicName, 'policies', 'new'],
           topicNames: [],
+          repositoryPaths: [],
           result,
         })),
       );
@@ -300,7 +366,9 @@ export class PolicyListPage {
         project.description || 'Project-specific policies and related topics',
       backLink: '/projects',
       backLabel: 'Back to projects',
+      addRoute: ['/projects', scope.projectId, 'policies', 'new'],
       topicNames: project.topicNames,
+      repositoryPaths: project.repositoryPaths,
       result,
     };
   }
