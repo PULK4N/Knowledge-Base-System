@@ -5,6 +5,7 @@
         class="markdown-document"
         mermaid
         [data]="markdown() ?? ''"
+        (ready)="qualifyFragmentLinks()"
       />
     } @else {
       <div class="empty-content">{{ emptyMessage() }}</div>
