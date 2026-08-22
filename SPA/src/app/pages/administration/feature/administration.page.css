@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--indigo);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.administration-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 30px 0 22px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #f2f4f8;
+}
+
+.administration-tabs a {
+  display: block;
+  min-width: 150px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 8px;
+  color: #4b5872;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.administration-tabs a:hover {
+  color: var(--navy);
+  background: rgb(255 255 255 / 65%);
+}
+
+.administration-tabs a.active {
+  color: #2632d9;
+  background: white;
+  box-shadow: 0 2px 8px rgb(30 43 78 / 10%);
+}
+
+@media (max-width: 560px) {
+  .administration-tabs a {
+    min-width: 0;
+    flex: 1;
+  }
+}

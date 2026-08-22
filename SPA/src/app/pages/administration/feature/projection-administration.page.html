@@ -1,11 +1,3 @@
-<header>
-  <p class="eyebrow">Operations</p>
-  <h1 class="page-heading">Administration</h1>
-  <p class="page-subtitle">
-    Run projection processing from the latest event of each aggregate
-  </p>
-</header>
-
 @if (vm$ | async; as vm) {
   @switch (vm.projections.status) {
     @case ('loading') {

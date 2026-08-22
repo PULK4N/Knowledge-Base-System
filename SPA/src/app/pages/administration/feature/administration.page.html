@@ -1,0 +1,38 @@
+<header>
+  <p class="eyebrow">Operations</p>
+  <h1 class="page-heading">Administration</h1>
+  <p class="page-subtitle">
+    Manage projection processing and inspect queued outbox work
+  </p>
+</header>
+
+<nav class="administration-tabs" role="tablist" aria-label="Administration">
+  <a
+    role="tab"
+    id="projections-tab"
+    aria-controls="administration-panel"
+    routerLink="projections"
+    routerLinkActive="active"
+    #projectionsLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="projectionsLink.isActive"
+  >
+    Projections
+  </a>
+  <a
+    role="tab"
+    id="outbox-tab"
+    aria-controls="administration-panel"
+    routerLink="outbox"
+    routerLinkActive="active"
+    #outboxLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="outboxLink.isActive"
+  >
+    Outbox
+  </a>
+</nav>
+
+<section id="administration-panel" role="tabpanel">
+  <router-outlet />
+</section>

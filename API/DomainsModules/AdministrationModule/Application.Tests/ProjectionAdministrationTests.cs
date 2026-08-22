@@ -220,7 +220,7 @@ public sealed class ProjectionAdministrationTests
         public Task UpdateCompleted(long id) =>
             throw new NotSupportedException();
 
-        public Task UpdateFailed(long id) =>
+        public Task UpdateFailed(long id, string errorMessage) =>
             throw new NotSupportedException();
     }
 
