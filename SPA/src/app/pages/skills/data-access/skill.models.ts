@@ -1,8 +1,16 @@
 import { PagedResult } from '../../../core/store/entity-store.service';
+import { ListSortDirection } from '../../../shared/list-state/list-state';
 
 export interface SkillSummary {
   readonly id: string;
   readonly name: string;
+}
+
+export interface SkillListItem extends SkillSummary {
+  readonly description: string;
+  readonly tags: readonly string[];
+  readonly referenceCount: number;
+  readonly attachmentCount: number;
 }
 
 export interface SkillReference {
@@ -18,26 +26,38 @@ export interface SkillAttachment {
   readonly extension: string;
 }
 
-export interface Skill extends SkillSummary {
+export interface Skill extends SkillListItem {
   readonly isDeleted: boolean;
-  readonly description: string;
   readonly content: string;
-  readonly tags: readonly string[];
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
 }
+
+export type SkillSearchSortField =
+  | 'Name'
+  | 'ReferenceCount'
+  | 'AttachmentCount';
 
 export interface SkillSearchRequest {
   readonly page: number;
   readonly pageSize: number;
   readonly search: string;
+  readonly tag: string;
+  readonly hasReferences: boolean | null;
+  readonly hasAttachments: boolean | null;
+  readonly sortBy: SkillSearchSortField;
+  readonly sortDirection: ListSortDirection;
 }
 
-export type SkillSearchResult = PagedResult<SkillSummary>;
+export type SkillSearchResult = PagedResult<SkillListItem>;
 
-export interface SkillSummaryDto {
+export interface SkillListItemDto {
   readonly skillId: string;
   readonly name: string;
+  readonly description: string;
+  readonly tags: readonly string[];
+  readonly referenceCount: number;
+  readonly attachmentCount: number;
 }
 
 export interface SkillDto {

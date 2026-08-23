@@ -21,10 +21,11 @@ import {
   SkillCommandResult,
   SkillCreatedCommandResult,
   SkillDto,
+  SkillListItem,
+  SkillListItemDto,
   SkillSearchRequest,
   SkillSearchResult,
   SkillSummary,
-  SkillSummaryDto,
   UpdateSkillReferenceRequest,
   UpdateSkillRequest,
 } from './skill.models';
@@ -43,28 +44,52 @@ export class SkillService {
 
   search(request: SkillSearchRequest): Observable<SkillSearchResult> {
     const normalizedSearch = request.search.trim();
-    const queryKey = [
-      SKILL_ENTITY_TYPE,
-      request.page,
-      request.pageSize,
-      normalizedSearch.toLowerCase(),
-    ].join(':');
+    const normalizedTag = request.tag.trim();
+    const queryKey = JSON.stringify({
+      entityType: SKILL_ENTITY_TYPE,
+      page: request.page,
+      pageSize: request.pageSize,
+      search: normalizedSearch.toLowerCase(),
+      tag: normalizedTag.toLowerCase(),
+      hasReferences: request.hasReferences,
+      hasAttachments: request.hasAttachments,
+      sortBy: request.sortBy,
+      sortDirection: request.sortDirection,
+    });
     let params = new HttpParams()
       .set('page', request.page)
-      .set('pageSize', request.pageSize);
+      .set('pageSize', request.pageSize)
+      .set('sortBy', request.sortBy)
+      .set('sortDirection', request.sortDirection);
 
     if (normalizedSearch) {
       params = params.set('search', normalizedSearch);
     }
 
+    if (normalizedTag) {
+      params = params.set('tag', normalizedTag);
+    }
+
+    if (request.hasReferences !== null) {
+      params = params.set('hasReferences', request.hasReferences);
+    }
+
+    if (request.hasAttachments !== null) {
+      params = params.set('hasAttachments', request.hasAttachments);
+    }
+
     const refresh$ = this.http
-      .get<PagedResult<SkillSummaryDto>>(this.controllerPath, { params })
+      .get<PagedResult<SkillListItemDto>>(this.controllerPath, { params })
       .pipe(
         map(result => ({
           ...result,
           items: result.items.map(item => ({
             id: item.skillId,
             name: item.name,
+            description: item.description,
+            tags: item.tags,
+            referenceCount: item.referenceCount,
+            attachmentCount: item.attachmentCount,
           })),
         })),
         tap(result =>
@@ -73,7 +98,7 @@ export class SkillService {
         ignoreElements(),
       );
 
-    const cached$ = this.store.search$<SkillSummary>(queryKey).pipe(
+    const cached$ = this.store.search$<SkillListItem>(queryKey).pipe(
       filter(
         (result): result is SkillSearchResult => result !== undefined,
       ),
@@ -168,6 +193,11 @@ export class SkillService {
       .get<SkillDto>(`${this.controllerPath}/${encodeURIComponent(id)}`)
       .pipe(
         map(skill => ({ ...skill })),
+        map(skill => ({
+          ...skill,
+          referenceCount: Object.keys(skill.references).length,
+          attachmentCount: Object.keys(skill.attachments).length,
+        })),
         tap(skill => this.store.upsert(SKILL_ENTITY_TYPE, skill)),
       );
   }

@@ -8,6 +8,8 @@ const skill: Skill = {
   description: 'Angular guidance',
   content: '# Skill',
   tags: [],
+  referenceCount: 1,
+  attachmentCount: 0,
   references: {
     'references/architecture.md': {
       content: '# Architecture\n\nObservable-first pages.',

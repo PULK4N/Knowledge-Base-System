@@ -24,7 +24,7 @@ const skill: SkillDto = {
   attachments: {},
 };
 
-describe('SkillService mutations', () => {
+describe('SkillService', () => {
   let service: SkillService;
   let http: HttpTestingController;
 
@@ -37,6 +37,72 @@ describe('SkillService mutations', () => {
   });
 
   afterEach(() => http.verify());
+
+  it('maps every list option to the API and caches the projected result', async () => {
+    const resultPromise = firstValueFrom(
+      service.search({
+        page: 2,
+        pageSize: 10,
+        search: ' writer ',
+        tag: ' angular ',
+        hasReferences: true,
+        hasAttachments: false,
+        sortBy: 'ReferenceCount',
+        sortDirection: 'Descending',
+      }),
+    );
+    const request = http.expectOne(
+      candidate =>
+        candidate.url === '/api/skills' &&
+        candidate.params.get('page') === '2' &&
+        candidate.params.get('pageSize') === '10' &&
+        candidate.params.get('search') === 'writer' &&
+        candidate.params.get('tag') === 'angular' &&
+        candidate.params.get('hasReferences') === 'true' &&
+        candidate.params.get('hasAttachments') === 'false' &&
+        candidate.params.get('sortBy') === 'ReferenceCount' &&
+        candidate.params.get('sortDirection') === 'Descending',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      items: [
+        {
+          skillId: skill.id,
+          name: skill.name,
+          description: skill.description,
+          tags: skill.tags,
+          referenceCount: 1,
+          attachmentCount: 0,
+        },
+      ],
+      page: 2,
+      pageSize: 10,
+      totalCount: 11,
+      totalPages: 2,
+      hasPreviousPage: true,
+      hasNextPage: false,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      items: [
+        {
+          id: skill.id,
+          name: skill.name,
+          description: skill.description,
+          tags: skill.tags,
+          referenceCount: 1,
+          attachmentCount: 0,
+        },
+      ],
+      page: 2,
+      pageSize: 10,
+      totalCount: 11,
+      totalPages: 2,
+      hasPreviousPage: true,
+      hasNextPage: false,
+    });
+  });
 
   it('creates and refreshes a skill', async () => {
     const request = {
@@ -59,6 +125,8 @@ describe('SkillService mutations', () => {
       ...skill,
       ...request,
       id: 'skill-2',
+      referenceCount: 1,
+      attachmentCount: 0,
     });
   });
 
@@ -79,7 +147,12 @@ describe('SkillService mutations', () => {
     const refresh = http.expectOne('/api/skills/skill-1');
     refresh.flush({ ...skill, ...request });
 
-    await expect(resultPromise).resolves.toEqual({ ...skill, ...request });
+    await expect(resultPromise).resolves.toEqual({
+      ...skill,
+      ...request,
+      referenceCount: 1,
+      attachmentCount: 0,
+    });
   });
 
   it('deletes a skill through a POST action', async () => {
@@ -183,7 +256,11 @@ describe('SkillService mutations', () => {
     const refresh = http.expectOne('/api/skills/skill-1');
     refresh.flush(skill);
 
-    await expect(resultPromise).resolves.toEqual(skill);
+    await expect(resultPromise).resolves.toEqual({
+      ...skill,
+      referenceCount: 1,
+      attachmentCount: 0,
+    });
   });
 
   it('deletes and refreshes a reference', async () => {
