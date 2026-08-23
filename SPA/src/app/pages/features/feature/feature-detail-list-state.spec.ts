@@ -33,6 +33,7 @@ const plans: readonly FeaturePlan[] = [
 const research: readonly FeatureResearchDiscovery[] = [
   {
     id: 'research-1',
+    title: 'Routed list state',
     content: 'The route owns list state.',
     sourceType: 'Code',
     sourceReference: 'feature-details.page.ts',
@@ -41,6 +42,7 @@ const research: readonly FeatureResearchDiscovery[] = [
   },
   {
     id: 'research-2',
+    title: 'Shareable browser state',
     content: 'The browser URL is shareable.',
     sourceType: 'Web',
     sourceReference: 'https://example.com/routing',
@@ -107,6 +109,17 @@ describe('Feature detail client list state', () => {
         sortDirection: 'Descending',
       }).map(discovery => discovery.id),
     ).toEqual(['research-1']);
+  });
+
+  it('searches and sorts research by title', () => {
+    expect(
+      selectFeatureResearch(research, {
+        search: 'shareable browser',
+        filter: 'All',
+        sortBy: 'title',
+        sortDirection: 'Ascending',
+      }).map(discovery => discovery.id),
+    ).toEqual(['research-2']);
   });
 
   it('filters edited conversations and sorts them without mutating input', () => {

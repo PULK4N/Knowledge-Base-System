@@ -25,6 +25,11 @@ public sealed class FeatureResearchDiscovery
 {
     public FeatureResearchDiscoveryId Id { get; init; }
 
+    /// <summary>
+    /// Uses a deterministic fallback when replaying V1 events that predate discovery titles.
+    /// </summary>
+    public string Title { get; set; } = "Untitled discovery";
+
     public string Content { get; set; } = string.Empty;
 
     public FeatureResearchDiscoverySourceType SourceType { get; set; }

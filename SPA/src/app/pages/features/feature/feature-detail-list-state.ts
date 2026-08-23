@@ -19,7 +19,11 @@ import {
 export type FeatureTab = 'overview' | 'plans' | 'research' | 'conversations';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
-export type FeatureResearchSort = 'updatedAt' | 'createdAt' | 'sourceType';
+export type FeatureResearchSort =
+  | 'updatedAt'
+  | 'createdAt'
+  | 'title'
+  | 'sourceType';
 export type FeatureResearchFilter =
   | 'All'
   | FeatureResearchDiscoverySourceType;
@@ -62,6 +66,7 @@ const PLAN_FILTERS: readonly FeaturePlanFilter[] = [
 const RESEARCH_SORTS: readonly FeatureResearchSort[] = [
   'updatedAt',
   'createdAt',
+  'title',
   'sourceType',
 ];
 const RESEARCH_FILTERS: readonly FeatureResearchFilter[] = [
@@ -170,11 +175,13 @@ export function selectFeatureResearch(
 ): readonly FeatureResearchDiscovery[] {
   return selectClientList(discoveries, state, {
     searchText: discovery =>
-      `${discovery.content}\n${discovery.sourceReference}\n${discovery.sourceType}`,
+      `${discovery.title}\n${discovery.content}\n${discovery.sourceReference}\n${discovery.sourceType}`,
     matchesFilter: (discovery, filter) =>
       filter === 'All' || discovery.sourceType === filter,
     compare: (left, right, sortBy) => {
       switch (sortBy) {
+        case 'title':
+          return compareText(left.title, right.title);
         case 'sourceType':
           return compareText(left.sourceType, right.sourceType);
         case 'createdAt':

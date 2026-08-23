@@ -47,6 +47,8 @@ public sealed record RemoveFeatureRecordRequest
 
 public sealed record FeatureResearchDiscoveryContentRequest
 {
+    public required string Title { get; init; }
+
     public required string Content { get; init; }
 
     public FeatureResearchDiscoverySourceType SourceType { get; init; }
@@ -57,6 +59,8 @@ public sealed record FeatureResearchDiscoveryContentRequest
 public sealed record UpdateFeatureResearchDiscoveryRequest
 {
     public required Guid DiscoveryId { get; init; }
+
+    public required string Title { get; init; }
 
     public required string Content { get; init; }
 

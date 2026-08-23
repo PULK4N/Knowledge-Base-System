@@ -41,7 +41,9 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureRecordUpdatedV1),
                 nameof(FeatureRecordRemovedV1),
                 nameof(FeatureResearchDiscoveryAddedV1),
+                nameof(FeatureResearchDiscoveryAddedV2),
                 nameof(FeatureResearchDiscoveryUpdatedV1),
+                nameof(FeatureResearchDiscoveryUpdatedV2),
                 nameof(FeatureResearchDiscoveryRemovedV1),
                 nameof(FeaturePlanAddedV1),
                 nameof(CurrentFeaturePlanUpdatedV1),
@@ -143,8 +145,9 @@ public sealed class FeatureStateMachineDefinitionTests
             CreateDefinitionProvider()
         );
         var payload = CreatePayload(
-            new FeatureResearchDiscoveryUpdatedV1(
+            new FeatureResearchDiscoveryUpdatedV2(
                 FeatureResearchDiscoveryId.FromDatabaseGuid(Guid.NewGuid()),
+                "Discovery title",
                 "A research discovery",
                 FeatureResearchDiscoverySourceType.Web,
                 "https://example.com"
@@ -218,7 +221,9 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureRecordUpdatedV1),
         typeof(FeatureRecordRemovedV1),
         typeof(FeatureResearchDiscoveryAddedV1),
+        typeof(FeatureResearchDiscoveryAddedV2),
         typeof(FeatureResearchDiscoveryUpdatedV1),
+        typeof(FeatureResearchDiscoveryUpdatedV2),
         typeof(FeatureResearchDiscoveryRemovedV1),
         typeof(FeaturePlanAddedV1),
         typeof(CurrentFeaturePlanUpdatedV1),

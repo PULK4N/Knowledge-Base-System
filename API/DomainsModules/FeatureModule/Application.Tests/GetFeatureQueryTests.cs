@@ -53,6 +53,7 @@ public sealed class GetFeatureQueryTests
         if (expectedDiscoveryCount > 0)
         {
             var discovery = Assert.Single(feature.ResearchDiscoveries);
+            Assert.Equal("Untitled discovery", discovery.Title);
             Assert.Equal(
                 FeatureResearchDiscoverySourceType.Code,
                 discovery.SourceType

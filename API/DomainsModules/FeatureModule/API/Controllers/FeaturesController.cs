@@ -159,6 +159,7 @@ public sealed class FeaturesController(
     )
     {
         command.FeatureId = featureId;
+        command.Title = request.Title;
         command.Content = request.Content;
         command.SourceType = request.SourceType;
         command.SourceReference = request.SourceReference;
@@ -180,6 +181,7 @@ public sealed class FeaturesController(
     {
         command.FeatureId = featureId;
         command.DiscoveryId = request.DiscoveryId;
+        command.Title = request.Title;
         command.Content = request.Content;
         command.SourceType = request.SourceType;
         command.SourceReference = request.SourceReference;

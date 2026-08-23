@@ -325,6 +325,7 @@ button:disabled {
   grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
 }
 
+.research-discovery-editor .discovery-title-field,
 .research-discovery-editor .discovery-content-field,
 .research-discovery-editor > button,
 .research-discovery-editor .discovery-editor-actions {
@@ -387,6 +388,12 @@ button:disabled {
 
 .research-discovery-body {
   padding: 18px 20px;
+}
+
+.research-discovery-body h3 {
+  margin: 0 0 10px;
+  color: #18223c;
+  font-size: 17px;
 }
 
 .research-discovery-body > p {
@@ -522,6 +529,7 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .research-discovery-editor .discovery-title-field,
   .research-discovery-editor .discovery-content-field,
   .research-discovery-editor > button,
   .research-discovery-editor .discovery-editor-actions {
