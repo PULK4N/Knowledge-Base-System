@@ -388,12 +388,60 @@ button:disabled {
 
 .research-discovery-body {
   padding: 18px 20px;
+  background: white;
 }
 
-.research-discovery-body h3 {
-  margin: 0 0 10px;
+.research-discovery-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 20px;
+  border-top: 1px solid #dfe4ed;
+  color: #18223c;
+  background: #eef2f8;
+  cursor: pointer;
+  list-style: none;
+  transition: background 160ms ease;
+}
+
+.research-discovery-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.research-discovery-toggle:hover {
+  background: #e7ecf5;
+}
+
+.research-discovery-toggle:focus-visible {
+  outline: 3px solid rgb(48 60 255 / 22%);
+  outline-offset: -3px;
+}
+
+.research-discovery-toggle h3 {
+  margin: 0;
   color: #18223c;
   font-size: 17px;
+}
+
+.discovery-chevron {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  fill: none;
+  stroke: #4f5e7c;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transition: transform 160ms ease;
+}
+
+.research-discovery-document[open] .research-discovery-toggle {
+  background: #e8ecfa;
+}
+
+.research-discovery-document[open] .discovery-chevron {
+  transform: rotate(180deg);
 }
 
 .research-discovery-body .readme-document {

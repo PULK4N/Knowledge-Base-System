@@ -404,21 +404,32 @@
                   </div>
                 </form>
               } @else {
-                <div class="research-discovery-body">
-                  <h3>{{ discovery.title }}</h3>
-                  <app-markdown-content
-                    class="readme-document"
-                    [blocks]="emptyBlocks"
-                    [markdown]="discovery.content"
-                    emptyMessage="This discovery has no content."
-                  />
-                  @if (discovery.sourceReference) {
-                    <div class="discovery-source">
-                      <span>Source</span>
-                      <code>{{ discovery.sourceReference }}</code>
-                    </div>
-                  }
-                </div>
+                <details class="research-discovery-document">
+                  <summary class="research-discovery-toggle">
+                    <h3>{{ discovery.title }}</h3>
+                    <svg
+                      class="discovery-chevron"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="m7 9 5 5 5-5" />
+                    </svg>
+                  </summary>
+                  <div class="research-discovery-body">
+                    <app-markdown-content
+                      class="readme-document"
+                      [blocks]="emptyBlocks"
+                      [markdown]="discovery.content"
+                      emptyMessage="This discovery has no content."
+                    />
+                    @if (discovery.sourceReference) {
+                      <div class="discovery-source">
+                        <span>Source</span>
+                        <code>{{ discovery.sourceReference }}</code>
+                      </div>
+                    }
+                  </div>
+                </details>
               }
             </article>
           } @empty {

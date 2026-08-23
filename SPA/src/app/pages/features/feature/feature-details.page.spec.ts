@@ -203,6 +203,28 @@ describe('FeatureDetailsPage research discoveries', () => {
     );
   });
 
+  it('collapses research content by default and toggles it from the title row', () => {
+    const element = harness.routeNativeElement as HTMLElement;
+    const discovery = element.querySelector(
+      '.research-discovery-document',
+    ) as HTMLDetailsElement;
+    const title = discovery.querySelector(
+      '.research-discovery-toggle',
+    ) as HTMLElement;
+
+    expect(discovery.open).toBe(false);
+    expect(title.textContent).toContain('YAML configuration');
+    expect(title.querySelector('.discovery-chevron')).not.toBeNull();
+
+    title.click();
+    harness.detectChanges();
+    expect(discovery.open).toBe(true);
+
+    title.click();
+    harness.detectChanges();
+    expect(discovery.open).toBe(false);
+  });
+
   it('keeps tab-only list state on the client without reloading the feature', async () => {
     await harness.navigateByUrl(
       '/features/feature-1?tab=research&researchSource=Web',
