@@ -52,18 +52,28 @@ export class FeatureService {
 
   search(request: FeatureSearchRequest): Observable<FeatureSearchResult> {
     const normalizedSearch = request.search.trim();
-    const queryKey = [
-      FEATURE_ENTITY_TYPE,
-      request.page,
-      request.pageSize,
-      normalizedSearch.toLowerCase(),
-    ].join(':');
+    const normalizedProjectId = request.projectId.trim();
+    const queryKey = JSON.stringify({
+      entityType: FEATURE_ENTITY_TYPE,
+      page: request.page,
+      pageSize: request.pageSize,
+      search: normalizedSearch.toLowerCase(),
+      projectId: normalizedProjectId.toLowerCase(),
+      sortBy: request.sortBy,
+      sortDirection: request.sortDirection,
+    });
     let params = new HttpParams()
       .set('page', request.page)
-      .set('pageSize', request.pageSize);
+      .set('pageSize', request.pageSize)
+      .set('sortBy', request.sortBy)
+      .set('sortDirection', request.sortDirection);
 
     if (normalizedSearch) {
       params = params.set('search', normalizedSearch);
+    }
+
+    if (normalizedProjectId) {
+      params = params.set('projectId', normalizedProjectId);
     }
 
     const refresh$ = this.http

@@ -16,12 +16,14 @@ import { visiblePages } from './visible-pages';
 export class PaginationComponent {
   readonly page = input.required<number>();
   readonly pageSize = input.required<number>();
+  readonly pageSizes = input<readonly number[]>([]);
   readonly totalCount = input.required<number>();
   readonly totalPages = input.required<number>();
   readonly hasPreviousPage = input.required<boolean>();
   readonly hasNextPage = input.required<boolean>();
   readonly label = input('Items');
   readonly pageRequested = output<number>();
+  readonly pageSizeRequested = output<number>();
 
   protected readonly pages = computed(() =>
     visiblePages(this.totalPages(), this.page()),
@@ -37,5 +39,14 @@ export class PaginationComponent {
     if (page < 1 || page > this.totalPages() || page === this.page()) return;
 
     this.pageRequested.emit(page);
+  }
+
+  protected requestPageSize(value: string): void {
+    const pageSize = Number(value);
+    if (!this.pageSizes().includes(pageSize) || pageSize === this.pageSize()) {
+      return;
+    }
+
+    this.pageSizeRequested.emit(pageSize);
   }
 }

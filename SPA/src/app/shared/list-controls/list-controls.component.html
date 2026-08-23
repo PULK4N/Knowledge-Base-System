@@ -1,0 +1,59 @@
+<div class="list-controls">
+  <label class="search-control">
+    <span class="sr-only">{{ searchLabel() }}</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 5 5" />
+    </svg>
+    <input
+      #searchInput
+      type="search"
+      autocomplete="off"
+      [value]="search()"
+      [attr.maxlength]="searchMaxLength()"
+      [placeholder]="searchPlaceholder()"
+      (input)="requestSearch(searchInput.value)"
+    />
+  </label>
+
+  @if (filterOptions().length > 0) {
+    <label class="select-control">
+      <span>{{ filterLabel() }}</span>
+      <select
+        #filterSelect
+        [value]="filter()"
+        [disabled]="filterDisabled()"
+        (change)="requestFilter(filterSelect.value)"
+      >
+        @for (option of filterOptions(); track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+  }
+
+  <label class="select-control">
+    <span>Sort by</span>
+    <select
+      #sortSelect
+      [value]="sortBy()"
+      (change)="requestSort(sortSelect.value)"
+    >
+      @for (option of sortOptions(); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="select-control direction-control">
+    <span>Direction</span>
+    <select
+      #directionSelect
+      [value]="sortDirection()"
+      (change)="requestDirection(directionSelect.value)"
+    >
+      <option value="Ascending">Ascending</option>
+      <option value="Descending">Descending</option>
+    </select>
+  </label>
+</div>

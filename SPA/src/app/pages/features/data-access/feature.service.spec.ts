@@ -64,14 +64,24 @@ describe('FeatureService', () => {
 
   it('searches feature summaries and maps aggregate IDs', async () => {
     const resultPromise = firstValueFrom(
-      service.search({ page: 2, pageSize: 6, search: ' journal ' }),
+      service.search({
+        page: 2,
+        pageSize: 6,
+        search: ' journal ',
+        projectId: 'project-1',
+        sortBy: 'RecordCount',
+        sortDirection: 'Descending',
+      }),
     );
     const request = http.expectOne(
       request =>
         request.url === '/api/features' &&
         request.params.get('page') === '2' &&
         request.params.get('pageSize') === '6' &&
-        request.params.get('search') === 'journal',
+        request.params.get('search') === 'journal' &&
+        request.params.get('projectId') === 'project-1' &&
+        request.params.get('sortBy') === 'RecordCount' &&
+        request.params.get('sortDirection') === 'Descending',
     );
 
     expect(request.request.method).toBe('GET');

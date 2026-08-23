@@ -25,12 +25,56 @@
           </p>
         </div>
         <a class="plans-link" [routerLink]="['/features', vm.state.data.id, 'plans']">
-          View all plans
+          Manage plans
           <span>{{ vm.state.data.plans.length }}</span>
         </a>
       </header>
 
-      <section class="feature-overview surface-card">
+      <nav class="feature-tabs" role="tablist" aria-label="Feature sections">
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'overview' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'overview'"
+          [class.active]="vm.listState.activeTab === 'overview'"
+        >
+          Overview
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'plans' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'plans'"
+          [class.active]="vm.listState.activeTab === 'plans'"
+        >
+          Plans <span>{{ vm.state.data.plans.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'research' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'research'"
+          [class.active]="vm.listState.activeTab === 'research'"
+        >
+          Research <span>{{ vm.state.data.researchDiscoveries.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'conversations' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'conversations'"
+          [class.active]="vm.listState.activeTab === 'conversations'"
+        >
+          Conversations <span>{{ vm.state.data.records.length }}</span>
+        </a>
+      </nav>
+
+      @if (vm.listState.activeTab === 'overview') {
+        <section class="feature-overview surface-card">
         <div class="overview-main">
           <span class="feature-icon large" aria-hidden="true">◇</span>
           <div>
@@ -61,32 +105,101 @@
             Update status
           </button>
         </form>
-      </section>
+        </section>
 
-      @if (vm.state.data.currentPlanId; as currentPlanId) {
-        @for (plan of vm.state.data.plans; track plan.id) {
-          @if (plan.id === currentPlanId) {
-            <section class="section-card surface-card current-plan">
-              <div class="section-heading">
-                <div>
-                  <span class="eyebrow">Current plan</span>
-                  <h2>{{ plan.title }}</h2>
+        @if (vm.state.data.currentPlanId; as currentPlanId) {
+          @for (plan of vm.state.data.plans; track plan.id) {
+            @if (plan.id === currentPlanId) {
+              <section class="section-card surface-card current-plan">
+                <div class="section-heading">
+                  <div>
+                    <span class="eyebrow">Current plan</span>
+                    <h2>{{ plan.title }}</h2>
+                  </div>
+                  <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
+                    Open plan →
+                  </a>
                 </div>
-                <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
-                  Open plan →
-                </a>
-              </div>
-              <app-markdown-content
-                [blocks]="emptyBlocks"
-                [markdown]="plan.contentType === 'Markdown' ? plan.content : ''"
-                emptyMessage="Open the plan to view its HTML content."
-              />
-            </section>
+                <app-markdown-content
+                  [blocks]="emptyBlocks"
+                  [markdown]="plan.contentType === 'Markdown' ? plan.content : ''"
+                  emptyMessage="Open the plan to view its HTML content."
+                />
+              </section>
+            }
           }
         }
       }
 
-      <section class="section-card surface-card research-discoveries">
+      @if (vm.listState.activeTab === 'plans') {
+        <section class="section-card surface-card tab-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Implementation history</span>
+              <h2>Plans</h2>
+            </div>
+            <a [routerLink]="['/features', vm.state.data.id, 'plans']">
+              Manage plans →
+            </a>
+          </div>
+          <p class="section-description">
+            Search plan content, filter by format, and sort the loaded feature
+            projection without another API request.
+          </p>
+          <app-list-controls
+            class="tab-list-controls"
+            [search]="vm.listState.plans.search"
+            searchLabel="Search plans"
+            searchPlaceholder="Search plan titles and content"
+            [filter]="vm.listState.plans.filter"
+            filterLabel="Content type"
+            [filterOptions]="planFilterOptions"
+            [sortBy]="vm.listState.plans.sortBy"
+            [sortOptions]="planSortOptions"
+            [sortDirection]="vm.listState.plans.sortDirection"
+            (searchChanged)="updatePlanSearch($event)"
+            (filterChanged)="updatePlanFilter($event)"
+            (sortByChanged)="updatePlanSort($event)"
+            (sortDirectionChanged)="updatePlanDirection($event)"
+          />
+          <p class="visible-count">
+            Showing {{ vm.collections.plans.length }} of
+            {{ vm.state.data.plans.length }} plans
+          </p>
+          <div class="tab-plan-list">
+            @for (plan of vm.collections.plans; track plan.id) {
+              <a
+                class="tab-plan-row"
+                [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
+              >
+                <span class="plan-document-icon" aria-hidden="true">▤</span>
+                <span>
+                  <strong>{{ plan.title }}</strong>
+                  <small>
+                    {{ plan.contentType }} · Updated
+                    {{ plan.updatedAt | date: 'medium' }}
+                  </small>
+                </span>
+                @if (plan.id === vm.state.data.currentPlanId) {
+                  <span class="current-badge">Current</span>
+                }
+                <span class="open-plan" aria-hidden="true">→</span>
+              </a>
+            } @empty {
+              <div class="empty-section">
+                @if (vm.state.data.plans.length === 0) {
+                  No plans have been saved.
+                } @else {
+                  No plans match the current search and filter.
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (vm.listState.activeTab === 'research') {
+        <section class="section-card surface-card research-discoveries tab-section">
         <div class="section-heading">
           <div>
             <span class="eyebrow">Research trail</span>
@@ -154,9 +267,30 @@
           </button>
         </form>
 
+        <app-list-controls
+          class="tab-list-controls"
+          [search]="vm.listState.research.search"
+          searchLabel="Search research discoveries"
+          searchPlaceholder="Search discoveries and source references"
+          [filter]="vm.listState.research.filter"
+          filterLabel="Source"
+          [filterOptions]="researchFilterOptions"
+          [sortBy]="vm.listState.research.sortBy"
+          [sortOptions]="researchSortOptions"
+          [sortDirection]="vm.listState.research.sortDirection"
+          (searchChanged)="updateResearchSearch($event)"
+          (filterChanged)="updateResearchFilter($event)"
+          (sortByChanged)="updateResearchSort($event)"
+          (sortDirectionChanged)="updateResearchDirection($event)"
+        />
+        <p class="visible-count">
+          Showing {{ vm.collections.research.length }} of
+          {{ vm.state.data.researchDiscoveries.length }} discoveries
+        </p>
+
         <div class="research-discovery-list">
           @for (
-            discovery of vm.state.data.researchDiscoveries;
+            discovery of vm.collections.research;
             track discovery.id
           ) {
             <article class="research-discovery-item">
@@ -260,13 +394,19 @@
             </article>
           } @empty {
             <div class="empty-section">
-              No research discoveries have been saved.
+              @if (vm.state.data.researchDiscoveries.length === 0) {
+                No research discoveries have been saved.
+              } @else {
+                No discoveries match the current search and filter.
+              }
             </div>
           }
         </div>
-      </section>
+        </section>
+      }
 
-      <section class="section-card surface-card">
+      @if (vm.listState.activeTab === 'conversations') {
+        <section class="section-card surface-card tab-section">
         <div class="section-heading">
           <div>
             <span class="eyebrow">Decision trail</span>
@@ -296,8 +436,29 @@
           </button>
         </form>
 
+        <app-list-controls
+          class="tab-list-controls"
+          [search]="vm.listState.conversations.search"
+          searchLabel="Search conversation records"
+          searchPlaceholder="Search user messages and AI answers"
+          [filter]="vm.listState.conversations.filter"
+          filterLabel="Record type"
+          [filterOptions]="conversationFilterOptions"
+          [sortBy]="vm.listState.conversations.sortBy"
+          [sortOptions]="conversationSortOptions"
+          [sortDirection]="vm.listState.conversations.sortDirection"
+          (searchChanged)="updateConversationSearch($event)"
+          (filterChanged)="updateConversationFilter($event)"
+          (sortByChanged)="updateConversationSort($event)"
+          (sortDirectionChanged)="updateConversationDirection($event)"
+        />
+        <p class="visible-count">
+          Showing {{ vm.collections.conversations.length }} of
+          {{ vm.state.data.records.length }} records
+        </p>
+
         <div class="record-list">
-          @for (record of vm.state.data.records; track record.id) {
+          @for (record of vm.collections.conversations; track record.id) {
             <article class="record-item">
               <header>
                 <span>Recorded {{ record.updatedAt | date: 'medium' }}</span>
@@ -351,12 +512,20 @@
               }
             </article>
           } @empty {
-            <div class="empty-section">No conversation records have been saved.</div>
+            <div class="empty-section">
+              @if (vm.state.data.records.length === 0) {
+                No conversation records have been saved.
+              } @else {
+                No records match the current search and filter.
+              }
+            </div>
           }
         </div>
-      </section>
+        </section>
+      }
 
-      <section class="section-card surface-card">
+      @if (vm.listState.activeTab === 'overview') {
+        <section class="section-card surface-card">
         <div class="section-heading">
           <div>
             <span class="eyebrow">Implementation clues</span>
@@ -420,13 +589,9 @@
             <div class="empty-section">No related skills have been added.</div>
           }
         </div>
-      </section>
+        </section>
 
-      @if (vm.mutation.status === 'error') {
-        <p class="form-error mutation-error" role="alert">{{ vm.mutation.message }}</p>
-      }
-
-      <section class="danger-zone surface-card">
+        <section class="danger-zone surface-card">
         <div>
           <h2>Delete feature</h2>
           <p>Remove this feature and its trace data from active views.</p>
@@ -450,7 +615,12 @@
             Delete feature
           </button>
         }
-      </section>
+        </section>
+      }
+
+      @if (vm.mutation.status === 'error') {
+        <p class="form-error mutation-error" role="alert">{{ vm.mutation.message }}</p>
+      }
     }
   }
 }

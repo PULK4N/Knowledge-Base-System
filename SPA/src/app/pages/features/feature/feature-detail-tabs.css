@@ -1,0 +1,138 @@
+.feature-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 28px;
+  overflow-x: auto;
+  border-bottom: 1px solid #dfe3eb;
+}
+
+.feature-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 17px;
+  color: #56627b;
+  border-bottom: 3px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.feature-tabs a:hover,
+.feature-tabs a.active {
+  color: var(--indigo);
+}
+
+.feature-tabs a.active {
+  border-bottom-color: var(--indigo);
+  font-weight: 720;
+}
+
+.feature-tabs a span {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  place-items: center;
+  border-radius: 999px;
+  color: #4d5870;
+  background: #edf0f5;
+  font-size: 12px;
+}
+
+.tab-section {
+  margin-top: 28px;
+}
+
+.tab-list-controls {
+  display: block;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.visible-count {
+  margin: 14px 0 0;
+  color: #69738a;
+  font-size: 13px;
+}
+
+.tab-plan-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.tab-plan-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 15px;
+  min-height: 76px;
+  padding: 13px 16px;
+  border: 1px solid #dfe4ed;
+  border-radius: 10px;
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.tab-plan-row:hover {
+  border-color: #aab2ff;
+}
+
+.plan-document-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--teal);
+  background: #e9f8fb;
+  font-size: 22px;
+}
+
+.tab-plan-row > span:nth-child(2) {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.tab-plan-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-plan-row small {
+  color: var(--muted);
+}
+
+.current-badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #3340a6;
+  background: #e8eaff;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.open-plan {
+  color: var(--indigo);
+  font-size: 20px;
+}
+
+@media (max-width: 620px) {
+  .tab-plan-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .plan-document-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .current-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
