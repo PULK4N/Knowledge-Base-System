@@ -9,6 +9,9 @@ public sealed class FeatureMcpFunctionsTests
         "feature_list",
         "feature_get_by_name",
         "feature_get",
+        "feature_plan_get",
+        "feature_research_discovery_get",
+        "feature_record_list",
         "feature_add",
         "feature_remove",
         "feature_status_update",
@@ -153,6 +156,50 @@ public sealed class FeatureMcpFunctionsTests
         );
         var required = function.JsonSchema
             .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("featureId", required);
+        Assert.DoesNotContain("orderNumber", required);
+    }
+
+    [Fact]
+    public void PlanGet_RequiresFeatureAndPlanIdsButNotOrderNumber()
+    {
+        var required = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == "feature_plan_get")
+            .JsonSchema.GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("featureId", required);
+        Assert.Contains("planId", required);
+        Assert.DoesNotContain("orderNumber", required);
+    }
+
+    [Fact]
+    public void ResearchDiscoveryGet_RequiresFeatureAndDiscoveryIds()
+    {
+        var required = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == "feature_research_discovery_get")
+            .JsonSchema.GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("featureId", required);
+        Assert.Contains("discoveryIds", required);
+        Assert.DoesNotContain("orderNumber", required);
+    }
+
+    [Fact]
+    public void RecordList_RequiresFeatureIdButNotOrderNumber()
+    {
+        var required = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == "feature_record_list")
+            .JsonSchema.GetProperty("required")
             .EnumerateArray()
             .Select(element => element.GetString())
             .ToList();

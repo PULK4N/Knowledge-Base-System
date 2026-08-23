@@ -22,9 +22,24 @@ public static class FeatureMcpFunctions
             "Gets an active feature summary by its exact case-insensitive name."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, uint, Task<FeatureDto?>>)Get,
+            (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a feature, including its progress description, related skills, conversation records, research discoveries, plans, and current plan. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its current plan, five latest research discoveries, five latest conversation records, and title/ID references for other plans and discoveries. Set orderNumber to zero for the latest state or to an event order number for historical state."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, uint, Task<FeaturePlanDto?>>)GetPlan,
+            "feature_plan_get",
+            "Gets one feature plan by feature ID and plan ID."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, List<Guid>, uint, Task<List<FeatureResearchDiscoveryDto>>>)GetResearchDiscoveries,
+            "feature_research_discovery_get",
+            "Gets multiple research discoveries in one call by feature ID and discovery IDs."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, uint, Task<List<FeatureRecordDto>>>)ListRecords,
+            "feature_record_list",
+            "Gets all conversation records for a feature."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, Task<FeatureCreatedCommandResult>>)Add,
@@ -137,10 +152,65 @@ public static class FeatureMcpFunctions
             query => query.Name = name
         );
 
-    private static Task<FeatureDto?> Get(
+    private static async Task<FeatureMcpDto?> Get(
         IServiceProvider services,
         Guid featureId,
         uint orderNumber = 0
+    )
+    {
+        var feature = await GetFullFeature(services, featureId, orderNumber);
+
+        return feature is null ? null : FeatureMcpDto.FromFeature(feature);
+    }
+
+    private static async Task<FeaturePlanDto?> GetPlan(
+        IServiceProvider services,
+        Guid featureId,
+        Guid planId,
+        uint orderNumber = 0
+    ) =>
+        (await GetFullFeature(services, featureId, orderNumber))?.Plans
+            .SingleOrDefault(plan => plan.Id == planId);
+
+    private static async Task<List<FeatureResearchDiscoveryDto>> GetResearchDiscoveries(
+        IServiceProvider services,
+        Guid featureId,
+        List<Guid> discoveryIds,
+        uint orderNumber = 0
+    )
+    {
+        var feature = await GetFullFeature(services, featureId, orderNumber);
+
+        if (feature is null || discoveryIds.Count == 0)
+        {
+            return [];
+        }
+
+        var discoveriesById = feature.ResearchDiscoveries.ToDictionary(
+            discovery => discovery.Id
+        );
+
+        return discoveryIds
+            .Distinct()
+            .Where(discoveriesById.ContainsKey)
+            .Select(discoveryId => discoveriesById[discoveryId])
+            .ToList();
+    }
+
+    private static async Task<List<FeatureRecordDto>> ListRecords(
+        IServiceProvider services,
+        Guid featureId,
+        uint orderNumber = 0
+    ) =>
+        (await GetFullFeature(services, featureId, orderNumber))?.Records
+            .OrderByDescending(record => record.UpdatedAt)
+            .ThenBy(record => record.Id)
+            .ToList() ?? [];
+
+    private static Task<FeatureDto?> GetFullFeature(
+        IServiceProvider services,
+        Guid featureId,
+        uint orderNumber
     ) =>
         FeatureMcpActionExecutor.ExecuteQuery<GetFeatureQuery, FeatureDto?>(
             services,
