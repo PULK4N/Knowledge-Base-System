@@ -212,7 +212,7 @@
 
         <p class="section-description">
           Keep useful facts from code inspection, web research, MCP tools, and
-          other sources attached to this feature.
+          other sources as README-style Markdown documents attached to this feature.
         </p>
 
         <form
@@ -237,12 +237,13 @@
             />
           </label>
           <label class="discovery-content-field">
-            <span>Discovery</span>
+            <span>Research Discovery Findings</span>
             <textarea
               #newDiscoveryContent="ngModel"
               name="researchDiscoveryContent"
-              rows="4"
+              rows="10"
               required
+              placeholder="Write the discovery using README-style Markdown."
               ngModel
             ></textarea>
           </label>
@@ -354,11 +355,11 @@
                     />
                   </label>
                   <label class="discovery-content-field">
-                    <span>Discovery</span>
+                    <span>Discovery (Markdown)</span>
                     <textarea
                       #editDiscoveryContent="ngModel"
                       name="editResearchDiscoveryContent"
-                      rows="4"
+                      rows="10"
                       required
                       [ngModel]="discovery.content"
                     ></textarea>
@@ -405,7 +406,12 @@
               } @else {
                 <div class="research-discovery-body">
                   <h3>{{ discovery.title }}</h3>
-                  <p>{{ discovery.content }}</p>
+                  <app-markdown-content
+                    class="readme-document"
+                    [blocks]="emptyBlocks"
+                    [markdown]="discovery.content"
+                    emptyMessage="This discovery has no content."
+                  />
                   @if (discovery.sourceReference) {
                     <div class="discovery-source">
                       <span>Source</span>
@@ -438,18 +444,37 @@
           <span class="count-badge">{{ vm.state.data.records.length }}</span>
         </div>
 
+        <p class="section-description">
+          User messages and AI answers are stored and rendered as README-style
+          Markdown. Short plain-text records remain valid Markdown documents.
+        </p>
+
         <form
           class="inline-editor"
           #newRecordForm="ngForm"
           (ngSubmit)="addRecord(vm.state.data.id, newUserMessage.value, newAiAnswer.value)"
         >
           <label>
-            <span>User message</span>
-            <textarea #newUserMessage="ngModel" name="userMessage" rows="3" required ngModel></textarea>
+            <span>User message (Markdown)</span>
+            <textarea
+              #newUserMessage="ngModel"
+              name="userMessage"
+              rows="8"
+              required
+              placeholder="Write the user message using README-style Markdown."
+              ngModel
+            ></textarea>
           </label>
           <label>
-            <span>AI answer</span>
-            <textarea #newAiAnswer="ngModel" name="aiAnswer" rows="4" required ngModel></textarea>
+            <span>AI answer (Markdown)</span>
+            <textarea
+              #newAiAnswer="ngModel"
+              name="aiAnswer"
+              rows="10"
+              required
+              placeholder="Write the AI answer using README-style Markdown."
+              ngModel
+            ></textarea>
           </label>
           <button
             type="submit"
@@ -504,12 +529,24 @@
                   (ngSubmit)="updateRecord(vm.state.data.id, record.id, editUser.value, editAi.value)"
                 >
                   <label>
-                    <span>User message</span>
-                    <textarea #editUser="ngModel" name="editUser" rows="3" required [ngModel]="record.userMessage"></textarea>
+                    <span>User message (Markdown)</span>
+                    <textarea
+                      #editUser="ngModel"
+                      name="editUser"
+                      rows="8"
+                      required
+                      [ngModel]="record.userMessage"
+                    ></textarea>
                   </label>
                   <label>
-                    <span>AI answer</span>
-                    <textarea #editAi="ngModel" name="editAi" rows="4" required [ngModel]="record.aiAnswer"></textarea>
+                    <span>AI answer (Markdown)</span>
+                    <textarea
+                      #editAi="ngModel"
+                      name="editAi"
+                      rows="10"
+                      required
+                      [ngModel]="record.aiAnswer"
+                    ></textarea>
                   </label>
                   <div class="editor-actions">
                     <button
@@ -526,11 +563,21 @@
               } @else {
                 <div class="message user-message">
                   <span>User</span>
-                  <p>{{ record.userMessage }}</p>
+                  <app-markdown-content
+                    class="readme-document"
+                    [blocks]="emptyBlocks"
+                    [markdown]="record.userMessage"
+                    emptyMessage="This user message has no content."
+                  />
                 </div>
                 <div class="message ai-message">
                   <span>AI</span>
-                  <p>{{ record.aiAnswer }}</p>
+                  <app-markdown-content
+                    class="readme-document"
+                    [blocks]="emptyBlocks"
+                    [markdown]="record.aiAnswer"
+                    emptyMessage="This AI answer has no content."
+                  />
                 </div>
               }
             </article>

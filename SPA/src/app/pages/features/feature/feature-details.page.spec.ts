@@ -17,14 +17,22 @@ const feature: Feature = {
   status: 'Frontend implementation is in progress.',
   currentPlanId: null,
   planCount: 0,
-  recordCount: 0,
+  recordCount: 1,
   relatedSkillIds: [],
-  records: [],
+  records: [
+    {
+      id: 'record-1',
+      userMessage: 'Can this be **Markdown**?',
+      aiAnswer: 'Yes.',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T11:00:00Z',
+    },
+  ],
   researchDiscoveries: [
     {
       id: 'discovery-1',
       title: 'YAML configuration',
-      content: 'Feature transitions are configured in YAML.',
+      content: '## Finding\n\nFeature transitions are configured in **YAML**.',
       sourceType: 'Code',
       sourceReference: 'StateMachines/features.yaml',
       createdAt: '2026-08-22T10:00:00Z',
@@ -93,6 +101,14 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(element.textContent).toContain(
       'Feature transitions are configured in YAML.',
     );
+    expect(
+      element.querySelector('.research-discovery-body .markdown-document h2')
+        ?.textContent,
+    ).toBe('Finding');
+    expect(
+      element.querySelector('.research-discovery-body .markdown-document strong')
+        ?.textContent,
+    ).toBe('YAML');
     expect(element.textContent).toContain('StateMachines/features.yaml');
 
     setControlValue(
@@ -197,6 +213,25 @@ describe('FeatureDetailsPage research discoveries', () => {
     const element = harness.routeNativeElement as HTMLElement;
     expect(element.textContent).toContain('No discoveries match');
     expect(features.watch).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders long and short conversation record fields as Markdown documents', async () => {
+    await harness.navigateByUrl(
+      '/features/feature-1?tab=conversations',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const documents = element.querySelectorAll(
+      '.record-item app-markdown-content.readme-document',
+    );
+
+    expect(documents).toHaveLength(2);
+    expect(documents[0].querySelector('strong')?.textContent).toBe('Markdown');
+    expect(documents[1].querySelector('p')?.textContent).toBe('Yes.');
   });
 });
 

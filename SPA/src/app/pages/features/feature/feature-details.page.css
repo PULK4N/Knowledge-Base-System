@@ -396,11 +396,9 @@ button:disabled {
   font-size: 17px;
 }
 
-.research-discovery-body > p {
-  margin: 0;
-  color: #222c45;
-  line-height: 1.65;
-  white-space: pre-wrap;
+.research-discovery-body .readme-document {
+  display: block;
+  min-width: 0;
 }
 
 .discovery-source {
@@ -461,11 +459,9 @@ button:disabled {
   text-transform: uppercase;
 }
 
-.message p {
-  margin: 0;
-  color: #222c45;
-  line-height: 1.65;
-  white-space: pre-wrap;
+.message .readme-document {
+  display: block;
+  min-width: 0;
 }
 
 .ai-message {
