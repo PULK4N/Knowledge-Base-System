@@ -147,6 +147,10 @@ public sealed class SkillSummaryProjectorTests
     {
         public DbSet<SkillSummaryEntry> SkillSummaries =>
             Set<SkillSummaryEntry>();
+        public DbSet<SkillListEntry> SkillListEntries =>
+            Set<SkillListEntry>();
+        public DbSet<SkillListTagEntry> SkillListTags =>
+            Set<SkillListTagEntry>();
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder
@@ -159,6 +163,17 @@ public sealed class SkillSummaryProjectorTests
                 .Entity<SkillSummaryEntry>()
                 .HasIndex(summary => summary.SkillAggregateId)
                 .IsUnique();
+            modelBuilder
+                .Entity<SkillListEntry>()
+                .HasKey(skill => skill.Id);
+            modelBuilder
+                .Entity<SkillListEntry>()
+                .HasMany(skill => skill.Tags)
+                .WithOne()
+                .HasForeignKey(tag => tag.SkillListEntryId);
+            modelBuilder
+                .Entity<SkillListTagEntry>()
+                .HasKey(tag => tag.Id);
         }
     }
 }

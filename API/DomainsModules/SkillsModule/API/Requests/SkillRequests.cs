@@ -1,6 +1,23 @@
+using System.ComponentModel.DataAnnotations;
+using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Http;
+using SkillsModule.Contracts;
 
 namespace SkillsModule.API.Requests;
+
+public sealed record SearchSkillsRequest : PagedSearchRequest
+{
+    [StringLength(EntityQueryLimits.MaximumSearchLength)]
+    public string? Tag { get; init; }
+
+    public bool? HasReferences { get; init; }
+
+    public bool? HasAttachments { get; init; }
+
+    [EnumDataType(typeof(SkillSearchSortField))]
+    public SkillSearchSortField SortBy { get; init; } =
+        SkillSearchSortField.Name;
+}
 
 public sealed record AddSkillAttachmentsRequest
 {

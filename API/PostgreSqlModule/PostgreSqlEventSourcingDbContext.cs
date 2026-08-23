@@ -33,6 +33,10 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         Set<ProjectPolicyTopic>();
     public DbSet<SkillSummaryEntry> SkillSummaries =>
         Set<SkillSummaryEntry>();
+    public DbSet<SkillListEntry> SkillListEntries =>
+        Set<SkillListEntry>();
+    public DbSet<SkillListTagEntry> SkillListTags =>
+        Set<SkillListTagEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -128,6 +132,77 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .IsUnique();
                 skill.HasIndex(summary => summary.Name).IsUnique();
                 skill.Property(summary => summary.Name).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<SkillListEntry>(
+            skill =>
+            {
+                skill.ToTable("SkillListEntries");
+                skill.HasKey(entry => entry.Id);
+                skill
+                    .HasIndex(entry => entry.SkillAggregateId)
+                    .IsUnique();
+                skill.HasIndex(
+                    entry => new
+                    {
+                        entry.NormalizedName,
+                        entry.Name,
+                        entry.SkillAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                skill.HasIndex(
+                    entry => new
+                    {
+                        entry.ReferenceCount,
+                        entry.SkillAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                skill.HasIndex(
+                    entry => new
+                    {
+                        entry.AttachmentCount,
+                        entry.SkillAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                skill
+                    .HasIndex(entry => entry.SearchText)
+                    .HasMethod("GIN")
+                    .HasOperators("gin_trgm_ops")
+                    .HasFilter("\"IsDeleted\" = FALSE");
+                skill.Property(entry => entry.Name).IsRequired();
+                skill.Property(entry => entry.NormalizedName).IsRequired();
+                skill.Property(entry => entry.Description).IsRequired();
+                skill.Property(entry => entry.SearchText).IsRequired();
+                skill
+                    .HasMany(entry => entry.Tags)
+                    .WithOne()
+                    .HasForeignKey(tag => tag.SkillListEntryId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            }
+        );
+
+        modelBuilder.Entity<SkillListTagEntry>(
+            tag =>
+            {
+                tag.ToTable("SkillListTags");
+                tag.HasKey(entry => entry.Id);
+                tag.HasIndex(
+                    entry => new
+                    {
+                        entry.SkillListEntryId,
+                        entry.NormalizedTag
+                    }
+                ).IsUnique();
+                tag.HasIndex(
+                    entry => new
+                    {
+                        entry.NormalizedTag,
+                        entry.SkillListEntryId
+                    }
+                );
+                tag.Property(entry => entry.Tag).IsRequired();
+                tag.Property(entry => entry.NormalizedTag).IsRequired();
             }
         );
 

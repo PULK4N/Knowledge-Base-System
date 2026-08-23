@@ -5,6 +5,7 @@ initializationEvents:
   - SkillCreatedV2
 projections:
   - SkillSummaryProjector
+  - SkillListProjector
   - SkillSearchProjector
 events:
   SkillCreatedV1:

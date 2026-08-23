@@ -19,18 +19,19 @@ public sealed class SkillsController(
 ) : ActionController(executorProvider)
 {
     [HttpGet]
-    public async Task<ActionResult<PagedResult<SkillSummaryDto>>> List(
+    public async Task<ActionResult<PagedResult<SkillListItemDto>>> List(
         [FromServices] SearchSkillsQuery query,
-        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
-            int page = Pagination.DefaultPage,
-        [FromQuery, Range(1, Pagination.MaximumPageSize)]
-            int pageSize = Pagination.DefaultPageSize,
-        [FromQuery] string? search = null
+        [FromQuery] SearchSkillsRequest request
     )
     {
-        query.Page = page;
-        query.PageSize = pageSize;
-        query.Search = search;
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Search;
+        query.Tag = request.Tag;
+        query.HasReferences = request.HasReferences;
+        query.HasAttachments = request.HasAttachments;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
 
         return Ok(await Execute(query));
     }

@@ -25,7 +25,11 @@ public sealed class SkillStateMachineDefinitionTests
             definition.InitializationEvents
         );
         Assert.Equal(
-            ["SkillSummaryProjector", "SkillSearchProjector"],
+            [
+                "SkillSummaryProjector",
+                "SkillListProjector",
+                "SkillSearchProjector"
+            ],
             definition.Projections
         );
         Assert.Equal(

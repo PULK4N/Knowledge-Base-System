@@ -1,6 +1,7 @@
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
 using SkillsModule.Application.DTOs;
+using SkillsModule.Contracts;
 using SkillsModule.Persistence.Interfaces;
 
 namespace SkillsModule.Application.Queries;
@@ -39,33 +40,39 @@ public sealed class GetSkillByNameQuery(
 }
 
 public sealed class SearchSkillsQuery(
-    ISkillSummaryRepository skillSummaryRepository
-) : Query<PagedResult<SkillSummaryDto>>
+    ISkillListRepository skillListRepository
+) : PagedQuery<SkillListItemDto>
 {
-    public int Page { get; set; } = Pagination.DefaultPage;
-    public int PageSize { get; set; } = Pagination.DefaultPageSize;
-    public string? Search { get; set; }
+    public string? Tag { get; set; }
+    public bool? HasReferences { get; set; }
+    public bool? HasAttachments { get; set; }
+    public SkillSearchSortField SortBy { get; set; } =
+        SkillSearchSortField.Name;
+    public SortDirection SortDirection { get; set; } =
+        SortDirection.Ascending;
 
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(Pagination.IsValid(Page, PageSize));
+    public override async Task<bool> CanExecute(Executor executor) =>
+        await base.CanExecute(executor)
+        && (Tag?.Length ?? 0) <= EntityQueryLimits.MaximumSearchLength
+        && Enum.IsDefined(SortBy)
+        && Enum.IsDefined(SortDirection);
 
-    protected override async Task<PagedResult<SkillSummaryDto>> ExecuteInternal(
+    protected override async Task<PagedResult<SkillListItemDto>> ExecuteInternal(
         Executor executor
     )
     {
-        var result = await skillSummaryRepository.Search(
-            Page,
-            PageSize,
-            Search
+        var result = await skillListRepository.Search(
+            CreateEntityQuery(
+                new SkillSearchFilters(
+                    Tag,
+                    HasReferences,
+                    HasAttachments
+                ),
+                SortBy,
+                SortDirection
+            )
         );
 
-        return new PagedResult<SkillSummaryDto>(
-            result.Items
-                .Select(SkillSummaryDto.FromReadModel)
-                .ToList(),
-            Page,
-            PageSize,
-            result.TotalCount
-        );
+        return result.Map(SkillListItemDto.FromReadModel);
     }
 }
