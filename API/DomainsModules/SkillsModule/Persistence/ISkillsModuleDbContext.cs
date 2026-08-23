@@ -6,6 +6,8 @@ namespace SkillsModule.Persistence;
 public interface ISkillsModuleDbContext
 {
     DbSet<SkillSummaryEntry> SkillSummaries { get; }
+    DbSet<SkillListEntry> SkillListEntries { get; }
+    DbSet<SkillListTagEntry> SkillListTags { get; }
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default

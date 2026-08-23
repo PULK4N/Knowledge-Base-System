@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="../API/API.csproj" />
     <ProjectReference Include="../Application/Application.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
     <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
   </ItemGroup>
 

@@ -190,7 +190,16 @@ export class FeatureDetailsPage {
     );
 
   private readonly skillsState$: Observable<LoadState<SkillSearchResult>> =
-    this.skills.search({ page: 1, pageSize: 100, search: '' }).pipe(
+    this.skills.search({
+      page: 1,
+      pageSize: 100,
+      search: '',
+      tag: '',
+      hasReferences: null,
+      hasAttachments: null,
+      sortBy: 'Name',
+      sortDirection: 'Ascending',
+    }).pipe(
       map(data => ({ status: 'success', data }) as const),
       startWith({ status: 'loading' } as const),
       catchError(error =>

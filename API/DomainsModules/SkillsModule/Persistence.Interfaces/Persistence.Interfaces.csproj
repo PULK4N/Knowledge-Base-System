@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
   </ItemGroup>
 
 </Project>

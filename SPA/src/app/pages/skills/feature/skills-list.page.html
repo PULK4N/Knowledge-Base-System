@@ -9,34 +9,35 @@
 </header>
 
 <section class="skills-panel surface-card">
-  <div class="toolbar">
-    <label class="search-box">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="10.5" cy="10.5" r="6.5" />
-        <path d="m15.5 15.5 5 5" />
-      </svg>
-      <span class="sr-only">Search skills</span>
-      <input
-        #searchInput
-        type="search"
-        placeholder="Search skills"
-        autocomplete="off"
-        (input)="search(searchInput.value)"
+  @if (vm$ | async; as vm) {
+    <div class="toolbar">
+      <app-list-controls
+        [search]="vm.request.search"
+        searchLabel="Search skills"
+        searchPlaceholder="Search names and descriptions"
+        [sortBy]="vm.request.sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="vm.request.sortDirection"
+        (searchChanged)="search(vm.request, $event)"
+        (sortByChanged)="sort(vm.request, $event)"
+        (sortDirectionChanged)="changeDirection(vm.request, $event)"
       />
-    </label>
 
-    @if (state$ | async; as state) {
-      @if (state.status === 'success') {
+      <app-list-filters
+        [filters]="filters(vm.request)"
+        (textFilterChanged)="filter(vm.request, $event)"
+        (selectFilterChanged)="filter(vm.request, $event)"
+      />
+
+      @if (vm.state.status === 'success') {
         <span class="total-count">
-          {{ state.data.result.totalCount }}
-          {{ state.data.result.totalCount === 1 ? 'skill' : 'skills' }}
+          {{ vm.state.data.totalCount }}
+          {{ vm.state.data.totalCount === 1 ? 'skill' : 'skills' }}
         </span>
       }
-    }
-  </div>
+    </div>
 
-  @if (state$ | async; as state) {
-    @switch (state.status) {
+    @switch (vm.state.status) {
       @case ('loading') {
         <div class="request-message">Loading skills…</div>
       }
@@ -44,76 +45,70 @@
         <div class="request-message error">
           <div>
             <strong>Skills could not be loaded</strong>
-            <p>{{ state.message }}</p>
+            <p>{{ vm.state.message }}</p>
           </div>
         </div>
       }
       @case ('success') {
-        <div class="list-heading" aria-hidden="true">
-          <span>Skill</span>
-          <span>Skill ID</span>
-          <span></span>
-        </div>
-
-        <div class="skill-list" aria-label="Skills">
-          @for (skill of state.data.result.items; track skill.id) {
-            <a class="skill-row" [routerLink]="['/skills', skill.id]">
-              <span class="skill-name">
+        <div class="skill-grid" aria-label="Skills">
+          @for (skill of vm.state.data.items; track skill.id) {
+            <a class="skill-card" [routerLink]="['/skills', skill.id]">
+              <header class="skill-card-heading">
                 <span class="skill-icon" aria-hidden="true">&lt;/&gt;</span>
-                <strong>{{ skill.name }}</strong>
-              </span>
-              <span class="skill-id" [title]="skill.id">
-                {{ skill.id | shortId }}
-              </span>
-              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m9 5 7 7-7 7" />
-              </svg>
+                <span>
+                  <strong>{{ skill.name }}</strong>
+                  <small class="skill-id" [title]="skill.id">
+                    {{ skill.id | shortId }}
+                  </small>
+                </span>
+              </header>
+
+              <p class="skill-description">
+                {{ skill.description || 'No description provided.' }}
+              </p>
+
+              <div class="tag-list" aria-label="Tags">
+                @for (tag of skill.tags; track tag) {
+                  <span>{{ tag }}</span>
+                } @empty {
+                  <span class="empty-tag">No tags</span>
+                }
+              </div>
+
+              <footer>
+                <span>
+                  {{ skill.referenceCount }}
+                  {{ skill.referenceCount === 1 ? 'reference' : 'references' }}
+                </span>
+                <span>
+                  {{ skill.attachmentCount }}
+                  {{ skill.attachmentCount === 1 ? 'attachment' : 'attachments' }}
+                </span>
+                <span class="open-skill" aria-hidden="true">→</span>
+              </footer>
             </a>
           } @empty {
             <div class="empty-state">
               <strong>No skills found</strong>
-              <span>Try a different search term.</span>
+              <span>Try different search or filter values.</span>
+              <a routerLink="/skills/new">Add your first skill</a>
             </div>
           }
         </div>
 
-        @if (state.data.result.totalCount > 0) {
-          <footer class="pagination-bar">
-            <span>
-              Showing
-              {{ state.data.firstVisibleItem }}–{{ state.data.lastVisibleItem }}
-              of {{ state.data.result.totalCount }}
-            </span>
-            <nav class="pagination" aria-label="Skills pagination">
-              <button
-                type="button"
-                aria-label="Previous page"
-                [disabled]="!state.data.result.hasPreviousPage"
-                (click)="goToPage(state.data.result.page - 1)"
-              >
-                <span aria-hidden="true">‹</span>
-              </button>
-              @for (page of state.data.pages; track page) {
-                <button
-                  type="button"
-                  [class.current]="page === state.data.result.page"
-                  [attr.aria-current]="page === state.data.result.page ? 'page' : null"
-                  [attr.aria-label]="'Page ' + page"
-                  (click)="goToPage(page)"
-                >
-                  {{ page }}
-                </button>
-              }
-              <button
-                type="button"
-                aria-label="Next page"
-                [disabled]="!state.data.result.hasNextPage"
-                (click)="goToPage(state.data.result.page + 1)"
-              >
-                <span aria-hidden="true">›</span>
-              </button>
-            </nav>
-          </footer>
+        @if (vm.state.data.totalCount > 0) {
+          <app-pagination
+            [page]="vm.state.data.page"
+            [pageSize]="vm.state.data.pageSize"
+            [pageSizes]="pageSizes"
+            [totalCount]="vm.state.data.totalCount"
+            [totalPages]="vm.state.data.totalPages"
+            [hasPreviousPage]="vm.state.data.hasPreviousPage"
+            [hasNextPage]="vm.state.data.hasNextPage"
+            label="Skills"
+            (pageRequested)="goToPage(vm.request, $event)"
+            (pageSizeRequested)="changePageSize(vm.request, $event)"
+          />
         }
       }
     }

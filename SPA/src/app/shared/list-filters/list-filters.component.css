@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.list-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.filter-control {
+  display: grid;
+  gap: 6px;
+}
+
+.filter-control > span {
+  color: #56627b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.filter-control input,
+.filter-control select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #d6dce7;
+  border-radius: 9px;
+  outline: 0;
+  color: #263550;
+  background: white;
+  font: inherit;
+}
+
+.filter-control select {
+  padding-right: 34px;
+}
+
+.filter-control input:focus,
+.filter-control select:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.filter-control input:disabled,
+.filter-control select:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}

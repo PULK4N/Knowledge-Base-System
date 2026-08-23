@@ -1,0 +1,30 @@
+<div class="list-filters">
+  @for (filter of filters(); track filter.key) {
+    <label class="filter-control">
+      <span>{{ filter.label }}</span>
+      @if (filter.kind === 'text') {
+        <input
+          #textInput
+          type="text"
+          autocomplete="off"
+          [value]="filter.value"
+          [disabled]="filter.disabled ?? false"
+          [attr.maxlength]="filter.maxLength ?? 500"
+          [placeholder]="filter.placeholder ?? ''"
+          (input)="requestText(filter.key, textInput.value)"
+        />
+      } @else {
+        <select
+          #selectInput
+          [value]="filter.value"
+          [disabled]="filter.disabled ?? false"
+          (change)="requestSelection(filter.key, selectInput.value)"
+        >
+          @for (option of filter.options; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      }
+    </label>
+  }
+</div>

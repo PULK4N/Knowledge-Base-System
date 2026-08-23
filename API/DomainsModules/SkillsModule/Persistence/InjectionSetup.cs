@@ -18,6 +18,14 @@ public static class InjectionSetup
                 >()
         );
         services.AddScoped<IProjector, SkillSummaryProjector>();
+        services.AddScoped<SkillListRepository>();
+        services.AddScoped<ISkillListRepository>(
+            serviceProvider =>
+                serviceProvider.GetRequiredService<
+                    SkillListRepository
+                >()
+        );
+        services.AddScoped<IProjector, SkillListProjector>();
         services.AddScoped<ISkillSearch, SkillSearch>();
         services.AddScoped<IProjector, SkillSearchProjector>();
 

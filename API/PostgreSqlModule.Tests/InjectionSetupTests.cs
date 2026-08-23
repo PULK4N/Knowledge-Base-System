@@ -22,6 +22,7 @@ using PolicyModule.Persistence;
 using PolicyModule.Persistence.Interfaces;
 using PolicyModule.Persistence.Models;
 using SkillsModule.Application.Attachments;
+using SkillsModule.Contracts;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
 using SkillsModule.Persistence.Models;
@@ -39,6 +40,20 @@ public sealed class InjectionSetupTests
 
         Assert.Empty(
             migration.UpOperations.OfType<SqlOperation>()
+        );
+    }
+
+    [Fact]
+    public void SkillListMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddSkillListProjection();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
         );
     }
 
@@ -112,6 +127,11 @@ public sealed class InjectionSetupTests
                 ISkillSummaryRepository
             >()
         );
+        Assert.IsType<SkillListRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                ISkillListRepository
+            >()
+        );
         Assert.IsType<FeatureSearchRepository>(
             scope.ServiceProvider.GetRequiredService<
                 IFeatureSearchRepository
@@ -151,6 +171,7 @@ public sealed class InjectionSetupTests
             projectorTypes
         );
         Assert.Contains(typeof(SkillSummaryProjector), projectorTypes);
+        Assert.Contains(typeof(SkillListProjector), projectorTypes);
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
         Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
@@ -192,6 +213,8 @@ public sealed class InjectionSetupTests
         AssertIntPrimaryKey<TopicPolicyText>(context);
         AssertIntPrimaryKey<ProjectPolicyTopic>(context);
         AssertIntPrimaryKey<SkillSummaryEntry>(context);
+        AssertIntPrimaryKey<SkillListEntry>(context);
+        AssertIntPrimaryKey<SkillListTagEntry>(context);
         AssertIntPrimaryKey<FeatureSummaryEntry>(context);
         AssertIntPrimaryKey<FeatureSearchEntry>(context);
         AssertUniqueIndex<GeneralPolicyText>(context, 1);
@@ -206,6 +229,87 @@ public sealed class InjectionSetupTests
                 .Count(index => index.IsUnique)
         );
         AssertUniqueIndex<FeatureSearchEntry>(context, 1);
+        AssertUniqueIndex<SkillListEntry>(context, 1);
+        var skillList = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(SkillListEntry));
+        Assert.NotNull(skillList);
+        Assert.All(
+            skillList!.GetIndexes().Where(index => !index.IsUnique),
+            index => Assert.Equal(
+                "\"IsDeleted\" = FALSE",
+                index.GetFilter()
+            )
+        );
+        Assert.Contains(
+            skillList.GetIndexes(),
+            index => index.Properties.Select(property => property.Name)
+                .SequenceEqual(
+                    [
+                        nameof(SkillListEntry.NormalizedName),
+                        nameof(SkillListEntry.Name),
+                        nameof(SkillListEntry.SkillAggregateId)
+                    ]
+                )
+        );
+        Assert.Contains(
+            skillList.GetIndexes(),
+            index => index.Properties.Select(property => property.Name)
+                .SequenceEqual(
+                    [
+                        nameof(SkillListEntry.ReferenceCount),
+                        nameof(SkillListEntry.SkillAggregateId)
+                    ]
+                )
+        );
+        Assert.Contains(
+            skillList.GetIndexes(),
+            index => index.Properties.Select(property => property.Name)
+                .SequenceEqual(
+                    [
+                        nameof(SkillListEntry.AttachmentCount),
+                        nameof(SkillListEntry.SkillAggregateId)
+                    ]
+                )
+        );
+        Assert.Contains(
+            skillList.GetIndexes(),
+            index =>
+                index.Properties.SingleOrDefault()?.Name
+                    == nameof(SkillListEntry.SearchText)
+                && string.Equals(
+                    index.GetMethod(),
+                    "gin",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                && index.GetOperators() is ["gin_trgm_ops"]
+        );
+        var skillListTag = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(SkillListTagEntry));
+        Assert.NotNull(skillListTag);
+        Assert.Contains(
+            skillListTag!.GetIndexes(),
+            index => index.IsUnique
+                && index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(SkillListTagEntry.SkillListEntryId),
+                            nameof(SkillListTagEntry.NormalizedTag)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            skillListTag.GetIndexes(),
+            index => !index.IsUnique
+                && index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(SkillListTagEntry.NormalizedTag),
+                            nameof(SkillListTagEntry.SkillListEntryId)
+                        ]
+                    )
+        );
         var featureSearch = context.GetService<IDesignTimeModel>()
             .Model
             .FindEntityType(typeof(FeatureSearchEntry));
@@ -489,6 +593,46 @@ public sealed class InjectionSetupTests
 
         Assert.Contains("FeatureSearchEntries", sql);
         Assert.Contains("LIKE", sql);
+        Assert.Contains("ORDER BY", sql);
+        Assert.Contains("LIMIT", sql);
+        Assert.Contains("OFFSET", sql);
+    }
+
+    [Fact]
+    public void SkillListQuery_translates_entirely_to_postgresql()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var request = new EntityQuery<
+            SkillSearchFilters,
+            SkillSearchSortField
+        >(
+            new PageRequest(2, 25),
+            " trace ",
+            new SkillSearchFilters("dotnet", true, false),
+            new SortRequest<SkillSearchSortField>(
+                SkillSearchSortField.ReferenceCount,
+                SortDirection.Descending
+            )
+        );
+
+        var sql = new SkillListRepository(context)
+            .CreatePageQuery(request)
+            .ToQueryString();
+
+        Assert.Contains("SkillListEntries", sql);
+        Assert.Contains("SkillListTags", sql);
+        Assert.Contains("EXISTS", sql);
+        Assert.Contains("LIKE", sql);
+        Assert.Contains("ReferenceCount", sql);
+        Assert.Contains("AttachmentCount", sql);
         Assert.Contains("ORDER BY", sql);
         Assert.Contains("LIMIT", sql);
         Assert.Contains("OFFSET", sql);
