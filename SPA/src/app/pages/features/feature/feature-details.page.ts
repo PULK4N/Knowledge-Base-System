@@ -65,6 +65,7 @@ const RESEARCH_FILTER_OPTIONS: readonly ListControlOption[] = [
 const RESEARCH_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'updatedAt', label: 'Last updated' },
   { value: 'createdAt', label: 'Created date' },
+  { value: 'title', label: 'Title' },
   { value: 'sourceType', label: 'Source type' },
 ];
 const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
@@ -99,6 +100,7 @@ type FeatureAction =
   | {
       readonly kind: 'add-research-discovery';
       readonly featureId: string;
+      readonly title: string;
       readonly content: string;
       readonly sourceType: FeatureResearchDiscoverySourceType;
       readonly sourceReference: string;
@@ -107,6 +109,7 @@ type FeatureAction =
       readonly kind: 'update-research-discovery';
       readonly featureId: string;
       readonly discoveryId: string;
+      readonly title: string;
       readonly content: string;
       readonly sourceType: FeatureResearchDiscoverySourceType;
       readonly sourceReference: string;
@@ -376,6 +379,7 @@ export class FeatureDetailsPage {
 
   protected addResearchDiscovery(
     featureId: string,
+    title: string,
     content: string,
     sourceType: FeatureResearchDiscoverySourceType,
     sourceReference: string,
@@ -383,6 +387,7 @@ export class FeatureDetailsPage {
     this.actions.next({
       kind: 'add-research-discovery',
       featureId,
+      title: title.trim(),
       content: content.trim(),
       sourceType,
       sourceReference: sourceReference.trim(),
@@ -392,6 +397,7 @@ export class FeatureDetailsPage {
   protected updateResearchDiscovery(
     featureId: string,
     discoveryId: string,
+    title: string,
     content: string,
     sourceType: FeatureResearchDiscoverySourceType,
     sourceReference: string,
@@ -400,6 +406,7 @@ export class FeatureDetailsPage {
       kind: 'update-research-discovery',
       featureId,
       discoveryId,
+      title: title.trim(),
       content: content.trim(),
       sourceType,
       sourceReference: sourceReference.trim(),
@@ -453,6 +460,7 @@ export class FeatureDetailsPage {
         return this.features.removeRecord(action.featureId, action.recordId);
       case 'add-research-discovery':
         return this.features.addResearchDiscovery(action.featureId, {
+          title: action.title,
           content: action.content,
           sourceType: action.sourceType,
           sourceReference: action.sourceReference,
@@ -460,6 +468,7 @@ export class FeatureDetailsPage {
       case 'update-research-discovery':
         return this.features.updateResearchDiscovery(action.featureId, {
           discoveryId: action.discoveryId,
+          title: action.title,
           content: action.content,
           sourceType: action.sourceType,
           sourceReference: action.sourceReference,

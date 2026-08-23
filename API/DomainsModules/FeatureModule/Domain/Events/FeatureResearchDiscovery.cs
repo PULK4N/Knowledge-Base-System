@@ -34,6 +34,36 @@ public readonly record struct FeatureResearchDiscoveryAddedV1(
     }
 }
 
+public readonly record struct FeatureResearchDiscoveryAddedV2(
+    FeatureResearchDiscoveryId DiscoveryId,
+    string Title,
+    string Content,
+    FeatureResearchDiscoverySourceType SourceType,
+    string SourceReference
+) : IFeatureResearchDiscoveryAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.ResearchDiscoveries.Add(
+            new Models.FeatureResearchDiscovery
+            {
+                Id = DiscoveryId,
+                Title = Title,
+                Content = Content,
+                SourceType = SourceType,
+                SourceReference = SourceReference,
+                CreatedAt = eventExecutionInfo.Timestamp,
+                UpdatedAt = eventExecutionInfo.Timestamp
+            }
+        );
+        return state;
+    }
+}
+
 public interface IFeatureResearchDiscoveryUpdated : IEvent;
 
 public readonly record struct FeatureResearchDiscoveryUpdatedV1(
@@ -53,6 +83,33 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV1(
         var discovery = state.ResearchDiscoveries.Single(
             item => item.Id == discoveryId
         );
+        discovery.Content = Content;
+        discovery.SourceType = SourceType;
+        discovery.SourceReference = SourceReference;
+        discovery.UpdatedAt = eventExecutionInfo.Timestamp;
+        return state;
+    }
+}
+
+public readonly record struct FeatureResearchDiscoveryUpdatedV2(
+    FeatureResearchDiscoveryId DiscoveryId,
+    string Title,
+    string Content,
+    FeatureResearchDiscoverySourceType SourceType,
+    string SourceReference
+) : IFeatureResearchDiscoveryUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var discoveryId = DiscoveryId;
+        var discovery = state.ResearchDiscoveries.Single(
+            item => item.Id == discoveryId
+        );
+        discovery.Title = Title;
         discovery.Content = Content;
         discovery.SourceType = SourceType;
         discovery.SourceReference = SourceReference;

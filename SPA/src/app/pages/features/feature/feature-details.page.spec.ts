@@ -23,6 +23,7 @@ const feature: Feature = {
   researchDiscoveries: [
     {
       id: 'discovery-1',
+      title: 'YAML configuration',
       content: 'Feature transitions are configured in YAML.',
       sourceType: 'Code',
       sourceReference: 'StateMachines/features.yaml',
@@ -88,11 +89,17 @@ describe('FeatureDetailsPage research discoveries', () => {
   it('renders provenance and submits a new research discovery', () => {
     const element = harness.routeNativeElement as HTMLElement;
     expect(element.textContent).toContain('Research discoveries');
+    expect(element.textContent).toContain('YAML configuration');
     expect(element.textContent).toContain(
       'Feature transitions are configured in YAML.',
     );
     expect(element.textContent).toContain('StateMachines/features.yaml');
 
+    setControlValue(
+      element,
+      '[name="researchDiscoveryTitle"]',
+      'Documentation behavior ',
+    );
     setControlValue(
       element,
       '[name="researchDiscoveryContent"]',
@@ -117,6 +124,7 @@ describe('FeatureDetailsPage research discoveries', () => {
     harness.detectChanges();
 
     expect(features.addResearchDiscovery).toHaveBeenCalledWith(feature.id, {
+      title: 'Documentation behavior',
       content: 'Documentation confirms the behavior.',
       sourceType: 'Web',
       sourceReference: 'https://example.com/docs',
@@ -139,6 +147,11 @@ describe('FeatureDetailsPage research discoveries', () => {
 
     setControlValue(
       element,
+      '[name="editResearchDiscoveryTitle"]',
+      'YAML behavior',
+    );
+    setControlValue(
+      element,
       '[name="editResearchDiscoveryContent"]',
       'YAML selects transitions and validators.',
     );
@@ -153,6 +166,7 @@ describe('FeatureDetailsPage research discoveries', () => {
       feature.id,
       {
         discoveryId: 'discovery-1',
+        title: 'YAML behavior',
         content: 'YAML selects transitions and validators.',
         sourceType: 'Code',
         sourceReference: 'StateMachines/features.yaml',

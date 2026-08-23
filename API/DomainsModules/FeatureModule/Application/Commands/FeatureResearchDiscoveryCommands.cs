@@ -10,6 +10,8 @@ public sealed class AddFeatureResearchDiscoveryCommand(
     StateMachineHandler stateMachineHandler
 ) : ExistingFeatureCommand(stateMachineHandler)
 {
+    public required string Title { get; set; }
+
     public required string Content { get; set; }
 
     public FeatureResearchDiscoverySourceType SourceType { get; set; }
@@ -19,6 +21,7 @@ public sealed class AddFeatureResearchDiscoveryCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             FeatureId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(Title)
             && !string.IsNullOrWhiteSpace(Content)
             && Enum.IsDefined(SourceType)
         );
@@ -31,8 +34,9 @@ public sealed class AddFeatureResearchDiscoveryCommand(
 
         await ExecuteEvent(
             executor,
-            new FeatureResearchDiscoveryAddedV1(
+            new FeatureResearchDiscoveryAddedV2(
                 discoveryId,
+                Title.Trim(),
                 Content,
                 SourceType,
                 SourceReference
@@ -51,6 +55,8 @@ public sealed class UpdateFeatureResearchDiscoveryCommand(
 {
     public required Guid DiscoveryId { get; set; }
 
+    public required string Title { get; set; }
+
     public required string Content { get; set; }
 
     public FeatureResearchDiscoverySourceType SourceType { get; set; }
@@ -61,6 +67,7 @@ public sealed class UpdateFeatureResearchDiscoveryCommand(
         Task.FromResult(
             FeatureId != Guid.Empty
             && DiscoveryId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(Title)
             && !string.IsNullOrWhiteSpace(Content)
             && Enum.IsDefined(SourceType)
         );
@@ -68,8 +75,9 @@ public sealed class UpdateFeatureResearchDiscoveryCommand(
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(
             executor,
-            new FeatureResearchDiscoveryUpdatedV1(
+            new FeatureResearchDiscoveryUpdatedV2(
                 FeatureResearchDiscoveryId.FromDatabaseGuid(DiscoveryId),
+                Title.Trim(),
                 Content,
                 SourceType,
                 SourceReference

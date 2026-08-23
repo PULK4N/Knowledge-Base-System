@@ -220,11 +220,22 @@
           #newDiscoveryForm="ngForm"
           (ngSubmit)="addResearchDiscovery(
             vm.state.data.id,
+            newDiscoveryTitle.value,
             newDiscoveryContent.value,
             newDiscoverySourceType.value,
             newDiscoverySourceReference.value
           )"
         >
+          <label class="discovery-title-field">
+            <span>Title</span>
+            <input
+              #newDiscoveryTitle="ngModel"
+              name="researchDiscoveryTitle"
+              type="text"
+              required
+              ngModel
+            />
+          </label>
           <label class="discovery-content-field">
             <span>Discovery</span>
             <textarea
@@ -271,7 +282,7 @@
           class="tab-list-controls"
           [search]="vm.listState.research.search"
           searchLabel="Search research discoveries"
-          searchPlaceholder="Search discoveries and source references"
+          searchPlaceholder="Search titles, discoveries, and sources"
           [filter]="vm.listState.research.filter"
           filterLabel="Source"
           [filterOptions]="researchFilterOptions"
@@ -326,11 +337,22 @@
                   (ngSubmit)="updateResearchDiscovery(
                     vm.state.data.id,
                     discovery.id,
+                    editDiscoveryTitle.value,
                     editDiscoveryContent.value,
                     editDiscoverySourceType.value,
                     editDiscoverySourceReference.value
                   )"
                 >
+                  <label class="discovery-title-field">
+                    <span>Title</span>
+                    <input
+                      #editDiscoveryTitle="ngModel"
+                      name="editResearchDiscoveryTitle"
+                      type="text"
+                      required
+                      [ngModel]="discovery.title"
+                    />
+                  </label>
                   <label class="discovery-content-field">
                     <span>Discovery</span>
                     <textarea
@@ -382,6 +404,7 @@
                 </form>
               } @else {
                 <div class="research-discovery-body">
+                  <h3>{{ discovery.title }}</h3>
                   <p>{{ discovery.content }}</p>
                   @if (discovery.sourceReference) {
                     <div class="discovery-source">

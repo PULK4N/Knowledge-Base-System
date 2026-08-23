@@ -139,6 +139,7 @@ public sealed class FeatureMcpFunctionsTests
             sourceReference.GetProperty("default").GetString()
         );
         Assert.Contains("featureId", required);
+        Assert.Contains("title", required);
         Assert.Contains("content", required);
         Assert.DoesNotContain("sourceType", required);
         Assert.DoesNotContain("sourceReference", required);

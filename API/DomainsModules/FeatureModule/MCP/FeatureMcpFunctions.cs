@@ -67,12 +67,12 @@ public static class FeatureMcpFunctions
             "Removes a feature record from the current feature state."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, FeatureResearchDiscoverySourceType, string, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
+            (Func<IServiceProvider, Guid, string, string, FeatureResearchDiscoverySourceType, string, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
             "feature_research_discovery_add",
             "Stores a research discovery for a feature. The optional source reference can be a code path, URL, MCP tool name, or other provenance."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, FeatureResearchDiscoverySourceType, string, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
+            (Func<IServiceProvider, Guid, Guid, string, string, FeatureResearchDiscoverySourceType, string, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
             "feature_research_discovery_update",
             "Updates a stored feature research discovery and its provenance."
         ),
@@ -297,6 +297,7 @@ public static class FeatureMcpFunctions
     > AddResearchDiscovery(
         IServiceProvider services,
         Guid featureId,
+        string title,
         string content,
         FeatureResearchDiscoverySourceType sourceType =
             FeatureResearchDiscoverySourceType.Other,
@@ -310,6 +311,7 @@ public static class FeatureMcpFunctions
             command =>
             {
                 command.FeatureId = featureId;
+                command.Title = title;
                 command.Content = content;
                 command.SourceType = sourceType;
                 command.SourceReference = sourceReference;
@@ -320,6 +322,7 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         Guid discoveryId,
+        string title,
         string content,
         FeatureResearchDiscoverySourceType sourceType =
             FeatureResearchDiscoverySourceType.Other,
@@ -334,6 +337,7 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.DiscoveryId = discoveryId;
+                command.Title = title;
                 command.Content = content;
                 command.SourceType = sourceType;
                 command.SourceReference = sourceReference;

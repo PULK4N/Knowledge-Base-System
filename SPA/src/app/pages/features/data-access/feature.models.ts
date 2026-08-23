@@ -29,6 +29,7 @@ export interface FeatureRecord {
 
 export interface FeatureResearchDiscovery {
   readonly id: string;
+  readonly title: string;
   readonly content: string;
   readonly sourceType: FeatureResearchDiscoverySourceType;
   readonly sourceReference: string;
@@ -130,6 +131,7 @@ export interface UpdateFeatureRecordRequest extends FeatureRecordContentRequest 
 }
 
 export interface FeatureResearchDiscoveryContentRequest {
+  readonly title: string;
   readonly content: string;
   readonly sourceType: FeatureResearchDiscoverySourceType;
   readonly sourceReference: string;

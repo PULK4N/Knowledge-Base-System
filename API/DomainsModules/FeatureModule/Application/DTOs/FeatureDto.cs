@@ -82,6 +82,8 @@ public sealed record FeatureResearchDiscoveryDto
 {
     public required Guid Id { get; init; }
 
+    public required string Title { get; init; }
+
     public required string Content { get; init; }
 
     public required FeatureResearchDiscoverySourceType SourceType { get; init; }
@@ -98,6 +100,7 @@ public sealed record FeatureResearchDiscoveryDto
         new()
         {
             Id = discovery.Id.Value,
+            Title = discovery.Title,
             Content = discovery.Content,
             SourceType = discovery.SourceType,
             SourceReference = discovery.SourceReference,

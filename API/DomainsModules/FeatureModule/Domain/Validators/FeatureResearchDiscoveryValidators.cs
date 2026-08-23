@@ -13,22 +13,28 @@ public sealed class FeatureResearchDiscoveryMustNotExistValidator
         EventPayload payload
     )
     {
-        if (
-            payload.EventData
-            is not FeatureResearchDiscoveryAddedV1 eventData
-        )
+        var discoveryId = payload.EventData switch
+        {
+            FeatureResearchDiscoveryAddedV1 eventData =>
+                eventData.DiscoveryId,
+            FeatureResearchDiscoveryAddedV2 eventData =>
+                eventData.DiscoveryId,
+            _ => (FeatureResearchDiscoveryId?)null
+        };
+
+        if (discoveryId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeatureResearchDiscoveryMustNotExistValidator),
                 false,
-                $"{nameof(FeatureResearchDiscoveryMustNotExistValidator)} can only validate {nameof(FeatureResearchDiscoveryAddedV1)} events."
+                $"{nameof(FeatureResearchDiscoveryMustNotExistValidator)} can only validate discovery add events."
             );
         }
 
         var state = (FeatureStateData)stateData;
         var exists = state.ResearchDiscoveries.Any(
-            discovery => discovery.Id == eventData.DiscoveryId
+            discovery => discovery.Id == discoveryId.Value
         );
 
         return EventValidationResult.FromPayload(
@@ -51,6 +57,8 @@ public sealed class FeatureResearchDiscoveryMustExistValidator
         var discoveryId = payload.EventData switch
         {
             FeatureResearchDiscoveryUpdatedV1 eventData =>
+                eventData.DiscoveryId,
+            FeatureResearchDiscoveryUpdatedV2 eventData =>
                 eventData.DiscoveryId,
             FeatureResearchDiscoveryRemovedV1 eventData =>
                 eventData.DiscoveryId,

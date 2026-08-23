@@ -71,14 +71,16 @@ public sealed class FeatureEventTests
             "Why keep and switch previous plans?",
             "They preserve reasoning and allow an earlier approach to become current again."
         ).Apply(state, executionInfo);
-        new FeatureResearchDiscoveryAddedV1(
+        new FeatureResearchDiscoveryAddedV2(
             DiscoveryId,
+            "YAML event selection",
             "Feature events are selected by YAML.",
             FeatureResearchDiscoverySourceType.Code,
             "StateMachines/features.yaml"
         ).Apply(state, executionInfo);
-        new FeatureResearchDiscoveryUpdatedV1(
+        new FeatureResearchDiscoveryUpdatedV2(
             DiscoveryId,
+            "YAML events and validators",
             "Feature events and validators are selected by YAML.",
             FeatureResearchDiscoverySourceType.Code,
             "StateMachines/features.yaml"
@@ -112,6 +114,7 @@ public sealed class FeatureEventTests
         var record = Assert.Single(state.Records);
         Assert.Equal("Why keep and switch previous plans?", record.UserMessage);
         var discovery = Assert.Single(state.ResearchDiscoveries);
+        Assert.Equal("YAML events and validators", discovery.Title);
         Assert.Equal(
             "Feature events and validators are selected by YAML.",
             discovery.Content
@@ -146,6 +149,29 @@ public sealed class FeatureEventTests
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
         Assert.True(state.IsDeleted);
+    }
+
+    [Fact]
+    public void AddedV1_ReplaysWithDeterministicLegacyTitle()
+    {
+        var state = new FeatureStateData(FeatureId);
+        var executionInfo = new EventExecutionInfo
+        {
+            AggregateId = FeatureId,
+            Timestamp = DateTime.UtcNow
+        };
+
+        new FeatureResearchDiscoveryAddedV1(
+            DiscoveryId,
+            "A discovery stored before titles existed.",
+            FeatureResearchDiscoverySourceType.Other,
+            string.Empty
+        ).Apply(state, executionInfo);
+
+        Assert.Equal(
+            "Untitled discovery",
+            Assert.Single(state.ResearchDiscoveries).Title
+        );
     }
 
     [Theory]

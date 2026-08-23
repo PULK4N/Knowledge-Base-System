@@ -28,6 +28,7 @@ const feature: FeatureDto = {
   researchDiscoveries: [
     {
       id: 'discovery-1',
+      title: 'YAML configuration',
       content: 'Feature transitions are configured in YAML.',
       sourceType: 'Code',
       sourceReference: 'StateMachines/features.yaml',
@@ -191,12 +192,14 @@ describe('FeatureService', () => {
       name: 'adds a research discovery',
       path: 'research-discoveries',
       body: {
+        title: 'YAML configuration',
         content: 'Feature transitions are configured in YAML.',
         sourceType: 'Code',
         sourceReference: 'StateMachines/features.yaml',
       },
       action: (api: FeatureService) =>
         api.addResearchDiscovery(feature.id, {
+          title: 'YAML configuration',
           content: 'Feature transitions are configured in YAML.',
           sourceType: 'Code',
           sourceReference: 'StateMachines/features.yaml',
@@ -208,6 +211,7 @@ describe('FeatureService', () => {
       path: 'research-discoveries/update',
       body: {
         discoveryId: 'discovery-1',
+        title: 'YAML transitions and validators',
         content: 'Feature transitions and validators are configured in YAML.',
         sourceType: 'Code',
         sourceReference: 'StateMachines/features.yaml',
@@ -215,6 +219,7 @@ describe('FeatureService', () => {
       action: (api: FeatureService) =>
         api.updateResearchDiscovery(feature.id, {
           discoveryId: 'discovery-1',
+          title: 'YAML transitions and validators',
           content:
             'Feature transitions and validators are configured in YAML.',
           sourceType: 'Code',
