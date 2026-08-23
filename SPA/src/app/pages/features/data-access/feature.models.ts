@@ -1,4 +1,5 @@
 import { PagedResult } from '../../../core/store/entity-store.service';
+import { ListSortDirection } from '../../../shared/list-state/list-state';
 
 export type FeaturePlanContentType = 'Markdown' | 'Html';
 export type FeatureResearchDiscoverySourceType =
@@ -56,7 +57,12 @@ export interface FeatureSearchRequest {
   readonly page: number;
   readonly pageSize: number;
   readonly search: string;
+  readonly projectId: string;
+  readonly sortBy: FeatureSearchSortField;
+  readonly sortDirection: ListSortDirection;
 }
+
+export type FeatureSearchSortField = 'Name' | 'PlanCount' | 'RecordCount';
 
 export type FeatureSearchResult = PagedResult<FeatureSummary>;
 

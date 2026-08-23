@@ -17,7 +17,13 @@ export interface PagedResult<T> {
 
 interface StoredSearch {
   readonly entityType: string;
-  readonly result: PagedResult<BaseEntity>;
+  readonly itemIds: readonly string[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalCount: number;
+  readonly totalPages: number;
+  readonly hasPreviousPage: boolean;
+  readonly hasNextPage: boolean;
 }
 
 interface EntityStoreState {
@@ -60,11 +66,24 @@ export class EntityStore {
     queryKey: string,
   ): Observable<PagedResult<T> | undefined> {
     return this.state$.pipe(
-      map(
-        state =>
-          state.searches[queryKey]?.result as PagedResult<T> | undefined,
-      ),
-      distinctUntilChanged(),
+      map(state => {
+        const search = state.searches[queryKey];
+        if (!search) return undefined;
+
+        const entities = state.entities[search.entityType] ?? {};
+        return {
+          items: search.itemIds
+            .map(id => entities[id] as T | undefined)
+            .filter((entity): entity is T => entity !== undefined),
+          page: search.page,
+          pageSize: search.pageSize,
+          totalCount: search.totalCount,
+          totalPages: search.totalPages,
+          hasPreviousPage: search.hasPreviousPage,
+          hasNextPage: search.hasNextPage,
+        };
+      }),
+      distinctUntilChanged(equalPagedResult),
     );
   }
 
@@ -76,29 +95,13 @@ export class EntityStore {
       ...(state.entities[typeKey] ?? {}),
       [idKey]: entity,
     };
-    const searches = Object.fromEntries(
-      Object.entries(state.searches).map(([queryKey, entry]) => [
-        queryKey,
-        entry.entityType !== typeKey
-          ? entry
-          : {
-              ...entry,
-              result: {
-                ...entry.result,
-                items: entry.result.items.map(item =>
-                  normalize(item.id) === idKey ? entity : item,
-                ),
-              },
-            },
-      ]),
-    );
 
     this.stateSubject.next({
       entities: {
         ...state.entities,
         [typeKey]: entitiesForType,
       },
-      searches,
+      searches: state.searches,
     });
   }
 
@@ -111,13 +114,15 @@ export class EntityStore {
     const typeKey = normalize(entityType);
     const entitiesForType = result.items.reduce<
       Readonly<Record<string, BaseEntity>>
-    >(
-      (entities, entity) => ({
+    >((entities, entity) => {
+      const idKey = normalize(entity.id);
+      const existing = entities[idKey];
+
+      return {
         ...entities,
-        [normalize(entity.id)]: entity,
-      }),
-      state.entities[typeKey] ?? {},
-    );
+        [idKey]: existing ? { ...existing, ...entity } : entity,
+      };
+    }, state.entities[typeKey] ?? {});
 
     this.stateSubject.next({
       entities: {
@@ -128,7 +133,13 @@ export class EntityStore {
         ...state.searches,
         [queryKey]: {
           entityType: typeKey,
-          result,
+          itemIds: result.items.map(entity => normalize(entity.id)),
+          page: result.page,
+          pageSize: result.pageSize,
+          totalCount: result.totalCount,
+          totalPages: result.totalPages,
+          hasPreviousPage: result.hasPreviousPage,
+          hasNextPage: result.hasNextPage,
         },
       },
     });
@@ -145,30 +156,25 @@ export class EntityStore {
       Object.entries(state.searches).map(([queryKey, entry]) => {
         if (entry.entityType !== typeKey) return [queryKey, entry];
 
-        const items = entry.result.items.filter(
-          item => normalize(item.id) !== idKey,
-        );
-        if (items.length === entry.result.items.length) {
+        const itemIds = entry.itemIds.filter(itemId => itemId !== idKey);
+        if (itemIds.length === entry.itemIds.length) {
           return [queryKey, entry];
         }
 
-        const totalCount = Math.max(0, entry.result.totalCount - 1);
+        const totalCount = Math.max(0, entry.totalCount - 1);
         const totalPages =
           totalCount === 0
             ? 0
-            : Math.ceil(totalCount / entry.result.pageSize);
+            : Math.ceil(totalCount / entry.pageSize);
 
         return [
           queryKey,
           {
             ...entry,
-            result: {
-              ...entry.result,
-              items,
-              totalCount,
-              totalPages,
-              hasNextPage: entry.result.page < totalPages,
-            },
+            itemIds,
+            totalCount,
+            totalPages,
+            hasNextPage: entry.page < totalPages,
           },
         ];
       }),
@@ -186,4 +192,23 @@ export class EntityStore {
   reset(): void {
     this.stateSubject.next(initialState);
   }
+}
+
+function equalPagedResult<T extends BaseEntity>(
+  left: PagedResult<T> | undefined,
+  right: PagedResult<T> | undefined,
+): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.page === right.page &&
+    left.pageSize === right.pageSize &&
+    left.totalCount === right.totalCount &&
+    left.totalPages === right.totalPages &&
+    left.hasPreviousPage === right.hasPreviousPage &&
+    left.hasNextPage === right.hasNextPage &&
+    left.items.length === right.items.length &&
+    left.items.every((item, index) => item === right.items[index])
+  );
 }

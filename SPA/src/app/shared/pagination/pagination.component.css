@@ -13,6 +13,29 @@
   gap: 12px;
 }
 
+.pagination-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pagination-summary label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5e6980;
+  font-size: 13px;
+}
+
+.pagination-summary select {
+  min-height: 38px;
+  padding: 0 28px 0 9px;
+  border: 1px solid #d5dbe5;
+  border-radius: 7px;
+  color: #253555;
+  background: white;
+}
+
 .pagination button {
   display: grid;
   width: 56px;
@@ -56,6 +79,11 @@
   .pagination {
     width: 100%;
     gap: 6px;
+  }
+
+  .pagination-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .pagination button {

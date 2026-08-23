@@ -126,6 +126,8 @@ public sealed class FeatureSummaryProjectorTests
     {
         public DbSet<FeatureSummaryEntry> FeatureSummaries =>
             Set<FeatureSummaryEntry>();
+        public DbSet<FeatureSearchEntry> FeatureSearchEntries =>
+            Set<FeatureSearchEntry>();
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder
@@ -142,6 +144,9 @@ public sealed class FeatureSummaryProjectorTests
                 .Entity<FeatureSummaryEntry>()
                 .HasIndex(summary => summary.Name)
                 .IsUnique();
+            modelBuilder
+                .Entity<FeatureSearchEntry>()
+                .HasKey(entry => entry.Id);
         }
     }
 }

@@ -5,10 +5,15 @@ using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Interfaces;
+using ActionModule.Shared.Models;
+using FeatureModule.Contracts;
 using FeatureModule.Persistence.Models;
+using FeatureModule.Persistence;
+using FeatureModule.Persistence.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MemoryModule.Persistence;
@@ -26,6 +31,17 @@ namespace PostgreSqlModule.Tests;
 
 public sealed class InjectionSetupTests
 {
+    [Fact]
+    public void FeatureSearchMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddFeatureSearchProjection();
+
+        Assert.Empty(
+            migration.UpOperations.OfType<SqlOperation>()
+        );
+    }
+
     [Fact]
     public void RegisterPostgreSqlModuleRegistersContextsAndStorage()
     {
@@ -96,6 +112,11 @@ public sealed class InjectionSetupTests
                 ISkillSummaryRepository
             >()
         );
+        Assert.IsType<FeatureSearchRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IFeatureSearchRepository
+            >()
+        );
         Assert.IsType<PostgreSqlMemorySearchRepository>(
             scope.ServiceProvider.GetRequiredService<
                 IMemorySearchRepository
@@ -133,6 +154,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
         Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
+        Assert.Contains(typeof(FeatureSearchProjector), projectorTypes);
     }
 
     [Fact]
@@ -171,6 +193,7 @@ public sealed class InjectionSetupTests
         AssertIntPrimaryKey<ProjectPolicyTopic>(context);
         AssertIntPrimaryKey<SkillSummaryEntry>(context);
         AssertIntPrimaryKey<FeatureSummaryEntry>(context);
+        AssertIntPrimaryKey<FeatureSearchEntry>(context);
         AssertUniqueIndex<GeneralPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyText>(context, 1);
         AssertUniqueIndex<TopicPolicyText>(context, 1);
@@ -181,6 +204,100 @@ public sealed class InjectionSetupTests
                 .FindEntityType(typeof(PolicyProjectSummaryEntry))!
                 .GetIndexes()
                 .Count(index => index.IsUnique)
+        );
+        AssertUniqueIndex<FeatureSearchEntry>(context, 1);
+        var featureSearch = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(FeatureSearchEntry));
+        Assert.NotNull(featureSearch);
+        Assert.All(
+            featureSearch!.GetIndexes().Where(index => !index.IsUnique),
+            index => Assert.Equal(
+                "\"IsDeleted\" = FALSE",
+                index.GetFilter()
+            )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index => index.Properties.Select(property => property.Name)
+                .SequenceEqual(
+                    [
+                        nameof(FeatureSearchEntry.ProjectId),
+                        nameof(FeatureSearchEntry.NormalizedName),
+                        nameof(FeatureSearchEntry.Name),
+                        nameof(FeatureSearchEntry.FeatureAggregateId)
+                    ]
+                )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(FeatureSearchEntry.NormalizedName),
+                            nameof(FeatureSearchEntry.Name),
+                            nameof(FeatureSearchEntry.FeatureAggregateId)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(FeatureSearchEntry.ProjectId),
+                            nameof(FeatureSearchEntry.PlanCount),
+                            nameof(FeatureSearchEntry.FeatureAggregateId)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(FeatureSearchEntry.ProjectId),
+                            nameof(FeatureSearchEntry.RecordCount),
+                            nameof(FeatureSearchEntry.FeatureAggregateId)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(FeatureSearchEntry.PlanCount),
+                            nameof(FeatureSearchEntry.FeatureAggregateId)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(FeatureSearchEntry.RecordCount),
+                            nameof(FeatureSearchEntry.FeatureAggregateId)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            featureSearch.GetIndexes(),
+            index =>
+                index.Properties.SingleOrDefault()?.Name
+                    == nameof(FeatureSearchEntry.SearchText)
+                && string.Equals(
+                    index.GetMethod(),
+                    "gin",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                && index.GetOperators() is ["gin_trgm_ops"]
         );
         Assert.Equal(
             2,
@@ -337,6 +454,44 @@ public sealed class InjectionSetupTests
         Assert.Contains("@@", textSql);
         Assert.Contains("ts_rank_cd", textSql);
         Assert.Contains("<=>", vectorSql);
+    }
+
+    [Fact]
+    public void FeatureSearchQuery_translates_entirely_to_postgresql()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var request = new EntityQuery<
+            FeatureSearchFilters,
+            FeatureSearchSortField
+        >(
+            new PageRequest(2, 25),
+            " trace ",
+            new FeatureSearchFilters(
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            ),
+            new SortRequest<FeatureSearchSortField>(
+                FeatureSearchSortField.Name,
+                SortDirection.Ascending
+            )
+        );
+
+        var sql = new FeatureSearchRepository(context)
+            .CreatePageQuery(request)
+            .ToQueryString();
+
+        Assert.Contains("FeatureSearchEntries", sql);
+        Assert.Contains("LIKE", sql);
+        Assert.Contains("ORDER BY", sql);
+        Assert.Contains("LIMIT", sql);
+        Assert.Contains("OFFSET", sql);
     }
 
     private static void AssertIntPrimaryKey<TEntity>(DbContext context)

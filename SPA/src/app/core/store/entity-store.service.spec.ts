@@ -83,6 +83,34 @@ describe('EntityStore', () => {
     expect(result?.items).toEqual([existing]);
   });
 
+  it('preserves richer detail fields when a summary search is refreshed', async () => {
+    const detail = {
+      id: 'skill-1',
+      name: 'Angular',
+      description: 'Observable-first architecture',
+    };
+    store.upsert('skill', detail);
+
+    store.replaceSearch(
+      'skills:all',
+      'skill',
+      page([{ id: detail.id, name: 'Angular 22' }]),
+    );
+
+    const selectedDetail = await firstValueFrom(
+      store.entity$<TestEntity>('skill', detail.id),
+    );
+    const search = await firstValueFrom(
+      store.search$<TestEntity>('skills:all'),
+    );
+
+    expect(selectedDetail).toEqual({
+      ...detail,
+      name: 'Angular 22',
+    });
+    expect(search?.items[0]).toBe(selectedDetail);
+  });
+
   it('removes an entity from detail state and every cached search', async () => {
     const removed = { id: 'skill-1', name: 'Angular' };
     const retained = { id: 'skill-2', name: 'Event sourcing' };

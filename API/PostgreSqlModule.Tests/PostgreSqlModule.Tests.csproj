@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="../DomainsModules/AdministrationModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
+    <ProjectReference Include="../DomainsModules/FeatureModule/Contracts/Contracts.csproj" />
     <ProjectReference Include="../PostgreSqlModule/PostgreSqlModule.csproj" />
   </ItemGroup>
 

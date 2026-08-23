@@ -22,6 +22,7 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                 .HasAnnotation("ProductVersion", "8.0.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
@@ -119,6 +120,87 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.HasKey("ConstraintHash");
 
                     b.ToTable("UniqueEventConstraints", (string)null);
+                });
+
+            modelBuilder.Entity("FeatureModule.Persistence.Models.FeatureSearchEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("CurrentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FeatureAggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PlanCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectedOrderNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeatureAggregateId")
+                        .IsUnique();
+
+                    b.HasIndex("SearchText")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchText"), "GIN");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("SearchText"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("PlanCount", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("RecordCount", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("NormalizedName", "Name", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("ProjectId", "PlanCount", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("ProjectId", "RecordCount", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("ProjectId", "NormalizedName", "Name", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("FeatureSearchEntries", (string)null);
                 });
 
             modelBuilder.Entity("FeatureModule.Persistence.Models.FeatureSummaryEntry", b =>

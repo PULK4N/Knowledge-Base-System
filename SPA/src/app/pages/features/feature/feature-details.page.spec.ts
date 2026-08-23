@@ -80,7 +80,9 @@ describe('FeatureDetailsPage research discoveries', () => {
       ],
     }).compileComponents();
 
-    harness = await RouterTestingHarness.create('/features/feature-1');
+    harness = await RouterTestingHarness.create(
+      '/features/feature-1?tab=research',
+    );
   });
 
   it('renders provenance and submits a new research discovery', () => {
@@ -169,6 +171,18 @@ describe('FeatureDetailsPage research discoveries', () => {
       feature.id,
       'discovery-1',
     );
+  });
+
+  it('keeps tab-only list state on the client without reloading the feature', async () => {
+    await harness.navigateByUrl(
+      '/features/feature-1?tab=research&researchSource=Web',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    expect(element.textContent).toContain('No discoveries match');
+    expect(features.watch).toHaveBeenCalledTimes(1);
   });
 });
 

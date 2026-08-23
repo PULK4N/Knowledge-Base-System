@@ -19,6 +19,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
 {
     public DbSet<FeatureSummaryEntry> FeatureSummaries =>
         Set<FeatureSummaryEntry>();
+    public DbSet<FeatureSearchEntry> FeatureSearchEntries =>
+        Set<FeatureSearchEntry>();
     public DbSet<GeneralPolicyText> GeneralPolicyTexts =>
         Set<GeneralPolicyText>();
     public DbSet<ProjectPolicyText> ProjectPolicyTexts =>
@@ -37,6 +39,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.HasPostgresExtension("vector");
+        modelBuilder.HasPostgresExtension("pg_trgm");
 
         var payloadMessage = modelBuilder.Entity<SerializedPayloadMessage>();
 
@@ -140,6 +143,74 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                 feature.Property(summary => summary.Name).IsRequired();
                 feature.Property(summary => summary.Summary).IsRequired();
                 feature.Property(summary => summary.Status).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<FeatureSearchEntry>(
+            feature =>
+            {
+                feature.ToTable("FeatureSearchEntries");
+                feature.HasKey(entry => entry.Id);
+                feature
+                    .HasIndex(entry => entry.FeatureAggregateId)
+                    .IsUnique();
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.NormalizedName,
+                        entry.Name,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.ProjectId,
+                        entry.NormalizedName,
+                        entry.Name,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.ProjectId,
+                        entry.PlanCount,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.ProjectId,
+                        entry.RecordCount,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.PlanCount,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.RecordCount,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature
+                    .HasIndex(entry => entry.SearchText)
+                    .HasMethod("GIN")
+                    .HasOperators("gin_trgm_ops")
+                    .HasFilter("\"IsDeleted\" = FALSE");
+                feature.Property(entry => entry.Name).IsRequired();
+                feature.Property(entry => entry.NormalizedName).IsRequired();
+                feature.Property(entry => entry.Summary).IsRequired();
+                feature.Property(entry => entry.SearchText).IsRequired();
+                feature.Property(entry => entry.Status).IsRequired();
             }
         );
 

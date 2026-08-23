@@ -9,34 +9,39 @@
 </header>
 
 <section class="features-panel surface-card">
-  <div class="toolbar">
-    <label class="search-box">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="10.5" cy="10.5" r="6.5" />
-        <path d="m15.5 15.5 5 5" />
-      </svg>
-      <span class="sr-only">Search features</span>
-      <input
-        #searchInput
-        type="search"
-        placeholder="Search feature names and summaries"
-        autocomplete="off"
-        (input)="search(searchInput.value)"
+  @if (vm$ | async; as vm) {
+    <div class="toolbar">
+      <app-list-controls
+        [search]="vm.request.search"
+        searchLabel="Search features"
+        searchPlaceholder="Search feature names and summaries"
+        [filter]="vm.request.projectId"
+        filterLabel="Project"
+        [filterOptions]="projectOptions(vm.projects, vm.request.projectId)"
+        [filterDisabled]="vm.projects.status === 'loading'"
+        [sortBy]="vm.request.sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="vm.request.sortDirection"
+        (searchChanged)="search(vm.request, $event)"
+        (filterChanged)="filterByProject(vm.request, $event)"
+        (sortByChanged)="sort(vm.request, $event)"
+        (sortDirectionChanged)="changeDirection(vm.request, $event)"
       />
-    </label>
 
-    @if (state$ | async; as state) {
-      @if (state.status === 'success') {
+      <div class="result-summary">
+        @if (vm.state.status === 'success') {
         <span class="total-count">
-          {{ state.data.totalCount }}
-          {{ state.data.totalCount === 1 ? 'feature' : 'features' }}
+            {{ vm.state.data.totalCount }}
+            {{ vm.state.data.totalCount === 1 ? 'feature' : 'features' }}
         </span>
-      }
-    }
-  </div>
+        }
+        @if (vm.projects.status === 'error') {
+          <span class="filter-warning">Project filter unavailable</span>
+        }
+      </div>
+    </div>
 
-  @if (state$ | async; as state) {
-    @switch (state.status) {
+    @switch (vm.state.status) {
       @case ('loading') {
         <div class="request-message">Loading features…</div>
       }
@@ -44,13 +49,13 @@
         <div class="request-message error">
           <div>
             <strong>Features could not be loaded</strong>
-            <p>{{ state.message }}</p>
+            <p>{{ vm.state.message }}</p>
           </div>
         </div>
       }
       @case ('success') {
         <div class="feature-grid" aria-label="Features">
-          @for (feature of state.data.items; track feature.id) {
+          @for (feature of vm.state.data.items; track feature.id) {
             <a class="feature-card" [routerLink]="['/features', feature.id]">
               <div class="feature-card-heading">
                 <span class="feature-icon" aria-hidden="true">◇</span>
@@ -81,16 +86,18 @@
           }
         </div>
 
-        @if (state.data.totalCount > 0) {
+        @if (vm.state.data.totalCount > 0) {
           <app-pagination
-            [page]="state.data.page"
-            [pageSize]="state.data.pageSize"
-            [totalCount]="state.data.totalCount"
-            [totalPages]="state.data.totalPages"
-            [hasPreviousPage]="state.data.hasPreviousPage"
-            [hasNextPage]="state.data.hasNextPage"
+            [page]="vm.state.data.page"
+            [pageSize]="vm.state.data.pageSize"
+            [pageSizes]="pageSizes"
+            [totalCount]="vm.state.data.totalCount"
+            [totalPages]="vm.state.data.totalPages"
+            [hasPreviousPage]="vm.state.data.hasPreviousPage"
+            [hasNextPage]="vm.state.data.hasNextPage"
             label="Features"
-            (pageRequested)="goToPage($event)"
+            (pageRequested)="goToPage(vm.request, $event)"
+            (pageSizeRequested)="changePageSize(vm.request, $event)"
           />
         }
       }

@@ -6,6 +6,7 @@ namespace FeatureModule.Persistence;
 public interface IFeatureModuleDbContext
 {
     DbSet<FeatureSummaryEntry> FeatureSummaries { get; }
+    DbSet<FeatureSearchEntry> FeatureSearchEntries { get; }
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default

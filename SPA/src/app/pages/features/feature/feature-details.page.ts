@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import {
   Observable,
   Subject,
@@ -23,6 +23,12 @@ import {
   tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
+import {
+  ListControlOption,
+  ListControlsComponent,
+} from '../../../shared/list-controls/list-controls.component';
+import { omitDefault, omitEmpty } from '../../../shared/list-state/list-route-state';
+import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { SkillSearchResult } from '../../skills/data-access/skill.models';
 import { SkillService } from '../../skills/data-access/skill.service';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
@@ -32,6 +38,45 @@ import {
   FeatureResearchDiscoverySourceType,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import {
+  parseFeatureDetailListState,
+  selectFeaturePlans,
+  selectFeatureRecords,
+  selectFeatureResearch,
+} from './feature-detail-list-state';
+
+const PLAN_FILTER_OPTIONS: readonly ListControlOption[] = [
+  { value: 'All', label: 'All content types' },
+  { value: 'Markdown', label: 'Markdown' },
+  { value: 'Html', label: 'HTML' },
+];
+const PLAN_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'updatedAt', label: 'Last updated' },
+  { value: 'createdAt', label: 'Created date' },
+  { value: 'title', label: 'Title' },
+];
+const RESEARCH_FILTER_OPTIONS: readonly ListControlOption[] = [
+  { value: 'All', label: 'All sources' },
+  { value: 'Code', label: 'Code' },
+  { value: 'Web', label: 'Web' },
+  { value: 'Mcp', label: 'MCP' },
+  { value: 'Other', label: 'Other' },
+];
+const RESEARCH_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'updatedAt', label: 'Last updated' },
+  { value: 'createdAt', label: 'Created date' },
+  { value: 'sourceType', label: 'Source type' },
+];
+const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
+  { value: 'All', label: 'All records' },
+  { value: 'Edited', label: 'Edited records' },
+  { value: 'Original', label: 'Original records' },
+];
+const CONVERSATION_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'updatedAt', label: 'Last updated' },
+  { value: 'createdAt', label: 'Created date' },
+  { value: 'userMessage', label: 'User message' },
+];
 
 type FeatureAction =
   | { readonly kind: 'status'; readonly featureId: string; readonly status: string }
@@ -84,12 +129,17 @@ type MutationState =
     AsyncPipe,
     DatePipe,
     FormsModule,
+    ListControlsComponent,
     MarkdownContentComponent,
     RouterLink,
     ShortIdPipe,
   ],
   templateUrl: './feature-details.page.html',
-  styleUrls: ['./feature-details.page.css', '../ui/feature-pages.css'],
+  styleUrls: [
+    './feature-details.page.css',
+    './feature-detail-tabs.css',
+    '../ui/feature-pages.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeatureDetailsPage {
@@ -104,6 +154,21 @@ export class FeatureDetailsPage {
   protected readonly confirmingFeatureRemoval = signal(false);
 
   protected readonly emptyBlocks = [];
+  protected readonly planFilterOptions = PLAN_FILTER_OPTIONS;
+  protected readonly planSortOptions = PLAN_SORT_OPTIONS;
+  protected readonly researchFilterOptions = RESEARCH_FILTER_OPTIONS;
+  protected readonly researchSortOptions = RESEARCH_SORT_OPTIONS;
+  protected readonly conversationFilterOptions = CONVERSATION_FILTER_OPTIONS;
+  protected readonly conversationSortOptions = CONVERSATION_SORT_OPTIONS;
+
+  private readonly listState$ = this.route.queryParamMap.pipe(
+    map(parseFeatureDetailListState),
+    distinctUntilChanged(
+      (previous, current) =>
+        JSON.stringify(previous) === JSON.stringify(current),
+    ),
+  );
+
   private readonly state$: Observable<LoadState<Feature>> =
     this.route.paramMap.pipe(
       map(params => params.get('featureId')),
@@ -159,9 +224,102 @@ export class FeatureDetailsPage {
 
   protected readonly vm$ = combineLatest({
     state: this.state$,
+    listState: this.listState$,
     skills: this.skillsState$,
     mutation: this.mutation$,
-  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+  }).pipe(
+    map(vm => ({
+      ...vm,
+      collections:
+        vm.state.status === 'success'
+          ? {
+              plans: selectFeaturePlans(
+                vm.state.data.plans,
+                vm.listState.plans,
+              ),
+              research: selectFeatureResearch(
+                vm.state.data.researchDiscoveries,
+                vm.listState.research,
+              ),
+              conversations: selectFeatureRecords(
+                vm.state.data.records,
+                vm.listState.conversations,
+              ),
+            }
+          : { plans: [], research: [], conversations: [] },
+    })),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  protected updatePlanSearch(search: string): void {
+    this.updateListQuery({ planSearch: omitEmpty(search) }, true);
+  }
+
+  protected updatePlanFilter(filter: string): void {
+    if (!PLAN_FILTER_OPTIONS.some(option => option.value === filter)) return;
+    this.updateListQuery({ planType: omitDefault(filter, 'All') });
+  }
+
+  protected updatePlanSort(sortBy: string): void {
+    if (!PLAN_SORT_OPTIONS.some(option => option.value === sortBy)) return;
+    this.updateListQuery({ planSort: omitDefault(sortBy, 'updatedAt') });
+  }
+
+  protected updatePlanDirection(direction: ListSortDirection): void {
+    this.updateListQuery({
+      planDirection: omitDefault(direction, 'Descending'),
+    });
+  }
+
+  protected updateResearchSearch(search: string): void {
+    this.updateListQuery({ researchSearch: omitEmpty(search) }, true);
+  }
+
+  protected updateResearchFilter(filter: string): void {
+    if (!RESEARCH_FILTER_OPTIONS.some(option => option.value === filter)) return;
+    this.updateListQuery({ researchSource: omitDefault(filter, 'All') });
+  }
+
+  protected updateResearchSort(sortBy: string): void {
+    if (!RESEARCH_SORT_OPTIONS.some(option => option.value === sortBy)) return;
+    this.updateListQuery({
+      researchSort: omitDefault(sortBy, 'updatedAt'),
+    });
+  }
+
+  protected updateResearchDirection(direction: ListSortDirection): void {
+    this.updateListQuery({
+      researchDirection: omitDefault(direction, 'Descending'),
+    });
+  }
+
+  protected updateConversationSearch(search: string): void {
+    this.updateListQuery({ conversationSearch: omitEmpty(search) }, true);
+  }
+
+  protected updateConversationFilter(filter: string): void {
+    if (!CONVERSATION_FILTER_OPTIONS.some(option => option.value === filter)) {
+      return;
+    }
+    this.updateListQuery({
+      conversationFilter: omitDefault(filter, 'All'),
+    });
+  }
+
+  protected updateConversationSort(sortBy: string): void {
+    if (!CONVERSATION_SORT_OPTIONS.some(option => option.value === sortBy)) {
+      return;
+    }
+    this.updateListQuery({
+      conversationSort: omitDefault(sortBy, 'updatedAt'),
+    });
+  }
+
+  protected updateConversationDirection(direction: ListSortDirection): void {
+    this.updateListQuery({
+      conversationDirection: omitDefault(direction, 'Descending'),
+    });
+  }
 
   protected updateStatus(featureId: string, status: string): void {
     this.actions.next({ kind: 'status', featureId, status: status.trim() });
@@ -252,6 +410,15 @@ export class FeatureDetailsPage {
 
   protected removeFeature(featureId: string): void {
     this.actions.next({ kind: 'remove-feature', featureId });
+  }
+
+  private updateListQuery(queryParams: Params, replaceUrl = false): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl,
+    });
   }
 
   private execute(action: FeatureAction): Observable<unknown> {
