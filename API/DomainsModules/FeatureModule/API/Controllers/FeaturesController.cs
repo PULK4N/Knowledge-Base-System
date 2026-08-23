@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
@@ -20,16 +19,15 @@ public sealed class FeaturesController(
     [HttpGet]
     public async Task<ActionResult<PagedResult<FeatureSummaryDto>>> List(
         [FromServices] SearchFeaturesQuery query,
-        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
-            int page = Pagination.DefaultPage,
-        [FromQuery, Range(1, Pagination.MaximumPageSize)]
-            int pageSize = Pagination.DefaultPageSize,
-        [FromQuery] string? search = null
+        [FromQuery] SearchFeaturesRequest request
     )
     {
-        query.Page = page;
-        query.PageSize = pageSize;
-        query.Search = search;
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Search;
+        query.ProjectId = request.ProjectId;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
 
         return Ok(await Execute(query));
     }

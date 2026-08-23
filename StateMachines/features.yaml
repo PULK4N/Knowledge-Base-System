@@ -4,6 +4,7 @@ initializationEvents:
   - FeatureAddedV1
 projections:
   - FeatureSummaryProjector
+  - FeatureSearchProjector
 events:
   FeatureAddedV1:
     uniqueConstraints:

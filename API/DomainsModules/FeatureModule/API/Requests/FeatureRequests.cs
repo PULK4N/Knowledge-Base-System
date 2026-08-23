@@ -1,6 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+using ActionModule.Shared.Models;
+using FeatureModule.Contracts;
 using FeatureModule.Domain.Models;
 
 namespace FeatureModule.API.Requests;
+
+public sealed record SearchFeaturesRequest : PagedSearchRequest
+{
+    public Guid? ProjectId { get; init; }
+
+    [EnumDataType(typeof(FeatureSearchSortField))]
+    public FeatureSearchSortField SortBy { get; init; } =
+        FeatureSearchSortField.Name;
+}
 
 public sealed record UpdateFeatureStatusRequest
 {

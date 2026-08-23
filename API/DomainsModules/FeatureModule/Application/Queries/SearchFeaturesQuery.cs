@@ -1,6 +1,7 @@
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
 using FeatureModule.Application.DTOs;
+using FeatureModule.Contracts;
 using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Application.Queries;
@@ -39,33 +40,32 @@ public sealed class GetFeatureByNameQuery(
 }
 
 public sealed class SearchFeaturesQuery(
-    IFeatureSummaryRepository featureSummaryRepository
-) : Query<PagedResult<FeatureSummaryDto>>
+    IFeatureSearchRepository featureSearchRepository
+) : PagedQuery<FeatureSummaryDto>
 {
-    public int Page { get; set; } = Pagination.DefaultPage;
-    public int PageSize { get; set; } = Pagination.DefaultPageSize;
-    public string? Search { get; set; }
+    public Guid? ProjectId { get; set; }
+    public FeatureSearchSortField SortBy { get; set; } =
+        FeatureSearchSortField.Name;
+    public SortDirection SortDirection { get; set; } =
+        SortDirection.Ascending;
 
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(Pagination.IsValid(Page, PageSize));
+    public override async Task<bool> CanExecute(Executor executor) =>
+        await base.CanExecute(executor)
+        && Enum.IsDefined(SortBy)
+        && Enum.IsDefined(SortDirection);
 
     protected override async Task<PagedResult<FeatureSummaryDto>> ExecuteInternal(
         Executor executor
     )
     {
-        var result = await featureSummaryRepository.Search(
-            Page,
-            PageSize,
-            Search
+        var result = await featureSearchRepository.Search(
+            CreateEntityQuery(
+                new FeatureSearchFilters(ProjectId),
+                SortBy,
+                SortDirection
+            )
         );
 
-        return new PagedResult<FeatureSummaryDto>(
-            result.Items
-                .Select(FeatureSummaryDto.FromReadModel)
-                .ToList(),
-            Page,
-            PageSize,
-            result.TotalCount
-        );
+        return result.Map(FeatureSummaryDto.FromReadModel);
     }
 }
