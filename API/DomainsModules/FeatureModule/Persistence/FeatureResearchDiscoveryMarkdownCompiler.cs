@@ -14,6 +14,7 @@ internal static class FeatureResearchDiscoveryMarkdownCompiler
                     discovery.Title,
                     discovery.SourceType.ToString(),
                     discovery.SourceReference,
+                    discovery.CreatedAt,
                     discovery.UpdatedAt,
                     $"# {discovery.Title}\n\n{discovery.Content}"
                 )
@@ -26,6 +27,7 @@ internal sealed record FeatureResearchDiscoverySource(
     string Title,
     string SourceType,
     string SourceReference,
+    DateTime CreatedAt,
     DateTime UpdatedAt,
     string Markdown
 );

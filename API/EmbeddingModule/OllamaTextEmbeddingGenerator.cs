@@ -17,6 +17,57 @@ public sealed class OllamaTextEmbeddingGenerator(
         if (inputs.Count == 0)
             return [];
 
+        if (options.BatchSize <= 0)
+            throw new InvalidOperationException("Embedding batch size must be positive.");
+        if (options.BatchCharacterLimit <= 0)
+            throw new InvalidOperationException("Embedding batch character limit must be positive.");
+
+        var embeddings = new List<ImmutableArray<float>>(inputs.Count);
+        var batch = new List<string>(options.BatchSize);
+        var batchCharacterCount = 0;
+
+        foreach (var input in inputs)
+        {
+            if (input.Length > options.BatchCharacterLimit)
+            {
+                throw new ArgumentException(
+                    $"One embedding input contains {input.Length} characters, exceeding the configured batch character limit of {options.BatchCharacterLimit}.",
+                    nameof(inputs)
+                );
+            }
+
+            if (batch.Count > 0
+                && (batch.Count == options.BatchSize
+                    || batchCharacterCount + input.Length
+                        > options.BatchCharacterLimit))
+            {
+                embeddings.AddRange(
+                    await GenerateBatch(batch, cancellationToken)
+                );
+                batch = new List<string>(options.BatchSize);
+                batchCharacterCount = 0;
+            }
+
+            batch.Add(input);
+            batchCharacterCount += input.Length;
+        }
+
+        if (batch.Count > 0)
+        {
+            embeddings.AddRange(
+                await GenerateBatch(batch, cancellationToken)
+            );
+        }
+
+        return embeddings;
+    }
+
+    private async Task<List<ImmutableArray<float>>> GenerateBatch(
+        List<string> inputs,
+        CancellationToken cancellationToken
+    )
+    {
+
         using var response = await httpClient.PostAsJsonAsync(
             "api/embed",
             new EmbedRequest(

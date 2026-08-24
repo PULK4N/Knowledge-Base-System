@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Persistence;
 using EventSourcing.Persistence;
@@ -48,6 +49,20 @@ public sealed class InjectionSetupTests
     {
         var migration = new PostgreSqlModule.Migrations.EventSourcing
             .AddFeatureResearchSearchProjection();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+    }
+
+    [Fact]
+    public void KnowledgeSearchMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddKnowledgeSearchProjection();
 
         Assert.Empty(
             migration.UpOperations.Where(
@@ -181,6 +196,19 @@ public sealed class InjectionSetupTests
         );
         Assert.IsType<SkillSearch>(
             scope.ServiceProvider.GetRequiredService<ISkillSearch>()
+        );
+        Assert.IsType<PostgreSqlKnowledgeSearchRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IKnowledgeSearchRepository
+            >()
+        );
+        Assert.IsType<KnowledgeSearch>(
+            scope.ServiceProvider.GetRequiredService<IKnowledgeSearch>()
+        );
+        Assert.IsType<PostgreSqlKnowledgeSearchProjectionTransaction>(
+            scope.ServiceProvider.GetRequiredService<
+                IKnowledgeSearchProjectionTransaction
+            >()
         );
         var projectorTypes = scope.ServiceProvider
             .GetServices<IProjector>()
@@ -566,6 +594,88 @@ public sealed class InjectionSetupTests
                 StringComparison.OrdinalIgnoreCase
             )
         );
+
+        var knowledgeSearch = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(KnowledgeSearchEntry));
+        Assert.NotNull(knowledgeSearch);
+        Assert.Equal(
+            "vector(1024)",
+            knowledgeSearch!
+                .FindProperty(nameof(KnowledgeSearchEntry.Embedding))!
+                .GetColumnType()
+        );
+        Assert.Equal(
+            "jsonb",
+            knowledgeSearch
+                .FindProperty(nameof(KnowledgeSearchEntry.MetadataJson))!
+                .GetColumnType()
+        );
+        Assert.Equal(
+            "timestamp with time zone",
+            knowledgeSearch
+                .FindProperty(nameof(KnowledgeSearchEntry.Timestamp))!
+                .GetColumnType()
+        );
+        Assert.Contains(
+            knowledgeSearch.GetIndexes(),
+            index => index.IsUnique
+                && index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(KnowledgeSearchEntry.OwnerType),
+                            nameof(KnowledgeSearchEntry.OwnerAggregateId),
+                            nameof(KnowledgeSearchEntry.SourceType),
+                            nameof(KnowledgeSearchEntry.SourceKey),
+                            nameof(KnowledgeSearchEntry.ChunkIndex)
+                        ]
+                    )
+        );
+        Assert.Contains(
+            knowledgeSearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "gin",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+        Assert.Contains(
+            knowledgeSearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "hnsw",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+    }
+
+    [Fact]
+    public void KnowledgeSearchQueries_translate_to_bounded_full_text_and_cosine_search()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlKnowledgeSearchRepository(context);
+
+        var textSql = repository.CreateTextQuery("event sourcing", 50)
+            .ToQueryString();
+        var vectorSql = repository.CreateVectorQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            50
+        ).ToQueryString();
+
+        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("@@", textSql);
+        Assert.Contains("ts_rank_cd", textSql);
+        Assert.Contains("LIMIT", textSql);
+        Assert.Contains("<=>", vectorSql);
+        Assert.Contains("LIMIT", vectorSql);
     }
 
     [Fact]

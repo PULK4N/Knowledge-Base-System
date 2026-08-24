@@ -20,9 +20,12 @@ public sealed class SkillSearchProjectorTests
         var state = CreateSkill();
         var embeddingGenerator = new FakeEmbeddingGenerator();
         var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new SkillSearchProjector(
             embeddingGenerator,
-            repository
+            repository,
+            knowledgeRepository,
+            new ImmediateTransaction()
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -50,6 +53,11 @@ public sealed class SkillSearchProjectorTests
             repository.Documents,
             document => Assert.Equal([1f, 2f], document.Embedding.ToArray())
         );
+        Assert.Equal(repository.Documents.Count, knowledgeRepository.Documents.Count);
+        Assert.All(
+            knowledgeRepository.Documents,
+            document => Assert.Equal([1f, 2f], document.Embedding.ToArray())
+        );
         Assert.DoesNotContain(
             repository.Documents,
             document => document.Text.Contains("SECRET-ATTACHMENT.pdf")
@@ -75,15 +83,20 @@ public sealed class SkillSearchProjectorTests
         var state = CreateSkill();
         state.IsDeleted = true;
         var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new SkillSearchProjector(
             new FakeEmbeddingGenerator(),
-            repository
+            repository,
+            knowledgeRepository,
+            new ImmediateTransaction()
         );
 
         await projector.Update([CreateStateInfo(state)]);
 
         Assert.Equal([SkillId], repository.AggregateIds);
         Assert.Empty(repository.Documents);
+        Assert.Equal([SkillId], knowledgeRepository.OwnerAggregateIds);
+        Assert.Empty(knowledgeRepository.Documents);
     }
 
     [Fact]
@@ -209,5 +222,26 @@ public sealed class SkillSearchProjectorTests
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
+    }
+
+    private sealed class FakeKnowledgeRepository : IKnowledgeSearchRepository
+    {
+        public List<KnowledgeSearchDocument> Documents { get; private set; } = [];
+        public List<AggregateId> OwnerAggregateIds { get; private set; } = [];
+
+        public Task Write(string ownerType, List<AggregateId> ownerAggregateIds, List<KnowledgeSearchDocument> documents, CancellationToken cancellationToken = default)
+        {
+            OwnerAggregateIds = ownerAggregateIds;
+            Documents = documents;
+            return Task.CompletedTask;
+        }
+
+        public Task<List<KnowledgeSearchCandidate>> SearchText(string query, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private sealed class ImmediateTransaction : IKnowledgeSearchProjectionTransaction
+    {
+        public Task Execute(Func<Task> writes, CancellationToken cancellationToken = default) => writes();
     }
 }

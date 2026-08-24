@@ -13,6 +13,9 @@ using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
 using MemoryModule.Domain;
 using MemoryModule.MCP;
+using KnowledgeSearchModule.API;
+using KnowledgeSearchModule.Application;
+using KnowledgeSearchModule.MCP;
 using PolicyModule.API.Controllers;
 using PolicyModule.Application.Commands;
 using PolicyModule.Domain;
@@ -51,6 +54,7 @@ builder.Services
     .AddApplicationPart(typeof(FeaturesController).Assembly)
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
+    .AddApplicationPart(typeof(KnowledgeSearchController).Assembly)
     .AddApplicationPart(typeof(PoliciesController).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -68,6 +72,7 @@ builder.Services.RegisterActions(
     typeof(AddFeatureCommand).Assembly,
     typeof(AddSkillCommand).Assembly,
     typeof(RecordCodexPromptHookCommand).Assembly,
+    typeof(SearchKnowledgeQuery).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly
 );
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
@@ -79,6 +84,7 @@ builder.Services
             .Concat(FeatureMcpFunctions.Create())
             .Concat(SkillMcpFunctions.Create())
             .Concat(MemoryMcpFunctions.Create())
+            .Concat(KnowledgeSearchMcpFunctions.Create())
             .Select(
                 function =>
                     ModelContextProtocol.Server.McpServerTool.Create(

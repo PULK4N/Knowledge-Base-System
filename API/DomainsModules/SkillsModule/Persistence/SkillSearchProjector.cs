@@ -8,15 +8,28 @@ namespace SkillsModule.Persistence;
 
 public sealed class SkillSearchProjector(
     ITextEmbeddingGenerator embeddingGenerator,
-    ISkillSearchRepository repository
+    ISkillSearchRepository repository,
+    IKnowledgeSearchRepository knowledgeSearchRepository,
+    IKnowledgeSearchProjectionTransaction projectionTransaction
 ) : IProjector
 {
     public async Task Update(List<StateInfo> stateInfos)
     {
-        var skills = stateInfos
-            .Select(stateInfo => stateInfo.StateData)
-            .OfType<SkillStateData>()
+        var skillStates = stateInfos
+            .Where(stateInfo => stateInfo.StateData is SkillStateData)
+            .Select(
+                stateInfo => new
+                {
+                    Skill = (SkillStateData)stateInfo.StateData,
+                    stateInfo.LastUpdateTimestamp
+                }
+            )
             .ToList();
+        var skills = skillStates.Select(state => state.Skill).ToList();
+        var lastUpdates = skillStates.ToDictionary(
+            state => state.Skill.Id,
+            state => state.LastUpdateTimestamp
+        );
         var chunks = skills
             .Where(skill => !skill.IsDeleted)
             .SelectMany(
@@ -26,6 +39,7 @@ public sealed class SkillSearchProjector(
                             skill.Id,
                             skill.Name,
                             source.RelativePath,
+                            lastUpdates[skill.Id],
                             chunkIndex,
                             text
                         )
@@ -49,9 +63,42 @@ public sealed class SkillSearchProjector(
             )
             .ToList();
 
-        await repository.Write(
-            skills.Select(skill => skill.Id).Distinct().ToList(),
-            documents
+        var aggregateIds = skills
+            .Select(skill => skill.Id)
+            .Distinct()
+            .ToList();
+        var globalDocuments = documents
+                .Select(
+                    (document, index) => new KnowledgeSearchDocument(
+                        KnowledgeSearchOwnerTypes.Skill,
+                        document.SkillAggregateId,
+                        KnowledgeSearchSourceTypes.Skill,
+                        document.SourcePath,
+                        document.ChunkIndex,
+                        chunks[index].LastUpdateTimestamp,
+                        KnowledgeSearchMetadata.Create(new Dictionary<string, object?>
+                        {
+                            ["skillId"] = document.SkillAggregateId.Value.ToString(),
+                            ["skillName"] = document.SkillName,
+                            ["sourcePath"] = document.SourcePath,
+                            ["updatedAt"] = chunks[index].LastUpdateTimestamp
+                        }),
+                        $"{document.SkillName} {document.SourcePath}",
+                        document.Text,
+                        document.Embedding
+                    )
+                )
+                .ToList();
+        await projectionTransaction.Execute(
+            async () =>
+            {
+                await repository.Write(aggregateIds, documents);
+                await knowledgeSearchRepository.Write(
+                    KnowledgeSearchOwnerTypes.Skill,
+                    aggregateIds,
+                    globalDocuments
+                );
+            }
         );
     }
 
@@ -59,6 +106,7 @@ public sealed class SkillSearchProjector(
         AggregateId SkillAggregateId,
         string SkillName,
         string SourcePath,
+        DateTime LastUpdateTimestamp,
         int ChunkIndex,
         string Text
     )

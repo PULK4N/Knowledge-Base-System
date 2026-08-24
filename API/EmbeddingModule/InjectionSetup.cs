@@ -40,6 +40,18 @@ public static class InjectionSetup
         var numCtx = configuredNumCtx is null
             ? EmbeddingOptions.DefaultNumCtx
             : int.Parse(configuredNumCtx);
+        var configuredBatchSize = configuration[
+            $"{EmbeddingOptions.SectionName}:BatchSize"
+        ];
+        var batchSize = configuredBatchSize is null
+            ? EmbeddingOptions.DefaultBatchSize
+            : int.Parse(configuredBatchSize);
+        var configuredBatchCharacterLimit = configuration[
+            $"{EmbeddingOptions.SectionName}:BatchCharacterLimit"
+        ];
+        var batchCharacterLimit = configuredBatchCharacterLimit is null
+            ? EmbeddingOptions.DefaultBatchCharacterLimit
+            : int.Parse(configuredBatchCharacterLimit);
         var options = new EmbeddingOptions
         {
             BaseUrl = new Uri(baseUrl, UriKind.Absolute),
@@ -47,7 +59,9 @@ public static class InjectionSetup
             Dimensions = dimensions,
             NumGpu = numGpu,
             MainGpu = mainGpu,
-            NumCtx = numCtx
+            NumCtx = numCtx,
+            BatchSize = batchSize,
+            BatchCharacterLimit = batchCharacterLimit
         };
 
         services.AddSingleton(options);
@@ -58,6 +72,7 @@ public static class InjectionSetup
                 client.Timeout = TimeSpan.FromMinutes(10);
             }
         );
+        services.AddScoped<IKnowledgeSearch, KnowledgeSearch>();
 
         return services;
     }

@@ -8,6 +8,8 @@ public sealed record EmbeddingOptions
     public const int ForceAllGpuLayers = 999;
     public const int DefaultMainGpu = 0;
     public const int DefaultNumCtx = 4096;
+    public const int DefaultBatchSize = 8;
+    public const int DefaultBatchCharacterLimit = 16_000;
 
     public required Uri BaseUrl { get; init; }
     public string Model { get; init; } = DefaultModel;
@@ -15,4 +17,7 @@ public sealed record EmbeddingOptions
     public int NumGpu { get; init; } = ForceAllGpuLayers;
     public int MainGpu { get; init; } = DefaultMainGpu;
     public int NumCtx { get; init; } = DefaultNumCtx;
+    public int BatchSize { get; init; } = DefaultBatchSize;
+    public int BatchCharacterLimit { get; init; } =
+        DefaultBatchCharacterLimit;
 }

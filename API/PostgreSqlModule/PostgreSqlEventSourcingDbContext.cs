@@ -428,5 +428,57 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasOperators("vector_cosine_ops");
             }
         );
+
+        modelBuilder.Entity<KnowledgeSearchEntry>(
+            knowledge =>
+            {
+                knowledge.ToTable("KnowledgeSearchEntries");
+                knowledge.HasKey(entry => entry.Id);
+                knowledge.Property(entry => entry.OwnerType).IsRequired();
+                knowledge.Property(entry => entry.SourceType).IsRequired();
+                knowledge.Property(entry => entry.SourceKey).IsRequired();
+                knowledge
+                    .Property(entry => entry.MetadataJson)
+                    .HasColumnName("Metadata")
+                    .HasColumnType("jsonb")
+                    .IsRequired();
+                knowledge.Property(entry => entry.SearchableMetadata).IsRequired();
+                knowledge.Property(entry => entry.Text).IsRequired();
+                knowledge
+                    .Property(entry => entry.Embedding)
+                    .HasColumnType("vector(1024)")
+                    .IsRequired();
+                knowledge
+                    .HasIndex(
+                        entry => new
+                        {
+                            entry.OwnerType,
+                            entry.OwnerAggregateId,
+                            entry.SourceType,
+                            entry.SourceKey,
+                            entry.ChunkIndex
+                        }
+                    )
+                    .IsUnique();
+                knowledge
+                    .HasGeneratedTsVectorColumn(
+                        entry => entry.SearchVector,
+                        "simple",
+                        entry => new
+                        {
+                            entry.SourceType,
+                            entry.SourceKey,
+                            entry.SearchableMetadata,
+                            entry.Text
+                        }
+                    )
+                    .HasIndex(entry => entry.SearchVector)
+                    .HasMethod("GIN");
+                knowledge
+                    .HasIndex(entry => entry.Embedding)
+                    .HasMethod("hnsw")
+                    .HasOperators("vector_cosine_ops");
+            }
+        );
     }
 }

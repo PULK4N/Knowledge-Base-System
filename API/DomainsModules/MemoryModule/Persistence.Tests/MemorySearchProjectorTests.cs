@@ -21,9 +21,12 @@ public sealed class MemorySearchProjectorTests
         var state = CreateMemory();
         var embeddingGenerator = new FakeEmbeddingGenerator();
         var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             embeddingGenerator,
-            repository
+            repository,
+            knowledgeRepository,
+            new ImmediateTransaction()
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -34,6 +37,7 @@ public sealed class MemorySearchProjectorTests
         Assert.Contains("important memory", document.Text);
         Assert.Equal([1f, 2f], document.Embedding.ToArray());
         Assert.Equal([document.Text], embeddingGenerator.LastInputs);
+        Assert.Equal(document.Embedding, Assert.Single(knowledgeRepository.Documents).Embedding);
     }
 
     [Fact]
@@ -56,9 +60,12 @@ public sealed class MemorySearchProjectorTests
         };
         var embeddingGenerator = new FakeEmbeddingGenerator();
         var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             embeddingGenerator,
-            repository
+            repository,
+            knowledgeRepository,
+            new ImmediateTransaction()
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -86,15 +93,20 @@ public sealed class MemorySearchProjectorTests
         var state = CreateMemory();
         state.IsDeleted = true;
         var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             new FakeEmbeddingGenerator(),
-            repository
+            repository,
+            knowledgeRepository,
+            new ImmediateTransaction()
         );
 
         await projector.Update([CreateStateInfo(state)]);
 
         Assert.Equal([MemoryId], repository.AggregateIds);
         Assert.Empty(repository.Documents);
+        Assert.Equal([MemoryId], knowledgeRepository.OwnerAggregateIds);
+        Assert.Empty(knowledgeRepository.Documents);
     }
 
     [Fact]
@@ -212,5 +224,26 @@ public sealed class MemorySearchProjectorTests
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
+    }
+
+    private sealed class FakeKnowledgeRepository : IKnowledgeSearchRepository
+    {
+        public List<KnowledgeSearchDocument> Documents { get; private set; } = [];
+        public List<AggregateId> OwnerAggregateIds { get; private set; } = [];
+
+        public Task Write(string ownerType, List<AggregateId> ownerAggregateIds, List<KnowledgeSearchDocument> documents, CancellationToken cancellationToken = default)
+        {
+            OwnerAggregateIds = ownerAggregateIds;
+            Documents = documents;
+            return Task.CompletedTask;
+        }
+
+        public Task<List<KnowledgeSearchCandidate>> SearchText(string query, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private sealed class ImmediateTransaction : IKnowledgeSearchProjectionTransaction
+    {
+        public Task Execute(Func<Task> writes, CancellationToken cancellationToken = default) => writes();
     }
 }

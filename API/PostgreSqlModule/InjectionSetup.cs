@@ -110,6 +110,14 @@ public static class InjectionSetup
             PostgreSqlMemorySummaryRepository
         >();
         services.RegisterTextEmbeddings(configuration);
+        services.AddScoped<
+            IKnowledgeSearchRepository,
+            PostgreSqlKnowledgeSearchRepository
+        >();
+        services.AddScoped<
+            IKnowledgeSearchProjectionTransaction,
+            PostgreSqlKnowledgeSearchProjectionTransaction
+        >();
         services.RegisterMemoryModulePersistence();
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
             Database.PostgreSql

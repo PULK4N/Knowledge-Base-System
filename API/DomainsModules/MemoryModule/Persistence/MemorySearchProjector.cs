@@ -9,7 +9,9 @@ namespace MemoryModule.Persistence;
 
 public sealed class MemorySearchProjector(
     ITextEmbeddingGenerator embeddingGenerator,
-    IMemorySearchRepository repository
+    IMemorySearchRepository repository,
+    IKnowledgeSearchRepository knowledgeSearchRepository,
+    IKnowledgeSearchProjectionTransaction projectionTransaction
 ) : IProjector
 {
     public async Task Update(List<StateInfo> stateInfos)
@@ -88,9 +90,56 @@ public sealed class MemorySearchProjector(
             )
             .ToList();
 
-        await repository.Write(
-            memories.Select(memory => memory.Id).Distinct().ToList(),
-            documents
+        var aggregateIds = memories
+            .Select(memory => memory.Id)
+            .Distinct()
+            .ToList();
+        await projectionTransaction.Execute(
+            async () =>
+            {
+                await repository.Write(aggregateIds, documents);
+                await knowledgeSearchRepository.Write(
+                    KnowledgeSearchOwnerTypes.Memory,
+                    aggregateIds,
+                    documents.Select(ToKnowledgeDocument).ToList()
+                );
+            }
+        );
+    }
+
+    private static KnowledgeSearchDocument ToKnowledgeDocument(
+        MemorySearchDocument document
+    )
+    {
+        var isSummary = string.Equals(
+            document.HookEventName,
+            MemorySearchDocumentSources.ChatSummary,
+            StringComparison.Ordinal
+        );
+
+        return new KnowledgeSearchDocument(
+            KnowledgeSearchOwnerTypes.Memory,
+            document.MemoryAggregateId,
+            isSummary
+                ? KnowledgeSearchSourceTypes.MemorySummary
+                : KnowledgeSearchSourceTypes.MemoryPrompt,
+            isSummary
+                ? "summary"
+                : $"{document.PromptId.Value:N}:{document.HookIndex}",
+            document.ChunkIndex,
+            document.PromptStartTimestamp,
+            KnowledgeSearchMetadata.Create(new Dictionary<string, object?>
+            {
+                ["memoryId"] = document.MemoryAggregateId.Value.ToString(),
+                ["threadId"] = document.ThreadId.Value.ToString(),
+                ["promptId"] = document.PromptId.Value.ToString(),
+                ["hookIndex"] = document.HookIndex,
+                ["hookEventName"] = document.HookEventName,
+                ["timestamp"] = document.PromptStartTimestamp
+            }),
+            document.HookEventName,
+            document.Text,
+            document.Embedding
         );
     }
 
