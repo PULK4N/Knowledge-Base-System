@@ -8,9 +8,7 @@ namespace SkillsModule.Persistence;
 
 public sealed class SkillSearchProjector(
     ITextEmbeddingGenerator embeddingGenerator,
-    ISkillSearchRepository repository,
-    IKnowledgeSearchRepository knowledgeSearchRepository,
-    IKnowledgeSearchProjectionTransaction projectionTransaction
+    ISkillSearchProjectionWriter projectionWriter
 ) : IProjector
 {
     public async Task Update(List<StateInfo> stateInfos)
@@ -89,16 +87,12 @@ public sealed class SkillSearchProjector(
                     )
                 )
                 .ToList();
-        await projectionTransaction.Execute(
-            async () =>
-            {
-                await repository.Write(aggregateIds, documents);
-                await knowledgeSearchRepository.Write(
-                    KnowledgeSearchOwnerTypes.Skill,
-                    aggregateIds,
-                    globalDocuments
-                );
-            }
+        await projectionWriter.Write(
+            new SkillSearchProjectionBatch(
+                aggregateIds,
+                documents,
+                globalDocuments
+            )
         );
     }
 

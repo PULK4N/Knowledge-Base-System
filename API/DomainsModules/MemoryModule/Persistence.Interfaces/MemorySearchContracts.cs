@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain.Models;
 
@@ -38,6 +39,20 @@ public sealed record MemorySearchResult(
     int? TextRank,
     int? VectorRank
 );
+
+public sealed record MemorySearchProjectionBatch(
+    List<AggregateId> MemoryAggregateIds,
+    List<MemorySearchDocument> MemoryDocuments,
+    List<KnowledgeSearchDocument> KnowledgeDocuments
+);
+
+public interface IMemorySearchProjectionWriter
+{
+    Task Write(
+        MemorySearchProjectionBatch batch,
+        CancellationToken cancellationToken = default
+    );
+}
 
 public sealed record HybridMemorySearchOptions
 {

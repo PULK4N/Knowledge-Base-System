@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Shared.Models;
 
 namespace FeatureModule.Persistence.Interfaces;
@@ -34,6 +35,20 @@ public sealed record FeatureResearchSearchResult(
     int? TextRank,
     int? VectorRank
 );
+
+public sealed record FeatureSearchProjectionBatch(
+    List<AggregateId> FeatureAggregateIds,
+    List<FeatureResearchSearchDocument> ResearchDocuments,
+    List<KnowledgeSearchDocument> KnowledgeDocuments
+);
+
+public interface IFeatureSearchProjectionWriter
+{
+    Task Write(
+        FeatureSearchProjectionBatch batch,
+        CancellationToken cancellationToken = default
+    );
+}
 
 public sealed record HybridFeatureResearchSearchOptions
 {

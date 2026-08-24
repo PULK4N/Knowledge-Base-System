@@ -115,8 +115,16 @@ public static class InjectionSetup
             PostgreSqlKnowledgeSearchRepository
         >();
         services.AddScoped<
-            IKnowledgeSearchProjectionTransaction,
-            PostgreSqlKnowledgeSearchProjectionTransaction
+            IMemorySearchProjectionWriter,
+            PostgreSqlMemorySearchProjectionWriter
+        >();
+        services.AddScoped<
+            ISkillSearchProjectionWriter,
+            PostgreSqlSkillSearchProjectionWriter
+        >();
+        services.AddScoped<
+            IFeatureSearchProjectionWriter,
+            PostgreSqlFeatureSearchProjectionWriter
         >();
         services.RegisterMemoryModulePersistence();
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(

@@ -205,9 +205,19 @@ public sealed class InjectionSetupTests
         Assert.IsType<KnowledgeSearch>(
             scope.ServiceProvider.GetRequiredService<IKnowledgeSearch>()
         );
-        Assert.IsType<PostgreSqlKnowledgeSearchProjectionTransaction>(
+        Assert.IsType<PostgreSqlMemorySearchProjectionWriter>(
             scope.ServiceProvider.GetRequiredService<
-                IKnowledgeSearchProjectionTransaction
+                IMemorySearchProjectionWriter
+            >()
+        );
+        Assert.IsType<PostgreSqlSkillSearchProjectionWriter>(
+            scope.ServiceProvider.GetRequiredService<
+                ISkillSearchProjectionWriter
+            >()
+        );
+        Assert.IsType<PostgreSqlFeatureSearchProjectionWriter>(
+            scope.ServiceProvider.GetRequiredService<
+                IFeatureSearchProjectionWriter
             >()
         );
         var projectorTypes = scope.ServiceProvider

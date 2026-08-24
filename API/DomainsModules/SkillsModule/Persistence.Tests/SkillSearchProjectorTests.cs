@@ -23,9 +23,7 @@ public sealed class SkillSearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new SkillSearchProjector(
             embeddingGenerator,
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -86,9 +84,7 @@ public sealed class SkillSearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new SkillSearchProjector(
             new FakeEmbeddingGenerator(),
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -240,8 +236,27 @@ public sealed class SkillSearchProjectorTests
         public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
-    private sealed class ImmediateTransaction : IKnowledgeSearchProjectionTransaction
+    private sealed class FakeProjectionWriter(
+        FakeRepository repository,
+        FakeKnowledgeRepository knowledgeRepository
+    ) : ISkillSearchProjectionWriter
     {
-        public Task Execute(Func<Task> writes, CancellationToken cancellationToken = default) => writes();
+        public async Task Write(
+            SkillSearchProjectionBatch batch,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await repository.Write(
+                batch.SkillAggregateIds,
+                batch.SkillDocuments,
+                cancellationToken
+            );
+            await knowledgeRepository.Write(
+                KnowledgeSearchOwnerTypes.Skill,
+                batch.SkillAggregateIds,
+                batch.KnowledgeDocuments,
+                cancellationToken
+            );
+        }
     }
 }

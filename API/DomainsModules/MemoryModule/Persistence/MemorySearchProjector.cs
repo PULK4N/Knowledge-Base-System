@@ -9,9 +9,7 @@ namespace MemoryModule.Persistence;
 
 public sealed class MemorySearchProjector(
     ITextEmbeddingGenerator embeddingGenerator,
-    IMemorySearchRepository repository,
-    IKnowledgeSearchRepository knowledgeSearchRepository,
-    IKnowledgeSearchProjectionTransaction projectionTransaction
+    IMemorySearchProjectionWriter projectionWriter
 ) : IProjector
 {
     public async Task Update(List<StateInfo> stateInfos)
@@ -94,16 +92,12 @@ public sealed class MemorySearchProjector(
             .Select(memory => memory.Id)
             .Distinct()
             .ToList();
-        await projectionTransaction.Execute(
-            async () =>
-            {
-                await repository.Write(aggregateIds, documents);
-                await knowledgeSearchRepository.Write(
-                    KnowledgeSearchOwnerTypes.Memory,
-                    aggregateIds,
-                    documents.Select(ToKnowledgeDocument).ToList()
-                );
-            }
+        await projectionWriter.Write(
+            new MemorySearchProjectionBatch(
+                aggregateIds,
+                documents,
+                documents.Select(ToKnowledgeDocument).ToList()
+            )
         );
     }
 

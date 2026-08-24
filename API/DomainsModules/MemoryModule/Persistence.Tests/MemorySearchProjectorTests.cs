@@ -24,9 +24,7 @@ public sealed class MemorySearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             embeddingGenerator,
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -63,9 +61,7 @@ public sealed class MemorySearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             embeddingGenerator,
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -96,9 +92,7 @@ public sealed class MemorySearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new MemorySearchProjector(
             new FakeEmbeddingGenerator(),
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update([CreateStateInfo(state)]);
@@ -242,8 +236,27 @@ public sealed class MemorySearchProjectorTests
         public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
-    private sealed class ImmediateTransaction : IKnowledgeSearchProjectionTransaction
+    private sealed class FakeProjectionWriter(
+        FakeRepository repository,
+        FakeKnowledgeRepository knowledgeRepository
+    ) : IMemorySearchProjectionWriter
     {
-        public Task Execute(Func<Task> writes, CancellationToken cancellationToken = default) => writes();
+        public async Task Write(
+            MemorySearchProjectionBatch batch,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await repository.Write(
+                batch.MemoryAggregateIds,
+                batch.MemoryDocuments,
+                cancellationToken
+            );
+            await knowledgeRepository.Write(
+                KnowledgeSearchOwnerTypes.Memory,
+                batch.MemoryAggregateIds,
+                batch.KnowledgeDocuments,
+                cancellationToken
+            );
+        }
     }
 }

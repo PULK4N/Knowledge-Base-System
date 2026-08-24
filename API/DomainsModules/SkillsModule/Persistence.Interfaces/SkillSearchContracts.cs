@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Shared.Models;
 
 namespace SkillsModule.Persistence.Interfaces;
@@ -26,6 +27,20 @@ public sealed record SkillSearchResult(
     int? TextRank,
     int? VectorRank
 );
+
+public sealed record SkillSearchProjectionBatch(
+    List<AggregateId> SkillAggregateIds,
+    List<SkillSearchDocument> SkillDocuments,
+    List<KnowledgeSearchDocument> KnowledgeDocuments
+);
+
+public interface ISkillSearchProjectionWriter
+{
+    Task Write(
+        SkillSearchProjectionBatch batch,
+        CancellationToken cancellationToken = default
+    );
+}
 
 public sealed record HybridSkillSearchOptions
 {

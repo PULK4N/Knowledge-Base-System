@@ -79,9 +79,7 @@ public sealed class FeatureResearchSearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new FeatureResearchSearchProjector(
             generator,
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update(
@@ -167,9 +165,7 @@ public sealed class FeatureResearchSearchProjectorTests
         var knowledgeRepository = new FakeKnowledgeRepository();
         var projector = new FeatureResearchSearchProjector(
             new FakeEmbeddingGenerator(),
-            repository,
-            knowledgeRepository,
-            new ImmediateTransaction()
+            new FakeProjectionWriter(repository, knowledgeRepository)
         );
 
         await projector.Update(
@@ -245,8 +241,27 @@ public sealed class FeatureResearchSearchProjectorTests
         public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
-    private sealed class ImmediateTransaction : IKnowledgeSearchProjectionTransaction
+    private sealed class FakeProjectionWriter(
+        FakeRepository repository,
+        FakeKnowledgeRepository knowledgeRepository
+    ) : IFeatureSearchProjectionWriter
     {
-        public Task Execute(Func<Task> writes, CancellationToken cancellationToken = default) => writes();
+        public async Task Write(
+            FeatureSearchProjectionBatch batch,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await repository.Write(
+                batch.FeatureAggregateIds,
+                batch.ResearchDocuments,
+                cancellationToken
+            );
+            await knowledgeRepository.Write(
+                KnowledgeSearchOwnerTypes.Feature,
+                batch.FeatureAggregateIds,
+                batch.KnowledgeDocuments,
+                cancellationToken
+            );
+        }
     }
 }

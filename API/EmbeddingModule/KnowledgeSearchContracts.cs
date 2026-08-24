@@ -101,18 +101,6 @@ public interface IKnowledgeSearchRepository
     );
 }
 
-/// <summary>
-/// Keeps specialized and global search-table replacements atomic without
-/// holding a database transaction open during embedding inference.
-/// </summary>
-public interface IKnowledgeSearchProjectionTransaction
-{
-    Task Execute(
-        Func<Task> writes,
-        CancellationToken cancellationToken = default
-    );
-}
-
 public interface IKnowledgeSearch
 {
     Task<List<KnowledgeSearchResult>> Search(

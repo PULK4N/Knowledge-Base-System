@@ -9,9 +9,7 @@ namespace FeatureModule.Persistence;
 
 public sealed class FeatureResearchSearchProjector(
     ITextEmbeddingGenerator embeddingGenerator,
-    IFeatureResearchSearchRepository repository,
-    IKnowledgeSearchRepository knowledgeSearchRepository,
-    IKnowledgeSearchProjectionTransaction projectionTransaction
+    IFeatureSearchProjectionWriter projectionWriter
 ) : IProjector
 {
     public async Task Update(List<StateInfo> stateInfos)
@@ -114,16 +112,12 @@ public sealed class FeatureResearchSearchProjector(
             .Select(feature => feature.Id)
             .Distinct()
             .ToList();
-        await projectionTransaction.Execute(
-            async () =>
-            {
-                await repository.Write(aggregateIds, documents);
-                await knowledgeSearchRepository.Write(
-                    KnowledgeSearchOwnerTypes.Feature,
-                    aggregateIds,
-                    globalDocuments
-                );
-            }
+        await projectionWriter.Write(
+            new FeatureSearchProjectionBatch(
+                aggregateIds,
+                documents,
+                globalDocuments
+            )
         );
     }
 
