@@ -8,12 +8,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import {
-  BehaviorSubject,
   Observable,
   Subject,
   catchError,
   combineLatest,
-  debounceTime,
   distinctUntilChanged,
   exhaustMap,
   map,
@@ -33,6 +31,7 @@ import {
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { policySearchRequests } from './policy-search-requests';
 
 interface PolicyListView {
   readonly scope: PolicyScope;
@@ -91,8 +90,6 @@ type ProjectConnectionState =
       readonly message: string;
     };
 
-const PAGE_SIZE = 5;
-
 export function policyScopeFromRoute(
   scopeKind: unknown,
   params: ParamMap,
@@ -122,16 +119,18 @@ export function policyScopeFromRoute(
 export class PolicyListPage {
   private readonly route = inject(ActivatedRoute);
   private readonly policies = inject(PolicyService);
-  private readonly querySubject = new BehaviorSubject<PolicySearchRequest>({
-    page: 1,
-    pageSize: PAGE_SIZE,
-    search: '',
-  });
+  private readonly searchRequests = new Subject<string>();
+  private readonly pageRequests = new Subject<number>();
+  private readonly request$ = policySearchRequests(
+    this.searchRequests,
+    this.pageRequests,
+  );
   private readonly actions = new Subject<PolicyAction>();
   private readonly connectionRequests = new Subject<ProjectConnectionAction>();
 
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly confirmingPolicyId = signal<string | null>(null);
+  protected readonly searchText = signal('');
 
   private readonly scope$ = combineLatest([
     this.route.data,
@@ -144,8 +143,7 @@ export class PolicyListPage {
   );
 
   private readonly state$: Observable<LoadState<PolicyListView>> =
-    combineLatest({ scope: this.scope$, request: this.querySubject }).pipe(
-      debounceTime(200),
+    combineLatest({ scope: this.scope$, request: this.request$ }).pipe(
       switchMap(({ scope, request }) => {
         if (!scope) {
           return of({
@@ -242,15 +240,12 @@ export class PolicyListPage {
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected search(search: string): void {
-    this.querySubject.next({
-      ...this.querySubject.value,
-      page: 1,
-      search,
-    });
+    this.searchText.set(search);
+    this.searchRequests.next(search);
   }
 
   protected goToPage(page: number): void {
-    this.querySubject.next({ ...this.querySubject.value, page });
+    this.pageRequests.next(page);
   }
 
   protected startEditing(policy: Policy): void {

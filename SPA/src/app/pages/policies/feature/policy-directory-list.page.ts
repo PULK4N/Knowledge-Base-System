@@ -1,12 +1,16 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  BehaviorSubject,
   Observable,
+  Subject,
   catchError,
   combineLatest,
-  debounceTime,
   distinctUntilChanged,
   map,
   of,
@@ -19,6 +23,7 @@ import { PagedResult } from '../../../core/store/entity-store.service';
 import { PolicySearchRequest } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { policySearchRequests } from './policy-search-requests';
 
 type DirectoryKind = 'topics' | 'projects';
 
@@ -38,8 +43,6 @@ interface DirectoryListView {
   readonly result: PagedResult<DirectoryEntry>;
 }
 
-const PAGE_SIZE = 5;
-
 @Component({
   selector: 'app-policy-directory-list-page',
   imports: [AsyncPipe, PaginationComponent, RouterLink],
@@ -53,11 +56,13 @@ const PAGE_SIZE = 5;
 export class PolicyDirectoryListPage {
   private readonly route = inject(ActivatedRoute);
   private readonly policies = inject(PolicyService);
-  private readonly querySubject = new BehaviorSubject<PolicySearchRequest>({
-    page: 1,
-    pageSize: PAGE_SIZE,
-    search: '',
-  });
+  private readonly searchRequests = new Subject<string>();
+  private readonly pageRequests = new Subject<number>();
+  private readonly request$ = policySearchRequests(
+    this.searchRequests,
+    this.pageRequests,
+  );
+  protected readonly searchText = signal('');
 
   private readonly kind$ = this.route.data.pipe(
     map(data => (data['directoryKind'] === 'projects' ? 'projects' : 'topics')),
@@ -65,8 +70,7 @@ export class PolicyDirectoryListPage {
   );
 
   protected readonly state$: Observable<LoadState<DirectoryListView>> =
-    combineLatest({ kind: this.kind$, request: this.querySubject }).pipe(
-      debounceTime(200),
+    combineLatest({ kind: this.kind$, request: this.request$ }).pipe(
       distinctUntilChanged(
         (previous, current) =>
           previous.kind === current.kind &&
@@ -89,15 +93,12 @@ export class PolicyDirectoryListPage {
     );
 
   protected search(search: string): void {
-    this.querySubject.next({
-      ...this.querySubject.value,
-      page: 1,
-      search,
-    });
+    this.searchText.set(search);
+    this.searchRequests.next(search);
   }
 
   protected goToPage(page: number): void {
-    this.querySubject.next({ ...this.querySubject.value, page });
+    this.pageRequests.next(page);
   }
 
   private load(
