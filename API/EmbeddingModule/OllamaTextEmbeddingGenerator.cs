@@ -19,7 +19,15 @@ public sealed class OllamaTextEmbeddingGenerator(
 
         using var response = await httpClient.PostAsJsonAsync(
             "api/embed",
-            new EmbedRequest(options.Model, inputs),
+            new EmbedRequest(
+                options.Model,
+                inputs,
+                new EmbedRuntimeOptions(
+                    options.NumGpu,
+                    options.MainGpu,
+                    options.NumCtx
+                )
+            ),
             cancellationToken
         );
         response.EnsureSuccessStatusCode();
@@ -56,7 +64,17 @@ public sealed class OllamaTextEmbeddingGenerator(
 
     private sealed record EmbedRequest(
         string Model,
-        IReadOnlyList<string> Input
+        IReadOnlyList<string> Input,
+        EmbedRuntimeOptions Options
+    );
+
+    private sealed record EmbedRuntimeOptions(
+        [property: JsonPropertyName("num_gpu")]
+        int NumGpu,
+        [property: JsonPropertyName("main_gpu")]
+        int MainGpu,
+        [property: JsonPropertyName("num_ctx")]
+        int NumCtx
     );
 
     private sealed record EmbedResponse(

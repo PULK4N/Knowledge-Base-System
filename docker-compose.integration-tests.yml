@@ -10,6 +10,9 @@ services:
       Embeddings__BaseUrl: http://ollama:11434
       Embeddings__Model: qwen3-embedding:0.6b
       Embeddings__Dimensions: 1024
+      Embeddings__NumGpu: 0
+      Embeddings__MainGpu: 0
+      Embeddings__NumCtx: 4096
     ports:
       - "${MCP_INTEGRATION_API_PORT:-5232}:8080"
     depends_on:

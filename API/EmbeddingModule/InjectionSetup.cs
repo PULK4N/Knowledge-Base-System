@@ -22,11 +22,32 @@ public static class InjectionSetup
         var dimensions = configuredDimensions is null
             ? EmbeddingOptions.DefaultDimensions
             : int.Parse(configuredDimensions);
+        var configuredNumGpu = configuration[
+            $"{EmbeddingOptions.SectionName}:NumGpu"
+        ];
+        var numGpu = configuredNumGpu is null
+            ? EmbeddingOptions.ForceAllGpuLayers
+            : int.Parse(configuredNumGpu);
+        var configuredMainGpu = configuration[
+            $"{EmbeddingOptions.SectionName}:MainGpu"
+        ];
+        var mainGpu = configuredMainGpu is null
+            ? EmbeddingOptions.DefaultMainGpu
+            : int.Parse(configuredMainGpu);
+        var configuredNumCtx = configuration[
+            $"{EmbeddingOptions.SectionName}:NumCtx"
+        ];
+        var numCtx = configuredNumCtx is null
+            ? EmbeddingOptions.DefaultNumCtx
+            : int.Parse(configuredNumCtx);
         var options = new EmbeddingOptions
         {
             BaseUrl = new Uri(baseUrl, UriKind.Absolute),
             Model = model,
-            Dimensions = dimensions
+            Dimensions = dimensions,
+            NumGpu = numGpu,
+            MainGpu = mainGpu,
+            NumCtx = numCtx
         };
 
         services.AddSingleton(options);
