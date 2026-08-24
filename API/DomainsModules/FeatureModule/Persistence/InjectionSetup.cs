@@ -26,6 +26,11 @@ public static class InjectionSetup
                 >()
         );
         services.AddScoped<IProjector, FeatureSearchProjector>();
+        services.AddScoped<
+            IFeatureResearchSearch,
+            FeatureResearchSearch
+        >();
+        services.AddScoped<IProjector, FeatureResearchSearchProjector>();
 
         return services;
     }

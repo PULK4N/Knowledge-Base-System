@@ -384,5 +384,49 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                 skill.HasIndex(entry => entry.SkillName);
             }
         );
+
+        modelBuilder.Entity<FeatureResearchSearchEntry>(
+            research =>
+            {
+                research.ToTable("FeatureResearchSearchEntries");
+                research.HasKey(
+                    entry =>
+                        new
+                        {
+                            entry.FeatureAggregateId,
+                            entry.ResearchDiscoveryId,
+                            entry.ChunkIndex
+                        }
+                );
+                research.Property(entry => entry.FeatureName).IsRequired();
+                research.Property(entry => entry.Title).IsRequired();
+                research.Property(entry => entry.SourceType).IsRequired();
+                research.Property(entry => entry.SourceReference).IsRequired();
+                research.Property(entry => entry.Text).IsRequired();
+                research
+                    .Property(entry => entry.Embedding)
+                    .HasColumnType("vector(1024)")
+                    .IsRequired();
+                research
+                    .HasGeneratedTsVectorColumn(
+                        entry => entry.SearchVector,
+                        "simple",
+                        entry => new
+                        {
+                            entry.FeatureName,
+                            entry.Title,
+                            entry.SourceType,
+                            entry.SourceReference,
+                            entry.Text
+                        }
+                    )
+                    .HasIndex(entry => entry.SearchVector)
+                    .HasMethod("GIN");
+                research
+                    .HasIndex(entry => entry.Embedding)
+                    .HasMethod("hnsw")
+                    .HasOperators("vector_cosine_ops");
+            }
+        );
     }
 }

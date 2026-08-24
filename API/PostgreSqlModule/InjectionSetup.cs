@@ -3,6 +3,7 @@ using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using FeatureModule.Persistence;
+using FeatureModule.Persistence.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,10 @@ public static class InjectionSetup
         );
         services.RegisterAdministrationModulePersistence();
         services.RegisterFeatureModulePersistence();
+        services.AddScoped<
+            IFeatureResearchSearchRepository,
+            PostgreSqlFeatureResearchSearchRepository
+        >();
 
         services.AddDbContext<EventSourcingDbContext>(
             options =>

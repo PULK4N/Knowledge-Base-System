@@ -44,6 +44,20 @@ public sealed class InjectionSetupTests
     }
 
     [Fact]
+    public void FeatureResearchSearchMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddFeatureResearchSearchProjection();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+    }
+
+    [Fact]
     public void SkillListMigration_is_schema_only()
     {
         var migration = new PostgreSqlModule.Migrations.EventSourcing
@@ -137,6 +151,16 @@ public sealed class InjectionSetupTests
                 IFeatureSearchRepository
             >()
         );
+        Assert.IsType<PostgreSqlFeatureResearchSearchRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IFeatureResearchSearchRepository
+            >()
+        );
+        Assert.IsType<FeatureResearchSearch>(
+            scope.ServiceProvider.GetRequiredService<
+                IFeatureResearchSearch
+            >()
+        );
         Assert.IsType<PostgreSqlMemorySearchRepository>(
             scope.ServiceProvider.GetRequiredService<
                 IMemorySearchRepository
@@ -176,6 +200,10 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
         Assert.Contains(typeof(FeatureSearchProjector), projectorTypes);
+        Assert.Contains(
+            typeof(FeatureResearchSearchProjector),
+            projectorTypes
+        );
     }
 
     [Fact]
@@ -496,6 +524,40 @@ public sealed class InjectionSetupTests
                 StringComparison.OrdinalIgnoreCase
             )
         );
+        var featureResearchSearch = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(FeatureResearchSearchEntry));
+        Assert.NotNull(featureResearchSearch);
+        Assert.Equal(
+            "vector(1024)",
+            featureResearchSearch!
+                .FindProperty(nameof(FeatureResearchSearchEntry.Embedding))!
+                .GetColumnType()
+        );
+        Assert.Equal(
+            "tsvector",
+            featureResearchSearch
+                .FindProperty(
+                    nameof(FeatureResearchSearchEntry.SearchVector)
+                )!
+                .GetColumnType()
+        );
+        Assert.Contains(
+            featureResearchSearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "gin",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+        Assert.Contains(
+            featureResearchSearch.GetIndexes(),
+            index => string.Equals(
+                index.GetMethod(),
+                "hnsw",
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
         Assert.Contains(
             memorySearch.GetIndexes(),
             index => string.Equals(
@@ -546,6 +608,35 @@ public sealed class InjectionSetupTests
             options.Options
         );
         var repository = new PostgreSqlSkillSearchRepository(context);
+
+        var textSql = repository.CreateTextQuery("event sourcing", 50)
+            .ToQueryString();
+        var vectorSql = repository.CreateVectorQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            50
+        ).ToQueryString();
+
+        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("@@", textSql);
+        Assert.Contains("ts_rank_cd", textSql);
+        Assert.Contains("<=>", vectorSql);
+    }
+
+    [Fact]
+    public void FeatureResearchSearchQueries_translate_to_full_text_and_cosine_search()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlFeatureResearchSearchRepository(
+            context
+        );
 
         var textSql = repository.CreateTextQuery("event sourcing", 50)
             .ToQueryString();

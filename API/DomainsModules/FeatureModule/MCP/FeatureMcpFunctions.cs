@@ -37,6 +37,11 @@ public static class FeatureMcpFunctions
             "Gets multiple research discoveries in one call by feature ID and discovery IDs."
         ),
         CreateFunction(
+            (Func<IServiceProvider, string, int, Task<List<FeatureResearchSearchMatchDto>>>)SearchResearchDiscoveries,
+            "feature_research_discovery_search",
+            "Searches research discoveries across active features using hybrid semantic vector and full-text ranking. Returns the highest-ranked chunk per discovery; use feature_research_discovery_get with the returned feature and discovery IDs to load complete discoveries."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<List<FeatureRecordDto>>>)ListRecords,
             "feature_record_list",
             "Gets all conversation records for a feature."
@@ -196,6 +201,23 @@ public static class FeatureMcpFunctions
             .Select(discoveryId => discoveriesById[discoveryId])
             .ToList();
     }
+
+    private static Task<List<FeatureResearchSearchMatchDto>> SearchResearchDiscoveries(
+        IServiceProvider services,
+        string query,
+        int resultCount = SearchFeatureResearchQuery.DefaultResultCount
+    ) =>
+        FeatureMcpActionExecutor.ExecuteQuery<
+            SearchFeatureResearchQuery,
+            List<FeatureResearchSearchMatchDto>
+        >(
+            services,
+            search =>
+            {
+                search.SearchText = query;
+                search.ResultCount = resultCount;
+            }
+        );
 
     private static async Task<List<FeatureRecordDto>> ListRecords(
         IServiceProvider services,

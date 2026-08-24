@@ -11,6 +11,7 @@ public sealed class FeatureMcpFunctionsTests
         "feature_get",
         "feature_plan_get",
         "feature_research_discovery_get",
+        "feature_research_discovery_search",
         "feature_record_list",
         "feature_add",
         "feature_remove",

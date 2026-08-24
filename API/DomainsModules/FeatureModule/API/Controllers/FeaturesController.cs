@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
@@ -30,6 +31,25 @@ public sealed class FeaturesController(
         query.SortDirection = request.SortDirection;
 
         return Ok(await Execute(query));
+    }
+
+    [HttpGet("research-discoveries/search")]
+    public async Task<
+        ActionResult<List<FeatureResearchSearchMatchDto>>
+    > SearchResearchDiscoveries(
+        [FromServices] SearchFeatureResearchQuery searchQuery,
+        [FromQuery, Required] string query,
+        [FromQuery, Range(
+            SearchFeatureResearchQuery.MinimumResultCount,
+            SearchFeatureResearchQuery.MaximumResultCount
+        )]
+            int resultCount = SearchFeatureResearchQuery.DefaultResultCount
+    )
+    {
+        searchQuery.SearchText = query;
+        searchQuery.ResultCount = resultCount;
+
+        return Ok(await Execute(searchQuery));
     }
 
     [HttpPost]

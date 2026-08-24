@@ -118,6 +118,30 @@ public sealed class FeaturesControllerTests
         Assert.Equal(SortDirection.Descending, mapped.Sort.Direction);
     }
 
+    [Fact]
+    public async Task SearchResearchDiscoveries_maps_query_and_default_count()
+    {
+        var researchSearch = new FakeFeatureResearchSearch([]);
+        var searchQuery = new SearchFeatureResearchQuery(researchSearch)
+        {
+            SearchText = string.Empty
+        };
+        var controller = new FeaturesController(
+            new FixedExecutorProvider()
+        );
+
+        var response = await controller.SearchResearchDiscoveries(
+            searchQuery,
+            "PostgreSQL vector search"
+        );
+
+        var ok = Assert.IsType<OkObjectResult>(response.Result);
+        Assert.IsType<List<FeatureResearchSearchMatchDto>>(ok.Value);
+        Assert.Equal("PostgreSQL vector search", researchSearch.LastQuery);
+        Assert.Equal(5, researchSearch.LastOptions!.ResultCount);
+        Assert.Equal(50, researchSearch.LastOptions.CandidateCount);
+    }
+
     private sealed class CapturingFeatureSearchRepository
         : IFeatureSearchRepository
     {
@@ -137,6 +161,25 @@ public sealed class FeaturesControllerTests
                     0
                 )
             );
+        }
+    }
+
+    private sealed class FakeFeatureResearchSearch(
+        List<FeatureResearchSearchResult> results
+    ) : IFeatureResearchSearch
+    {
+        public string? LastQuery { get; private set; }
+        public HybridFeatureResearchSearchOptions? LastOptions { get; private set; }
+
+        public Task<List<FeatureResearchSearchResult>> Search(
+            string query,
+            HybridFeatureResearchSearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastQuery = query;
+            LastOptions = options;
+            return Task.FromResult(results);
         }
     }
 

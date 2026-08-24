@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="../../../ActionModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
+    <ProjectReference Include="../../../EmbeddingModule/EmbeddingModule.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
     <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
