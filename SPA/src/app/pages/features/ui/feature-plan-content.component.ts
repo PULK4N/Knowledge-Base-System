@@ -8,6 +8,7 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { FeaturePlan } from '../data-access/feature.models';
+import { HtmlPlanNewTabService } from './html-plan-new-tab.service';
 
 @Component({
   selector: 'app-feature-plan-content',
@@ -18,6 +19,7 @@ import { FeaturePlan } from '../data-access/feature.models';
 })
 export class FeaturePlanContentComponent {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly htmlPlanNewTab = inject(HtmlPlanNewTabService);
 
   readonly plan = input.required<FeaturePlan>();
   protected readonly emptyBlocks = [];
@@ -26,4 +28,8 @@ export class FeaturePlanContentComponent {
   protected readonly sandboxedHtmlDocument = computed(() =>
     this.sanitizer.bypassSecurityTrustHtml(this.plan().content),
   );
+
+  protected openHtmlPlanInNewTab(): void {
+    this.htmlPlanNewTab.open(this.plan());
+  }
 }

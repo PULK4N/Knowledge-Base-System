@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FeaturePlan } from '../data-access/feature.models';
 import { FeaturePlanContentComponent } from './feature-plan-content.component';
+import { HtmlPlanNewTabService } from './html-plan-new-tab.service';
 
 const htmlPlan: FeaturePlan = {
   id: 'plan-1',
@@ -13,11 +14,19 @@ const htmlPlan: FeaturePlan = {
 };
 
 describe('FeaturePlanContentComponent', () => {
-  it('renders a complete HTML plan in a sandboxed iframe', async () => {
+  const htmlPlanNewTab = { open: vi.fn() };
+
+  beforeEach(async () => {
+    htmlPlanNewTab.open.mockReset();
     await TestBed.configureTestingModule({
       imports: [FeaturePlanContentComponent],
+      providers: [
+        { provide: HtmlPlanNewTabService, useValue: htmlPlanNewTab },
+      ],
     }).compileComponents();
+  });
 
+  it('renders a complete HTML plan in a sandboxed iframe', async () => {
     const fixture = TestBed.createComponent(FeaturePlanContentComponent);
     fixture.componentRef.setInput('plan', htmlPlan);
     fixture.detectChanges();
@@ -34,11 +43,21 @@ describe('FeaturePlanContentComponent', () => {
     expect(fixture.nativeElement.querySelector('article.html-plan')).toBeNull();
   });
 
-  it('does not create an iframe for an empty HTML plan', async () => {
-    await TestBed.configureTestingModule({
-      imports: [FeaturePlanContentComponent],
-    }).compileComponents();
+  it('opens the HTML plan in a new tab when its preview is clicked', () => {
+    const fixture = TestBed.createComponent(FeaturePlanContentComponent);
+    fixture.componentRef.setInput('plan', htmlPlan);
+    fixture.detectChanges();
 
+    const openButton = fixture.nativeElement.querySelector(
+      'button.html-plan-open',
+    ) as HTMLButtonElement;
+    openButton.click();
+
+    expect(htmlPlanNewTab.open).toHaveBeenCalledOnce();
+    expect(htmlPlanNewTab.open).toHaveBeenCalledWith(htmlPlan);
+  });
+
+  it('does not create an iframe for an empty HTML plan', () => {
     const fixture = TestBed.createComponent(FeaturePlanContentComponent);
     fixture.componentRef.setInput('plan', { ...htmlPlan, content: '   ' });
     fixture.detectChanges();

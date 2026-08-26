@@ -7,13 +7,24 @@
     />
   } @else {
     @if (plan().content.trim()) {
-      <iframe
-        class="html-plan"
-        [title]="'HTML plan: ' + plan().title"
-        sandbox=""
-        referrerpolicy="no-referrer"
-        [srcdoc]="sandboxedHtmlDocument()"
-      ></iframe>
+      <div class="html-plan-preview">
+        <iframe
+          class="html-plan"
+          [title]="'HTML plan: ' + plan().title"
+          tabindex="-1"
+          sandbox=""
+          referrerpolicy="no-referrer"
+          [srcdoc]="sandboxedHtmlDocument()"
+        ></iframe>
+        <button
+          type="button"
+          class="html-plan-open"
+          [attr.aria-label]="'Open ' + plan().title + ' in a new tab'"
+          (click)="openHtmlPlanInNewTab()"
+        >
+          <span>Open in new tab <span aria-hidden="true">↗</span></span>
+        </button>
+      </div>
     } @else {
       <div class="empty-content">This plan has no content.</div>
     }
