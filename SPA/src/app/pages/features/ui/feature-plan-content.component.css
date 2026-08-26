@@ -3,10 +3,12 @@
 }
 
 .html-plan {
-  color: #202a43;
-  font-size: 17px;
-  line-height: 1.75;
-  overflow-wrap: anywhere;
+  display: block;
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
 }
 
 .empty-content {

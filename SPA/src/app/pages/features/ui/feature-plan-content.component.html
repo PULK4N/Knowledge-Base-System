@@ -7,7 +7,13 @@
     />
   } @else {
     @if (plan().content.trim()) {
-      <article class="html-plan" [innerHTML]="plan().content"></article>
+      <iframe
+        class="html-plan"
+        [title]="'HTML plan: ' + plan().title"
+        sandbox=""
+        referrerpolicy="no-referrer"
+        [srcdoc]="sandboxedHtmlDocument()"
+      ></iframe>
     } @else {
       <div class="empty-content">This plan has no content.</div>
     }
