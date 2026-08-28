@@ -57,4 +57,24 @@ describe('ProjectionAdministrationService', () => {
       queuedAggregateCount: 3,
     });
   });
+
+  it('runs one projection for the requested scope', async () => {
+    const body = {
+      projectionName: 'SkillSearchProjector',
+      aggregateId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    };
+    const resultPromise = firstValueFrom(service.run(body));
+    const request = http.expectOne(
+      '/api/administration/projections/run',
+    );
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(body);
+    request.flush({ status: 'Completed', processedAggregateCount: 1 });
+
+    await expect(resultPromise).resolves.toEqual({
+      status: 'Completed',
+      processedAggregateCount: 1,
+    });
+  });
 });

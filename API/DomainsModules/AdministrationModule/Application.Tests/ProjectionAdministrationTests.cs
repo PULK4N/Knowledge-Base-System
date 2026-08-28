@@ -2,11 +2,14 @@ using ActionModule.Shared.Models;
 using AdministrationModule.Application.Commands;
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Application.Queries;
+using EventSourcing.Core;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Models;
+using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
+using Shared.Interfaces;
 using Xunit;
 
 namespace AdministrationModule.Application.Tests;
@@ -150,6 +153,137 @@ public sealed class ProjectionAdministrationTests
         );
     }
 
+    [Fact]
+    public async Task Run_executes_an_unconfigured_projection_for_one_aggregate()
+    {
+        const string stateMachineId = "skills-state-machine";
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            Guid.Parse(
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+            )
+        );
+        var definitionProvider = new StubDefinitionProvider(
+            new StateMachineDefinition
+            {
+                Id = stateMachineId
+            }
+        );
+        var history = new List<EventPayload>
+        {
+            CreatePayload(stateMachineId, aggregateId.Value.ToString(), 1),
+            CreatePayload(stateMachineId, aggregateId.Value.ToString(), 2)
+        };
+        var projector = new CapturingProjector();
+        var command = new RunProjectionCommand(
+            new StubReplayRepository([]),
+            new StubEventStore(
+                new Dictionary<AggregateId, List<EventPayload>>
+                {
+                    [aggregateId] = history
+                }
+            ),
+            CreateStateCalculator(definitionProvider),
+            [projector]
+        )
+        {
+            ProjectionName = nameof(CapturingProjector),
+            AggregateId = aggregateId.Value
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.NotNull(result);
+        Assert.Equal("Completed", result!.Status);
+        Assert.Equal(1, result.ProcessedAggregateCount);
+        var stateInfo = Assert.Single(projector.StateInfos);
+        Assert.Equal(aggregateId, stateInfo.AggregateId);
+        Assert.Equal(2u, stateInfo.CurrentOrderNumber);
+    }
+
+    [Fact]
+    public async Task Run_executes_an_unconfigured_projection_for_every_state_machine_aggregate()
+    {
+        const string stateMachineId = "skills-state-machine";
+        var first = CreatePayload(
+            stateMachineId,
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            1
+        );
+        var second = CreatePayload(
+            stateMachineId,
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            1
+        );
+        var definitionProvider = new StubDefinitionProvider(
+            new StateMachineDefinition
+            {
+                Id = stateMachineId
+            }
+        );
+        var repository = new StubReplayRepository([first, second]);
+        var projector = new CapturingProjector();
+        var command = new RunProjectionCommand(
+            repository,
+            new StubEventStore(
+                new Dictionary<AggregateId, List<EventPayload>>
+                {
+                    [first.EventExecutionInfo.AggregateId] = [first],
+                    [second.EventExecutionInfo.AggregateId] = [second]
+                }
+            ),
+            CreateStateCalculator(definitionProvider),
+            [projector]
+        )
+        {
+            ProjectionName = nameof(CapturingProjector),
+            StateMachineId = stateMachineId
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.ProcessedAggregateCount);
+        Assert.Equal(stateMachineId, repository.StateMachineId);
+        Assert.Equal(2, projector.StateInfos.Count);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "skills-state-machine"
+    )]
+    public async Task Run_requires_exactly_one_replay_scope(
+        string? aggregateId,
+        string? stateMachineId
+    )
+    {
+        var definitionProvider = new StubDefinitionProvider(
+            new StateMachineDefinition
+            {
+                Id = "skills-state-machine",
+                Projections = [nameof(CapturingProjector)]
+            }
+        );
+        var command = new RunProjectionCommand(
+            new StubReplayRepository([]),
+            new StubEventStore(
+                new Dictionary<AggregateId, List<EventPayload>>()
+            ),
+            CreateStateCalculator(definitionProvider),
+            [new CapturingProjector()]
+        )
+        {
+            ProjectionName = nameof(CapturingProjector),
+            AggregateId = aggregateId is null
+                ? null
+                : Guid.Parse(aggregateId),
+            StateMachineId = stateMachineId
+        };
+
+        Assert.False(await command.CanExecute(Executor));
+    }
+
     private static EventPayload CreatePayload(
         string stateMachineId,
         string aggregateId,
@@ -168,6 +302,17 @@ public sealed class ProjectionAdministrationTests
 
         return payload;
     }
+
+    private static StateCalculator CreateStateCalculator(
+        IStateMachineDefinitionProvider definitionProvider
+    ) =>
+        new(
+            new OrderNumberHelper(),
+            new StubStateDataProvider(),
+            new StubEventValidatorProvider(),
+            new StubUniqueEventConstraintProvider(),
+            definitionProvider
+        );
 
     private sealed class StubDefinitionProvider(
         params StateMachineDefinition[] definitions
@@ -198,6 +343,77 @@ public sealed class ProjectionAdministrationTests
             StateMachineId = stateMachineId;
             return Task.FromResult(lastEvents);
         }
+    }
+
+    private sealed class StubEventStore(
+        Dictionary<AggregateId, List<EventPayload>> histories
+    ) : IEventStore
+    {
+        public Task<Dictionary<AggregateId, List<EventPayload>>> GetEvents(
+            List<AggregateId> aggregateIds
+        ) =>
+            Task.FromResult(
+                aggregateIds.ToDictionary(
+                    aggregateId => aggregateId,
+                    aggregateId => histories.GetValueOrDefault(
+                        aggregateId,
+                        []
+                    )
+                )
+            );
+
+        public Task Write(List<EventPayload> payloads) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class CapturingProjector : IProjector
+    {
+        public List<StateInfo> StateInfos { get; private set; } = [];
+
+        public Task Update(List<StateInfo> stateInfo)
+        {
+            StateInfos = stateInfo;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class StubStateDataProvider : IStateDataProvider
+    {
+        public Task<object> GetStateDataByStateMachine(
+            string stateMachineId,
+            AggregateId aggregateId
+        ) =>
+            Task.FromResult(new object());
+    }
+
+    private sealed class StubEventValidatorProvider
+        : IEventValidatorProvider
+    {
+        public Task<List<IPreEventValidator>>
+            GetPreEventStateValidators(EventPayload payload) =>
+            Task.FromResult(new List<IPreEventValidator>());
+
+        public Task<List<IPostEventValidator>>
+            GetPostEventStateValidators(EventPayload payload) =>
+            Task.FromResult(new List<IPostEventValidator>());
+    }
+
+    private sealed class StubUniqueEventConstraintProvider
+        : IUniqueEventConstraintProvider
+    {
+        public IEnumerable<UniqueEventConstraintData>
+            GetConstraintsToAdd(
+                object stateData,
+                EventPayload payload
+            ) =>
+            [];
+
+        public IEnumerable<UniqueEventConstraintData>
+            GetConstraintsToRemove(
+                object stateData,
+                EventPayload payload
+            ) =>
+            [];
     }
 
     private sealed class CapturingOutbox : IOutbox

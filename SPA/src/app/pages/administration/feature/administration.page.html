@@ -21,6 +21,18 @@
   </a>
   <a
     role="tab"
+    id="projection-runner-tab"
+    aria-controls="administration-panel"
+    routerLink="projection-runner"
+    routerLinkActive="active"
+    #projectionRunnerLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="projectionRunnerLink.isActive"
+  >
+    Run projection
+  </a>
+  <a
+    role="tab"
     id="outbox-tab"
     aria-controls="administration-panel"
     routerLink="outbox"

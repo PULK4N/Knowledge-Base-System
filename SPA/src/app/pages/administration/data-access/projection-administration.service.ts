@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import {
   ProjectionGroup,
   ProjectionReplayQueuedResult,
+  ProjectionRunResult,
+  RunProjectionRequest,
 } from './projection-administration.models';
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +23,13 @@ export class ProjectionAdministrationService {
     return this.http.post<ProjectionReplayQueuedResult>(
       `${this.controllerPath}/${encodeURIComponent(stateMachineId)}/execute`,
       null,
+    );
+  }
+
+  run(request: RunProjectionRequest): Observable<ProjectionRunResult> {
+    return this.http.post<ProjectionRunResult>(
+      `${this.controllerPath}/run`,
+      request,
     );
   }
 }
