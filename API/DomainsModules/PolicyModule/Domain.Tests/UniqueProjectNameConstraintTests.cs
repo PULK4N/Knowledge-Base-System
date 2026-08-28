@@ -14,7 +14,7 @@ public sealed class UniqueProjectNameConstraintTests
     {
         var payload = CreatePayload(
             new ProjectCreatedV1(
-                "  MCP Skill System  ",
+                "  MCP Knowledge Base  ",
                 "Description",
                 ImmutableArray<string>.Empty
             )
@@ -32,7 +32,7 @@ public sealed class UniqueProjectNameConstraintTests
             UniqueProjectNameConstraint.ConstraintName,
             constraint.ConstraintName
         );
-        Assert.Equal("MCP SKILL SYSTEM", constraint.ValueToHash);
+        Assert.Equal("MCP KNOWLEDGE BASE", constraint.ValueToHash);
     }
 
     [Fact]

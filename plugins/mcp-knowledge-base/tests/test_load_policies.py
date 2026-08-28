@@ -2,6 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).parents[1] / "hooks" / "load_policies.py"
@@ -26,6 +27,16 @@ class FakeClient:
 
 
 class LoadPoliciesTests(unittest.TestCase):
+    def test_mcp_url_uses_knowledge_base_override(self):
+        with mock.patch.dict(
+            load_policies.os.environ,
+            {"MCP_KNOWLEDGE_BASE_URL": "http://knowledge-base/mcp"},
+            clear=True,
+        ):
+            self.assertEqual(
+                "http://knowledge-base/mcp", load_policies._mcp_url()
+            )
+
     def test_first_prompt_loads_and_caches_policies(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
             client = FakeClient({"status": "OK", "policies": "Use focused tests."})

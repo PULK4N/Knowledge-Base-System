@@ -252,7 +252,7 @@ public sealed class PolicyCommandTests
         var created = Assert.IsType<ProjectCreatedCommandResult>(
             await new CreateProjectCommand(handler)
             {
-                ProjectName = "MCP Skill System",
+                ProjectName = "MCP Knowledge Base",
                 ProjectDescription = "Event-sourced Codex tooling.",
                 RepositoryPaths = repositoryPaths
             }.Execute(Executor)
@@ -309,7 +309,7 @@ public sealed class PolicyCommandTests
             {
                 Assert.IsType<ProjectCreatedV1>(payload.EventData);
                 Assert.Equal(
-                    "MCP SKILL SYSTEM",
+                    "MCP KNOWLEDGE BASE",
                     Assert.Single(
                         payload.UniqueEventConstraintsToAdd
                     ).ValueToHash

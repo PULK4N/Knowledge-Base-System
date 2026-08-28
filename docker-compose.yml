@@ -1,4 +1,4 @@
-name: mcp-skill-system
+name: mcp-knowledge-base
 
 services:
   frontend:
@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: API/API/Dockerfile
-    container_name: skill-memory-api
+    container_name: knowledge-base-api
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -38,7 +38,7 @@ services:
 
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: skill-memory-postgres
+    container_name: knowledge-base-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: skill_memory
@@ -47,7 +47,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - skill-memory-postgres-data:/var/lib/postgresql/data
+      - knowledge-base-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test:
         - CMD-SHELL
@@ -58,7 +58,7 @@ services:
 
   pgweb:
     image: sosedoff/pgweb:latest
-    container_name: skill-memory-pgweb
+    container_name: knowledge-base-pgweb
     restart: unless-stopped
     environment:
       PGWEB_DATABASE_URL: postgres://skill_memory:skill_memory@postgres:5432/skill_memory?sslmode=disable
@@ -80,7 +80,7 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    container_name: skill-memory-ollama
+    container_name: knowledge-base-ollama
     restart: always
     deploy:
       resources:
@@ -98,7 +98,7 @@ services:
     ports:
       - "11435:11434"
     volumes:
-      - skill-memory-ollama-data:/root/.ollama
+      - knowledge-base-ollama-data:/root/.ollama
       - ./scripts/ollama-gpu-entrypoint.sh:/usr/local/bin/ollama-gpu-entrypoint.sh:ro
     healthcheck:
       test:
@@ -110,7 +110,7 @@ services:
 
   ollama-model-init:
     image: ollama/ollama:latest
-    container_name: skill-memory-ollama-model-init
+    container_name: knowledge-base-ollama-model-init
     restart: "no"
     environment:
       OLLAMA_HOST: http://ollama:11434
@@ -124,5 +124,10 @@ services:
       - qwen3-embedding:0.6b
 
 volumes:
-  skill-memory-postgres-data:
-  skill-memory-ollama-data:
+  knowledge-base-postgres-data:
+    external: true
+    name: mcp-skill-system_skill-memory-postgres-data
+
+  knowledge-base-ollama-data:
+    external: true
+    name: mcp-skill-system_skill-memory-ollama-data

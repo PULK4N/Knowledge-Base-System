@@ -1,5 +1,5 @@
 {
-  "name": "mcp-skill-system",
+  "name": "mcp-knowledge-base",
   "version": "0.2.0",
   "description": "Loads repository policies before Codex works and exposes MCP-managed skills, policies, and memory.",
   "author": {
@@ -7,7 +7,7 @@
     "email": "47610156+PULK4N@users.noreply.github.com",
     "url": "https://github.com/PULK4N"
   },
-  "repository": "https://github.com/PULK4N/MCP-Skill-System",
+  "repository": "https://github.com/PULK4N/MCP-Knowledge-Base",
   "license": "MIT",
   "keywords": [
     "mcp",
@@ -16,7 +16,7 @@
     "memory"
   ],
   "interface": {
-    "displayName": "MCP Skill System",
+    "displayName": "MCP Knowledge Base",
     "shortDescription": "Load authoritative policies, skills, and memory.",
     "longDescription": "Loads repository policies from trusted Codex working-directory context before work begins, then exposes MCP tools for skills, policies, and durable memory.",
     "developerName": "Nikola",
