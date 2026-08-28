@@ -1,14 +1,14 @@
 {
-  "name": "knowledge-base-codex-local",
+  "name": "knowledge-base-codex",
   "interface": {
-    "displayName": "Knowledge Base Codex Local"
+    "displayName": "Knowledge Base Codex"
   },
   "plugins": [
     {
       "name": "mcp-knowledge-base",
       "source": {
         "source": "local",
-        "path": "./plugins/mcp-knowledge-base"
+        "path": "./integrations/codex/plugins/mcp-knowledge-base"
       },
       "policy": {
         "installation": "AVAILABLE",
