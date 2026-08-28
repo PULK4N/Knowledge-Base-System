@@ -26,7 +26,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "mcp__mcp-knowledge-base__policy_project_(create|repository_add)",
+        "matcher": "mcp__.*policy_project_(create|repository_add)$",
         "hooks": [
           {
             "type": "command",
