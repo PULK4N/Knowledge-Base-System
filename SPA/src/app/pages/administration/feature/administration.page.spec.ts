@@ -7,6 +7,7 @@ import { ProjectionAdministrationService } from '../data-access/projection-admin
 import { AdministrationPage } from './administration.page';
 import { OutboxAdministrationPage } from './outbox-administration.page';
 import { ProjectionAdministrationPage } from './projection-administration.page';
+import { ProjectionRunnerPage } from './projection-runner.page';
 
 describe('AdministrationPage', () => {
   beforeEach(async () => {
@@ -30,6 +31,10 @@ describe('AdministrationPage', () => {
                 path: 'outbox',
                 component: OutboxAdministrationPage,
               },
+              {
+                path: 'projection-runner',
+                component: ProjectionRunnerPage,
+              },
             ],
           },
         ]),
@@ -38,6 +43,7 @@ describe('AdministrationPage', () => {
           useValue: {
             list: vi.fn(() => of([])),
             execute: vi.fn(),
+            run: vi.fn(),
           },
         },
         {
@@ -65,6 +71,7 @@ describe('AdministrationPage', () => {
     const harness = await RouterTestingHarness.create(
       '/administration/outbox',
     );
+    harness.detectChanges();
     const router = TestBed.inject(Router);
     const element = harness.routeNativeElement as HTMLElement;
     const outboxTab = element.querySelector('#outbox-tab') as HTMLAnchorElement;
@@ -75,6 +82,7 @@ describe('AdministrationPage', () => {
     expect(element.textContent).toContain('The outbox is empty');
 
     await harness.navigateByUrl('/administration/projections');
+    harness.detectChanges();
 
     const projectionsTab = element.querySelector(
       '#projections-tab',
@@ -82,5 +90,15 @@ describe('AdministrationPage', () => {
     expect(router.url).toBe('/administration/projections');
     expect(projectionsTab.getAttribute('aria-selected')).toBe('true');
     expect(element.textContent).toContain('Projection groups');
+
+    await harness.navigateByUrl('/administration/projection-runner');
+    harness.detectChanges();
+
+    const projectionRunnerTab = element.querySelector(
+      '#projection-runner-tab',
+    ) as HTMLAnchorElement;
+    expect(router.url).toBe('/administration/projection-runner');
+    expect(projectionRunnerTab.getAttribute('aria-selected')).toBe('true');
+    expect(element.textContent).toContain('Run one projection');
   });
 });

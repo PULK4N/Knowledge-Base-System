@@ -27,6 +27,13 @@ export const ADMINISTRATION_ROUTES: Routes = [
             module => module.OutboxAdministrationPage,
           ),
       },
+      {
+        path: 'projection-runner',
+        loadComponent: () =>
+          import('./feature/projection-runner.page').then(
+            module => module.ProjectionRunnerPage,
+          ),
+      },
     ],
   },
 ];

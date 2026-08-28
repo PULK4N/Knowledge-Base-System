@@ -17,3 +17,16 @@ public sealed record ProjectionReplayQueuedResult(
     ) =>
         new(QueuedStatus, queuedAggregateCount);
 }
+
+public sealed record ProjectionRunResult(
+    string Status,
+    int ProcessedAggregateCount
+)
+{
+    public const string CompletedStatus = "Completed";
+
+    public static ProjectionRunResult Completed(
+        int processedAggregateCount
+    ) =>
+        new(CompletedStatus, processedAggregateCount);
+}

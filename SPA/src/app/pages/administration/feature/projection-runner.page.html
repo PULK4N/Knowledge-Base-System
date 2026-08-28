@@ -1,0 +1,143 @@
+@if (vm$ | async; as vm) {
+  <section class="runner-panel surface-card">
+    <div class="panel-heading">
+      <div>
+        <h2>Run one projection</h2>
+        <p>
+          Rebuild current state from the event stream and execute one named
+          projector immediately.
+        </p>
+      </div>
+      <span class="execution-mode">Direct execution</span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="run()">
+      <label class="form-field">
+        <span>Projection name</span>
+        <input
+          type="text"
+          formControlName="projectionName"
+          list="projection-names"
+          autocomplete="off"
+          placeholder="SkillSearchProjector"
+          required
+        />
+        <small>Names are case-sensitive and must match a registered projector.</small>
+      </label>
+
+      <datalist id="projection-names">
+        @if (vm.projections.status === 'success') {
+          @for (group of vm.projections.data; track group.stateMachineId) {
+            @for (projection of group.projectionNames; track projection) {
+              <option [value]="projection"></option>
+            }
+          }
+        }
+      </datalist>
+
+      @if (vm.projections.status === 'error') {
+        <p class="option-warning" role="status">
+          Projector suggestions could not be loaded. You can still enter a
+          projector name manually.
+        </p>
+      }
+
+      <fieldset>
+        <legend>Run for</legend>
+        <div class="scope-options">
+          <label>
+            <input
+              type="radio"
+              formControlName="scope"
+              value="aggregate"
+            />
+            <span>
+              <strong>One aggregate</strong>
+              Replay only the selected aggregate.
+            </span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              formControlName="scope"
+              value="stateMachine"
+            />
+            <span>
+              <strong>State machine</strong>
+              Replay every aggregate in the state machine.
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      @if (form.controls.scope.value === 'aggregate') {
+        <label class="form-field">
+          <span>Aggregate ID</span>
+          <input
+            type="text"
+            formControlName="aggregateId"
+            autocomplete="off"
+            placeholder="00000000-0000-0000-0000-000000000000"
+          />
+          @if (form.touched && form.hasError('aggregateIdInvalid')) {
+            <small class="field-error">Enter a valid aggregate GUID.</small>
+          }
+        </label>
+      } @else {
+        <label class="form-field">
+          <span>State-machine ID</span>
+          <input
+            type="text"
+            formControlName="stateMachineId"
+            list="state-machine-ids"
+            autocomplete="off"
+            placeholder="skills-state-machine"
+          />
+        </label>
+
+        <datalist id="state-machine-ids">
+          @if (vm.projections.status === 'success') {
+            @for (group of vm.projections.data; track group.stateMachineId) {
+              <option [value]="group.stateMachineId"></option>
+            }
+          }
+        </datalist>
+      }
+
+      @if (form.touched && form.hasError('targetRequired')) {
+        <p class="field-error">Enter the target to replay.</p>
+      }
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          [disabled]="form.invalid || vm.run.status === 'running'"
+        >
+          @if (vm.run.status === 'running') {
+            Running…
+          } @else {
+            Run projection
+          }
+        </button>
+        <span>This does not create an outbox item.</span>
+      </div>
+    </form>
+
+    @if (vm.run.status === 'success') {
+      <section class="run-result success" role="status">
+        <strong>{{ vm.run.request.projectionName }} completed</strong>
+        <span>
+          Processed {{ vm.run.processedAggregateCount }}
+          {{ vm.run.processedAggregateCount === 1 ? 'aggregate' : 'aggregates' }}.
+        </span>
+      </section>
+    }
+
+    @if (vm.run.status === 'error') {
+      <section class="run-result error" role="alert">
+        <strong>Projection could not be run</strong>
+        <span>{{ vm.run.message }}</span>
+      </section>
+    }
+  </section>
+}
