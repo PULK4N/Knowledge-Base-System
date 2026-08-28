@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-base-local",
+  "name": "knowledge-base-codex-local",
   "interface": {
-    "displayName": "Knowledge Base Local"
+    "displayName": "Knowledge Base Codex Local"
   },
   "plugins": [
     {
