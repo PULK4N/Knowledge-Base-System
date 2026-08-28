@@ -1,0 +1,20 @@
+{
+  "name": "knowledge-base-claude",
+  "owner": {
+    "name": "Nikola",
+    "email": "47610156+PULK4N@users.noreply.github.com",
+    "url": "https://github.com/PULK4N"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for the MCP Knowledge Base.",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "mcp-knowledge-base",
+      "source": "./integrations/claude/plugins/mcp-knowledge-base",
+      "description": "Overrides CLAUDE.md with authoritative repository policies on session start and exposes MCP-managed skills and policies.",
+      "category": "productivity"
+    }
+  ]
+}

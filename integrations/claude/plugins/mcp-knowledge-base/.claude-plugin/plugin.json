@@ -1,0 +1,20 @@
+{
+  "name": "mcp-knowledge-base",
+  "version": "0.2.0",
+  "description": "Overrides CLAUDE.md with authoritative repository policies before Claude works and exposes MCP-managed skills and policies.",
+  "author": {
+    "name": "Nikola",
+    "email": "47610156+PULK4N@users.noreply.github.com",
+    "url": "https://github.com/PULK4N"
+  },
+  "homepage": "https://github.com/PULK4N/MCP-Knowledge-Base",
+  "repository": "https://github.com/PULK4N/MCP-Knowledge-Base",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "policies",
+    "skills"
+  ],
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json"
+}
