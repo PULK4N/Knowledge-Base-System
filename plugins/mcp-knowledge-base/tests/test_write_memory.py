@@ -2,6 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).parents[1] / "hooks" / "write_memory.py"
@@ -29,6 +30,32 @@ class FailingClient:
 
 
 class WriteMemoryTests(unittest.TestCase):
+    def test_memory_hook_url_uses_knowledge_base_override(self):
+        with mock.patch.dict(
+            write_memory.os.environ,
+            {
+                "MCP_KNOWLEDGE_BASE_MEMORY_HOOK_URL": (
+                    "http://knowledge-base/memory-hooks"
+                )
+            },
+            clear=True,
+        ):
+            self.assertEqual(
+                "http://knowledge-base/memory-hooks",
+                write_memory._memory_hook_url(),
+            )
+
+    def test_memory_hook_url_uses_knowledge_base_mcp_url(self):
+        with mock.patch.dict(
+            write_memory.os.environ,
+            {"MCP_KNOWLEDGE_BASE_URL": "http://knowledge-base/mcp"},
+            clear=True,
+        ):
+            self.assertEqual(
+                "http://knowledge-base/api/memory/codex/prompt-hooks",
+                write_memory._memory_hook_url(),
+            )
+
     def test_user_prompt_is_queued_and_worker_is_started(self):
         with tempfile.TemporaryDirectory() as data:
             queue = write_memory.MemoryHookQueue(Path(data))

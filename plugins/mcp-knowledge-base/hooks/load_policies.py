@@ -40,7 +40,7 @@ class McpHttpClient:
                     "protocolVersion": PROTOCOL_VERSION,
                     "capabilities": {},
                     "clientInfo": {
-                        "name": "mcp-skill-system-codex-hook",
+                        "name": "mcp-knowledge-base-codex-hook",
                         "version": "0.2.0",
                     },
                 },
@@ -204,7 +204,7 @@ def _repository_path(cwd: str) -> str:
 
 
 def _mcp_url() -> str:
-    override = os.environ.get("MCP_SKILL_SYSTEM_URL")
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_URL")
     if override:
         return override
 
@@ -213,7 +213,7 @@ def _mcp_url() -> str:
         config_path = Path(plugin_root) / ".mcp.json"
         try:
             config = json.loads(config_path.read_text(encoding="utf-8"))
-            server = config["mcpServers"]["mcp-skill-system"]
+            server = config["mcpServers"]["mcp-knowledge-base"]
             url = server.get("url")
             if isinstance(url, str) and url:
                 return url
@@ -229,7 +229,7 @@ def _cache_path(session_id: str, data_directory: Path | None) -> Path:
         root = (
             Path(configured)
             if configured
-            else Path(tempfile.gettempdir()) / "mcp-skill-system-plugin"
+            else Path(tempfile.gettempdir()) / "mcp-knowledge-base-plugin"
         )
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
@@ -311,7 +311,7 @@ def _policy_context(repository_path: str, result: dict[str, Any]) -> str:
         message = _get_case_insensitive(result, "message") or ""
         projects = _get_case_insensitive(result, "projects") or []
         return (
-            "MCP Skill System could not load policies because the trusted "
+            "MCP Knowledge Base could not load policies because the trusted "
             f"repository is not mapped.\nTrusted repository: {repository_path}\n"
             "Stop repository reasoning and changes. Show the projects below and ask "
             "the user to select one or provide a unique new project name. Never "
@@ -322,7 +322,7 @@ def _policy_context(repository_path: str, result: dict[str, Any]) -> str:
 
     policies = _get_case_insensitive(result, "policies") or ""
     return (
-        "MCP Skill System loaded the authoritative policy context for this "
+        "MCP Knowledge Base loaded the authoritative policy context for this "
         f"session using trusted repository '{repository_path}'. Do not retrieve "
         "repository policies again during this session.\n\n"
         "Precedence: current explicit user instruction > project policies > topic "
@@ -347,7 +347,7 @@ def _context_output(event_name: str, context: str) -> dict[str, Any]:
 
 def _failure_output(message: str) -> dict[str, Any]:
     reason = (
-        "MCP Skill System policy bootstrap failed. Stop without inspecting or "
+        "MCP Knowledge Base policy bootstrap failed. Stop without inspecting or "
         f"changing the repository. {message}"
     )
     return {"continue": False, "stopReason": reason, "systemMessage": reason}

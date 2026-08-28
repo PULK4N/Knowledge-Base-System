@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "mcp-skill-system": {
+    "mcp-knowledge-base": {
       "url": "http://localhost:5231/mcp"
     }
   }

@@ -19,8 +19,8 @@ public sealed class SearchPolicyQueryTests
                 [
                     new PolicyProjectSummary(
                         projectId,
-                        "MCP Skill System",
-                        ["/workspace/mcp-skill-system"]
+                        "MCP Knowledge Base",
+                        ["/workspace/mcp-knowledge-base"]
                     )
                 ],
                 8
@@ -42,8 +42,8 @@ public sealed class SearchPolicyQueryTests
         Assert.Equal(8, result.TotalCount);
         var project = Assert.Single(result.Items);
         Assert.Equal(projectId, project.ProjectId);
-        Assert.Equal("MCP Skill System", project.ProjectName);
-        Assert.Equal(["/workspace/mcp-skill-system"], project.RepositoryPaths);
+        Assert.Equal("MCP Knowledge Base", project.ProjectName);
+        Assert.Equal(["/workspace/mcp-knowledge-base"], project.RepositoryPaths);
         Assert.Equal((2, 5, "skill"), repository.LastSearchRequest);
     }
 

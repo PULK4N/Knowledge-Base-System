@@ -174,7 +174,7 @@ def _summary_output(session_id: str) -> dict[str, Any]:
     context = (
         "This chat has just been compacted. Before continuing normal work, "
         "write a concise two-to-four paragraph checkpoint from the compacted "
-        "conversation and call the MCP Skill System tool memory_summary_add with "
+        "conversation and call the MCP Knowledge Base tool memory_summary_add with "
         f"threadId '{session_id}'. Capture goals, decisions, important changes, "
         "verification, unresolved work, and durable user preferences. Omit "
         "repetitive tool output, credentials, and other secrets."
@@ -192,7 +192,7 @@ def _backlog_warning(previous_failure: str | None) -> dict[str, Any] | None:
         return None
     return {
         "systemMessage": (
-            "MCP Skill System queued this memory record, but an earlier queued "
+            "MCP Knowledge Base queued this memory record, but an earlier queued "
             f"record has not reached the Memory API yet: {previous_failure}"
         )
     }
@@ -203,17 +203,17 @@ def _queue_directory() -> Path:
     root = (
         Path(configured)
         if configured
-        else Path(tempfile.gettempdir()) / "mcp-skill-system-plugin"
+        else Path(tempfile.gettempdir()) / "mcp-knowledge-base-plugin"
     )
     return root / "memory-queue"
 
 
 def _memory_hook_url() -> str:
-    override = os.environ.get("MCP_SKILL_SYSTEM_MEMORY_HOOK_URL")
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_MEMORY_HOOK_URL")
     if override:
         return override
 
-    mcp_url = os.environ.get("MCP_SKILL_SYSTEM_URL")
+    mcp_url = os.environ.get("MCP_KNOWLEDGE_BASE_URL")
     if not mcp_url:
         return DEFAULT_MEMORY_HOOK_URL
 
@@ -256,7 +256,7 @@ def main() -> int:
     except (MemoryHookError, OSError, json.JSONDecodeError) as error:
         output = {
             "systemMessage": (
-                "MCP Skill System could not queue this memory hook. Normal work "
+                "MCP Knowledge Base could not queue this memory hook. Normal work "
                 f"can continue, but this record may be missing: {error}"
             )
         }

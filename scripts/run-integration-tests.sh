@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 compose_file="${repository_root}/docker-compose.integration-tests.yml"
-project_name="${MCP_INTEGRATION_COMPOSE_PROJECT_NAME:-mcp-skill-system-integration-tests}"
+project_name="${MCP_INTEGRATION_COMPOSE_PROJECT_NAME:-mcp-knowledge-base-integration-tests}"
 api_port="${MCP_INTEGRATION_API_PORT:-5232}"
 export MCP_INTEGRATION_API_PORT="${api_port}"
 export MCP_INTEGRATION_MCP_URL="http://localhost:${api_port}/mcp"

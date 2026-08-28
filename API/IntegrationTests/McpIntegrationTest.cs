@@ -25,7 +25,7 @@ public abstract class McpIntegrationTest : IAsyncLifetime
         var transport = new HttpClientTransport(
             new HttpClientTransportOptions
             {
-                Name = "mcp-skill-system-integration-tests",
+                Name = "mcp-knowledge-base-integration-tests",
                 Endpoint = new Uri(endpoint, UriKind.Absolute),
                 TransportMode = HttpTransportMode.StreamableHttp,
                 ConnectionTimeout = TimeSpan.FromSeconds(30)

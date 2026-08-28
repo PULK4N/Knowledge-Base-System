@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "mcp-skill-system",
+      "name": "mcp-knowledge-base",
       "source": {
         "source": "local",
-        "path": "./plugins/mcp-skill-system"
+        "path": "./plugins/mcp-knowledge-base"
       },
       "policy": {
         "installation": "AVAILABLE",
