@@ -10,7 +10,7 @@
             "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Restoring MCP policies",
-            "additionalContextLimit": 12000
+            "additionalContextLimit": 25000
           }
         ]
       },
@@ -35,7 +35,7 @@
             "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Loading MCP policies",
-            "additionalContextLimit": 12000
+            "additionalContextLimit": 25000
           },
           {
             "type": "command",
@@ -55,7 +55,7 @@
             "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Refreshing MCP policies",
-            "additionalContextLimit": 12000
+            "additionalContextLimit": 25000
           }
         ]
       }
