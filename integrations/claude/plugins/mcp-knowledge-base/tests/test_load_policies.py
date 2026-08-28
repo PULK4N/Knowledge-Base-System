@@ -47,7 +47,9 @@ class LoadPoliciesTests(unittest.TestCase):
             )
 
             claude_md = Path(cwd) / "CLAUDE.md"
-            self.assertIn("Use focused tests.", claude_md.read_text(encoding="utf-8"))
+            self.assertEqual(
+                "Use focused tests.", claude_md.read_text(encoding="utf-8")
+            )
             self.assertEqual(cwd, client.requested_repository)
             self.assertTrue(client.closed)
             self.assertEqual(1, len(list(Path(data).glob("policies-*.json"))))
@@ -66,9 +68,7 @@ class LoadPoliciesTests(unittest.TestCase):
             )
 
             content = claude_md.read_text(encoding="utf-8")
-            self.assertNotIn("Handwritten notes", content)
-            self.assertIn("Authoritative policy", content)
-            self.assertIn(load_policies.GENERATED_MARKER, content)
+            self.assertEqual("Authoritative policy", content)
             self.assertIn("CLAUDE.md", self.context(output))
 
     def test_policies_are_not_pushed_into_context(self):
