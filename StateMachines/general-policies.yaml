@@ -3,9 +3,11 @@ stateData: GeneralPoliciesStateData
 initializationEvents:
   - GeneralPolicyAddedV1
   - TopicCreatedV1
+  - AgentFamilyCreatedV1
 projections:
   - GeneralPolicyTextProjector
   - TopicPolicyTextProjector
+  - AgentFamilyPolicyTextProjector
 events:
   GeneralPolicyAddedV1:
     preEventValidators:
@@ -37,3 +39,24 @@ events:
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustExistValidator
+  AgentFamilyCreatedV1:
+    preEventValidators:
+      - AgentFamilyMustNotExistValidator
+  AgentFamilyUpdatedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+  AgentFamilyRemovedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+  AgentFamilyPolicyAddedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustNotExistValidator
+  AgentFamilyPolicyUpdatedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustExistValidator
+  AgentFamilyPolicyRemovedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustExistValidator

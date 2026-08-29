@@ -14,7 +14,7 @@ public sealed class PolicyTextProjectorTests
         );
 
     [Fact]
-    public async Task Projections_AreJoinedInProjectTopicGeneralOrder()
+    public async Task Projections_AreJoinedInGeneralProjectTopicOrder()
     {
         await using var context = CreateContext();
         var repository = new PolicyTextRepository(context);
@@ -49,13 +49,13 @@ public sealed class PolicyTextProjectorTests
         );
 
         Assert.Equal(
-            "# Project \"Policy project\" policies\n\n"
+            "# General policies\n\n"
+                + "## General policy\nGeneral text.\n\n"
+                + "# Project \"Policy project\" policies\n\n"
                 + "## Project policy\nProject text.\n\n"
                 + "# Topic \"cloud\" policies\n\n"
-                + "## Topic policy\nTopic text.\n\n"
-                + "# General policies\n\n"
-                + "## General policy\nGeneral text.",
-            await repository.Get(ProjectId)
+                + "## Topic policy\nTopic text.",
+            await repository.Get(ProjectId, null)
         );
         Assert.Single(context.GeneralPolicyTexts);
         Assert.Single(context.ProjectPolicyTexts);
@@ -124,7 +124,7 @@ public sealed class PolicyTextProjectorTests
 
         Assert.Empty(context.ProjectPolicyTexts);
         Assert.Empty(context.ProjectPolicyTopics);
-        Assert.Null(await repository.Get(ProjectId));
+        Assert.Null(await repository.Get(ProjectId, null));
     }
 
     [Fact]
@@ -171,6 +171,79 @@ public sealed class PolicyTextProjectorTests
         Assert.Empty(await repository.List());
     }
 
+    [Theory]
+    [InlineData("claude", "Claude policy", "Claude text.")]
+    [InlineData("Codex", "Codex policy", "Codex text.")]
+    public async Task AgentFamilyProjection_AppendsOnlyTheRequestedFamily(
+        string requestedAgentFamily,
+        string expectedTitle,
+        string expectedText
+    )
+    {
+        await using var context = CreateContext();
+        var repository = new PolicyTextRepository(context);
+        var generalStateInfo = CreateStateInfo(
+            CreateGeneralPolicies("General policy")
+        );
+        var projectStateInfo = CreateStateInfo(CreateProject());
+        await new GeneralPolicyTextProjector(repository).Update(
+            [generalStateInfo]
+        );
+        await new TopicPolicyTextProjector(repository).Update(
+            [generalStateInfo]
+        );
+        await new AgentFamilyPolicyTextProjector(repository).Update(
+            [generalStateInfo]
+        );
+        await new ProjectPolicyTextProjector(repository).Update(
+            [projectStateInfo]
+        );
+        await new ProjectTopicProjector(repository).Update(
+            [projectStateInfo]
+        );
+
+        Assert.Equal(
+            "# General policies\n\n"
+                + "## General policy\nGeneral text.\n\n"
+                + "# Project \"Policy project\" policies\n\n"
+                + "## Project policy\nProject text.\n\n"
+                + $"# Agent family \"{requestedAgentFamily.ToLowerInvariant()}\" policies\n\n"
+                + $"## {expectedTitle}\n{expectedText}\n\n"
+                + "# Topic \"cloud\" policies\n\n"
+                + "## Topic policy\nTopic text.",
+            await repository.Get(ProjectId, requestedAgentFamily)
+        );
+        Assert.Equal(2, context.AgentFamilyPolicyTexts.Count());
+    }
+
+    [Fact]
+    public async Task AgentFamilyProjection_IsOmittedWhenNoFamilyIsRequested()
+    {
+        await using var context = CreateContext();
+        var repository = new PolicyTextRepository(context);
+        var generalStateInfo = CreateStateInfo(
+            CreateGeneralPolicies("General policy")
+        );
+        var projectStateInfo = CreateStateInfo(CreateProject());
+        await new GeneralPolicyTextProjector(repository).Update(
+            [generalStateInfo]
+        );
+        await new AgentFamilyPolicyTextProjector(repository).Update(
+            [generalStateInfo]
+        );
+        await new ProjectPolicyTextProjector(repository).Update(
+            [projectStateInfo]
+        );
+
+        var policies = await repository.Get(ProjectId, null);
+
+        Assert.DoesNotContain("Agent family", policies);
+        Assert.DoesNotContain(
+            "Agent family",
+            await repository.Get(ProjectId, "cursor")
+        );
+    }
+
     private static TestPolicyDbContext CreateContext()
     {
         var context = new TestPolicyDbContext(
@@ -212,6 +285,32 @@ public sealed class PolicyTextProjectorTests
             "Topic text."
         );
         state.Topics.Add(topicName, topic);
+
+        foreach (var (agentFamilyName, policyId, title, description) in
+            new[]
+            {
+                ("claude", "aaaaaaaa-5555-5555-5555-555555555555",
+                    "Claude policy", "Claude text."),
+                ("codex", "aaaaaaaa-6666-6666-6666-666666666666",
+                    "Codex policy", "Codex text.")
+            })
+        {
+            var agentFamily = new AgentFamily
+            {
+                AgentFamilyName = new AgentFamilyName(agentFamilyName),
+                Description = $"{agentFamilyName} policies."
+            };
+            AddPolicy(
+                agentFamily.Policies,
+                policyId,
+                title,
+                description
+            );
+            state.AgentFamilies.Add(
+                agentFamily.AgentFamilyName,
+                agentFamily
+            );
+        }
 
         return state;
     }
@@ -277,6 +376,8 @@ public sealed class PolicyTextProjectorTests
             Set<TopicPolicyText>();
         public DbSet<ProjectPolicyTopic> ProjectPolicyTopics =>
             Set<ProjectPolicyTopic>();
+        public DbSet<AgentFamilyPolicyText> AgentFamilyPolicyTexts =>
+            Set<AgentFamilyPolicyText>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -295,6 +396,9 @@ public sealed class PolicyTextProjectorTests
             modelBuilder
                 .Entity<ProjectPolicyTopic>()
                 .HasKey(relation => relation.Id);
+            modelBuilder
+                .Entity<AgentFamilyPolicyText>()
+                .HasKey(text => text.Id);
             modelBuilder
                 .Entity<ProjectPolicyTopic>()
                 .HasIndex(

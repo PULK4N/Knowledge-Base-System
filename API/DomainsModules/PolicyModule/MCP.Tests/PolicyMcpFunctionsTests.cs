@@ -30,6 +30,14 @@ public sealed class PolicyMcpFunctionsTests
         "policy_project_policy_remove",
         "policy_project_topic_add",
         "policy_project_topic_remove",
+        "policy_agent_family_list",
+        "policy_agent_family_policy_list",
+        "policy_agent_family_create",
+        "policy_agent_family_update",
+        "policy_agent_family_remove",
+        "policy_agent_family_policy_add",
+        "policy_agent_family_policy_update",
+        "policy_agent_family_policy_remove",
         "policy_get_by_repository"
     ];
 
@@ -96,22 +104,47 @@ public sealed class PolicyMcpFunctionsTests
     }
 
     [Fact]
-    public void Get_by_repository_exposes_only_the_repository_path()
+    public void Get_by_repository_exposes_the_repository_path_and_agent_family()
     {
         var function = PolicyMcpFunctions.Create().Single(
             function =>
                 function.Name == "policy_get_by_repository"
         );
-        var properties = function.JsonSchema
-            .GetProperty("properties");
 
-        var property = Assert.Single(properties.EnumerateObject());
-
-        Assert.Equal("repositoryPath", property.Name);
+        Assert.Equal(
+            ["repositoryPath", "agentFamily"],
+            function.JsonSchema
+                .GetProperty("properties")
+                .EnumerateObject()
+                .Select(property => property.Name)
+                .ToList()
+        );
+        Assert.Equal(
+            ["repositoryPath"],
+            function.JsonSchema
+                .GetProperty("required")
+                .EnumerateArray()
+                .Select(element => element.GetString())
+                .ToList()
+        );
         Assert.Contains(
             "stop reasoning",
             function.Description,
             StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    [Fact]
+    public void Agent_family_list_does_not_require_arguments()
+    {
+        var function = PolicyMcpFunctions.Create().Single(
+            function => function.Name == "policy_agent_family_list"
+        );
+
+        Assert.Empty(
+            function.JsonSchema
+                .GetProperty("properties")
+                .EnumerateObject()
         );
     }
 }

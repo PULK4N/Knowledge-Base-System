@@ -9,6 +9,7 @@ public static class PolicyMcpFunctions
         .. GeneralPolicyMcpFunctions.Create(),
         .. TopicPolicyMcpFunctions.Create(),
         .. ProjectPolicyMcpFunctions.Create(),
+        .. AgentFamilyPolicyMcpFunctions.Create(),
         .. PolicyQueryMcpFunctions.Create()
     ];
 

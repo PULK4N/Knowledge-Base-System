@@ -15,10 +15,12 @@ public sealed class PoliciesController(
     [HttpGet]
     public async Task<ActionResult<GetPoliciesByRepositoryResult>> GetByRepository(
         [FromQuery] string repositoryPath,
-        [FromServices] GetPoliciesByRepositoryQuery query
+        [FromServices] GetPoliciesByRepositoryQuery query,
+        [FromQuery] string? agentFamily = null
     )
     {
         query.RepositoryPath = repositoryPath;
+        query.AgentFamily = agentFamily;
 
         return Ok(await Execute(query));
     }

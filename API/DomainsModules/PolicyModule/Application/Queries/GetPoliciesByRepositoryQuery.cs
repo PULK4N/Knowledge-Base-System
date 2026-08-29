@@ -19,6 +19,12 @@ public sealed class GetPoliciesByRepositoryQuery(
 {
     public required string RepositoryPath { get; set; }
 
+    /// <summary>
+    /// Optional agent family such as "claude" or "codex". Selects the agent
+    /// family policy block appended to the returned policy text.
+    /// </summary>
+    public string? AgentFamily { get; set; }
+
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             !string.IsNullOrWhiteSpace(RepositoryPath)
@@ -58,7 +64,10 @@ public sealed class GetPoliciesByRepositoryQuery(
                     .ToList()
             );
 
-        var policies = await policyTextRepository.Get(projectAggregateId)
+        var policies = await policyTextRepository.Get(
+            projectAggregateId,
+            AgentFamily
+        )
             ?? throw await CreateNotFoundException();
 
         return GetPoliciesByRepositoryResult.Found(

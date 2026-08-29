@@ -19,6 +19,12 @@ internal static class PolicyTextCompiler
     ) =>
         Compile($"Topic \"{topicName}\" policies", policies);
 
+    public static string CompileAgentFamily(
+        string agentFamilyName,
+        IEnumerable<Policy> policies
+    ) =>
+        Compile($"Agent family \"{agentFamilyName}\" policies", policies);
+
     private static string Compile(
         string scopeTitle,
         IEnumerable<Policy> policies

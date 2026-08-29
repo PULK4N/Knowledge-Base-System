@@ -17,6 +17,8 @@ public sealed class PolicyValidatorTests
             Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
         );
     private static readonly TopicName TopicName = new("cloud");
+    private static readonly AgentFamilyName AgentFamilyName =
+        new("claude");
 
     [Fact]
     public void GeneralPolicyUpdate_RequiresExistingPolicy()
@@ -178,6 +180,89 @@ public sealed class PolicyValidatorTests
 
         Assert.False(validator.Validate(state, payload).Succeded);
     }
+
+    [Fact]
+    public void AgentFamilyAndAgentFamilyPolicyUpdates_RequireExistingState()
+    {
+        var state = CreateGeneralState();
+        var agentFamilyPayload = CreatePayload(
+            new AgentFamilyUpdatedV1(AgentFamilyName, "Updated")
+        );
+        var policyPayload = CreatePayload(
+            new AgentFamilyPolicyUpdatedV1(
+                AgentFamilyName,
+                CreatePolicy()
+            )
+        );
+
+        Assert.False(
+            new AgentFamilyMustExistValidator()
+                .Validate(state, agentFamilyPayload)
+                .Succeded
+        );
+
+        var agentFamily = new AgentFamily
+        {
+            AgentFamilyName = AgentFamilyName,
+            Description = "Claude policies"
+        };
+        state.AgentFamilies.Add(AgentFamilyName, agentFamily);
+
+        Assert.True(
+            new AgentFamilyMustExistValidator()
+                .Validate(state, agentFamilyPayload)
+                .Succeded
+        );
+        Assert.False(
+            new AgentFamilyPolicyMustExistValidator()
+                .Validate(state, policyPayload)
+                .Succeded
+        );
+
+        agentFamily.Policies.Add(PolicyId, CreatePolicy());
+
+        Assert.True(
+            new AgentFamilyPolicyMustExistValidator()
+                .Validate(state, policyPayload)
+                .Succeded
+        );
+    }
+
+    [Fact]
+    public void AgentFamilyCreation_RequiresAnUnusedName()
+    {
+        var state = CreateGeneralState();
+        var payload = CreatePayload(
+            new AgentFamilyCreatedV1(AgentFamilyName, "Claude policies")
+        );
+        var validator = new AgentFamilyMustNotExistValidator();
+
+        Assert.True(validator.Validate(state, payload).Succeded);
+
+        state.AgentFamilies.Add(
+            AgentFamilyName,
+            new AgentFamily
+            {
+                AgentFamilyName = AgentFamilyName,
+                Description = "Claude policies"
+            }
+        );
+
+        Assert.False(validator.Validate(state, payload).Succeded);
+    }
+
+    [Theory]
+    [InlineData("claude", "claude")]
+    [InlineData("Claude", "claude")]
+    [InlineData("  CODEX  ", "codex")]
+    public void AgentFamilyNames_AreNormalized(
+        string name,
+        string expected
+    ) =>
+        Assert.Equal(
+            expected,
+            AgentFamilyName.Normalized(name).Name
+        );
 
     private static GeneralPoliciesStateData CreateGeneralState() =>
         new(AggregateId.FromDatabaseGuid(Guid.Empty));

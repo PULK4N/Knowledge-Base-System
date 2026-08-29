@@ -1,5 +1,6 @@
 using EventSourcing.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using PolicyModule.Domain.Models;
 using PolicyModule.Persistence.Interfaces;
 using PolicyModule.Persistence.Models;
 
@@ -9,15 +10,19 @@ public sealed class PolicyTextRepository(
     IPolicyModuleDbContext dbContext
 ) : IPolicyTextRepository
 {
-    public async Task<string?> Get(AggregateId projectAggregateId)
+    public async Task<string?> Get(
+        AggregateId projectAggregateId,
+        string? agentFamilyName
+    )
     {
         var projectId = projectAggregateId.Value;
         var project = dbContext.ProjectPolicyTexts.Where(
             policyText => policyText.ProjectAggregateId == projectId
         );
-        var segments = await project
-            .Select(
-                policyText =>
+        var segmentQuery = project
+            .SelectMany(
+                _ => dbContext.GeneralPolicyTexts,
+                (_, policyText) =>
                     new
                     {
                         Group = 0,
@@ -26,12 +31,11 @@ public sealed class PolicyTextRepository(
                     }
             )
             .Concat(
-                project.SelectMany(
-                    _ => dbContext.GeneralPolicyTexts,
-                    (_, policyText) =>
+                project.Select(
+                    policyText =>
                         new
                         {
-                            Group = 2,
+                            Group = 1,
                             Order = 0,
                             policyText.Text
                         }
@@ -45,11 +49,35 @@ public sealed class PolicyTextRepository(
                     on relation.TopicName equals topicPolicyText.TopicName
                 select new
                 {
-                    Group = 1,
+                    Group = 3,
                     Order = relation.TopicOrder,
                     topicPolicyText.Text
                 }
-            )
+            );
+
+        if (!string.IsNullOrWhiteSpace(agentFamilyName))
+        {
+            var normalizedAgentFamilyName =
+                AgentFamilyName.Normalized(agentFamilyName).Name;
+            segmentQuery = segmentQuery.Concat(
+                project.SelectMany(
+                    _ => dbContext.AgentFamilyPolicyTexts.Where(
+                        policyText =>
+                            policyText.AgentFamilyName
+                                == normalizedAgentFamilyName
+                    ),
+                    (_, policyText) =>
+                        new
+                        {
+                            Group = 2,
+                            Order = 0,
+                            policyText.Text
+                        }
+                )
+            );
+        }
+
+        var segments = await segmentQuery
             .OrderBy(segment => segment.Group)
             .ThenBy(segment => segment.Order)
             .Select(segment => segment.Text)
@@ -107,6 +135,25 @@ public sealed class PolicyTextRepository(
                     new ProjectPolicyText
                     {
                         ProjectAggregateId = policyText.Key.Value,
+                        Text = policyText.Value
+                    }
+            )
+        );
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task ReplaceAgentFamilies(
+        IReadOnlyDictionary<string, string> policyTexts
+    )
+    {
+        await dbContext.AgentFamilyPolicyTexts.ExecuteDeleteAsync();
+
+        await dbContext.AgentFamilyPolicyTexts.AddRangeAsync(
+            policyTexts.Select(
+                policyText =>
+                    new AgentFamilyPolicyText
+                    {
+                        AgentFamilyName = policyText.Key,
                         Text = policyText.Value
                     }
             )

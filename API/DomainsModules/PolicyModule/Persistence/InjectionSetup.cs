@@ -24,6 +24,7 @@ public static class InjectionSetup
         );
         services.AddScoped<IProjector, GeneralPolicyTextProjector>();
         services.AddScoped<IProjector, TopicPolicyTextProjector>();
+        services.AddScoped<IProjector, AgentFamilyPolicyTextProjector>();
         services.AddScoped<IProjector, ProjectPolicyTextProjector>();
         services.AddScoped<IProjector, ProjectTopicProjector>();
         services.AddScoped<IProjector, PolicyProjectSummaryProjector>();
