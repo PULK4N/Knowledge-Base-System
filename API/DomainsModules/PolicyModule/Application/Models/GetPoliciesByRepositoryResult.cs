@@ -12,6 +12,7 @@ public sealed record GetPoliciesByRepositoryResult(
     public const string OkStatus = "OK";
     public const string RepositoryMappingRequiredStatus =
         "RepositoryMappingRequired";
+    public const string AgentFamilyNotFoundStatus = "AgentFamilyNotFound";
 
     public static GetPoliciesByRepositoryResult Found(
         string repositoryPath,
@@ -23,6 +24,24 @@ public sealed record GetPoliciesByRepositoryResult(
             policies,
             false,
             null,
+            []
+        );
+
+    /// <summary>
+    /// The caller asked for an agent family that has not been created yet.
+    /// Returned as HTTP 400 so a plugin hook can create the family and retry.
+    /// </summary>
+    public static GetPoliciesByRepositoryResult AgentFamilyNotFound(
+        string repositoryPath,
+        string agentFamily
+    ) =>
+        new(
+            AgentFamilyNotFoundStatus,
+            repositoryPath,
+            null,
+            false,
+            $"Agent family '{agentFamily}' does not exist. "
+                + "Create it and retry the request.",
             []
         );
 

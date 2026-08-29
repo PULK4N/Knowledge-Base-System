@@ -13,16 +13,25 @@ SPEC.loader.exec_module(load_policies)
 
 
 class FakeClient:
-    def __init__(self, result):
+    def __init__(self, result, missing_agent_family=False):
         self.result = result
+        self.missing_agent_family = missing_agent_family
         self.requested_repository = None
         self.requested_agent_family = None
+        self.created_families = []
+        self.read_count = 0
         self.closed = False
 
     def get_policies(self, repository_path, agent_family):
         self.requested_repository = repository_path
         self.requested_agent_family = agent_family
+        self.read_count += 1
+        if self.missing_agent_family and agent_family not in self.created_families:
+            raise load_policies.AgentFamilyMissingError(agent_family)
         return self.result
+
+    def create_agent_family(self, agent_family):
+        self.created_families.append(agent_family)
 
     def close(self):
         self.closed = True
@@ -52,6 +61,7 @@ class LoadPoliciesTests(unittest.TestCase):
             self.assertEqual(
                 "Use focused tests.", claude_md.read_text(encoding="utf-8")
             )
+            self.assertIn("CLAUDE.md", self.context(output))
             self.assertEqual(cwd, client.requested_repository)
             self.assertTrue(client.closed)
             self.assertEqual(1, len(list(Path(data).glob("policies-*.json"))))
@@ -87,7 +97,9 @@ class LoadPoliciesTests(unittest.TestCase):
 
     def test_later_prompt_uses_session_cache_without_another_request(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
-            first = FakeClient({"status": "OK", "policies": "Cached policy"})
+            first = FakeClient(
+                {"status": "OK", "policies": "# General policies\n\nCached policy"}
+            )
             event = self.event(cwd)
             load_policies.process_hook(
                 event,
@@ -177,11 +189,15 @@ class LoadPoliciesTests(unittest.TestCase):
 
         with mock.patch.dict(
             load_policies.os.environ,
-            {"MCP_KNOWLEDGE_BASE_API_URL": "http://elsewhere/policies/"},
+            {"MCP_KNOWLEDGE_BASE_API_URL": "http://elsewhere/"},
             clear=True,
         ):
             self.assertEqual(
-                "http://elsewhere/policies", load_policies._policy_url()
+                "http://elsewhere/api/policies", load_policies._policy_url()
+            )
+            self.assertEqual(
+                "http://elsewhere/api/policies/agent-families",
+                load_policies._agent_family_url(),
             )
 
     def test_agent_family_defaults_to_claude_and_is_configurable(self):
@@ -213,10 +229,83 @@ class LoadPoliciesTests(unittest.TestCase):
             self.assertEqual("in-house-agent", client.requested_agent_family)
 
     def test_http_errors_stop_the_session(self):
-        client = load_policies.PolicyHttpClient("http://localhost:1/api/policies")
+        client = load_policies.PolicyHttpClient(
+            "http://localhost:1/api/policies",
+            "http://localhost:1/api/policies/agent-families",
+        )
 
         with self.assertRaises(load_policies.PolicyBootstrapError):
             client.get_policies("/workspace/repo", "claude")
+
+    def test_missing_agent_family_is_created_and_the_read_retried(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            client = FakeClient(
+                {"status": "OK", "policies": "# General policies"},
+                missing_agent_family=True,
+            )
+            load_policies.process_hook(
+                self.event(cwd),
+                client_factory=lambda: client,
+                data_directory=Path(data),
+            )
+
+            self.assertEqual(["claude"], client.created_families)
+            self.assertEqual(2, client.read_count)
+            self.assertEqual(
+                "# General policies",
+                (Path(cwd) / "CLAUDE.md").read_text(encoding="utf-8"),
+            )
+
+    def test_a_family_missing_after_creation_stops_the_session(self):
+        class NeverCreated(FakeClient):
+            def create_agent_family(self, agent_family):
+                pass
+
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            with self.assertRaises(load_policies.PolicyBootstrapError):
+                load_policies.process_hook(
+                    self.event(cwd),
+                    client_factory=lambda: NeverCreated(
+                        {"status": "OK", "policies": "x"},
+                        missing_agent_family=True,
+                    ),
+                    data_directory=Path(data),
+                )
+
+    def test_an_existing_policy_document_is_refreshed_silently(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            claude_md = Path(cwd) / "CLAUDE.md"
+            claude_md.write_text(
+                "# General policies\n\n## Old\nStale.", encoding="utf-8"
+            )
+
+            output = load_policies.process_hook(
+                self.event(cwd),
+                client_factory=lambda: FakeClient(
+                    {"status": "OK", "policies": "# General policies\n\n## New\nFresh."}
+                ),
+                data_directory=Path(data),
+            )
+
+            self.assertIsNone(output)
+            self.assertIn("Fresh.", claude_md.read_text(encoding="utf-8"))
+
+    def test_a_policy_document_without_general_policies_is_announced(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            claude_md = Path(cwd) / "CLAUDE.md"
+            claude_md.write_text("# Handwritten notes", encoding="utf-8")
+
+            output = load_policies.process_hook(
+                self.event(cwd),
+                client_factory=lambda: FakeClient(
+                    {"status": "OK", "policies": "# General policies"}
+                ),
+                data_directory=Path(data),
+            )
+
+            self.assertEqual(
+                "Policies written to CLAUDE.md.", self.context(output)
+            )
 
     @staticmethod
     def event(cwd):

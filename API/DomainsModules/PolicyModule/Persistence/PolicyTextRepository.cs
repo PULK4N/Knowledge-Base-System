@@ -92,6 +92,17 @@ public sealed class PolicyTextRepository(
         );
     }
 
+    public Task<bool> AgentFamilyExists(string agentFamilyName)
+    {
+        var normalizedAgentFamilyName =
+            AgentFamilyName.Normalized(agentFamilyName).Name;
+
+        return dbContext.AgentFamilyPolicyTexts.AnyAsync(
+            policyText =>
+                policyText.AgentFamilyName == normalizedAgentFamilyName
+        );
+    }
+
     public async Task ReplaceGeneral(
         AggregateId aggregateId,
         string text

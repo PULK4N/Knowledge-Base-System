@@ -355,6 +355,7 @@ public sealed class PolicyCommandTests
             project.ProjectId
         );
         var policyTextRepository = new StubPolicyTextRepository();
+        policyTextRepository.AgentFamilies.Add(agentFamily);
         policyTextRepository.PolicyTexts[projectAggregateId] =
             "# General policies\n\n## General policy\nApplies everywhere.";
 
@@ -375,6 +376,45 @@ public sealed class PolicyCommandTests
             policyTextRepository.LastProjectId
         );
         Assert.Equal(agentFamily, policyTextRepository.LastAgentFamily);
+    }
+
+    [Fact]
+    public async Task GetPoliciesByRepository_ReportsAnAgentFamilyThatDoesNotExist()
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        const string repositoryPath = "/workspace/unknown-family-project";
+        var project = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Unknown family project",
+                ProjectDescription = "Agent family is not created yet.",
+                RepositoryPaths = [repositoryPath]
+            }.Execute(Executor)
+        );
+        var policyTextRepository = new StubPolicyTextRepository();
+        policyTextRepository.PolicyTexts[
+            AggregateId.FromDatabaseGuid(project.ProjectId)
+        ] = "# General policies";
+
+        var result = await new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            eventStore,
+            policyTextRepository,
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = repositoryPath,
+            AgentFamily = "not-created-yet"
+        }.Execute(Executor);
+
+        Assert.Equal(
+            GetPoliciesByRepositoryResult.AgentFamilyNotFoundStatus,
+            result.Status
+        );
+        Assert.Null(result.Policies);
+        Assert.False(result.RequiresUserInput);
+        Assert.Contains("not-created-yet", result.Message);
     }
 
     [Theory]
@@ -1061,6 +1101,12 @@ public sealed class PolicyCommandTests
         public AggregateId? LastProjectId { get; private set; }
 
         public string? LastAgentFamily { get; private set; }
+
+        public HashSet<string> AgentFamilies { get; } =
+            new(StringComparer.OrdinalIgnoreCase) { "claude" };
+
+        public Task<bool> AgentFamilyExists(string agentFamilyName) =>
+            Task.FromResult(AgentFamilies.Contains(agentFamilyName));
 
         public Task<string?> Get(
             AggregateId projectAggregateId,

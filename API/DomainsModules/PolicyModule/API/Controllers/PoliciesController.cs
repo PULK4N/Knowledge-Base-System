@@ -23,6 +23,11 @@ public sealed class PoliciesController(
         query.RepositoryPath = repositoryPath;
         query.AgentFamily = agentFamily;
 
-        return Ok(await Execute(query));
+        var result = await Execute(query);
+
+        return result.Status
+            == GetPoliciesByRepositoryResult.AgentFamilyNotFoundStatus
+            ? BadRequest(result)
+            : Ok(result);
     }
 }

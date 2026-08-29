@@ -13,4 +13,6 @@ public interface IPolicyTextRepository
         AggregateId projectAggregateId,
         string? agentFamilyName
     );
+
+    Task<bool> AgentFamilyExists(string agentFamilyName);
 }

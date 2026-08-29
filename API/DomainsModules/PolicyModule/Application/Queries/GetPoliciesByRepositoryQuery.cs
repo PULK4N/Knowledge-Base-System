@@ -66,6 +66,12 @@ public sealed class GetPoliciesByRepositoryQuery(
                     .ToList()
             );
 
+        if (!await policyTextRepository.AgentFamilyExists(AgentFamily))
+            return GetPoliciesByRepositoryResult.AgentFamilyNotFound(
+                RepositoryPath,
+                AgentFamily
+            );
+
         var policies = await policyTextRepository.Get(
             projectAggregateId,
             AgentFamily
