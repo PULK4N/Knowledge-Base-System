@@ -17,15 +17,21 @@ public static class MemoryTextChunker
             '\n',
             $"Hook: {hook.HookEventName}",
             $"Prompt started: {prompt.PromptStartTimestamp:O}",
+            PromptHookPayload.FindMessage(hook.Payload) ?? CompilePayload(hook)
+        );
+
+        return Split(text);
+    }
+
+    private static string CompilePayload(PromptHookRecord hook) =>
+        string.Join(
+            '\n',
             "Payload:",
             JsonSerializer.Serialize(
                 hook.Payload,
                 new JsonSerializerOptions { WriteIndented = true }
             )
         );
-
-        return Split(text);
-    }
 
     public static IReadOnlyList<string> CompileSummaryChunks(
         ChatSummary summary

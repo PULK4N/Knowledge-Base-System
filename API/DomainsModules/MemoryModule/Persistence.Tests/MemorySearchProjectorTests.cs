@@ -103,6 +103,51 @@ public sealed class MemorySearchProjectorTests
         Assert.Empty(knowledgeRepository.Documents);
     }
 
+    [Theory]
+    [InlineData(
+        """{"hook_event_name":"UserPromptSubmit","prompt":"Remember the outbox","session_id":"019f"}""",
+        "Remember the outbox"
+    )]
+    [InlineData(
+        """{"hook_event_name":"Stop","last_assistant_message":"Requeued the payload."}""",
+        "Requeued the payload."
+    )]
+    public void CompileChunks_embeds_only_the_conversation_text(
+        string payloadJson,
+        string expectedText
+    )
+    {
+        var prompt = CreateMemory().ChatPrompts.Values.Single();
+        var hook = prompt.PromptHookRecords.Single();
+        hook.Payload = JsonDocument.Parse(payloadJson).RootElement;
+
+        var text = Assert.Single(
+            MemoryTextChunker.CompileChunks(prompt, hook)
+        );
+
+        Assert.Contains(expectedText, text);
+        Assert.DoesNotContain("session_id", text);
+        Assert.DoesNotContain("Payload:", text);
+    }
+
+    [Fact]
+    public void CompileChunks_falls_back_to_the_whole_payload()
+    {
+        var prompt = CreateMemory().ChatPrompts.Values.Single();
+        var hook = prompt.PromptHookRecords.Single();
+        hook.Payload = JsonSerializer.SerializeToElement(
+            new { session_id = "019f", note = "no message property" }
+        );
+
+        var text = Assert.Single(
+            MemoryTextChunker.CompileChunks(prompt, hook)
+        );
+
+        Assert.Contains("Payload:", text);
+        Assert.Contains("session_id", text);
+        Assert.Contains("no message property", text);
+    }
+
     [Fact]
     public void CompileChunks_uses_overlapping_bounded_chunks()
     {
