@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,6 +7,7 @@ from unittest import mock
 
 
 SCRIPT = Path(__file__).parents[1] / "hooks" / "load_policies.py"
+HOOKS_CONFIG = Path(__file__).parents[1] / "hooks" / "hooks.json"
 SPEC = importlib.util.spec_from_file_location("load_policies", SCRIPT)
 load_policies = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -38,6 +40,21 @@ class FakeClient:
 
 
 class LoadPoliciesTests(unittest.TestCase):
+    def test_policy_loader_runs_for_every_session_start_source(self):
+        hooks = json.loads(HOOKS_CONFIG.read_text(encoding="utf-8"))["hooks"]
+        policy_loader = next(
+            group
+            for group in hooks["SessionStart"]
+            if any(
+                "load_policies.py" in hook["command"]
+                for hook in group["hooks"]
+            )
+        )
+
+        self.assertEqual(
+            "startup|resume|clear|compact", policy_loader["matcher"]
+        )
+
     def test_mcp_url_uses_knowledge_base_override(self):
         with mock.patch.dict(
             load_policies.os.environ,

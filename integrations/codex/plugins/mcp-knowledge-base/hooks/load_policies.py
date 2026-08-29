@@ -339,7 +339,7 @@ def _policy_file_path(repository_path: str) -> Path:
 
 
 def _write_policy_file(repository_path: str, document: str) -> bool:
-    """Overwrite CLAUDE.md; return True when the file content changed."""
+    """Overwrite AGENTS.md; return True when the file content changed."""
     path = _policy_file_path(repository_path)
     try:
         if path.read_text(encoding="utf-8") == document:
