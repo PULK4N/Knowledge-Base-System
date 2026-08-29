@@ -23,21 +23,7 @@ export const routes: Routes = [
         path: 'policies',
         loadChildren: () =>
           import('./pages/policies/policies.routes').then(
-            module => module.GENERAL_POLICIES_ROUTES,
-          ),
-      },
-      {
-        path: 'topics',
-        loadChildren: () =>
-          import('./pages/policies/policies.routes').then(
-            module => module.TOPIC_POLICIES_ROUTES,
-          ),
-      },
-      {
-        path: 'projects',
-        loadChildren: () =>
-          import('./pages/policies/policies.routes').then(
-            module => module.PROJECT_POLICIES_ROUTES,
+            module => module.POLICIES_ROUTES,
           ),
       },
       {

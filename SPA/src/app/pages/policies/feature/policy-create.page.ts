@@ -46,7 +46,7 @@ function createContext(
       scope: { kind: 'general' },
       title: 'Add general policy',
       subtitle: 'Create a rule that applies across projects and topics',
-      backLink: ['/policies'],
+      backLink: ['/policies', 'general'],
     };
   }
 
@@ -57,7 +57,7 @@ function createContext(
           scope: { kind: 'topic', topicName },
           title: `Add policy to ${topicName}`,
           subtitle: 'Create a policy shared through this topic',
-          backLink: ['/topics', topicName],
+          backLink: ['/policies', 'topics', topicName],
         }
       : null;
   }
@@ -69,7 +69,7 @@ function createContext(
           scope: { kind: 'project', projectId },
           title: 'Add project policy',
           subtitle: 'Create a policy that applies only to this project',
-          backLink: ['/projects', projectId],
+          backLink: ['/policies', 'projects', projectId],
         }
       : null;
   }

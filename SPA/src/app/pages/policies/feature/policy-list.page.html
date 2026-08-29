@@ -37,7 +37,10 @@
           <div class="connection-management">
             <div class="topic-chips">
               @for (topicName of vm.state.data.topicNames; track topicName) {
-                <a class="topic-chip" [routerLink]="['/topics', topicName]">
+                <a
+                  class="topic-chip"
+                  [routerLink]="['/policies', 'topics', topicName]"
+                >
                   <span>{{ topicName }}</span>
                   <span aria-hidden="true">→</span>
                 </a>

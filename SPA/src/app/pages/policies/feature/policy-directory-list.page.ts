@@ -111,7 +111,7 @@ export class PolicyDirectoryListPage {
           kind,
           title: 'Topics',
           subtitle: 'Policy groups shared across projects',
-          addRoute: ['/topics', 'new'],
+          addRoute: ['/policies', 'topics', 'new'],
           result: {
             ...result,
             items: result.items.map(topic => ({
@@ -119,7 +119,7 @@ export class PolicyDirectoryListPage {
               name: topic.name,
               description: topic.description,
               metadata: `${topic.policyCount} ${topic.policyCount === 1 ? 'policy' : 'policies'}`,
-              route: ['/topics', topic.name],
+              route: ['/policies', 'topics', topic.name],
             })),
           },
         })),
@@ -131,7 +131,7 @@ export class PolicyDirectoryListPage {
         kind,
         title: 'Projects',
         subtitle: 'Project-specific policies and topic relationships',
-        addRoute: ['/projects', 'new'],
+        addRoute: ['/policies', 'projects', 'new'],
         result: {
           ...result,
           items: result.items.map(project => ({
@@ -140,7 +140,7 @@ export class PolicyDirectoryListPage {
             description:
               project.repositoryPaths[0] ?? 'No repositories connected',
             metadata: `${project.repositoryPaths.length} ${project.repositoryPaths.length === 1 ? 'repository' : 'repositories'}`,
-            route: ['/projects', project.id],
+            route: ['/policies', 'projects', project.id],
           })),
         },
       })),

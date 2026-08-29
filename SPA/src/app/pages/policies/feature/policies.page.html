@@ -1,0 +1,39 @@
+<nav class="policy-tabs" role="tablist" aria-label="Policies">
+  <a
+    role="tab"
+    id="general-policies-tab"
+    aria-controls="policies-panel"
+    routerLink="general"
+    routerLinkActive="active"
+    #generalLink="routerLinkActive"
+    [attr.aria-selected]="generalLink.isActive"
+  >
+    General
+  </a>
+  <a
+    role="tab"
+    id="topic-policies-tab"
+    aria-controls="policies-panel"
+    routerLink="topics"
+    routerLinkActive="active"
+    #topicLink="routerLinkActive"
+    [attr.aria-selected]="topicLink.isActive"
+  >
+    Topic
+  </a>
+  <a
+    role="tab"
+    id="project-policies-tab"
+    aria-controls="policies-panel"
+    routerLink="projects"
+    routerLinkActive="active"
+    #projectLink="routerLinkActive"
+    [attr.aria-selected]="projectLink.isActive"
+  >
+    Project
+  </a>
+</nav>
+
+<section id="policies-panel" role="tabpanel">
+  <router-outlet />
+</section>

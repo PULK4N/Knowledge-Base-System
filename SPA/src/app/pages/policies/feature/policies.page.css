@@ -1,0 +1,53 @@
+:host {
+  display: block;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.policy-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 30px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #f2f4f8;
+}
+
+.policy-tabs a {
+  display: block;
+  min-width: 150px;
+  padding: 11px 18px;
+  border-radius: 8px;
+  color: #4b5872;
+  background: transparent;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.policy-tabs a:hover {
+  color: var(--navy);
+  background: rgb(255 255 255 / 65%);
+}
+
+.policy-tabs a.active {
+  color: #2632d9;
+  background: white;
+  box-shadow: 0 2px 8px rgb(30 43 78 / 10%);
+}
+
+@media (max-width: 560px) {
+  .policy-tabs {
+    margin-bottom: 24px;
+  }
+
+  .policy-tabs a {
+    min-width: 0;
+    flex: 1;
+  }
+}

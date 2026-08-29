@@ -79,7 +79,14 @@
           <span class="feature-icon large" aria-hidden="true">◇</span>
           <div>
             <p class="summary-text">{{ vm.state.data.summary }}</p>
-            <a class="project-link" [routerLink]="['/projects', vm.state.data.projectId]">
+            <a
+              class="project-link"
+              [routerLink]="[
+                '/policies',
+                'projects',
+                vm.state.data.projectId,
+              ]"
+            >
               Project · {{ vm.state.data.projectId | shortId: 8 }}
             </a>
           </div>

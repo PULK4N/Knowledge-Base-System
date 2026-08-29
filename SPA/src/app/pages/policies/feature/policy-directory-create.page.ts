@@ -57,7 +57,9 @@ export class PolicyDirectoryCreatePage {
     exhaustMap(action => {
       if (action.kind === 'topics') {
         return this.policies.createTopic(action.request).pipe(
-          tap(topic => void this.router.navigate(['/topics', topic.name])),
+          tap(topic =>
+            void this.router.navigate(['/policies', 'topics', topic.name]),
+          ),
           map(() => ({ status: 'idle' }) as const),
           startWith({ status: 'saving' } as const),
           catchError(error =>
@@ -67,7 +69,9 @@ export class PolicyDirectoryCreatePage {
       }
 
       return this.policies.createProject(action.request).pipe(
-        tap(project => void this.router.navigate(['/projects', project.id])),
+        tap(project =>
+          void this.router.navigate(['/policies', 'projects', project.id]),
+        ),
         map(() => ({ status: 'idle' }) as const),
         startWith({ status: 'saving' } as const),
         catchError(error =>

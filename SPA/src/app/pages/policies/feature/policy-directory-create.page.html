@@ -1,6 +1,11 @@
 @if (kind$ | async; as kind) {
   @if (state$ | async; as state) {
-    <a class="back-link" [routerLink]="kind === 'topics' ? '/topics' : '/projects'">
+    <a
+      class="back-link"
+      [routerLink]="
+        kind === 'topics' ? '/policies/topics' : '/policies/projects'
+      "
+    >
       <span aria-hidden="true">←</span>
       Back to {{ kind }}
     </a>
@@ -47,7 +52,7 @@
           >
             {{ state.status === 'saving' ? 'Creating…' : 'Create topic' }}
           </button>
-          <a routerLink="/topics">Cancel</a>
+          <a routerLink="/policies/topics">Cancel</a>
         </div>
       </form>
     } @else {
@@ -94,7 +99,7 @@
           >
             {{ state.status === 'saving' ? 'Creating…' : 'Create project' }}
           </button>
-          <a routerLink="/projects">Cancel</a>
+          <a routerLink="/policies/projects">Cancel</a>
         </div>
       </form>
     }
