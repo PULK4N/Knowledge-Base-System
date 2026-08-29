@@ -20,6 +20,7 @@
     <ProjectReference Include="../Domain/Domain.csproj" />
     <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+    <ProjectReference Include="../../SharedModule/Persistence/Persistence.csproj" />
   </ItemGroup>
 
 </Project>

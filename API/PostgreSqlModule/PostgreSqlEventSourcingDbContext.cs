@@ -7,16 +7,19 @@ using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Models;
+using SharedModule.Persistence;
 
 namespace PostgreSqlModule;
 
 internal sealed class PostgreSqlEventSourcingDbContext(
     DbContextOptions<EventSourcingDbContext> options
 ) : EventSourcingDbContext(options),
+    IEntityRelationDbContext,
     IFeatureModuleDbContext,
     IPolicyModuleDbContext,
     ISkillsModuleDbContext
 {
+    public DbSet<EntityRelation> EntityRelations => Set<EntityRelation>();
     public DbSet<FeatureSummaryEntry> FeatureSummaries =>
         Set<FeatureSummaryEntry>();
     public DbSet<FeatureSearchEntry> FeatureSearchEntries =>
@@ -46,6 +49,28 @@ internal sealed class PostgreSqlEventSourcingDbContext(
 
         modelBuilder.HasPostgresExtension("vector");
         modelBuilder.HasPostgresExtension("pg_trgm");
+
+        modelBuilder.Entity<EntityRelation>(
+            relation =>
+            {
+                relation.ToTable("EntityRelations");
+                relation.HasKey(entry => entry.Id);
+                relation.HasIndex(
+                    entry => new
+                    {
+                        entry.EntityId,
+                        entry.RelatedEntityId
+                    }
+                ).IsUnique();
+                relation
+                    .Property(entry => entry.RelationType)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                relation
+                    .Property(entry => entry.RelatedEntitySummary)
+                    .IsRequired();
+            }
+        );
 
         var payloadMessage = modelBuilder.Entity<SerializedPayloadMessage>();
 

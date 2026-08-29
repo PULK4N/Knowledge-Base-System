@@ -2,6 +2,7 @@ using EventSourcing.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using SkillsModule.Domain;
 using SkillsModule.Persistence.Models;
+using SharedModule.Persistence;
 
 namespace SkillsModule.Persistence.Tests;
 
@@ -151,6 +152,8 @@ public sealed class SkillSummaryProjectorTests
             Set<SkillListEntry>();
         public DbSet<SkillListTagEntry> SkillListTags =>
             Set<SkillListTagEntry>();
+        public DbSet<EntityRelation> EntityRelations =>
+            Set<EntityRelation>();
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder
@@ -174,6 +177,19 @@ public sealed class SkillSummaryProjectorTests
             modelBuilder
                 .Entity<SkillListTagEntry>()
                 .HasKey(tag => tag.Id);
+            modelBuilder.Entity<EntityRelation>(
+                relation =>
+                {
+                    relation.HasKey(entry => entry.Id);
+                    relation.HasIndex(
+                        entry => new
+                        {
+                            entry.EntityId,
+                            entry.RelatedEntityId
+                        }
+                    ).IsUnique();
+                }
+            );
         }
     }
 }

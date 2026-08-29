@@ -39,6 +39,7 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureAddedV1),
                 nameof(FeatureRemovedV1),
                 nameof(FeatureStatusUpdatedV1),
+                nameof(FeatureParentSetV1),
                 nameof(FeatureSkillAddedV1),
                 nameof(FeatureSkillRemovedV1),
                 nameof(FeatureRecordAddedV1),
@@ -95,6 +96,32 @@ public sealed class FeatureStateMachineDefinitionTests
             eventDefinition => Assert.Empty(
                 eventDefinition.PostEventValidators
             )
+        );
+    }
+
+    [Fact]
+    public async Task ResolvesFeatureParentValidatorsFromYaml()
+    {
+        RegisterTypesOnce();
+        var provider = new EventValidatorProvider(
+            CreateDefinitionProvider()
+        );
+        var payload = CreatePayload(
+            new FeatureParentSetV1(
+                AggregateId.FromDatabaseGuid(Guid.NewGuid())
+            )
+        );
+
+        var validators = await provider.GetPreEventStateValidators(payload);
+
+        Assert.Collection(
+            validators,
+            validator =>
+                Assert.IsType<FeatureMustBeActiveValidator>(validator),
+            validator =>
+                Assert.IsType<FeatureCannotParentItselfValidator>(
+                    validator
+                )
         );
     }
 
@@ -219,6 +246,7 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureAddedV1),
         typeof(FeatureRemovedV1),
         typeof(FeatureStatusUpdatedV1),
+        typeof(FeatureParentSetV1),
         typeof(FeatureSkillAddedV1),
         typeof(FeatureSkillRemovedV1),
         typeof(FeatureRecordAddedV1),
@@ -238,6 +266,7 @@ public sealed class FeatureStateMachineDefinitionTests
     private static List<Type> ValidatorTypes { get; } =
     [
         typeof(FeatureMustBeActiveValidator),
+        typeof(FeatureCannotParentItselfValidator),
         typeof(FeatureSkillMustNotExistValidator),
         typeof(FeatureSkillMustExistValidator),
         typeof(FeatureRecordMustNotExistValidator),

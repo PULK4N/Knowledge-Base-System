@@ -3,6 +3,7 @@ using FeatureModule.Domain;
 using FeatureModule.Domain.Models;
 using FeatureModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
+using SharedModule.Persistence;
 
 namespace FeatureModule.Persistence.Tests;
 
@@ -55,6 +56,111 @@ public sealed class FeatureSummaryProjectorTests
                 .Items
                 .Select(feature => feature.FeatureId)
                 .ToList()
+        );
+    }
+
+    [Fact]
+    public async Task Update_replaces_bidirectional_feature_and_skill_relations()
+    {
+        await using var context = CreateContext();
+        var skillId = Guid.Parse(
+            "33333333-3333-3333-3333-333333333333"
+        );
+        var repository = new FeatureSummaryRepository(context);
+        var projector = new FeatureSummaryProjector(repository);
+        var parent = CreateFeature(
+            "11111111-1111-1111-1111-111111111111",
+            "Parent feature",
+            "Parent summary"
+        );
+        var child = CreateFeature(
+            "22222222-2222-2222-2222-222222222222",
+            "Child feature",
+            "Child summary"
+        );
+        child.ParentFeatureId = parent.Id;
+        child.RelatedSkillIds = [
+            AggregateId.FromDatabaseGuid(skillId)
+        ];
+
+        await projector.Update(
+            [CreateStateInfo(parent), CreateStateInfo(child)]
+        );
+
+        var relations = await context.EntityRelations
+            .AsNoTracking()
+            .ToListAsync();
+        Assert.Equal(4, relations.Count);
+        AssertRelation(
+            relations,
+            child.Id.Value,
+            parent.Id.Value,
+            FeatureEntityRelationTypes.ParentFeature,
+            "Parent summary"
+        );
+        AssertRelation(
+            relations,
+            parent.Id.Value,
+            child.Id.Value,
+            FeatureEntityRelationTypes.Subfeature,
+            "Child summary"
+        );
+        AssertRelation(
+            relations,
+            child.Id.Value,
+            skillId,
+            FeatureEntityRelationTypes.Skill,
+            string.Empty
+        );
+        AssertRelation(
+            relations,
+            skillId,
+            child.Id.Value,
+            FeatureEntityRelationTypes.Feature,
+            "Child summary"
+        );
+
+        parent.Summary = "Updated parent summary";
+        await projector.Update([CreateStateInfo(parent)]);
+
+        relations = await context.EntityRelations
+            .AsNoTracking()
+            .ToListAsync();
+        Assert.Equal(4, relations.Count);
+        AssertRelation(
+            relations,
+            child.Id.Value,
+            parent.Id.Value,
+            FeatureEntityRelationTypes.ParentFeature,
+            "Updated parent summary"
+        );
+
+        child.ParentFeatureId = null;
+        child.RelatedSkillIds.Clear();
+        await projector.Update([CreateStateInfo(child)]);
+
+        Assert.Empty(
+            await context.EntityRelations.AsNoTracking().ToListAsync()
+        );
+    }
+
+    private static void AssertRelation(
+        List<EntityRelation> relations,
+        Guid entityId,
+        Guid relatedEntityId,
+        string relationType,
+        string relatedEntitySummary
+    )
+    {
+        var relation = Assert.Single(
+            relations,
+            relation => relation.EntityId == entityId
+                && relation.RelatedEntityId == relatedEntityId
+        );
+        Assert.Equal(relationType, relation.RelationType);
+        Assert.Equal(
+            relatedEntitySummary,
+            relation.RelatedEntitySummary
         );
     }
 
@@ -128,6 +234,8 @@ public sealed class FeatureSummaryProjectorTests
             Set<FeatureSummaryEntry>();
         public DbSet<FeatureSearchEntry> FeatureSearchEntries =>
             Set<FeatureSearchEntry>();
+        public DbSet<EntityRelation> EntityRelations =>
+            Set<EntityRelation>();
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder
@@ -147,6 +255,19 @@ public sealed class FeatureSummaryProjectorTests
             modelBuilder
                 .Entity<FeatureSearchEntry>()
                 .HasKey(entry => entry.Id);
+            modelBuilder.Entity<EntityRelation>(
+                relation =>
+                {
+                    relation.HasKey(entry => entry.Id);
+                    relation.HasIndex(
+                        entry => new
+                        {
+                            entry.EntityId,
+                            entry.RelatedEntityId
+                        }
+                    ).IsUnique();
+                }
+            );
         }
     }
 }
