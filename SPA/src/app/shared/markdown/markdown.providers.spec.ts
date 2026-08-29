@@ -55,4 +55,18 @@ describe('provideKnowledgeMarkdown', () => {
     expect(html).not.toContain('onerror');
     expect(html).not.toContain('<script>');
   });
+
+  it.each(['c#', 'c-sharp'])(
+    'normalizes the %s code fence to the C# Prism grammar',
+    async (language) => {
+      const service = TestBed.inject(MarkdownService);
+      const html = await service.parse(
+        [`\`\`\`${language}`, 'public sealed class Example;', '\`\`\`'].join(
+          '\n',
+        ),
+      );
+
+      expect(html).toContain('class="language-csharp"');
+    },
+  );
 });
