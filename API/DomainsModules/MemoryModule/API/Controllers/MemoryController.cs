@@ -26,6 +26,17 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
+    [HttpPost("claude/prompt-hooks")]
+    public async Task<ActionResult<MemoryCommandResult>> RecordClaudePromptHook(
+        [FromBody] JsonElement payload,
+        [FromServices] RecordClaudePromptHookCommand command
+    )
+    {
+        payload.MapTo(command);
+
+        return Ok(await Execute(command));
+    }
+
     [HttpPost("codex/migrations")]
     public async Task<ActionResult<MemoryCommandResult>> Migrate(
         [FromBody] CodexMemoryMigrationRequest body,

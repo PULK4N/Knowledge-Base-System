@@ -16,6 +16,7 @@ internal sealed class TestStateMachineDefinitionProvider
                 InitializationEvents =
                 [
                     nameof(CodexPromptHookRecordedV1),
+                    nameof(ClaudePromptHookRecordedV1),
                     nameof(CodexMemoryMigratedV1)
                 ]
             },

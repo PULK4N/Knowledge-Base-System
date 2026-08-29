@@ -1,5 +1,5 @@
 {
-  "description": "Write authoritative MCP policies into CLAUDE.md before Claude works.",
+  "description": "Write authoritative MCP policies into CLAUDE.md and persist useful chat memory.",
   "hooks": {
     "SessionStart": [
       {
@@ -11,6 +11,16 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -20,6 +30,11 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5
           }
         ]
       }
@@ -36,6 +51,17 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
@@ -43,6 +69,11 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "timeout": 3
           }
         ]
       }
