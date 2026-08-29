@@ -1,11 +1,14 @@
+using ActionModule.Shared.Models;
+
 namespace AdministrationModule.Application.Persistence;
 
 public interface IOutboxAdministrationRepository
 {
-    Task<OutboxPayloadSearchResult> Search(
-        int page,
-        int pageSize,
-        bool onlyIncomplete,
+    Task<PagedResult<OutboxPayloadEntry>> Search(
+        EntityQuery<
+            OutboxPayloadSearchFilters,
+            OutboxPayloadSortField
+        > request,
         CancellationToken cancellationToken = default
     );
 
@@ -13,6 +16,24 @@ public interface IOutboxAdministrationRepository
         long outboxPayloadId,
         CancellationToken cancellationToken = default
     );
+}
+
+/// <summary>
+/// Delivery state is filtered by its name so the application layer stays
+/// independent of the event sourcing message status type.
+/// </summary>
+public sealed record OutboxPayloadSearchFilters(
+    bool OnlyIncomplete,
+    string? State,
+    Guid? AggregateId
+);
+
+public enum OutboxPayloadSortField
+{
+    Id,
+    State,
+    RetryCount,
+    AggregateId
 }
 
 public sealed record OutboxPayloadEntry(
@@ -27,9 +48,4 @@ public sealed record OutboxPayloadEntry(
     DateTime Timestamp,
     string ExecutionInfoJson,
     string EventDataJson
-);
-
-public sealed record OutboxPayloadSearchResult(
-    List<OutboxPayloadEntry> Items,
-    int TotalCount
 );

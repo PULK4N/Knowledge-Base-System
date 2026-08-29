@@ -79,7 +79,7 @@ describe('AdministrationPage', () => {
     expect(router.url).toBe('/administration/outbox');
     expect(outboxTab.getAttribute('aria-selected')).toBe('true');
     expect(element.textContent).toContain('Outbox payloads');
-    expect(element.textContent).toContain('The outbox is empty');
+    expect(element.textContent).toContain('No outbox payloads found');
 
     await harness.navigateByUrl('/administration/projections');
     harness.detectChanges();

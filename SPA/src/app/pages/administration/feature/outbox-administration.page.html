@@ -1,45 +1,56 @@
 @if (vm$ | async; as vm) {
-  @switch (vm.payloads.status) {
-    @case ('loading') {
-      <section class="request-message administration-message">
-        Loading outbox payloads…
-      </section>
-    }
-    @case ('error') {
-      <section class="request-message error administration-message">
-        <div>
-          <strong>Outbox payloads could not be loaded</strong>
-          <p>{{ vm.payloads.message }}</p>
-        </div>
-      </section>
-    }
-    @case ('success') {
-      <section class="outbox-panel surface-card">
-        <div class="panel-heading">
-          <div>
-            <h2>Outbox payloads</h2>
-            <p>
-              Requeue resets delivery state to New and the retry count to zero.
-              Select a payload row to inspect its JSON.
-            </p>
-          </div>
-          <div class="panel-tools">
-            <label class="incomplete-filter">
-              <input
-                #incompleteFilter
-                type="checkbox"
-                [checked]="vm.onlyIncomplete"
-                (change)="showOnlyIncomplete(incompleteFilter.checked)"
-              />
-              Show only payloads not completed successfully
-            </label>
-            <span class="payload-count">
-              {{ vm.payloads.data.totalCount }}
-              {{ vm.payloads.data.totalCount === 1 ? 'payload' : 'payloads' }}
-            </span>
-          </div>
-        </div>
+  <section class="outbox-panel surface-card">
+    <div class="panel-heading">
+      <div>
+        <h2>Outbox payloads</h2>
+        <p>
+          Requeue resets delivery state to New and the retry count to zero.
+          Select a payload row to inspect its JSON.
+        </p>
+      </div>
+      @if (vm.payloads.status === 'success') {
+        <span class="payload-count">
+          {{ vm.payloads.data.totalCount }}
+          {{ vm.payloads.data.totalCount === 1 ? 'payload' : 'payloads' }}
+        </span>
+      }
+    </div>
 
+    <div class="toolbar">
+      <app-list-controls
+        [search]="vm.request.search"
+        searchLabel="Search outbox payloads"
+        searchPlaceholder="Search events, state machines and errors"
+        [sortBy]="vm.request.sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="vm.request.sortDirection"
+        (searchChanged)="search(vm.request, $event)"
+        (sortByChanged)="sort(vm.request, $event)"
+        (sortDirectionChanged)="changeDirection(vm.request, $event)"
+      />
+
+      <app-list-filters
+        [filters]="filters(vm.request)"
+        (textFilterChanged)="filter(vm.request, $event)"
+        (selectFilterChanged)="filter(vm.request, $event)"
+      />
+    </div>
+
+    @switch (vm.payloads.status) {
+      @case ('loading') {
+        <div class="request-message administration-message">
+          Loading outbox payloads…
+        </div>
+      }
+      @case ('error') {
+        <div class="request-message error administration-message">
+          <div>
+            <strong>Outbox payloads could not be loaded</strong>
+            <p>{{ vm.payloads.message }}</p>
+          </div>
+        </div>
+      }
+      @case ('success') {
         <div class="table-scroll">
           <table>
             <thead>
@@ -144,8 +155,8 @@
               } @empty {
                 <tr>
                   <td colspan="6" class="empty-state">
-                    <strong>The outbox is empty</strong>
-                    <span>Queued projection payloads will appear here.</span>
+                    <strong>No outbox payloads found</strong>
+                    <span>Try different search or filter values.</span>
                   </td>
                 </tr>
               }
@@ -156,14 +167,16 @@
         <app-pagination
           [page]="vm.payloads.data.page"
           [pageSize]="vm.payloads.data.pageSize"
+          [pageSizes]="pageSizes"
           [totalCount]="vm.payloads.data.totalCount"
           [totalPages]="vm.payloads.data.totalPages"
           [hasPreviousPage]="vm.payloads.data.hasPreviousPage"
           [hasNextPage]="vm.payloads.data.hasNextPage"
           label="Outbox payloads"
-          (pageRequested)="goToPage($event)"
+          (pageRequested)="goToPage(vm.request, $event)"
+          (pageSizeRequested)="changePageSize(vm.request, $event)"
         />
-      </section>
+      }
     }
-  }
+  </section>
 }

@@ -48,16 +48,38 @@ export class OutboxAdministrationService {
   search(
     request: OutboxPayloadSearchRequest,
   ): Observable<OutboxPayloadSearchResult> {
-    const queryKey = [
-      OUTBOX_PAYLOAD_ENTITY_TYPE,
-      request.page,
-      request.pageSize,
-      request.onlyIncomplete,
-    ].join(':');
-    const params = new HttpParams()
+    const normalizedSearch = request.search.trim();
+    const normalizedAggregateId = request.aggregateId.trim();
+    const queryKey = JSON.stringify({
+      entityType: OUTBOX_PAYLOAD_ENTITY_TYPE,
+      page: request.page,
+      pageSize: request.pageSize,
+      search: normalizedSearch.toLowerCase(),
+      onlyIncomplete: request.onlyIncomplete,
+      state: request.state,
+      aggregateId: normalizedAggregateId.toLowerCase(),
+      sortBy: request.sortBy,
+      sortDirection: request.sortDirection,
+    });
+    let params = new HttpParams()
       .set('page', request.page)
       .set('pageSize', request.pageSize)
-      .set('onlyIncomplete', request.onlyIncomplete);
+      .set('onlyIncomplete', request.onlyIncomplete)
+      .set('sortBy', request.sortBy)
+      .set('sortDirection', request.sortDirection);
+
+    if (normalizedSearch) {
+      params = params.set('search', normalizedSearch);
+    }
+
+    if (request.state) {
+      params = params.set('state', request.state);
+    }
+
+    if (normalizedAggregateId) {
+      params = params.set('aggregateId', normalizedAggregateId);
+    }
+
     const refresh$ = this.http
       .get<PagedResult<OutboxPayloadDto>>(this.controllerPath, { params })
       .pipe(

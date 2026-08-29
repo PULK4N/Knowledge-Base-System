@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
+using AdministrationModule.API.Requests;
 using AdministrationModule.Application.Commands;
 using AdministrationModule.Application.DTOs;
 using AdministrationModule.Application.Queries;
@@ -18,16 +18,17 @@ public sealed class OutboxAdministrationController(
     [HttpGet]
     public async Task<ActionResult<PagedResult<OutboxPayloadDto>>> List(
         [FromServices] ListOutboxPayloadsQuery query,
-        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
-            int page = Pagination.DefaultPage,
-        [FromQuery, Range(1, Pagination.MaximumPageSize)]
-            int pageSize = Pagination.DefaultPageSize,
-        [FromQuery] bool onlyIncomplete = false
+        [FromQuery] SearchOutboxPayloadsRequest request
     )
     {
-        query.Page = page;
-        query.PageSize = pageSize;
-        query.OnlyIncomplete = onlyIncomplete;
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Search;
+        query.OnlyIncomplete = request.OnlyIncomplete;
+        query.State = request.State;
+        query.AggregateId = request.AggregateId;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
 
         return Ok(await Execute(query));
     }

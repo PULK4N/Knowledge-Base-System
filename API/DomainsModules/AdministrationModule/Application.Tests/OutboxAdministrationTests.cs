@@ -18,8 +18,11 @@ public sealed class OutboxAdministrationTests
             )
         };
 
+    private static readonly Guid AggregateId =
+        Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
     [Fact]
-    public async Task List_returns_paged_outbox_payloads()
+    public async Task List_forwards_paging_search_filters_and_sorting()
     {
         var repository = new StubOutboxAdministrationRepository(
             [CreateEntry(17, "Failed", 3)]
@@ -28,12 +31,32 @@ public sealed class OutboxAdministrationTests
         {
             Page = 2,
             PageSize = 10,
-            OnlyIncomplete = true
+            Search = " skill ",
+            OnlyIncomplete = true,
+            State = "Error",
+            AggregateId = AggregateId,
+            SortBy = OutboxPayloadSortField.RetryCount,
+            SortDirection = SortDirection.Ascending
         };
 
         var result = await query.Execute(Executor);
 
-        Assert.Equal((2, 10, true), repository.LastSearch);
+        var request = Assert.IsType<
+            EntityQuery<OutboxPayloadSearchFilters, OutboxPayloadSortField>
+        >(repository.LastRequest);
+        Assert.Equal(new PageRequest(2, 10), request.Page);
+        Assert.Equal("skill", request.NormalizedSearch);
+        Assert.Equal(
+            new OutboxPayloadSearchFilters(true, "Error", AggregateId),
+            request.Filters
+        );
+        Assert.Equal(
+            new SortRequest<OutboxPayloadSortField>(
+                OutboxPayloadSortField.RetryCount,
+                SortDirection.Ascending
+            ),
+            request.Sort
+        );
         Assert.Equal(1, result.TotalCount);
         var payload = Assert.Single(result.Items);
         Assert.Equal(17, payload.Id);
@@ -49,6 +72,53 @@ public sealed class OutboxAdministrationTests
             "{\"name\":\"Updated skill\"}",
             payload.EventDataJson
         );
+    }
+
+    [Fact]
+    public async Task List_defaults_to_the_newest_payloads_first()
+    {
+        var repository = new StubOutboxAdministrationRepository([]);
+        var query = new ListOutboxPayloadsQuery(repository);
+
+        await query.Execute(Executor);
+
+        var request = Assert.IsType<
+            EntityQuery<OutboxPayloadSearchFilters, OutboxPayloadSortField>
+        >(repository.LastRequest);
+        Assert.Equal(
+            new SortRequest<OutboxPayloadSortField>(
+                OutboxPayloadSortField.Id,
+                SortDirection.Descending
+            ),
+            request.Sort
+        );
+        Assert.Equal(
+            new OutboxPayloadSearchFilters(false, null, null),
+            request.Filters
+        );
+    }
+
+    [Theory]
+    [InlineData(0, Pagination.DefaultPageSize, "Error", false)]
+    [InlineData(Pagination.DefaultPage, 0, "Error", false)]
+    [InlineData(Pagination.DefaultPage, Pagination.DefaultPageSize, "Error", true)]
+    public async Task List_rejects_invalid_paging(
+        int page,
+        int pageSize,
+        string state,
+        bool canExecute
+    )
+    {
+        var query = new ListOutboxPayloadsQuery(
+            new StubOutboxAdministrationRepository([])
+        )
+        {
+            Page = page,
+            PageSize = pageSize,
+            State = state
+        };
+
+        Assert.Equal(canExecute, await query.CanExecute(Executor));
     }
 
     [Fact]
@@ -82,7 +152,7 @@ public sealed class OutboxAdministrationTests
             retryCount,
             "Projection failed.",
             "skills-state-machine",
-            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            AggregateId,
             7,
             "SkillUpdatedV1",
             DateTime.UnixEpoch,
@@ -94,23 +164,33 @@ public sealed class OutboxAdministrationTests
         List<OutboxPayloadEntry> entries
     ) : IOutboxAdministrationRepository
     {
-        public (int Page, int PageSize, bool OnlyIncomplete)? LastSearch
+        public EntityQuery<
+            OutboxPayloadSearchFilters,
+            OutboxPayloadSortField
+        >? LastRequest
         {
             get;
             private set;
         }
         public long? LastRequeuedId { get; private set; }
 
-        public Task<OutboxPayloadSearchResult> Search(
-            int page,
-            int pageSize,
-            bool onlyIncomplete,
+        public Task<PagedResult<OutboxPayloadEntry>> Search(
+            EntityQuery<
+                OutboxPayloadSearchFilters,
+                OutboxPayloadSortField
+            > request,
             CancellationToken cancellationToken = default
         )
         {
-            LastSearch = (page, pageSize, onlyIncomplete);
+            LastRequest = request;
+
             return Task.FromResult(
-                new OutboxPayloadSearchResult(entries, entries.Count)
+                new PagedResult<OutboxPayloadEntry>(
+                    entries,
+                    request.Page.Number,
+                    request.Page.Size,
+                    entries.Count
+                )
             );
         }
 

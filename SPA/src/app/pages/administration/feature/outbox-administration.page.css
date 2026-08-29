@@ -35,27 +35,10 @@
   color: #344260;
 }
 
-.panel-tools {
-  display: flex;
-  align-items: flex-end;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.incomplete-filter {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #344260;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.incomplete-filter input {
-  width: 17px;
-  height: 17px;
-  margin: 0;
-  accent-color: var(--indigo);
+.toolbar {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 22px;
 }
 
 .table-scroll {
@@ -263,10 +246,6 @@ td code {
   .panel-heading {
     align-items: start;
     flex-direction: column;
-  }
-
-  .panel-tools {
-    align-items: flex-start;
   }
 
   .json-grid {

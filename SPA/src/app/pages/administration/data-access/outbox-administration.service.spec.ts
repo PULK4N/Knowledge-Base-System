@@ -23,14 +23,29 @@ describe('OutboxAdministrationService', () => {
 
   it('loads a filtered outbox page and maps numeric payload IDs', async () => {
     const resultPromise = firstValueFrom(
-      service.search({ page: 2, pageSize: 10, onlyIncomplete: true }),
+      service.search({
+        page: 2,
+        pageSize: 10,
+        search: '  skill  ',
+        onlyIncomplete: true,
+        state: 'Error',
+        aggregateId: ' aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa ',
+        sortBy: 'RetryCount',
+        sortDirection: 'Ascending',
+      }),
     );
     const request = http.expectOne(
       candidate =>
         candidate.url === '/api/administration/outbox' &&
         candidate.params.get('page') === '2' &&
         candidate.params.get('pageSize') === '10' &&
-        candidate.params.get('onlyIncomplete') === 'true',
+        candidate.params.get('search') === 'skill' &&
+        candidate.params.get('onlyIncomplete') === 'true' &&
+        candidate.params.get('state') === 'Error' &&
+        candidate.params.get('aggregateId') ===
+          'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' &&
+        candidate.params.get('sortBy') === 'RetryCount' &&
+        candidate.params.get('sortDirection') === 'Ascending',
     );
 
     request.flush({

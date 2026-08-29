@@ -10,11 +10,12 @@
           <span>Per page</span>
           <select
             #pageSizeSelect
-            [value]="pageSize()"
             (change)="requestPageSize(pageSizeSelect.value)"
           >
             @for (size of pageSizes(); track size) {
-              <option [value]="size">{{ size }}</option>
+              <option [value]="size" [selected]="size === pageSize()">
+                {{ size }}
+              </option>
             }
           </select>
         </label>

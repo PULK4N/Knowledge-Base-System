@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../ActionModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../../EventSourcing/Persistence/Persistence.csproj" />
     <ProjectReference Include="../Application/Application.csproj" />
   </ItemGroup>
