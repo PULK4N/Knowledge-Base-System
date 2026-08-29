@@ -62,6 +62,39 @@ export const POLICIES_ROUTES: Routes = [
           ),
       },
       {
+        path: 'agent-families',
+        pathMatch: 'full',
+        data: { directoryKind: 'agent-families' },
+        loadComponent: () =>
+          import('./feature/policy-directory-list.page').then(
+            module => module.PolicyDirectoryListPage,
+          ),
+      },
+      {
+        path: 'agent-families/new',
+        data: { directoryKind: 'agent-families' },
+        loadComponent: () =>
+          import('./feature/policy-directory-create.page').then(
+            module => module.PolicyDirectoryCreatePage,
+          ),
+      },
+      {
+        path: 'agent-families/:agentFamilyName/policies/new',
+        data: { policyScope: 'agentFamily' },
+        loadComponent: () =>
+          import('./feature/policy-create.page').then(
+            module => module.PolicyCreatePage,
+          ),
+      },
+      {
+        path: 'agent-families/:agentFamilyName',
+        data: { policyScope: 'agentFamily' },
+        loadComponent: () =>
+          import('./feature/policy-list.page').then(
+            module => module.PolicyListPage,
+          ),
+      },
+      {
         path: 'projects',
         pathMatch: 'full',
         data: { directoryKind: 'projects' },

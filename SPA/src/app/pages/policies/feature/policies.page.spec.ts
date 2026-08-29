@@ -18,6 +18,7 @@ describe('PoliciesPage', () => {
             children: [
               { path: 'general', component: PolicyScopeTestPage },
               { path: 'topics', component: PolicyScopeTestPage },
+              { path: 'agent-families', component: PolicyScopeTestPage },
               { path: 'projects', component: PolicyScopeTestPage },
             ],
           },
@@ -32,7 +33,7 @@ describe('PoliciesPage', () => {
     const router = TestBed.inject(Router);
     const element = harness.routeNativeElement as HTMLElement;
 
-    expect(element.querySelectorAll('[role="tab"]')).toHaveLength(3);
+    expect(element.querySelectorAll('[role="tab"]')).toHaveLength(4);
     expect(
       element
         .querySelector('#general-policies-tab')
@@ -46,6 +47,16 @@ describe('PoliciesPage', () => {
     expect(
       element
         .querySelector('#topic-policies-tab')
+        ?.getAttribute('aria-selected'),
+    ).toBe('true');
+
+    await harness.navigateByUrl('/policies/agent-families');
+    harness.detectChanges();
+
+    expect(router.url).toBe('/policies/agent-families');
+    expect(
+      element
+        .querySelector('#agent-family-policies-tab')
         ?.getAttribute('aria-selected'),
     ).toBe('true');
 

@@ -22,12 +22,16 @@ export class OverviewService {
       generalPolicies: this.count('/api/policies/general'),
       projectPolicies: this.count('/api/policies/projects'),
       topics: this.count('/api/policies/topics'),
+      agentFamilies: this.count('/api/policies/agent-families'),
       memories: this.count('/api/memories'),
     }).pipe(
       map(result => ({
         skills: result.skills,
         policies:
-          result.generalPolicies + result.projectPolicies + result.topics,
+          result.generalPolicies +
+          result.projectPolicies +
+          result.topics +
+          result.agentFamilies,
         memories: result.memories,
       })),
     );

@@ -13,6 +13,13 @@ export interface PolicyTopicSummary {
   readonly policyCount: number;
 }
 
+export interface PolicyAgentFamilySummary {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly policyCount: number;
+}
+
 export interface PolicyProjectSummary {
   readonly id: string;
   readonly name: string;
@@ -27,6 +34,7 @@ export interface PolicyProjectDetails extends PolicyProjectSummary {
 export type PolicyScope =
   | { readonly kind: 'general' }
   | { readonly kind: 'topic'; readonly topicName: string }
+  | { readonly kind: 'agentFamily'; readonly agentFamilyName: string }
   | { readonly kind: 'project'; readonly projectId: string };
 
 export interface PolicySearchRequest {
@@ -37,6 +45,8 @@ export interface PolicySearchRequest {
 
 export type PolicySearchResult = PagedResult<Policy>;
 export type PolicyTopicSearchResult = PagedResult<PolicyTopicSummary>;
+export type PolicyAgentFamilySearchResult =
+  PagedResult<PolicyAgentFamilySummary>;
 export type PolicyProjectSearchResult = PagedResult<PolicyProjectSummary>;
 
 export interface PolicyDto {
@@ -47,6 +57,12 @@ export interface PolicyDto {
 
 export interface PolicyTopicSummaryDto {
   readonly topicName: string;
+  readonly description: string;
+  readonly policyCount: number;
+}
+
+export interface PolicyAgentFamilySummaryDto {
+  readonly agentFamilyName: string;
   readonly description: string;
   readonly policyCount: number;
 }
@@ -81,6 +97,11 @@ export interface AddPolicyRequest {
 
 export interface CreateTopicRequest {
   readonly topicName: string;
+  readonly description: string;
+}
+
+export interface CreateAgentFamilyRequest {
+  readonly agentFamilyName: string;
   readonly description: string;
 }
 

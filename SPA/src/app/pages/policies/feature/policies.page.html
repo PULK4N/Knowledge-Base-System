@@ -23,6 +23,17 @@
   </a>
   <a
     role="tab"
+    id="agent-family-policies-tab"
+    aria-controls="policies-panel"
+    routerLink="agent-families"
+    routerLinkActive="active"
+    #agentFamilyLink="routerLinkActive"
+    [attr.aria-selected]="agentFamilyLink.isActive"
+  >
+    Agent family
+  </a>
+  <a
+    role="tab"
     id="project-policies-tab"
     aria-controls="policies-panel"
     routerLink="projects"

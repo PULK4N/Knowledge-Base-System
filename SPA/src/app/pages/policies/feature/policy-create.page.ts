@@ -62,6 +62,18 @@ function createContext(
       : null;
   }
 
+  if (scopeKind === 'agentFamily') {
+    const agentFamilyName = params.get('agentFamilyName');
+    return agentFamilyName
+      ? {
+          scope: { kind: 'agentFamily', agentFamilyName },
+          title: `Add policy to ${agentFamilyName}`,
+          subtitle: 'Create a policy applied only to this kind of agent',
+          backLink: ['/policies', 'agent-families', agentFamilyName],
+        }
+      : null;
+  }
+
   if (scopeKind === 'project') {
     const projectId = params.get('projectId');
     return projectId

@@ -16,9 +16,13 @@ import {
 } from '../../../core/store/entity-store.service';
 import {
   AddPolicyRequest,
+  CreateAgentFamilyRequest,
   CreateProjectRequest,
   CreateTopicRequest,
   Policy,
+  PolicyAgentFamilySearchResult,
+  PolicyAgentFamilySummary,
+  PolicyAgentFamilySummaryDto,
   PolicyAddedCommandResult,
   PolicyCommandResult,
   PolicyDto,
@@ -38,6 +42,7 @@ import {
 } from './policy.models';
 
 const TOPIC_ENTITY_TYPE = 'policy-topic';
+const AGENT_FAMILY_ENTITY_TYPE = 'policy-agent-family';
 const PROJECT_ENTITY_TYPE = 'policy-project';
 
 function isProjectDetails(
@@ -52,6 +57,8 @@ export function policyControllerPath(scope: PolicyScope): string {
       return '/api/policies/general';
     case 'topic':
       return `/api/policies/topics/${encodeURIComponent(scope.topicName)}/policies`;
+    case 'agentFamily':
+      return `/api/policies/agent-families/${encodeURIComponent(scope.agentFamilyName)}/policies`;
     case 'project':
       return `/api/policies/projects/${encodeURIComponent(scope.projectId)}/policies`;
   }
@@ -63,6 +70,8 @@ function policyEntityType(scope: PolicyScope): string {
       return 'general-policy';
     case 'topic':
       return `topic-policy:${scope.topicName}`;
+    case 'agentFamily':
+      return `agent-family-policy:${scope.agentFamilyName}`;
     case 'project':
       return `project-policy:${scope.projectId}`;
   }
@@ -101,6 +110,24 @@ export class PolicyService {
         name: topic.topicName,
         description: topic.description,
         policyCount: topic.policyCount,
+      }),
+    );
+  }
+
+  searchAgentFamilies(
+    request: PolicySearchRequest,
+  ): Observable<PolicyAgentFamilySearchResult> {
+    return this.cachedSearch(
+      '/api/policies/agent-families',
+      AGENT_FAMILY_ENTITY_TYPE,
+      request,
+      (
+        agentFamily: PolicyAgentFamilySummaryDto,
+      ): PolicyAgentFamilySummary => ({
+        id: agentFamily.agentFamilyName,
+        name: agentFamily.agentFamilyName,
+        description: agentFamily.description,
+        policyCount: agentFamily.policyCount,
       }),
     );
   }
@@ -159,6 +186,24 @@ export class PolicyService {
           policyCount: 0,
         })),
         tap(topic => this.store.upsert(TOPIC_ENTITY_TYPE, topic)),
+      );
+  }
+
+  createAgentFamily(
+    request: CreateAgentFamilyRequest,
+  ): Observable<PolicyAgentFamilySummary> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/agent-families', request)
+      .pipe(
+        map(() => ({
+          id: request.agentFamilyName,
+          name: request.agentFamilyName,
+          description: request.description,
+          policyCount: 0,
+        })),
+        tap(agentFamily =>
+          this.store.upsert(AGENT_FAMILY_ENTITY_TYPE, agentFamily),
+        ),
       );
   }
 
@@ -308,6 +353,8 @@ export class PolicyService {
         return `/api/policies/general/${action}`;
       case 'topic':
         return `/api/policies/topics/policies/${action}`;
+      case 'agentFamily':
+        return `/api/policies/agent-families/policies/${action}`;
       case 'project':
         return `/api/policies/projects/policies/${action}`;
     }
@@ -319,6 +366,8 @@ export class PolicyService {
         return '/api/policies/general';
       case 'topic':
         return '/api/policies/topics/policies';
+      case 'agentFamily':
+        return '/api/policies/agent-families/policies';
       case 'project':
         return '/api/policies/projects/policies';
     }
@@ -330,6 +379,8 @@ export class PolicyService {
         return {};
       case 'topic':
         return { topicName: scope.topicName };
+      case 'agentFamily':
+        return { agentFamilyName: scope.agentFamilyName };
       case 'project':
         return { projectId: scope.projectId };
     }

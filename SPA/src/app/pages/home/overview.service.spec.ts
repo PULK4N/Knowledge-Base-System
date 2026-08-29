@@ -28,6 +28,7 @@ describe('OverviewService', () => {
       ['/api/policies/general', 3],
       ['/api/policies/projects', 2],
       ['/api/policies/topics', 5],
+      ['/api/policies/agent-families', 2],
       ['/api/memories', 7],
     ]);
 
@@ -49,7 +50,7 @@ describe('OverviewService', () => {
 
     await expect(resultPromise).resolves.toEqual({
       skills: 4,
-      policies: 10,
+      policies: 12,
       memories: 7,
     });
   });
