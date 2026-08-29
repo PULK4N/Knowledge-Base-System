@@ -5,11 +5,14 @@
       @if (filter.kind === 'text') {
         <input
           #textInput
-          type="text"
+          [type]="filter.type ?? 'text'"
           autocomplete="off"
           [value]="filter.value"
           [disabled]="filter.disabled ?? false"
           [attr.maxlength]="filter.maxLength ?? 500"
+          [attr.min]="filter.min ?? null"
+          [attr.max]="filter.max ?? null"
+          [attr.step]="filter.step ?? null"
           [placeholder]="filter.placeholder ?? ''"
           (input)="requestText(filter.key, textInput.value)"
         />

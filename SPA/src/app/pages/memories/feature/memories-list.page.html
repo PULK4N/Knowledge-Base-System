@@ -5,33 +5,50 @@
   </p>
 </header>
 
-@if (state$ | async; as state) {
-  <section class="list-panel surface-card">
+<section class="list-panel surface-card">
+  @if (vm$ | async; as vm) {
     <div class="toolbar">
-      <label class="search-box">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m15.5 15.5 5 5" />
-        </svg>
-        <span class="sr-only">Search memories</span>
-        <input
-          #searchInput
-          type="search"
-          placeholder="Search memories"
-          autocomplete="off"
-          (input)="search(searchInput.value)"
-        />
-      </label>
+      <app-list-controls
+        [search]="vm.request.search"
+        searchLabel="Search memory summaries and identifiers"
+        searchPlaceholder="Search summaries or paste an ID"
+        [secondarySearch]="vm.request.semanticSearch"
+        secondarySearchLabel="Hybrid semantic memory search"
+        secondarySearchPlaceholder="Search by meaning (vector + text)"
+        [sortBy]="vm.request.sortBy"
+        [sortOptions]="sortOptions(vm.request)"
+        [sortDirection]="vm.request.sortDirection"
+        (searchChanged)="search(vm.request, $event)"
+        (secondarySearchChanged)="semanticSearch(vm.request, $event)"
+        (sortByChanged)="sort(vm.request, $event)"
+        (sortDirectionChanged)="changeDirection(vm.request, $event)"
+      />
 
-      @if (state.status === 'success') {
-        <span class="total-count">
-          {{ state.data.totalCount }}
-          {{ state.data.totalCount === 1 ? 'memory' : 'memories' }}
+      <app-list-filters
+        [filters]="filters(vm.request)"
+        (textFilterChanged)="filter(vm.request, $event)"
+        (selectFilterChanged)="filter(vm.request, $event)"
+      />
+
+      <div class="toolbar-summary">
+        <span class="search-hint">
+          @if (vm.request.semanticSearch) {
+            Hybrid search ranks matching conversation content by meaning and
+            text.
+          } @else {
+            Standard search matches summaries and exact memory or thread IDs.
+          }
         </span>
-      }
+        @if (vm.state.status === 'success') {
+          <span class="total-count">
+            {{ vm.state.data.totalCount }}
+            {{ vm.state.data.totalCount === 1 ? 'memory' : 'memories' }}
+          </span>
+        }
+      </div>
     </div>
 
-    @switch (state.status) {
+    @switch (vm.state.status) {
       @case ('loading') {
         <div class="request-message">Loading memories…</div>
       }
@@ -39,7 +56,7 @@
         <div class="request-message error">
           <div>
             <strong>Memories could not be loaded</strong>
-            <p>{{ state.message }}</p>
+            <p>{{ vm.state.message }}</p>
           </div>
         </div>
       }
@@ -52,7 +69,7 @@
         </div>
 
         <div class="memory-list" aria-label="Memories">
-          @for (memory of state.data.items; track memory.id) {
+          @for (memory of vm.state.data.items; track memory.id) {
             <details class="memory-item">
               <summary class="memory-row">
                 <span class="memory-name">
@@ -137,22 +154,26 @@
           } @empty {
             <div class="empty-state">
               <strong>No memories found</strong>
-              <span>Try a different search term.</span>
+              <span>Try different search or filter values.</span>
             </div>
           }
         </div>
 
-        <app-pagination
-          [page]="state.data.page"
-          [pageSize]="state.data.pageSize"
-          [totalCount]="state.data.totalCount"
-          [totalPages]="state.data.totalPages"
-          [hasPreviousPage]="state.data.hasPreviousPage"
-          [hasNextPage]="state.data.hasNextPage"
-          label="Memories"
-          (pageRequested)="goToPage($event)"
-        />
+        @if (vm.state.data.totalCount > 0) {
+          <app-pagination
+            [page]="vm.state.data.page"
+            [pageSize]="vm.state.data.pageSize"
+            [pageSizes]="pageSizes"
+            [totalCount]="vm.state.data.totalCount"
+            [totalPages]="vm.state.data.totalPages"
+            [hasPreviousPage]="vm.state.data.hasPreviousPage"
+            [hasNextPage]="vm.state.data.hasNextPage"
+            label="Memories"
+            (pageRequested)="goToPage(vm.request, $event)"
+            (pageSizeRequested)="changePageSize(vm.request, $event)"
+          />
+        }
       }
     }
-  </section>
-}
+  }
+</section>

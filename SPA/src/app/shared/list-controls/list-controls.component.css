@@ -25,6 +25,15 @@
   box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
 }
 
+.semantic-search-control {
+  border-color: #c9c7f5;
+  background: #fbfaff;
+}
+
+.semantic-search-control svg {
+  stroke: var(--indigo);
+}
+
 .search-control svg {
   width: 24px;
   flex: 0 0 24px;

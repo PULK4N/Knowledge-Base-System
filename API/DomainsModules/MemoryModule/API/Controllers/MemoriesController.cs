@@ -4,6 +4,7 @@ using ActionModule.Shared;
 using ActionModule.Shared.Models;
 using MemoryModule.Application.DTOs;
 using MemoryModule.Application.Queries;
+using MemoryModule.API.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MemoryModule.API.Controllers;
@@ -17,16 +18,21 @@ public sealed class MemoriesController(
     [HttpGet]
     public async Task<ActionResult<PagedResult<MemorySummaryDto>>> List(
         [FromServices] SearchMemoriesQuery query,
-        [FromQuery, Range(Pagination.DefaultPage, Pagination.MaximumPage)]
-            int page = Pagination.DefaultPage,
-        [FromQuery, Range(1, Pagination.MaximumPageSize)]
-            int pageSize = Pagination.DefaultPageSize,
-        [FromQuery] string? search = null
+        [FromQuery] ListMemoriesRequest request
     )
     {
-        query.Page = page;
-        query.PageSize = pageSize;
-        query.Search = search;
+        Map(request, query);
+
+        return Ok(await Execute(query));
+    }
+
+    [HttpGet("hybrid-search")]
+    public async Task<ActionResult<PagedResult<MemorySummaryDto>>> HybridSearch(
+        [FromServices] HybridSearchMemoriesQuery query,
+        [FromQuery] HybridSearchMemoriesRequest request
+    )
+    {
+        Map(request, query);
 
         return Ok(await Execute(query));
     }
@@ -85,5 +91,33 @@ public sealed class MemoriesController(
         var result = await Execute(query);
 
         return result is null ? NotFound() : Ok(result);
+    }
+
+    private static void Map(
+        MemorySummarySearchRequest request,
+        SearchMemoriesQuery query
+    )
+    {
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Search;
+        query.HasSummary = request.HasSummary;
+        query.MinimumPromptCount = request.MinimumPromptCount;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
+    }
+
+    private static void Map(
+        HybridSearchMemoriesRequest request,
+        HybridSearchMemoriesQuery query
+    )
+    {
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Query;
+        query.HasSummary = request.HasSummary;
+        query.MinimumPromptCount = request.MinimumPromptCount;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
     }
 }

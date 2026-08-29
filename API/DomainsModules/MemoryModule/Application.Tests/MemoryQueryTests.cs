@@ -55,7 +55,11 @@ public sealed class MemoryQueryTests
         {
             Page = 2,
             PageSize = 5,
-            Search = "session"
+            Search = "session",
+            HasSummary = true,
+            MinimumPromptCount = 2,
+            SortBy = MemorySummarySortField.PromptCount,
+            SortDirection = SortDirection.Ascending
         };
 
         var result = await query.Execute(Executor);
@@ -64,7 +68,122 @@ public sealed class MemoryQueryTests
         Assert.Equal(5, result.PageSize);
         Assert.Equal(6, result.TotalCount);
         Assert.Equal(memoryId.Value, Assert.Single(result.Items).MemoryId);
-        Assert.Equal((2, 5, "session"), repository.LastSearchRequest);
+        var request = Assert.IsType<
+            EntityQuery<MemorySummaryFilters, MemorySummarySortField>
+        >(repository.LastSearchRequest);
+        Assert.Equal(new PageRequest(2, 5), request.Page);
+        Assert.Equal("session", request.Search);
+        Assert.Equal(new MemorySummaryFilters(true, 2), request.Filters);
+        Assert.Equal(MemorySummarySortField.PromptCount, request.Sort.Field);
+        Assert.Equal(SortDirection.Ascending, request.Sort.Direction);
+    }
+
+    [Fact]
+    public async Task Hybrid_search_returns_ranked_sessions_as_paged_summaries()
+    {
+        var first = CreateMemory(
+            "11111111-1111-1111-1111-111111111111",
+            "aaaaaaaa-1111-1111-1111-111111111111",
+            "First summary",
+            2
+        );
+        var second = CreateMemory(
+            "22222222-2222-2222-2222-222222222222",
+            "aaaaaaaa-2222-2222-2222-222222222222",
+            "Second summary",
+            3
+        );
+        var search = new FakeMemorySearch(
+        [
+            CreateSearchResult(second, matchedSummary: false, "match")
+                with { Score = 0.9 },
+            CreateSearchResult(second, matchedSummary: true, "summary")
+                with { Score = 0.8 },
+            CreateSearchResult(first, matchedSummary: true, "summary")
+                with { Score = 0.7 }
+        ]);
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult(
+                [
+                    CreateSummary(first, "First summary", 2),
+                    CreateSummary(second, "Second summary", 3)
+                ],
+                2
+            )
+        );
+        var query = new HybridSearchMemoriesQuery(search, repository)
+        {
+            Search = "model search",
+            Page = 1,
+            PageSize = 5
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(second.AggregateId.Value, result.Items[0].MemoryId);
+        Assert.Equal(first.AggregateId.Value, result.Items[1].MemoryId);
+        Assert.Equal(100, search.LastOptions!.ResultCount);
+        Assert.Equal(100, search.LastOptions.CandidateCount);
+        Assert.Equal(
+            [second.AggregateId, first.AggregateId],
+            repository.LastGetManyRequest
+        );
+    }
+
+    [Fact]
+    public async Task Hybrid_search_applies_summary_prompt_and_sort_filters()
+    {
+        var first = CreateMemory(
+            "11111111-1111-1111-1111-111111111111",
+            "aaaaaaaa-1111-1111-1111-111111111111",
+            "First summary",
+            2
+        );
+        var second = CreateMemory(
+            "22222222-2222-2222-2222-222222222222",
+            "aaaaaaaa-2222-2222-2222-222222222222",
+            "Second summary",
+            4
+        );
+        var withoutSummary = CreateMemory(
+            "33333333-3333-3333-3333-333333333333",
+            "aaaaaaaa-3333-3333-3333-333333333333",
+            string.Empty,
+            8
+        );
+        var search = new FakeMemorySearch(
+        [
+            CreateSearchResult(second, matchedSummary: true, "summary"),
+            CreateSearchResult(withoutSummary, matchedSummary: false, "match"),
+            CreateSearchResult(first, matchedSummary: true, "summary")
+        ]);
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult(
+                [
+                    CreateSummary(first, "First summary", 2),
+                    CreateSummary(second, "Second summary", 4),
+                    CreateSummary(withoutSummary, string.Empty, 8)
+                ],
+                3
+            )
+        );
+        var query = new HybridSearchMemoriesQuery(search, repository)
+        {
+            Search = "summary decisions",
+            HasSummary = true,
+            MinimumPromptCount = 2,
+            SortBy = MemorySummarySortField.PromptCount,
+            SortDirection = SortDirection.Ascending
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(
+            [first.AggregateId.Value, second.AggregateId.Value],
+            result.Items.Select(item => item.MemoryId)
+        );
     }
 
     [Fact]
@@ -279,6 +398,22 @@ public sealed class MemoryQueryTests
             1
         );
 
+    private static MemorySummary CreateSummary(
+        MemoryFixture memory,
+        string summary,
+        int promptCount
+    ) =>
+        new(
+            memory.AggregateId,
+            memory.ThreadId,
+            summary,
+            promptCount,
+            DateTime.UnixEpoch,
+            DateTime.UnixEpoch.AddMinutes(promptCount),
+            DateTime.UnixEpoch.AddMinutes(promptCount + 1),
+            DateTime.UnixEpoch.AddMinutes(promptCount + 1)
+        );
+
     private static StateCalculator CreateStateCalculator() =>
         new(
             new OrderNumberHelper(),
@@ -318,7 +453,8 @@ public sealed class MemoryQueryTests
         MemorySummarySearchResult result
     ) : IMemorySummaryRepository
     {
-        public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
+        public object? LastSearchRequest { get; private set; }
+        public IReadOnlyCollection<AggregateId>? LastGetManyRequest { get; private set; }
 
         public Task<MemorySummary?> Get(
             AggregateId memoryAggregateId,
@@ -330,14 +466,27 @@ public sealed class MemoryQueryTests
             )
         );
 
-        public Task<MemorySummarySearchResult> Search(
-            int page,
-            int pageSize,
-            string? search,
+        public Task<List<MemorySummary>> GetMany(
+            IReadOnlyCollection<AggregateId> memoryAggregateIds,
             CancellationToken cancellationToken = default
         )
         {
-            LastSearchRequest = (page, pageSize, search);
+            LastGetManyRequest = memoryAggregateIds;
+            return Task.FromResult(
+                result.Items
+                    .Where(summary => memoryAggregateIds.Contains(
+                        summary.MemoryAggregateId
+                    ))
+                    .ToList()
+            );
+        }
+
+        public Task<MemorySummarySearchResult> Search(
+            EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastSearchRequest = request;
             return Task.FromResult(result);
         }
 

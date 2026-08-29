@@ -10,52 +10,22 @@
 }
 
 .toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  display: grid;
+  gap: 16px;
   margin-bottom: 26px;
 }
 
-.search-box {
+.toolbar-summary {
   display: flex;
   align-items: center;
-  width: min(580px, 75%);
-  height: 58px;
-  padding: 0 18px;
-  border: 1px solid #d6dce7;
-  border-radius: 9px;
-  background: white;
-  box-shadow: inset 0 1px 2px rgb(18 29 54 / 3%);
+  justify-content: space-between;
+  gap: 20px;
 }
 
-.search-box:focus-within {
-  border-color: #8790ff;
-  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
-}
-
-.search-box svg {
-  width: 27px;
-  flex: 0 0 27px;
-  fill: none;
-  stroke: #53617e;
-  stroke-linecap: round;
-  stroke-width: 1.8;
-}
-
-.search-box input {
-  width: 100%;
-  height: 100%;
-  padding: 0 14px;
-  border: 0;
-  outline: none;
-  color: var(--navy);
-  background: transparent;
-  font-size: 18px;
-}
-
-.search-box input::placeholder {
-  color: #929bb1;
+.search-hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .total-count {
@@ -288,12 +258,13 @@
   }
 
   .toolbar {
-    align-items: stretch;
-    flex-direction: column;
+    gap: 14px;
   }
 
-  .search-box {
-    width: 100%;
+  .toolbar-summary {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .list-heading {

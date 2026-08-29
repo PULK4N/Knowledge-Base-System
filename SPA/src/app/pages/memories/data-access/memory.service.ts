@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, concat, map, of, switchMap, take, tap } from 'rxjs';
+import { Observable, filter, ignoreElements, map, merge, tap } from 'rxjs';
 import {
   EntityStore,
   PagedResult,
@@ -69,22 +69,45 @@ export class MemoryService {
 
   search(request: MemorySearchRequest): Observable<MemorySearchResult> {
     const normalizedSearch = request.search.trim();
-    const queryKey = [
-      MEMORY_ENTITY_TYPE,
-      request.page,
-      request.pageSize,
-      normalizedSearch.toLowerCase(),
-    ].join(':');
+    const normalizedSemanticSearch = request.semanticSearch.trim();
+    const queryKey = JSON.stringify({
+      entityType: MEMORY_ENTITY_TYPE,
+      page: request.page,
+      pageSize: request.pageSize,
+      search: normalizedSearch.toLowerCase(),
+      semanticSearch: normalizedSemanticSearch.toLowerCase(),
+      hasSummary: request.hasSummary,
+      minimumPromptCount: request.minimumPromptCount,
+      sortBy: request.sortBy,
+      sortDirection: request.sortDirection,
+    });
     let params = new HttpParams()
       .set('page', request.page)
-      .set('pageSize', request.pageSize);
+      .set('pageSize', request.pageSize)
+      .set('sortBy', request.sortBy)
+      .set('sortDirection', request.sortDirection);
 
-    if (normalizedSearch) {
-      params = params.set('search', normalizedSearch);
+    const activeSearch = normalizedSemanticSearch || normalizedSearch;
+    if (activeSearch) {
+      params = params.set(
+        normalizedSemanticSearch ? 'query' : 'search',
+        activeSearch,
+      );
     }
 
+    if (request.hasSummary !== null) {
+      params = params.set('hasSummary', request.hasSummary);
+    }
+
+    if (request.minimumPromptCount !== null) {
+      params = params.set('minimumPromptCount', request.minimumPromptCount);
+    }
+
+    const path = normalizedSemanticSearch
+      ? `${this.controllerPath}/hybrid-search`
+      : this.controllerPath;
     const refresh$ = this.http
-      .get<PagedResult<MemorySummaryDto>>(this.controllerPath, { params })
+      .get<PagedResult<MemorySummaryDto>>(path, { params })
       .pipe(
         map(result => ({
           ...result,
@@ -104,11 +127,15 @@ export class MemoryService {
         tap(result =>
           this.store.replaceSearch(queryKey, MEMORY_ENTITY_TYPE, result),
         ),
+        ignoreElements(),
       );
 
-    return this.store.search$<MemorySummary>(queryKey).pipe(
-      take(1),
-      switchMap(cached => (cached ? concat(of(cached), refresh$) : refresh$)),
+    const cached$ = this.store.search$<MemorySummary>(queryKey).pipe(
+      filter(
+        (result): result is MemorySearchResult => result !== undefined,
+      ),
     );
+
+    return merge(cached$, refresh$);
   }
 }

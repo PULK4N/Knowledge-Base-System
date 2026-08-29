@@ -22,8 +22,12 @@ interface ListFilterBase {
 
 export interface ListTextFilter extends ListFilterBase {
   readonly kind: 'text';
+  readonly type?: 'text' | 'number' | 'date';
   readonly placeholder?: string;
   readonly maxLength?: number;
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
 }
 
 export interface ListSelectFilter extends ListFilterBase {

@@ -16,6 +16,27 @@
     />
   </label>
 
+  @if (secondarySearch() !== null) {
+    <label class="search-control semantic-search-control">
+      <span class="sr-only">{{ secondarySearchLabel() }}</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="7" cy="7" r="2.5" />
+        <circle cx="17" cy="7" r="2.5" />
+        <circle cx="12" cy="17" r="2.5" />
+        <path d="m9.1 8.4 1.8 6.1M14.9 8.4l-1.8 6.1M9.5 7h5" />
+      </svg>
+      <input
+        #secondarySearchInput
+        type="search"
+        autocomplete="off"
+        [value]="secondarySearch()"
+        [attr.maxlength]="secondarySearchMaxLength()"
+        [placeholder]="secondarySearchPlaceholder()"
+        (input)="requestSecondarySearch(secondarySearchInput.value)"
+      />
+    </label>
+  }
+
   @if (filterOptions().length > 0) {
     <label class="select-control">
       <span>{{ filterLabel() }}</span>

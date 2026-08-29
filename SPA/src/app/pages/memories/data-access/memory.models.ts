@@ -1,4 +1,5 @@
 import { PagedResult } from '../../../core/store/entity-store.service';
+import { ListSortDirection } from '../../../shared/list-state/list-state';
 
 export interface MemorySummary {
   readonly id: string;
@@ -15,7 +16,20 @@ export interface MemorySearchRequest {
   readonly page: number;
   readonly pageSize: number;
   readonly search: string;
+  readonly semanticSearch: string;
+  readonly hasSummary: boolean | null;
+  readonly minimumPromptCount: number | null;
+  readonly sortBy: MemorySearchSortField;
+  readonly sortDirection: ListSortDirection;
 }
+
+export type MemorySearchSortField =
+  | 'Relevance'
+  | 'LastActivity'
+  | 'PromptCount'
+  | 'FirstPrompt'
+  | 'LastPrompt'
+  | 'SummaryUpdated';
 
 export type MemorySearchResult = PagedResult<MemorySummary>;
 

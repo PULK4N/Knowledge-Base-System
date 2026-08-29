@@ -23,14 +23,27 @@ describe('MemoryService', () => {
 
   it('searches memories and maps the API identity', async () => {
     const resultPromise = firstValueFrom(
-      service.search({ page: 2, pageSize: 5, search: 'event sourcing' }),
+      service.search({
+        page: 2,
+        pageSize: 5,
+        search: 'event sourcing',
+        semanticSearch: '',
+        hasSummary: true,
+        minimumPromptCount: 3,
+        sortBy: 'PromptCount',
+        sortDirection: 'Ascending',
+      }),
     );
     const request = http.expectOne(
       candidate =>
         candidate.url === '/api/memories' &&
         candidate.params.get('page') === '2' &&
         candidate.params.get('pageSize') === '5' &&
-        candidate.params.get('search') === 'event sourcing',
+        candidate.params.get('search') === 'event sourcing' &&
+        candidate.params.get('hasSummary') === 'true' &&
+        candidate.params.get('minimumPromptCount') === '3' &&
+        candidate.params.get('sortBy') === 'PromptCount' &&
+        candidate.params.get('sortDirection') === 'Ascending',
     );
 
     request.flush({
@@ -65,6 +78,40 @@ describe('MemoryService', () => {
       summaryTimestamp: '2026-08-01T09:05:00Z',
       lastActivityTimestamp: '2026-08-01T09:05:00Z',
     });
+  });
+
+  it('uses the paged hybrid endpoint for semantic search', async () => {
+    const resultPromise = firstValueFrom(
+      service.search({
+        page: 1,
+        pageSize: 10,
+        search: '',
+        semanticSearch: 'what did we decide about event replay?',
+        hasSummary: null,
+        minimumPromptCount: null,
+        sortBy: 'Relevance',
+        sortDirection: 'Descending',
+      }),
+    );
+    const request = http.expectOne(
+      candidate =>
+        candidate.url === '/api/memories/hybrid-search' &&
+        candidate.params.get('query') ===
+          'what did we decide about event replay?' &&
+        candidate.params.get('sortBy') === 'Relevance',
+    );
+
+    request.flush({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    });
+
+    expect((await resultPromise).items).toEqual([]);
   });
 
   it('loads a conversation and normalizes message roles and payloads', async () => {

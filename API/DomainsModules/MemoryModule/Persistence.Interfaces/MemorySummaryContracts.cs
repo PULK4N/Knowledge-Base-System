@@ -1,3 +1,4 @@
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain.Models;
 
@@ -19,6 +20,21 @@ public sealed record MemorySummarySearchResult(
     int TotalCount
 );
 
+public sealed record MemorySummaryFilters(
+    bool? HasSummary,
+    int? MinimumPromptCount
+);
+
+public enum MemorySummarySortField
+{
+    Relevance,
+    LastActivity,
+    PromptCount,
+    FirstPrompt,
+    LastPrompt,
+    SummaryUpdated
+}
+
 public interface IMemorySummaryRepository
 {
     Task<MemorySummary?> Get(
@@ -26,10 +42,13 @@ public interface IMemorySummaryRepository
         CancellationToken cancellationToken = default
     );
 
+    Task<List<MemorySummary>> GetMany(
+        IReadOnlyCollection<AggregateId> memoryAggregateIds,
+        CancellationToken cancellationToken = default
+    );
+
     Task<MemorySummarySearchResult> Search(
-        int page,
-        int pageSize,
-        string? search,
+        EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,
         CancellationToken cancellationToken = default
     );
 

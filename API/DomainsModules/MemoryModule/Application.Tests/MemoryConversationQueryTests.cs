@@ -145,10 +145,13 @@ public sealed class MemoryConversationQueryTests
             CancellationToken cancellationToken = default
         ) => Task.FromResult(summary);
 
+        public Task<List<MemorySummary>> GetMany(
+            IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
         public Task<MemorySummarySearchResult> Search(
-            int page,
-            int pageSize,
-            string? search,
+            EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 

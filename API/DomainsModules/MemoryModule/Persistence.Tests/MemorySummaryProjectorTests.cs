@@ -1,3 +1,4 @@
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Models;
@@ -94,10 +95,13 @@ public sealed class MemorySummaryProjectorTests
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
+        public Task<List<MemorySummary>> GetMany(
+            IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
         public Task<MemorySummarySearchResult> Search(
-            int page,
-            int pageSize,
-            string? search,
+            EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
