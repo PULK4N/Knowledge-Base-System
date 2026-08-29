@@ -11,6 +11,8 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
 
     public AggregateId ProjectId { get; set; }
 
+    public AggregateId? ParentFeatureId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public string Summary { get; set; } = string.Empty;

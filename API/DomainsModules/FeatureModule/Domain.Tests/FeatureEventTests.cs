@@ -16,6 +16,9 @@ public sealed class FeatureEventTests
     private static readonly AggregateId SkillId = Id(
         "33333333-3333-3333-3333-333333333333"
     );
+    private static readonly AggregateId ParentFeatureId = Id(
+        "88888888-8888-8888-8888-888888888888"
+    );
     private static readonly FeatureRecordId RecordId =
         FeatureRecordId.FromDatabaseGuid(
             Guid.Parse("44444444-4444-4444-4444-444444444444")
@@ -149,6 +152,28 @@ public sealed class FeatureEventTests
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
         Assert.True(state.IsDeleted);
+    }
+
+    [Fact]
+    public void FeatureParentSetV1_SetsAndClearsParentFeature()
+    {
+        var state = new FeatureStateData(FeatureId);
+        var executionInfo = new EventExecutionInfo
+        {
+            AggregateId = FeatureId,
+            Timestamp = DateTime.UtcNow
+        };
+
+        new FeatureParentSetV1(ParentFeatureId).Apply(
+            state,
+            executionInfo
+        );
+
+        Assert.Equal(ParentFeatureId, state.ParentFeatureId);
+
+        new FeatureParentSetV1(null).Apply(state, executionInfo);
+
+        Assert.Null(state.ParentFeatureId);
     }
 
     [Fact]
