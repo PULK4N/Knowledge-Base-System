@@ -6,6 +6,7 @@ using FeatureModule.Domain.Models;
 using FeatureModule.Persistence.Interfaces;
 using FeatureModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
+using SharedModule.Persistence;
 
 namespace FeatureModule.Persistence.Tests;
 
@@ -334,5 +335,7 @@ public sealed class FeatureSearchProjectorTests
             Set<FeatureSummaryEntry>();
         public DbSet<FeatureSearchEntry> FeatureSearchEntries =>
             Set<FeatureSearchEntry>();
+        public DbSet<EntityRelation> EntityRelations =>
+            Set<EntityRelation>();
     }
 }

@@ -5,6 +5,7 @@ using SkillsModule.Contracts;
 using SkillsModule.Domain;
 using SkillsModule.Domain.Models;
 using SkillsModule.Persistence.Models;
+using SharedModule.Persistence;
 
 namespace SkillsModule.Persistence.Tests;
 
@@ -313,6 +314,8 @@ public sealed class SkillListProjectorTests
             Set<SkillListEntry>();
         public DbSet<SkillListTagEntry> SkillListTags =>
             Set<SkillListTagEntry>();
+        public DbSet<EntityRelation> EntityRelations =>
+            Set<EntityRelation>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
