@@ -212,6 +212,11 @@ public sealed class InjectionSetupTests
                 IMemorySummaryRepository
             >()
         );
+        Assert.IsType<PostgreSqlMemoryConversationRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IMemoryConversationRepository
+            >()
+        );
         Assert.IsType<PostgreSqlSkillSearchRepository>(
             scope.ServiceProvider.GetRequiredService<
                 ISkillSearchRepository
@@ -259,6 +264,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(SkillListProjector), projectorTypes);
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
         Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
+        Assert.Contains(typeof(MemoryConversationProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
         Assert.Contains(typeof(FeatureSearchProjector), projectorTypes);
         Assert.Contains(

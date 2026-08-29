@@ -9,4 +9,11 @@ export const MEMORIES_ROUTES: Routes = [
         module => module.MemoriesListPage,
       ),
   },
+  {
+    path: ':memoryId',
+    loadComponent: () =>
+      import('./feature/memory-chat.page').then(
+        module => module.MemoryChatPage,
+      ),
+  },
 ];

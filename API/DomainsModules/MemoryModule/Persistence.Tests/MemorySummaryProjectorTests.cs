@@ -89,6 +89,11 @@ public sealed class MemorySummaryProjectorTests
         public IReadOnlyCollection<AggregateId> AggregateIds { get; private set; } = [];
         public IReadOnlyCollection<MemorySummary> Summaries { get; private set; } = [];
 
+        public Task<MemorySummary?> Get(
+            AggregateId memoryAggregateId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
         public Task<MemorySummarySearchResult> Search(
             int page,
             int pageSize,

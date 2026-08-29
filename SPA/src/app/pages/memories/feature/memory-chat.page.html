@@ -1,0 +1,111 @@
+<header class="page-header">
+  <a class="back-link" routerLink="/memories">← Memories</a>
+</header>
+
+@if (state$ | async; as state) {
+  @switch (state.status) {
+    @case ('loading') {
+      <section class="request-message surface-card">
+        Loading conversation…
+      </section>
+    }
+    @case ('error') {
+      <section class="request-message error surface-card">
+        <div>
+          <strong>Conversation could not be loaded</strong>
+          <p>{{ state.message }}</p>
+        </div>
+      </section>
+    }
+    @case ('success') {
+      <section class="chat-panel surface-card">
+        <div class="chat-heading">
+          <div>
+            <h1 class="page-heading">{{ state.data.title }}</h1>
+            <p class="page-subtitle" [title]="state.data.conversation.threadId">
+              Thread {{ state.data.conversation.threadId }}
+            </p>
+          </div>
+          <dl class="chat-metadata">
+            <div>
+              <dt>Messages</dt>
+              <dd>{{ state.data.conversation.messages.length }}</dd>
+            </div>
+            <div>
+              <dt>First prompt</dt>
+              <dd>
+                @if (state.data.conversation.firstPromptTimestamp) {
+                  {{ state.data.conversation.firstPromptTimestamp | date: 'medium' }}
+                } @else {
+                  —
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Last prompt</dt>
+              <dd>
+                @if (state.data.conversation.lastPromptTimestamp) {
+                  {{ state.data.conversation.lastPromptTimestamp | date: 'medium' }}
+                } @else {
+                  —
+                }
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        @if (state.data.conversation.summary) {
+          <details class="chat-summary">
+            <summary>Summary</summary>
+            <app-markdown-content
+              class="readme-document"
+              [blocks]="emptyBlocks"
+              [markdown]="state.data.conversation.summary"
+              emptyMessage="This memory has no summary."
+            />
+          </details>
+        }
+
+        <ol class="chat-transcript" aria-label="Conversation">
+          @for (message of state.data.conversation.messages; track message.id) {
+            <li class="chat-message" [class]="'role-' + message.role">
+              <div class="message-heading">
+                <span class="role-badge">{{ roleLabel(message.role) }}</span>
+                <span class="hook-name">{{ message.hookEventName }}</span>
+                <time [attr.datetime]="message.timestamp">
+                  {{ message.timestamp | date: 'medium' }}
+                </time>
+              </div>
+
+              @if (message.message) {
+                <app-markdown-content
+                  class="readme-document"
+                  [blocks]="emptyBlocks"
+                  [markdown]="message.message"
+                  emptyMessage="This message has no content."
+                />
+              } @else {
+                <p class="no-message">
+                  This hook carries no prompt or assistant message.
+                </p>
+              }
+
+              <details class="message-payload">
+                <summary>Raw payload</summary>
+                <pre><code>{{ message.payloadJson }}</code></pre>
+              </details>
+            </li>
+          } @empty {
+            <li class="empty-state">
+              <strong>No messages were recorded</strong>
+              <span>
+                Prompts and assistant replies appear here once hooks are
+                recorded for this memory.
+              </span>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  }
+}

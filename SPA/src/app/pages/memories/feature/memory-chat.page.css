@@ -1,0 +1,215 @@
+:host {
+  display: block;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.page-header {
+  padding-top: 4px;
+}
+
+.back-link {
+  color: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.request-message {
+  margin-top: 24px;
+  padding: 26px 30px;
+  color: var(--muted);
+}
+
+.request-message.error {
+  color: #8c2b3f;
+}
+
+.request-message p {
+  margin: 8px 0 0;
+}
+
+.chat-panel {
+  margin-top: 24px;
+  padding: 30px 34px 34px;
+}
+
+.chat-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.chat-heading .page-heading {
+  margin: 0;
+}
+
+.chat-heading .page-subtitle {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.chat-metadata {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 26px;
+  margin: 0;
+}
+
+.chat-metadata dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.chat-metadata dd {
+  margin: 6px 0 0;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.chat-summary {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfbff;
+}
+
+.chat-summary > summary,
+.message-payload > summary {
+  color: #52617d;
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.chat-transcript {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-message {
+  min-width: 0;
+  padding: 16px 19px;
+  border: 1px solid #e5e8ee;
+  border-radius: 12px;
+  background: white;
+}
+
+.chat-message.role-assistant {
+  margin-left: clamp(0px, 4vw, 72px);
+  background: #fbfbff;
+}
+
+.chat-message.role-hook {
+  border-style: dashed;
+  background: #fafbfd;
+}
+
+.message-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.role-badge {
+  color: var(--indigo);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.role-assistant .role-badge {
+  color: #2f7a5b;
+}
+
+.role-hook .role-badge {
+  color: #6b7590;
+}
+
+.hook-name {
+  color: #52617d;
+  font-size: 13px;
+}
+
+.message-heading time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-message .readme-document {
+  display: block;
+  min-width: 0;
+}
+
+.no-message {
+  margin: 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.message-payload {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eceff5;
+}
+
+.message-payload pre {
+  overflow-x: auto;
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: #f5f6fa;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 32px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--navy);
+}
+
+@media (max-width: 720px) {
+  .chat-panel {
+    padding: 24px 18px 26px;
+  }
+
+  .chat-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .chat-metadata {
+    grid-auto-flow: row;
+    gap: 12px;
+  }
+
+  .chat-message.role-assistant {
+    margin-left: 0;
+  }
+}

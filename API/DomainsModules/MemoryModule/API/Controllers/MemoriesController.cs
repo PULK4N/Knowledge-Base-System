@@ -48,6 +48,18 @@ public sealed class MemoriesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("{memoryId:guid}/conversation")]
+    public async Task<ActionResult<MemoryConversationDto>> GetConversation(
+        Guid memoryId,
+        [FromServices] GetMemoryConversationQuery query
+    )
+    {
+        query.MemoryId = memoryId;
+        var result = await Execute(query);
+
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpGet("{memoryId:guid}/prompts")]
     public async Task<ActionResult<MemoryPromptWindowResult>> GetPromptWindow(
         Guid memoryId,

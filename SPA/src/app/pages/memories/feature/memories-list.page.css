@@ -323,3 +323,15 @@
     padding: 4px 4px 26px;
   }
 }
+
+.open-chat {
+  justify-self: start;
+  margin-top: 4px;
+  color: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.open-chat:hover {
+  text-decoration: underline;
+}

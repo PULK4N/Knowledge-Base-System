@@ -34,3 +34,23 @@ public sealed record MemoryPromptDto(
     DateTime PromptStartTimestamp,
     string Text
 );
+
+public sealed record MemoryConversationDto(
+    Guid MemoryId,
+    Guid ThreadId,
+    string Summary,
+    DateTime? SummaryTimestamp,
+    DateTime? FirstPromptTimestamp,
+    DateTime? LastPromptTimestamp,
+    List<MemoryConversationMessageDto> Messages
+);
+
+public sealed record MemoryConversationMessageDto(
+    Guid PromptId,
+    int HookIndex,
+    DateTime Timestamp,
+    string HookEventName,
+    string Role,
+    string Message,
+    string PayloadJson
+);

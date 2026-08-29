@@ -1,5 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   BehaviorSubject,
   Observable,
@@ -30,7 +31,7 @@ interface MemoryListItem extends MemorySummary {
 
 @Component({
   selector: 'app-memories-list-page',
-  imports: [AsyncPipe, DatePipe, PaginationComponent],
+  imports: [AsyncPipe, DatePipe, PaginationComponent, RouterLink],
   templateUrl: './memories-list.page.html',
   styleUrl: './memories-list.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

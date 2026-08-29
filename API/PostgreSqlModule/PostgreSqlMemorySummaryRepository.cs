@@ -10,6 +10,22 @@ internal sealed class PostgreSqlMemorySummaryRepository(
     EventSourcingDbContext dbContext
 ) : IMemorySummaryRepository
 {
+    public async Task<MemorySummary?> Get(
+        AggregateId memoryAggregateId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entry = await dbContext.Set<MemorySummaryEntry>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                summary =>
+                    summary.MemoryAggregateId == memoryAggregateId.Value,
+                cancellationToken
+            );
+
+        return entry is null ? null : ToReadModel(entry);
+    }
+
     public async Task<MemorySummarySearchResult> Search(
         int page,
         int pageSize,

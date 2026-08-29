@@ -21,6 +21,11 @@ public sealed record MemorySummarySearchResult(
 
 public interface IMemorySummaryRepository
 {
+    Task<MemorySummary?> Get(
+        AggregateId memoryAggregateId,
+        CancellationToken cancellationToken = default
+    );
+
     Task<MemorySummarySearchResult> Search(
         int page,
         int pageSize,

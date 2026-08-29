@@ -2,6 +2,19 @@ using System.Text.Json;
 
 namespace MemoryModule.Domain.Models;
 
+public static class PromptHookMessageRoles
+{
+    public const string User = "user";
+    public const string Assistant = "assistant";
+    public const string Hook = "hook";
+}
+
+/// <summary>
+/// The conversation text of a hook payload together with the side of the
+/// conversation it came from.
+/// </summary>
+public sealed record PromptHookMessage(string Role, string Text);
+
 /// <summary>
 /// Claude and Codex hook payloads carry the conversation text in "prompt" for a
 /// user turn and in "last_assistant_message" for an assistant turn. Everything
@@ -14,13 +27,31 @@ public static class PromptHookPayload
     public const string AssistantMessagePropertyName = "last_assistant_message";
 
     /// <summary>
-    /// Returns the conversation text of the hook, or null when the payload
+    /// Returns the conversation turn of the hook, or null when the payload
     /// carries neither message property so callers can fall back to the whole
     /// payload.
     /// </summary>
+    public static PromptHookMessage? Find(JsonElement payload)
+    {
+        var prompt = ReadText(payload, PromptPropertyName);
+        if (prompt is not null)
+            return new PromptHookMessage(PromptHookMessageRoles.User, prompt);
+
+        var assistantMessage = ReadText(
+            payload,
+            AssistantMessagePropertyName
+        );
+
+        return assistantMessage is null
+            ? null
+            : new PromptHookMessage(
+                PromptHookMessageRoles.Assistant,
+                assistantMessage
+            );
+    }
+
     public static string? FindMessage(JsonElement payload) =>
-        ReadText(payload, PromptPropertyName)
-        ?? ReadText(payload, AssistantMessagePropertyName);
+        Find(payload)?.Text;
 
     private static string? ReadText(JsonElement payload, string propertyName)
     {

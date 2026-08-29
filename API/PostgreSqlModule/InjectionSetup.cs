@@ -116,6 +116,10 @@ public static class InjectionSetup
             IMemorySummaryRepository,
             PostgreSqlMemorySummaryRepository
         >();
+        services.AddScoped<
+            IMemoryConversationRepository,
+            PostgreSqlMemoryConversationRepository
+        >();
         services.RegisterTextEmbeddings(configuration);
         services.AddScoped<
             IKnowledgeSearchRepository,

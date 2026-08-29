@@ -382,6 +382,31 @@ internal sealed class PostgreSqlEventSourcingDbContext(
             }
         );
 
+        modelBuilder.Entity<MemoryConversationEntry>(
+            memory =>
+            {
+                memory.ToTable("MemoryConversationEntries");
+                memory.HasKey(
+                    message =>
+                        new
+                        {
+                            message.MemoryAggregateId,
+                            message.PromptId,
+                            message.HookIndex
+                        }
+                );
+                memory.Property(message => message.HookEventName).IsRequired();
+                memory.Property(message => message.Role).IsRequired();
+                memory.Property(message => message.Message).IsRequired();
+                memory.Property(message => message.PayloadJson).IsRequired();
+                memory.HasIndex(message => message.ThreadId);
+                memory.HasIndex(
+                    message =>
+                        new { message.MemoryAggregateId, message.Timestamp }
+                );
+            }
+        );
+
         modelBuilder.Entity<SkillSearchEntry>(
             skill =>
             {

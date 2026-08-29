@@ -6,11 +6,45 @@ import {
   PagedResult,
 } from '../../../core/store/entity-store.service';
 import {
+  MemoryConversation,
+  MemoryConversationDto,
+  MemoryConversationMessage,
+  MemoryConversationMessageDto,
+  MemoryMessageRole,
   MemorySearchRequest,
   MemorySearchResult,
   MemorySummary,
   MemorySummaryDto,
 } from './memory.models';
+
+const MEMORY_MESSAGE_ROLES: readonly MemoryMessageRole[] = [
+  'user',
+  'assistant',
+  'hook',
+];
+
+function formatJson(value: string): string {
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
+}
+
+function toMessage(
+  message: MemoryConversationMessageDto,
+): MemoryConversationMessage {
+  const role = MEMORY_MESSAGE_ROLES.find(
+    candidate => candidate === message.role,
+  );
+
+  return {
+    ...message,
+    id: `${message.promptId}:${message.hookIndex}`,
+    role: role ?? 'hook',
+    payloadJson: formatJson(message.payloadJson),
+  };
+}
 
 const MEMORY_ENTITY_TYPE = 'memory';
 
@@ -19,6 +53,19 @@ export class MemoryService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(EntityStore);
   private readonly controllerPath = '/api/memories';
+
+  getConversation(memoryId: string): Observable<MemoryConversation> {
+    return this.http
+      .get<MemoryConversationDto>(
+        `${this.controllerPath}/${encodeURIComponent(memoryId)}/conversation`,
+      )
+      .pipe(
+        map(conversation => ({
+          ...conversation,
+          messages: conversation.messages.map(toMessage),
+        })),
+      );
+  }
 
   search(request: MemorySearchRequest): Observable<MemorySearchResult> {
     const normalizedSearch = request.search.trim();

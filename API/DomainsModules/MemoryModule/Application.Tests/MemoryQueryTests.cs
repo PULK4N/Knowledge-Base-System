@@ -320,6 +320,16 @@ public sealed class MemoryQueryTests
     {
         public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
 
+        public Task<MemorySummary?> Get(
+            AggregateId memoryAggregateId,
+            CancellationToken cancellationToken = default
+        ) => Task.FromResult(
+            result.Items.FirstOrDefault(
+                summary =>
+                    summary.MemoryAggregateId == memoryAggregateId
+            )
+        );
+
         public Task<MemorySummarySearchResult> Search(
             int page,
             int pageSize,

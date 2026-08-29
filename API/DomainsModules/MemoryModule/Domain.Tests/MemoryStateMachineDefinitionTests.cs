@@ -40,7 +40,8 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.Equal(
             [
                 nameof(MemorySearchProjector),
-                nameof(MemorySummaryProjector)
+                nameof(MemorySummaryProjector),
+                nameof(MemoryConversationProjector)
             ],
             definition.Projections
         );
@@ -60,4 +61,5 @@ public sealed class MemoryStateMachineDefinitionTests
 
     private sealed class MemorySearchProjector;
     private sealed class MemorySummaryProjector;
+    private sealed class MemoryConversationProjector;
 }
