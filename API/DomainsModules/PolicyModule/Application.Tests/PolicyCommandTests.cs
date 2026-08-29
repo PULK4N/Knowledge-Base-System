@@ -333,11 +333,11 @@ public sealed class PolicyCommandTests
     }
 
     [Theory]
-    [InlineData(null)]
     [InlineData("claude")]
     [InlineData("codex")]
+    [InlineData("in-house-agent")]
     public async Task GetPoliciesByRepository_ForwardsTheRequestedAgentFamily(
-        string? agentFamily
+        string agentFamily
     )
     {
         var eventStore = new CapturingEventStoreWithOutbox();
@@ -375,6 +375,30 @@ public sealed class PolicyCommandTests
             policyTextRepository.LastProjectId
         );
         Assert.Equal(agentFamily, policyTextRepository.LastAgentFamily);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetPoliciesByRepository_RefusesToRunWithoutAnAgentFamily(
+        string agentFamily
+    )
+    {
+        var query = new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            new CapturingEventStoreWithOutbox(),
+            new StubPolicyTextRepository(),
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = "/workspace/agent-family-project",
+            AgentFamily = agentFamily
+        };
+
+        Assert.False(await query.CanExecute(Executor));
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => query.Execute(Executor)
+        );
     }
 
     [Fact]
@@ -698,7 +722,8 @@ public sealed class PolicyCommandTests
             new StubPolicyProjectSummaryRepository()
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
 
         Assert.Equal(
@@ -806,7 +831,8 @@ public sealed class PolicyCommandTests
             new StubPolicyProjectSummaryRepository()
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
         Assert.Equal(
             "# Project \"Policy project\" policies\n\n"
@@ -846,7 +872,8 @@ public sealed class PolicyCommandTests
             projectSummaryRepository
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
 
         Assert.Equal(

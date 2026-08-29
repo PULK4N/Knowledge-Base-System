@@ -37,8 +37,7 @@ public sealed class PolicyMcpFunctionsTests
         "policy_agent_family_remove",
         "policy_agent_family_policy_add",
         "policy_agent_family_policy_update",
-        "policy_agent_family_policy_remove",
-        "policy_get_by_repository"
+        "policy_agent_family_policy_remove"
     ];
 
     [Fact]
@@ -104,33 +103,19 @@ public sealed class PolicyMcpFunctionsTests
     }
 
     [Fact]
-    public void Get_by_repository_exposes_the_repository_path_and_agent_family()
+    public void Repository_policies_are_not_reachable_over_mcp()
     {
-        var function = PolicyMcpFunctions.Create().Single(
-            function =>
-                function.Name == "policy_get_by_repository"
-        );
+        var functionNames = PolicyMcpFunctions.Create()
+            .Select(function => function.Name)
+            .ToList();
 
-        Assert.Equal(
-            ["repositoryPath", "agentFamily"],
-            function.JsonSchema
-                .GetProperty("properties")
-                .EnumerateObject()
-                .Select(property => property.Name)
-                .ToList()
-        );
-        Assert.Equal(
-            ["repositoryPath"],
-            function.JsonSchema
-                .GetProperty("required")
-                .EnumerateArray()
-                .Select(element => element.GetString())
-                .ToList()
-        );
-        Assert.Contains(
-            "stop reasoning",
-            function.Description,
-            StringComparison.OrdinalIgnoreCase
+        Assert.DoesNotContain("policy_get_by_repository", functionNames);
+        Assert.All(
+            functionNames,
+            name =>
+                Assert.False(
+                    name.Contains("by_repository", StringComparison.Ordinal)
+                )
         );
     }
 

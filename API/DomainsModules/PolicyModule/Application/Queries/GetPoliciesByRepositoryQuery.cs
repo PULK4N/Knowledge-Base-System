@@ -20,14 +20,16 @@ public sealed class GetPoliciesByRepositoryQuery(
     public required string RepositoryPath { get; set; }
 
     /// <summary>
-    /// Optional agent family such as "claude" or "codex". Selects the agent
-    /// family policy block appended to the returned policy text.
+    /// The agent family the policies are compiled for, such as "claude" or
+    /// "codex". Required because this query exists to bootstrap an agent
+    /// session, so the text must carry the block for the agent that will act.
     /// </summary>
-    public string? AgentFamily { get; set; }
+    public required string AgentFamily { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             !string.IsNullOrWhiteSpace(RepositoryPath)
+            && !string.IsNullOrWhiteSpace(AgentFamily)
         );
 
     protected override async Task<GetPoliciesByRepositoryResult> ExecuteInternal(
