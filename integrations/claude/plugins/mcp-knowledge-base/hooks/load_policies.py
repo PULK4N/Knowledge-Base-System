@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Override CLAUDE.md with repository policies from MCP before Claude works."""
+"""Override CLAUDE.md with repository policies from the HTTP API before Claude works."""
 
 from __future__ import annotations
 
@@ -10,127 +10,116 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Callable
 
 
-PROTOCOL_VERSION = "2025-11-25"
 DEFAULT_MCP_URL = "http://localhost:5231/mcp"
-POLICY_TOOL = "policy_get_by_repository"
+POLICY_PATH = "/api/policies"
+AGENT_FAMILY_PATH = "/api/policies/agent-families"
+DEFAULT_AGENT_FAMILY = "claude"
 POLICY_FILE_NAME = "CLAUDE.md"
+POLICY_DOCUMENT_MARKER = "# General policies"
+AGENT_FAMILY_NOT_FOUND_STATUS = "AgentFamilyNotFound"
 
 
 class PolicyBootstrapError(RuntimeError):
     pass
 
 
-class McpHttpClient:
-    def __init__(self, url: str, timeout_seconds: int = 20) -> None:
+class AgentFamilyMissingError(PolicyBootstrapError):
+    """The knowledge base has no such agent family yet."""
+
+
+class PolicyHttpClient:
+    """Reads repository policies from the knowledge base HTTP API.
+
+    Policies are deliberately not fetched over MCP. Serving them only over HTTP
+    keeps this hook the single place that decides which agent family the
+    session belongs to.
+    """
+
+    def __init__(
+        self,
+        url: str,
+        agent_family_url: str,
+        timeout_seconds: int = 20,
+    ) -> None:
         self._url = url
+        self._agent_family_url = agent_family_url
         self._timeout_seconds = timeout_seconds
-        self._session_id: str | None = None
 
-    def get_policies(self, repository_path: str) -> dict[str, Any]:
-        initialized = self._request(
-            {
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": PROTOCOL_VERSION,
-                    "capabilities": {},
-                    "clientInfo": {
-                        "name": "mcp-knowledge-base-claude-hook",
-                        "version": "0.2.0",
-                    },
-                },
-            },
-            request_id=1,
-        )
-        negotiated_version = _get_case_insensitive(
-            initialized.get("result", {}), "protocolVersion"
-        )
-        if not negotiated_version:
-            raise PolicyBootstrapError("MCP initialize returned no protocol version.")
-
-        self._request(
-            {
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized",
-                "params": {},
-            },
-            request_id=None,
-        )
-        response = self._request(
-            {
-                "jsonrpc": "2.0",
-                "id": 2,
-                "method": "tools/call",
-                "params": {
-                    "name": POLICY_TOOL,
-                    "arguments": {"repositoryPath": repository_path},
-                },
-            },
-            request_id=2,
-        )
-        return _read_tool_result(response)
-
-    def close(self) -> None:
-        if not self._session_id:
-            return
-        request = urllib.request.Request(self._url, method="DELETE")
-        request.add_header("Mcp-Session-Id", self._session_id)
-        try:
-            urllib.request.urlopen(request, timeout=2).close()
-        except (OSError, urllib.error.URLError):
-            pass
-
-    def _request(
-        self, payload: dict[str, Any], request_id: int | None
+    def get_policies(
+        self, repository_path: str, agent_family: str
     ) -> dict[str, Any]:
-        body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-        request = urllib.request.Request(self._url, data=body, method="POST")
-        request.add_header("Content-Type", "application/json")
-        request.add_header("Accept", "application/json, text/event-stream")
-        request.add_header("MCP-Protocol-Version", PROTOCOL_VERSION)
-        if self._session_id:
-            request.add_header("Mcp-Session-Id", self._session_id)
+        query = urllib.parse.urlencode(
+            {"repositoryPath": repository_path, "agentFamily": agent_family}
+        )
+        request = urllib.request.Request(f"{self._url}?{query}", method="GET")
+        request.add_header("Accept", "application/json")
 
         try:
             with urllib.request.urlopen(
                 request, timeout=self._timeout_seconds
             ) as response:
-                session_id = response.headers.get("Mcp-Session-Id")
-                if session_id:
-                    self._session_id = session_id
-                response_body = response.read().decode("utf-8")
+                body = response.read().decode("utf-8")
         except urllib.error.HTTPError as error:
             details = error.read().decode("utf-8", errors="replace")
+            if error.code == 400 and _is_missing_agent_family(details):
+                raise AgentFamilyMissingError(agent_family) from error
             raise PolicyBootstrapError(
-                f"MCP returned HTTP {error.code}: {details or error.reason}"
+                f"Policy API returned HTTP {error.code}: {details or error.reason}"
             ) from error
         except (OSError, urllib.error.URLError) as error:
-            raise PolicyBootstrapError(f"MCP is unavailable: {error}") from error
+            raise PolicyBootstrapError(
+                f"Policy API is unavailable: {error}"
+            ) from error
 
-        if request_id is None:
-            return {}
+        return _parse_result(body)
 
-        for message in _parse_messages(response_body):
-            if message.get("id") != request_id:
-                continue
-            if "error" in message:
-                raise PolicyBootstrapError(
-                    f"MCP request failed: {json.dumps(message['error'])}"
-                )
-            return message
-        raise PolicyBootstrapError("MCP returned no response for the request.")
+    def create_agent_family(self, agent_family: str) -> None:
+        """Register the family this plugin loads policies for.
+
+        The plugin knows which agent it serves, so a knowledge base that has
+        never seen this agent is provisioned rather than failing the session.
+        """
+        payload = json.dumps(
+            {
+                "agentFamilyName": agent_family,
+                "description": (
+                    f"Policies applied only to {agent_family} sessions."
+                ),
+            }
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            self._agent_family_url, data=payload, method="POST"
+        )
+        request.add_header("Content-Type", "application/json")
+        request.add_header("Accept", "application/json")
+
+        try:
+            urllib.request.urlopen(
+                request, timeout=self._timeout_seconds
+            ).close()
+        except urllib.error.HTTPError:
+            # A concurrent session may have created it first; the retried read
+            # decides whether the family is really usable.
+            pass
+        except (OSError, urllib.error.URLError) as error:
+            raise PolicyBootstrapError(
+                f"Could not create agent family '{agent_family}': {error}"
+            ) from error
+
+    def close(self) -> None:
+        """Kept so callers can manage the client uniformly; HTTP needs no teardown."""
 
 
 def process_hook(
     event: dict[str, Any],
     *,
-    client_factory: Callable[[], McpHttpClient] | None = None,
+    client_factory: Callable[[], PolicyHttpClient] | None = None,
     data_directory: Path | None = None,
 ) -> dict[str, Any] | None:
     event_name = str(event.get("hook_event_name", ""))
@@ -156,9 +145,13 @@ def process_hook(
     if cached:
         cache_path.unlink(missing_ok=True)
 
-    client = client_factory() if client_factory else McpHttpClient(_mcp_url())
+    client = (
+        client_factory()
+        if client_factory
+        else PolicyHttpClient(_policy_url(), _agent_family_url())
+    )
     try:
-        result = client.get_policies(repository_path)
+        result = _fetch_policies(client, repository_path, _agent_family())
     finally:
         client.close()
 
@@ -176,6 +169,23 @@ def process_hook(
     return _policy_file_output(event_name, repository_path, result)
 
 
+def _fetch_policies(
+    client: PolicyHttpClient, repository_path: str, agent_family: str
+) -> dict[str, Any]:
+    """Read policies, creating this plugin's agent family if it is missing."""
+    try:
+        return client.get_policies(repository_path, agent_family)
+    except AgentFamilyMissingError:
+        client.create_agent_family(agent_family)
+
+    try:
+        return client.get_policies(repository_path, agent_family)
+    except AgentFamilyMissingError as error:
+        raise PolicyBootstrapError(
+            f"Agent family '{agent_family}' is still missing after creating it."
+        ) from error
+
+
 def _policy_file_output(
     event_name: str, repository_path: str, result: dict[str, Any]
 ) -> dict[str, Any] | None:
@@ -187,9 +197,28 @@ def _policy_file_output(
 
     policies = _get_case_insensitive(result, "policies") or ""
     document = _policy_document(str(policies))
-    if not _write_policy_file(repository_path, document):
+    announce = not _has_loaded_policies(repository_path)
+    _write_policy_file(repository_path, document)
+
+    if not announce:
+        # The agent reads the policy file on its own; saying so every turn only
+        # spends context on something it already has.
         return None
-    return _context_output(event_name, _refreshed_context(repository_path))
+    return _context_output(
+        event_name,
+        f"Policies written to {POLICY_FILE_NAME}.",
+    )
+
+
+def _has_loaded_policies(repository_path: str) -> bool:
+    """True when the agent already has a policy document worth reading."""
+    try:
+        existing = _policy_file_path(repository_path).read_text(
+            encoding="utf-8"
+        )
+    except (OSError, UnicodeDecodeError):
+        return False
+    return POLICY_DOCUMENT_MARKER in existing
 
 
 def _repository_path(cwd: str) -> str:
@@ -220,18 +249,60 @@ def _mcp_url() -> str:
     if override:
         return override
 
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        config_path = Path(plugin_root) / ".mcp.json"
-        try:
-            config = json.loads(config_path.read_text(encoding="utf-8"))
-            server = config["mcpServers"]["mcp-knowledge-base"]
-            url = server.get("url")
-            if isinstance(url, str) and url:
-                return url
-        except (OSError, KeyError, TypeError, json.JSONDecodeError):
-            pass
+    url = _plugin_config().get("url")
+    if isinstance(url, str) and url:
+        return url
     return DEFAULT_MCP_URL
+
+
+def _api_base() -> str:
+    """Resolve the API root from the configured MCP base address."""
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_API_URL")
+    if override:
+        return override.rstrip("/")
+
+    base = _mcp_url().rstrip("/")
+    if base.endswith("/mcp"):
+        base = base[: -len("/mcp")]
+    return base.rstrip("/")
+
+
+def _policy_url() -> str:
+    return f"{_api_base()}{POLICY_PATH}"
+
+
+def _agent_family_url() -> str:
+    return f"{_api_base()}{AGENT_FAMILY_PATH}"
+
+
+def _agent_family() -> str:
+    """The agent family this hook loads policies for.
+
+    Families are free-form names defined in the knowledge base, so the value is
+    configurable; it only defaults to this plugin's own agent.
+    """
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_AGENT_FAMILY")
+    if override and override.strip():
+        return override.strip()
+
+    configured = _plugin_config().get("agentFamily")
+    if isinstance(configured, str) and configured.strip():
+        return configured.strip()
+    return DEFAULT_AGENT_FAMILY
+
+
+def _plugin_config() -> dict[str, Any]:
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if not plugin_root:
+        return {}
+
+    config_path = Path(plugin_root) / ".mcp.json"
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        server = config["mcpServers"]["mcp-knowledge-base"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return {}
+    return server if isinstance(server, dict) else {}
 
 
 def _cache_path(session_id: str, data_directory: Path | None) -> Path:
@@ -288,60 +359,6 @@ def _write_policy_file(repository_path: str, document: str) -> bool:
     return True
 
 
-def _read_tool_result(response: dict[str, Any]) -> dict[str, Any]:
-    result = response.get("result")
-    if not isinstance(result, dict):
-        raise PolicyBootstrapError("MCP tool returned no result object.")
-    if result.get("isError") is True:
-        raise PolicyBootstrapError(_tool_text(result) or "MCP policy tool failed.")
-
-    structured = result.get("structuredContent")
-    if isinstance(structured, dict):
-        return structured
-
-    text = _tool_text(result)
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError as error:
-        raise PolicyBootstrapError("MCP policy tool returned invalid JSON.") from error
-    if not isinstance(parsed, dict):
-        raise PolicyBootstrapError("MCP policy tool returned a non-object result.")
-    return parsed
-
-
-def _tool_text(result: dict[str, Any]) -> str:
-    content = result.get("content")
-    if not isinstance(content, list):
-        return ""
-    return "\n".join(
-        block.get("text", "")
-        for block in content
-        if isinstance(block, dict)
-        and block.get("type") == "text"
-        and isinstance(block.get("text"), str)
-    )
-
-
-def _parse_messages(body: str) -> list[dict[str, Any]]:
-    if not body.strip():
-        return []
-    try:
-        value = json.loads(body)
-        return [value] if isinstance(value, dict) else []
-    except json.JSONDecodeError:
-        messages: list[dict[str, Any]] = []
-        for line in body.splitlines():
-            if not line.startswith("data:"):
-                continue
-            try:
-                value = json.loads(line[5:].strip())
-            except json.JSONDecodeError:
-                continue
-            if isinstance(value, dict):
-                messages.append(value)
-        return messages
-
-
 def _policy_document(policies: str) -> str:
     return policies
 
@@ -360,16 +377,6 @@ def _mapping_required_context(repository_path: str, result: dict[str, Any]) -> s
     )
 
 
-def _refreshed_context(repository_path: str) -> str:
-    path = _policy_file_path(repository_path)
-    return (
-        f"MCP Knowledge Base replaced {path} with the authoritative policies for "
-        f"trusted repository '{repository_path}'. Read that file now and follow it "
-        "for the rest of this session; any earlier version of it is obsolete. Do "
-        "not retrieve repository policies again during this session."
-    )
-
-
 def _context_output(event_name: str, context: str) -> dict[str, Any]:
     return {
         "hookSpecificOutput": {
@@ -385,6 +392,27 @@ def _failure_output(message: str) -> dict[str, Any]:
         f"changing the repository. {message}"
     )
     return {"continue": False, "stopReason": reason, "systemMessage": reason}
+
+
+def _parse_result(body: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(body)
+    except json.JSONDecodeError as error:
+        raise PolicyBootstrapError(
+            "Policy API returned invalid JSON."
+        ) from error
+    if not isinstance(parsed, dict):
+        raise PolicyBootstrapError("Policy API returned a non-object result.")
+    return parsed
+
+
+def _is_missing_agent_family(body: str) -> bool:
+    try:
+        parsed = json.loads(body)
+    except json.JSONDecodeError:
+        return False
+    status = _get_case_insensitive(parsed, "status")
+    return str(status or "") == AGENT_FAMILY_NOT_FOUND_STATUS
 
 
 def _get_case_insensitive(value: Any, key: str) -> Any:

@@ -10,6 +10,7 @@ public interface IPolicyModuleDbContext
     DbSet<PolicyProjectSummaryEntry> PolicyProjectSummaries { get; }
     DbSet<TopicPolicyText> TopicPolicyTexts { get; }
     DbSet<ProjectPolicyTopic> ProjectPolicyTopics { get; }
+    DbSet<AgentFamilyPolicyText> AgentFamilyPolicyTexts { get; }
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default

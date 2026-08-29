@@ -130,3 +130,72 @@ public sealed class ListProjectPoliciesQuery(
             .ToList();
     }
 }
+
+public sealed class ListPolicyAgentFamiliesQuery(
+    StateCalculator stateCalculator,
+    IEventStore eventStore
+) : PolicyQuery<List<PolicyAgentFamilySummaryDto>>(stateCalculator, eventStore)
+{
+    protected override async Task<List<PolicyAgentFamilySummaryDto>> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var state = await Replay<GeneralPoliciesStateData>(
+            await GetEvents([aggregateId]),
+            aggregateId
+        );
+
+        return state?.AgentFamilies.Values
+                .OrderBy(
+                    agentFamily => agentFamily.AgentFamilyName.Name,
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .ThenBy(
+                    agentFamily => agentFamily.AgentFamilyName.Name,
+                    StringComparer.Ordinal
+                )
+                .Select(PolicyAgentFamilySummaryDto.FromModel)
+                .ToList()
+            ?? [];
+    }
+}
+
+public sealed class ListAgentFamilyPoliciesQuery(
+    StateCalculator stateCalculator,
+    IEventStore eventStore
+) : PolicyQuery<List<PolicyDto>?>(stateCalculator, eventStore)
+{
+    public required string AgentFamilyName { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(!string.IsNullOrWhiteSpace(AgentFamilyName));
+
+    protected override async Task<List<PolicyDto>?> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var state = await Replay<GeneralPoliciesStateData>(
+            await GetEvents([aggregateId]),
+            aggregateId
+        );
+
+        if (
+            state is null
+            || !state.AgentFamilies.TryGetValue(
+                Domain.Models.AgentFamilyName.Normalized(AgentFamilyName),
+                out var agentFamily
+            )
+        )
+            return null;
+
+        return agentFamily.Policies.Values
+            .Select(PolicyDto.FromModel)
+            .ToList();
+    }
+}

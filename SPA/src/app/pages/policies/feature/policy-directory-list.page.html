@@ -18,7 +18,7 @@
           <p class="page-subtitle">{{ state.data.subtitle }}</p>
         </div>
         <a class="primary-link" [routerLink]="state.data.addRoute">
-          Add {{ state.data.kind === 'topics' ? 'topic' : 'project' }}
+          Add {{ state.data.singularLabel }}
         </a>
       </header>
 
@@ -43,20 +43,16 @@
           <span class="total-count">
             {{ state.data.result.totalCount }}
             {{
-              state.data.kind === 'topics'
-                ? state.data.result.totalCount === 1
-                  ? 'topic'
-                  : 'topics'
-                : state.data.result.totalCount === 1
-                  ? 'project'
-                  : 'projects'
+              state.data.result.totalCount === 1
+                ? state.data.singularLabel
+                : state.data.pluralLabel
             }}
           </span>
         </div>
 
         <div class="list-heading" aria-hidden="true">
-          <span>{{ state.data.kind === 'topics' ? 'Topic' : 'Project' }}</span>
-          <span>{{ state.data.kind === 'topics' ? 'Policies' : 'Repositories' }}</span>
+          <span>{{ state.data.entryHeading }}</span>
+          <span>{{ state.data.metadataHeading }}</span>
           <span></span>
         </div>
 
@@ -64,8 +60,13 @@
           @for (entry of state.data.result.items; track entry.id) {
             <a class="directory-row" [routerLink]="entry.route">
               <span class="entry-copy">
-                <span class="entry-icon" [class.project]="state.data.kind === 'projects'" aria-hidden="true">
-                  @if (state.data.kind === 'topics') { # } @else { ▤ }
+                <span
+                  class="entry-icon"
+                  [class.project]="state.data.kind === 'projects'"
+                  [class.agent-family]="state.data.kind === 'agent-families'"
+                  aria-hidden="true"
+                >
+                  {{ state.data.icon }}
                 </span>
                 <span>
                   <strong>{{ entry.name }}</strong>

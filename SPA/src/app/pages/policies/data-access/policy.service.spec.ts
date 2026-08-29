@@ -38,6 +38,11 @@ describe('PolicyService', () => {
       identity: { topicName: 'Angular' },
     },
     {
+      scope: { kind: 'agentFamily', agentFamilyName: 'claude' },
+      path: '/api/policies/agent-families/policies',
+      identity: { agentFamilyName: 'claude' },
+    },
+    {
       scope: { kind: 'project', projectId: 'project-1' },
       path: '/api/policies/projects/policies',
       identity: { projectId: 'project-1' },
@@ -76,6 +81,28 @@ describe('PolicyService', () => {
       id: topic.topicName,
       name: topic.topicName,
       description: topic.description,
+      policyCount: 0,
+    });
+  });
+
+  it('creates an agent family', async () => {
+    const agentFamily = {
+      agentFamilyName: 'claude',
+      description: 'Policies applied only to Claude sessions.',
+    };
+    const resultPromise = firstValueFrom(
+      service.createAgentFamily(agentFamily),
+    );
+    const request = http.expectOne('/api/policies/agent-families');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(agentFamily);
+    request.flush({ status: 'OK' });
+
+    await expect(resultPromise).resolves.toEqual({
+      id: agentFamily.agentFamilyName,
+      name: agentFamily.agentFamilyName,
+      description: agentFamily.description,
       policyCount: 0,
     });
   });
@@ -144,6 +171,76 @@ describe('PolicyService', () => {
       id: 'project-1',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
+    });
+  });
+
+  it('searches agent families and maps their summaries', async () => {
+    const resultPromise = firstValueFrom(
+      service.searchAgentFamilies({ page: 1, pageSize: 5, search: '' }),
+    );
+    const request = http.expectOne(
+      candidate => candidate.url === '/api/policies/agent-families',
+    );
+
+    expect(request.request.params.has('search')).toBe(false);
+    request.flush({
+      items: [
+        {
+          agentFamilyName: 'codex',
+          description: 'Policies applied only to Codex sessions.',
+          policyCount: 3,
+        },
+      ],
+      page: 1,
+      pageSize: 5,
+      totalCount: 1,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    });
+
+    await expect(resultPromise).resolves.toMatchObject({
+      items: [
+        {
+          id: 'codex',
+          name: 'codex',
+          description: 'Policies applied only to Codex sessions.',
+          policyCount: 3,
+        },
+      ],
+    });
+  });
+
+  it('loads a nested agent family policy route', async () => {
+    const resultPromise = firstValueFrom(
+      service.searchPolicies(
+        { kind: 'agentFamily', agentFamilyName: 'claude' },
+        { page: 1, pageSize: 5, search: '' },
+      ),
+    );
+    const request = http.expectOne(
+      candidate =>
+        candidate.url === '/api/policies/agent-families/claude/policies',
+    );
+
+    request.flush({
+      items: [
+        {
+          policyId: 'policy-9',
+          title: 'Prefer the dedicated file tools',
+          description: 'Read and edit through the dedicated tools.',
+        },
+      ],
+      page: 1,
+      pageSize: 5,
+      totalCount: 1,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    });
+
+    await expect(resultPromise).resolves.toMatchObject({
+      items: [{ id: 'policy-9', title: 'Prefer the dedicated file tools' }],
     });
   });
 

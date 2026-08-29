@@ -254,6 +254,118 @@ public sealed class SearchPolicyTopicsQuery(
     }
 }
 
+public sealed class SearchAgentFamilyPoliciesQuery(
+    StateCalculator stateCalculator,
+    IEventStore eventStore
+) : PolicyQuery<PagedResult<PolicyDto>?>(stateCalculator, eventStore)
+{
+    public required string AgentFamilyName { get; set; }
+    public int Page { get; set; } = Pagination.DefaultPage;
+    public int PageSize { get; set; } = Pagination.DefaultPageSize;
+    public string? Search { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(
+            !string.IsNullOrWhiteSpace(AgentFamilyName)
+            && Pagination.IsValid(Page, PageSize)
+        );
+
+    protected override async Task<PagedResult<PolicyDto>?> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var state = await Replay<GeneralPoliciesStateData>(
+            await GetEvents([aggregateId]),
+            aggregateId
+        );
+
+        if (
+            state is null
+            || !state.AgentFamilies.TryGetValue(
+                Domain.Models.AgentFamilyName.Normalized(AgentFamilyName),
+                out var agentFamily
+            )
+        )
+            return null;
+
+        return PolicySearch.Create(
+            agentFamily.Policies.Values,
+            Page,
+            PageSize,
+            Search
+        );
+    }
+}
+
+public sealed class SearchPolicyAgentFamiliesQuery(
+    StateCalculator stateCalculator,
+    IEventStore eventStore
+) : PolicyQuery<PagedResult<PolicyAgentFamilySummaryDto>>(stateCalculator, eventStore)
+{
+    public int Page { get; set; } = Pagination.DefaultPage;
+    public int PageSize { get; set; } = Pagination.DefaultPageSize;
+    public string? Search { get; set; }
+
+    public override Task<bool> CanExecute(Executor executor) =>
+        Task.FromResult(Pagination.IsValid(Page, PageSize));
+
+    protected override async Task<PagedResult<PolicyAgentFamilySummaryDto>> ExecuteInternal(
+        Executor executor
+    )
+    {
+        var aggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var state = await Replay<GeneralPoliciesStateData>(
+            await GetEvents([aggregateId]),
+            aggregateId
+        );
+        var agentFamilies = state?.AgentFamilies.Values.AsEnumerable()
+            ?? Enumerable.Empty<AgentFamily>();
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var normalizedSearch = Search.Trim();
+            agentFamilies = agentFamilies.Where(
+                agentFamily =>
+                    agentFamily.AgentFamilyName.Name.Contains(
+                        normalizedSearch,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    || agentFamily.Description.Contains(
+                        normalizedSearch,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            );
+        }
+
+        var ordered = agentFamilies
+            .OrderBy(
+                agentFamily => agentFamily.AgentFamilyName.Name,
+                StringComparer.OrdinalIgnoreCase
+            )
+            .ThenBy(
+                agentFamily => agentFamily.AgentFamilyName.Name,
+                StringComparer.Ordinal
+            )
+            .ToList();
+
+        return new PagedResult<PolicyAgentFamilySummaryDto>(
+            ordered
+                .Skip(Pagination.Offset(Page, PageSize))
+                .Take(PageSize)
+                .Select(PolicyAgentFamilySummaryDto.FromModel)
+                .ToList(),
+            Page,
+            PageSize,
+            ordered.Count
+        );
+    }
+}
+
 internal static class PolicySearch
 {
     public static PagedResult<PolicyDto> Create(

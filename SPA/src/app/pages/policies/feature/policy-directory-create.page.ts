@@ -16,21 +16,66 @@ import {
 } from 'rxjs';
 import { toUserMessage } from '../../../core/http/load-state';
 import {
+  CreateAgentFamilyRequest,
   CreateProjectRequest,
   CreateTopicRequest,
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
-
-type DirectoryKind = 'topics' | 'projects';
+import {
+  DirectoryKind,
+  directoryKindFromRoute,
+} from './policy-directory-kind';
 
 type CreateDirectoryAction =
   | { readonly kind: 'topics'; readonly request: CreateTopicRequest }
+  | {
+      readonly kind: 'agent-families';
+      readonly request: CreateAgentFamilyRequest;
+    }
   | { readonly kind: 'projects'; readonly request: CreateProjectRequest };
 
 type CreateState =
   | { readonly status: 'idle' }
   | { readonly status: 'saving' }
   | { readonly status: 'error'; readonly message: string };
+
+interface DirectoryCreateLabels {
+  readonly kind: DirectoryKind;
+  readonly entity: string;
+  readonly singular: string;
+  readonly plural: string;
+  readonly subtitle: string;
+  readonly backLink: string;
+}
+
+const DIRECTORY_CREATE_LABELS: Readonly<
+  Record<DirectoryKind, DirectoryCreateLabels>
+> = {
+  topics: {
+    kind: 'topics',
+    entity: 'Topic',
+    singular: 'topic',
+    plural: 'topics',
+    subtitle: 'Create a policy group that projects can reuse',
+    backLink: '/policies/topics',
+  },
+  'agent-families': {
+    kind: 'agent-families',
+    entity: 'Agent family',
+    singular: 'agent family',
+    plural: 'agent families',
+    subtitle: 'Create a policy group applied only to one kind of agent',
+    backLink: '/policies/agent-families',
+  },
+  projects: {
+    kind: 'projects',
+    entity: 'Project',
+    singular: 'project',
+    plural: 'projects',
+    subtitle: 'Create a project knowledge scope and connect its repositories',
+    backLink: '/policies/projects',
+  },
+};
 
 @Component({
   selector: 'app-policy-directory-create-page',
@@ -45,11 +90,10 @@ export class PolicyDirectoryCreatePage {
   private readonly policies = inject(PolicyService);
   private readonly createRequests = new Subject<CreateDirectoryAction>();
 
-  protected readonly kind$ = this.route.data.pipe(
-    map(
-      (data): DirectoryKind =>
-        data['directoryKind'] === 'projects' ? 'projects' : 'topics',
-    ),
+  protected readonly labels$ = this.route.data.pipe(
+    map(data => DIRECTORY_CREATE_LABELS[
+      directoryKindFromRoute(data['directoryKind'])
+    ]),
     distinctUntilChanged(),
   );
 
@@ -59,6 +103,23 @@ export class PolicyDirectoryCreatePage {
         return this.policies.createTopic(action.request).pipe(
           tap(topic =>
             void this.router.navigate(['/policies', 'topics', topic.name]),
+          ),
+          map(() => ({ status: 'idle' }) as const),
+          startWith({ status: 'saving' } as const),
+          catchError(error =>
+            of({ status: 'error', message: toUserMessage(error) } as const),
+          ),
+        );
+      }
+
+      if (action.kind === 'agent-families') {
+        return this.policies.createAgentFamily(action.request).pipe(
+          tap(agentFamily =>
+            void this.router.navigate([
+              '/policies',
+              'agent-families',
+              agentFamily.name,
+            ]),
           ),
           map(() => ({ status: 'idle' }) as const),
           startWith({ status: 'saving' } as const),
@@ -87,6 +148,16 @@ export class PolicyDirectoryCreatePage {
     this.createRequests.next({
       kind: 'topics',
       request: { topicName: topicName.trim(), description },
+    });
+  }
+
+  protected createAgentFamily(
+    agentFamilyName: string,
+    description: string,
+  ): void {
+    this.createRequests.next({
+      kind: 'agent-families',
+      request: { agentFamilyName: agentFamilyName.trim(), description },
     });
   }
 

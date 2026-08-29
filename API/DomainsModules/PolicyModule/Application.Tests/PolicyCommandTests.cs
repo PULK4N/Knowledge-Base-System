@@ -83,14 +83,16 @@ public sealed class PolicyCommandTests
         Assert.Equal(
             [
                 "GeneralPolicyTextProjector",
-                "TopicPolicyTextProjector"
+                "TopicPolicyTextProjector",
+                "AgentFamilyPolicyTextProjector"
             ],
             definition.Projections
         );
         Assert.Equal(
             [
                 nameof(GeneralPolicyAddedV1),
-                nameof(TopicCreatedV1)
+                nameof(TopicCreatedV1),
+                nameof(AgentFamilyCreatedV1)
             ],
             definition.InitializationEvents
         );
@@ -237,6 +239,206 @@ public sealed class PolicyCommandTests
             eventStore.LastWritten[globalAggregateId].StateData
         );
         Assert.Empty(state.Topics);
+    }
+
+    [Theory]
+    [InlineData("claude", "claude")]
+    [InlineData("Codex", "codex")]
+    public async Task AgentFamilyCommands_CreateAddAndRemovePolicyOnGlobalStream(
+        string requestedName,
+        string storedName
+    )
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+
+        await new CreateAgentFamilyCommand(handler)
+        {
+            AgentFamilyName = requestedName,
+            Description = "Policies for this agent family."
+        }.Execute(Executor);
+        await new UpdateAgentFamilyCommand(handler)
+        {
+            AgentFamilyName = requestedName,
+            Description = "Updated agent family policies."
+        }.Execute(Executor);
+        var addedPolicy = Assert.IsType<PolicyAddedCommandResult>(
+            await new AddAgentFamilyPolicyCommand(handler)
+            {
+                AgentFamilyName = requestedName,
+                Title = "Prefer the dedicated file tools",
+                Description = "Read and edit through the provided tools."
+            }.Execute(Executor)
+        );
+        await new UpdateAgentFamilyPolicyCommand(handler)
+        {
+            AgentFamilyName = requestedName,
+            PolicyId = addedPolicy.PolicyId,
+            Title = "Prefer the dedicated file tools",
+            Description = "Read and edit through the dedicated tools."
+        }.Execute(Executor);
+        await new RemoveAgentFamilyPolicyCommand(handler)
+        {
+            AgentFamilyName = requestedName,
+            PolicyId = addedPolicy.PolicyId
+        }.Execute(Executor);
+        await new RemoveAgentFamilyCommand(handler)
+        {
+            AgentFamilyName = requestedName
+        }.Execute(Executor);
+
+        var globalAggregateId = AggregateId.FromDatabaseGuid(
+            StateDataAggregateIds.GeneralPolicies
+        );
+        var events = eventStore.GetStoredEvents(globalAggregateId);
+        Assert.Collection(
+            events,
+            payload =>
+            {
+                var created = Assert.IsType<AgentFamilyCreatedV1>(
+                    payload.EventData
+                );
+                Assert.Equal(
+                    storedName,
+                    created.AgentFamilyName.Name
+                );
+            },
+            payload =>
+                Assert.IsType<AgentFamilyUpdatedV1>(payload.EventData),
+            payload =>
+                Assert.IsType<AgentFamilyPolicyAddedV1>(
+                    payload.EventData
+                ),
+            payload =>
+                Assert.IsType<AgentFamilyPolicyUpdatedV1>(
+                    payload.EventData
+                ),
+            payload =>
+            {
+                var removed = Assert.IsType<AgentFamilyPolicyRemovedV1>(
+                    payload.EventData
+                );
+                Assert.Equal(
+                    addedPolicy.PolicyId,
+                    removed.PolicyId.Value
+                );
+            },
+            payload =>
+                Assert.IsType<AgentFamilyRemovedV1>(payload.EventData)
+        );
+        var state = Assert.IsType<GeneralPoliciesStateData>(
+            eventStore.LastWritten[globalAggregateId].StateData
+        );
+        Assert.Empty(state.AgentFamilies);
+    }
+
+    [Theory]
+    [InlineData("claude")]
+    [InlineData("codex")]
+    [InlineData("in-house-agent")]
+    public async Task GetPoliciesByRepository_ForwardsTheRequestedAgentFamily(
+        string agentFamily
+    )
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        const string repositoryPath = "/workspace/agent-family-project";
+        var project = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Agent family project",
+                ProjectDescription = "Agent family query test project.",
+                RepositoryPaths = [repositoryPath]
+            }.Execute(Executor)
+        );
+        var projectAggregateId = AggregateId.FromDatabaseGuid(
+            project.ProjectId
+        );
+        var policyTextRepository = new StubPolicyTextRepository();
+        policyTextRepository.AgentFamilies.Add(agentFamily);
+        policyTextRepository.PolicyTexts[projectAggregateId] =
+            "# General policies\n\n## General policy\nApplies everywhere.";
+
+        var result = await new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            eventStore,
+            policyTextRepository,
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = repositoryPath,
+            AgentFamily = agentFamily
+        }.Execute(Executor);
+
+        Assert.Equal(GetPoliciesByRepositoryResult.OkStatus, result.Status);
+        Assert.Equal(
+            projectAggregateId,
+            policyTextRepository.LastProjectId
+        );
+        Assert.Equal(agentFamily, policyTextRepository.LastAgentFamily);
+    }
+
+    [Fact]
+    public async Task GetPoliciesByRepository_ReportsAnAgentFamilyThatDoesNotExist()
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var handler = CreateHandler(eventStore);
+        const string repositoryPath = "/workspace/unknown-family-project";
+        var project = Assert.IsType<ProjectCreatedCommandResult>(
+            await new CreateProjectCommand(handler)
+            {
+                ProjectName = "Unknown family project",
+                ProjectDescription = "Agent family is not created yet.",
+                RepositoryPaths = [repositoryPath]
+            }.Execute(Executor)
+        );
+        var policyTextRepository = new StubPolicyTextRepository();
+        policyTextRepository.PolicyTexts[
+            AggregateId.FromDatabaseGuid(project.ProjectId)
+        ] = "# General policies";
+
+        var result = await new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            eventStore,
+            policyTextRepository,
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = repositoryPath,
+            AgentFamily = "not-created-yet"
+        }.Execute(Executor);
+
+        Assert.Equal(
+            GetPoliciesByRepositoryResult.AgentFamilyNotFoundStatus,
+            result.Status
+        );
+        Assert.Null(result.Policies);
+        Assert.False(result.RequiresUserInput);
+        Assert.Contains("not-created-yet", result.Message);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetPoliciesByRepository_RefusesToRunWithoutAnAgentFamily(
+        string agentFamily
+    )
+    {
+        var query = new GetPoliciesByRepositoryQuery(
+            CreateCalculator(),
+            new CapturingEventStoreWithOutbox(),
+            new StubPolicyTextRepository(),
+            new StubPolicyProjectSummaryRepository()
+        )
+        {
+            RepositoryPath = "/workspace/agent-family-project",
+            AgentFamily = agentFamily
+        };
+
+        Assert.False(await query.CanExecute(Executor));
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => query.Execute(Executor)
+        );
     }
 
     [Fact]
@@ -495,7 +697,7 @@ public sealed class PolicyCommandTests
     }
 
     [Fact]
-    public async Task GetPoliciesByRepository_ReturnsProjectTopicAndGeneralPolicies()
+    public async Task GetPoliciesByRepository_ReturnsGeneralProjectAndTopicPolicies()
     {
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
@@ -546,12 +748,12 @@ public sealed class PolicyCommandTests
             project.ProjectId
         );
         policyTextRepository.PolicyTexts[projectAggregateId] =
-            "# Project \"Policy project\" policies\n\n"
+            "# General policies\n\n"
+            + "## General policy\nApplies to every project.\n\n"
+            + "# Project \"Policy project\" policies\n\n"
             + "## Project policy\nApplies only to this project.\n\n"
             + "# Topic \"cloud\" policies\n\n"
-            + "## Cloud policy\nApplies to cloud projects.\n\n"
-            + "# General policies\n\n"
-            + "## General policy\nApplies to every project.";
+            + "## Cloud policy\nApplies to cloud projects.";
 
         var result = await new GetPoliciesByRepositoryQuery(
             CreateCalculator(),
@@ -560,16 +762,17 @@ public sealed class PolicyCommandTests
             new StubPolicyProjectSummaryRepository()
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
 
         Assert.Equal(
-            "# Project \"Policy project\" policies\n\n"
+            "# General policies\n\n"
+                + "## General policy\nApplies to every project.\n\n"
+                + "# Project \"Policy project\" policies\n\n"
                 + "## Project policy\nApplies only to this project.\n\n"
                 + "# Topic \"cloud\" policies\n\n"
-                + "## Cloud policy\nApplies to cloud projects.\n\n"
-                + "# General policies\n\n"
-                + "## General policy\nApplies to every project.",
+                + "## Cloud policy\nApplies to cloud projects.",
             result.Policies
         );
         Assert.Equal(GetPoliciesByRepositoryResult.OkStatus, result.Status);
@@ -668,7 +871,8 @@ public sealed class PolicyCommandTests
             new StubPolicyProjectSummaryRepository()
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
         Assert.Equal(
             "# Project \"Policy project\" policies\n\n"
@@ -708,7 +912,8 @@ public sealed class PolicyCommandTests
             projectSummaryRepository
         )
         {
-            RepositoryPath = repositoryPath
+            RepositoryPath = repositoryPath,
+            AgentFamily = "claude"
         }.Execute(Executor);
 
         Assert.Equal(
@@ -895,9 +1100,21 @@ public sealed class PolicyCommandTests
         public Dictionary<AggregateId, string> PolicyTexts { get; } = [];
         public AggregateId? LastProjectId { get; private set; }
 
-        public Task<string?> Get(AggregateId projectAggregateId)
+        public string? LastAgentFamily { get; private set; }
+
+        public HashSet<string> AgentFamilies { get; } =
+            new(StringComparer.OrdinalIgnoreCase) { "claude" };
+
+        public Task<bool> AgentFamilyExists(string agentFamilyName) =>
+            Task.FromResult(AgentFamilies.Contains(agentFamilyName));
+
+        public Task<string?> Get(
+            AggregateId projectAggregateId,
+            string? agentFamilyName
+        )
         {
             LastProjectId = projectAggregateId;
+            LastAgentFamily = agentFamilyName;
 
             return Task.FromResult(
                 PolicyTexts.TryGetValue(

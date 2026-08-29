@@ -32,3 +32,19 @@ public sealed record PolicyTopicSummaryDto(
             topic.Policies.Count
         );
 }
+
+public sealed record PolicyAgentFamilySummaryDto(
+    string AgentFamilyName,
+    string Description,
+    int PolicyCount
+)
+{
+    public static PolicyAgentFamilySummaryDto FromModel(
+        AgentFamily agentFamily
+    ) =>
+        new(
+            agentFamily.AgentFamilyName.Name,
+            agentFamily.Description,
+            agentFamily.Policies.Count
+        );
+}

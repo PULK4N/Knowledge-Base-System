@@ -8,13 +8,20 @@ describe('policyScopeFromRoute', () => {
     });
   });
 
-  it('creates topic and project scopes from their route parameters', () => {
+  it('creates scoped policy contexts from their route parameters', () => {
     expect(
       policyScopeFromRoute(
         'topic',
         convertToParamMap({ topicName: 'Web Design' }),
       ),
     ).toEqual({ kind: 'topic', topicName: 'Web Design' });
+    expect(
+      policyScopeFromRoute(
+        'agentFamily',
+        convertToParamMap({ agentFamilyName: 'claude' }),
+      ),
+    ).toEqual({ kind: 'agentFamily', agentFamilyName: 'claude' });
+
     expect(
       policyScopeFromRoute(
         'project',
@@ -25,6 +32,9 @@ describe('policyScopeFromRoute', () => {
 
   it('rejects missing or unknown route contexts', () => {
     expect(policyScopeFromRoute('topic', convertToParamMap({}))).toBeNull();
+    expect(
+      policyScopeFromRoute('agentFamily', convertToParamMap({})),
+    ).toBeNull();
     expect(policyScopeFromRoute('unknown', convertToParamMap({}))).toBeNull();
   });
 });

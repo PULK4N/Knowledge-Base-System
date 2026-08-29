@@ -1,28 +1,17 @@
-@if (kind$ | async; as kind) {
+@if (labels$ | async; as labels) {
   @if (state$ | async; as state) {
-    <a
-      class="back-link"
-      [routerLink]="
-        kind === 'topics' ? '/policies/topics' : '/policies/projects'
-      "
-    >
+    <a class="back-link" [routerLink]="labels.backLink">
       <span aria-hidden="true">←</span>
-      Back to {{ kind }}
+      Back to {{ labels.plural }}
     </a>
 
     <header>
-      <p class="eyebrow">{{ kind === 'topics' ? 'Topic' : 'Project' }} management</p>
-      <h1 class="page-heading">Add {{ kind === 'topics' ? 'topic' : 'project' }}</h1>
-      <p class="page-subtitle">
-        {{
-          kind === 'topics'
-            ? 'Create a policy group that projects can reuse'
-            : 'Create a project knowledge scope and connect its repositories'
-        }}
-      </p>
+      <p class="eyebrow">{{ labels.entity }} management</p>
+      <h1 class="page-heading">Add {{ labels.singular }}</h1>
+      <p class="page-subtitle">{{ labels.subtitle }}</p>
     </header>
 
-    @if (kind === 'topics') {
+    @if (labels.kind === 'topics') {
       <form
         #topicForm="ngForm"
         class="editor-card surface-card"
@@ -53,6 +42,52 @@
             {{ state.status === 'saving' ? 'Creating…' : 'Create topic' }}
           </button>
           <a routerLink="/policies/topics">Cancel</a>
+        </div>
+      </form>
+    } @else if (labels.kind === 'agent-families') {
+      <form
+        #agentFamilyForm="ngForm"
+        class="editor-card surface-card"
+        (ngSubmit)="
+          createAgentFamily(agentFamilyName.value, agentFamilyDescription.value)
+        "
+      >
+        <label>
+          <span>Name</span>
+          <input
+            #agentFamilyName="ngModel"
+            name="agentFamilyName"
+            type="text"
+            required
+            placeholder="claude"
+            ngModel
+          />
+          <small>
+            Names are stored in lowercase and must match the agent family the
+            hook reports, such as claude or codex.
+          </small>
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea
+            #agentFamilyDescription="ngModel"
+            name="agentFamilyDescription"
+            rows="10"
+            ngModel
+          ></textarea>
+        </label>
+        @if (state.status === 'error') {
+          <p class="form-error" role="alert">{{ state.message }}</p>
+        }
+        <div class="form-actions">
+          <button
+            class="primary-action"
+            type="submit"
+            [disabled]="agentFamilyForm.invalid || state.status === 'saving'"
+          >
+            {{ state.status === 'saving' ? 'Creating…' : 'Create agent family' }}
+          </button>
+          <a routerLink="/policies/agent-families">Cancel</a>
         </div>
       </form>
     } @else {

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,19 @@ public sealed class PoliciesController(
 {
     [HttpGet]
     public async Task<ActionResult<GetPoliciesByRepositoryResult>> GetByRepository(
-        [FromQuery] string repositoryPath,
+        [FromQuery, Required] string repositoryPath,
+        [FromQuery, Required] string agentFamily,
         [FromServices] GetPoliciesByRepositoryQuery query
     )
     {
         query.RepositoryPath = repositoryPath;
+        query.AgentFamily = agentFamily;
 
-        return Ok(await Execute(query));
+        var result = await Execute(query);
+
+        return result.Status
+            == GetPoliciesByRepositoryResult.AgentFamilyNotFoundStatus
+            ? BadRequest(result)
+            : Ok(result);
     }
 }

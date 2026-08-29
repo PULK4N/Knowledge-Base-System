@@ -103,6 +103,11 @@
   background: #fff5e5;
 }
 
+.entry-icon.agent-family {
+  color: var(--violet);
+  background: #f0ecfd;
+}
+
 .chevron {
   width: 26px;
   fill: none;

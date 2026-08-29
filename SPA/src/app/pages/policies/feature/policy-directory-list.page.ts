@@ -23,9 +23,12 @@ import { PagedResult } from '../../../core/store/entity-store.service';
 import { PolicySearchRequest } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import {
+  DirectoryKind,
+  directoryKindFromRoute,
+} from './policy-directory-kind';
 import { policySearchRequests } from './policy-search-requests';
 
-type DirectoryKind = 'topics' | 'projects';
 
 interface DirectoryEntry {
   readonly id: string;
@@ -39,8 +42,18 @@ interface DirectoryListView {
   readonly kind: DirectoryKind;
   readonly title: string;
   readonly subtitle: string;
+  readonly singularLabel: string;
+  readonly pluralLabel: string;
+  readonly entryHeading: string;
+  readonly metadataHeading: string;
+  readonly icon: string;
   readonly addRoute: readonly string[];
   readonly result: PagedResult<DirectoryEntry>;
+}
+
+
+function policyCountLabel(policyCount: number): string {
+  return `${policyCount} ${policyCount === 1 ? 'policy' : 'policies'}`;
 }
 
 @Component({
@@ -65,7 +78,7 @@ export class PolicyDirectoryListPage {
   protected readonly searchText = signal('');
 
   private readonly kind$ = this.route.data.pipe(
-    map(data => (data['directoryKind'] === 'projects' ? 'projects' : 'topics')),
+    map(data => directoryKindFromRoute(data['directoryKind'])),
     distinctUntilChanged(),
   );
 
@@ -111,6 +124,11 @@ export class PolicyDirectoryListPage {
           kind,
           title: 'Topics',
           subtitle: 'Policy groups shared across projects',
+          singularLabel: 'topic',
+          pluralLabel: 'topics',
+          entryHeading: 'Topic',
+          metadataHeading: 'Policies',
+          icon: '#',
           addRoute: ['/policies', 'topics', 'new'],
           result: {
             ...result,
@@ -118,8 +136,34 @@ export class PolicyDirectoryListPage {
               id: topic.id,
               name: topic.name,
               description: topic.description,
-              metadata: `${topic.policyCount} ${topic.policyCount === 1 ? 'policy' : 'policies'}`,
+              metadata: policyCountLabel(topic.policyCount),
               route: ['/policies', 'topics', topic.name],
+            })),
+          },
+        })),
+      );
+    }
+
+    if (kind === 'agent-families') {
+      return this.policies.searchAgentFamilies(request).pipe(
+        map(result => ({
+          kind,
+          title: 'Agent families',
+          subtitle: 'Policies applied only to one kind of agent',
+          singularLabel: 'agent family',
+          pluralLabel: 'agent families',
+          entryHeading: 'Agent family',
+          metadataHeading: 'Policies',
+          icon: '◆',
+          addRoute: ['/policies', 'agent-families', 'new'],
+          result: {
+            ...result,
+            items: result.items.map(agentFamily => ({
+              id: agentFamily.id,
+              name: agentFamily.name,
+              description: agentFamily.description,
+              metadata: policyCountLabel(agentFamily.policyCount),
+              route: ['/policies', 'agent-families', agentFamily.name],
             })),
           },
         })),
@@ -131,6 +175,11 @@ export class PolicyDirectoryListPage {
         kind,
         title: 'Projects',
         subtitle: 'Project-specific policies and topic relationships',
+        singularLabel: 'project',
+        pluralLabel: 'projects',
+        entryHeading: 'Project',
+        metadataHeading: 'Repositories',
+        icon: '▤',
         addRoute: ['/policies', 'projects', 'new'],
         result: {
           ...result,

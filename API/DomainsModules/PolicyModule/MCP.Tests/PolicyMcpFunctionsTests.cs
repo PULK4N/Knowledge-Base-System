@@ -30,7 +30,14 @@ public sealed class PolicyMcpFunctionsTests
         "policy_project_policy_remove",
         "policy_project_topic_add",
         "policy_project_topic_remove",
-        "policy_get_by_repository"
+        "policy_agent_family_list",
+        "policy_agent_family_policy_list",
+        "policy_agent_family_create",
+        "policy_agent_family_update",
+        "policy_agent_family_remove",
+        "policy_agent_family_policy_add",
+        "policy_agent_family_policy_update",
+        "policy_agent_family_policy_remove"
     ];
 
     [Fact]
@@ -96,22 +103,33 @@ public sealed class PolicyMcpFunctionsTests
     }
 
     [Fact]
-    public void Get_by_repository_exposes_only_the_repository_path()
+    public void Repository_policies_are_not_reachable_over_mcp()
+    {
+        var functionNames = PolicyMcpFunctions.Create()
+            .Select(function => function.Name)
+            .ToList();
+
+        Assert.DoesNotContain("policy_get_by_repository", functionNames);
+        Assert.All(
+            functionNames,
+            name =>
+                Assert.False(
+                    name.Contains("by_repository", StringComparison.Ordinal)
+                )
+        );
+    }
+
+    [Fact]
+    public void Agent_family_list_does_not_require_arguments()
     {
         var function = PolicyMcpFunctions.Create().Single(
-            function =>
-                function.Name == "policy_get_by_repository"
+            function => function.Name == "policy_agent_family_list"
         );
-        var properties = function.JsonSchema
-            .GetProperty("properties");
 
-        var property = Assert.Single(properties.EnumerateObject());
-
-        Assert.Equal("repositoryPath", property.Name);
-        Assert.Contains(
-            "stop reasoning",
-            function.Description,
-            StringComparison.OrdinalIgnoreCase
+        Assert.Empty(
+            function.JsonSchema
+                .GetProperty("properties")
+                .EnumerateObject()
         );
     }
 }

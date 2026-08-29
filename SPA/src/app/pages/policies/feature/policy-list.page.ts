@@ -101,6 +101,11 @@ export function policyScopeFromRoute(
     return topicName ? { kind: 'topic', topicName } : null;
   }
 
+  if (scopeKind === 'agentFamily') {
+    const agentFamilyName = params.get('agentFamilyName');
+    return agentFamilyName ? { kind: 'agentFamily', agentFamilyName } : null;
+  }
+
   if (scopeKind === 'project') {
     const projectId = params.get('projectId');
     return projectId ? { kind: 'project', projectId } : null;
@@ -335,6 +340,28 @@ export class PolicyListPage {
             '/policies',
             'topics',
             scope.topicName,
+            'policies',
+            'new',
+          ],
+          topicNames: [],
+          repositoryPaths: [],
+          result,
+        })),
+      );
+    }
+
+    if (scope.kind === 'agentFamily') {
+      return policies$.pipe(
+        map(result => ({
+          scope,
+          title: scope.agentFamilyName,
+          subtitle: 'Policies applied only to this kind of agent',
+          backLink: '/policies/agent-families',
+          backLabel: 'Back to agent families',
+          addRoute: [
+            '/policies',
+            'agent-families',
+            scope.agentFamilyName,
             'policies',
             'new',
           ],
