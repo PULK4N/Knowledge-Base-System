@@ -27,12 +27,27 @@ using SkillsModule.Contracts;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
 using SkillsModule.Persistence.Models;
+using SharedModule.Persistence;
 using Xunit;
 
 namespace PostgreSqlModule.Tests;
 
 public sealed class InjectionSetupTests
 {
+    [Fact]
+    public void EntityRelationsMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddEntityRelations();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+    }
+
     [Fact]
     public void FeatureSearchMigration_is_schema_only()
     {
@@ -113,6 +128,8 @@ public sealed class InjectionSetupTests
             scope.ServiceProvider.GetRequiredService<IPolicyModuleDbContext>();
         var skillProjectionContext =
             scope.ServiceProvider.GetRequiredService<ISkillsModuleDbContext>();
+        var entityRelationContext =
+            scope.ServiceProvider.GetRequiredService<IEntityRelationDbContext>();
 
         Assert.IsType<PostgreSqlEventSourcingDbContext>(
             eventSourcingContext
@@ -132,6 +149,12 @@ public sealed class InjectionSetupTests
         Assert.Same(
             eventSourcingContext,
             skillProjectionContext
+        );
+        Assert.Same(eventSourcingContext, entityRelationContext);
+        Assert.IsType<EntityRelationRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IEntityRelationRepository
+            >()
         );
         Assert.NotNull(
             scope.ServiceProvider.GetRequiredService<IEventStore>()
@@ -283,6 +306,38 @@ public sealed class InjectionSetupTests
         AssertIntPrimaryKey<SkillListTagEntry>(context);
         AssertIntPrimaryKey<FeatureSummaryEntry>(context);
         AssertIntPrimaryKey<FeatureSearchEntry>(context);
+        var entityRelation = context.GetService<IDesignTimeModel>()
+            .Model
+            .FindEntityType(typeof(EntityRelation));
+        Assert.NotNull(entityRelation);
+        var entityRelationId = Assert.Single(
+            entityRelation!.FindPrimaryKey()!.Properties
+        );
+        Assert.Equal(typeof(long), entityRelationId.ClrType);
+        Assert.Equal(ValueGenerated.OnAdd, entityRelationId.ValueGenerated);
+        Assert.Equal(
+            20,
+            entityRelation
+                .FindProperty(nameof(EntityRelation.RelationType))!
+                .GetMaxLength()
+        );
+        Assert.Equal(
+            "text",
+            entityRelation
+                .FindProperty(nameof(EntityRelation.RelatedEntitySummary))!
+                .GetColumnType()
+        );
+        Assert.Contains(
+            entityRelation.GetIndexes(),
+            index => index.IsUnique
+                && index.Properties.Select(property => property.Name)
+                    .SequenceEqual(
+                        [
+                            nameof(EntityRelation.EntityId),
+                            nameof(EntityRelation.RelatedEntityId)
+                        ]
+                    )
+        );
         AssertUniqueIndex<GeneralPolicyText>(context, 1);
         AssertUniqueIndex<ProjectPolicyText>(context, 1);
         AssertUniqueIndex<TopicPolicyText>(context, 1);

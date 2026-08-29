@@ -14,6 +14,7 @@ using PolicyModule.Persistence;
 using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
+using SharedModule.Persistence;
 using UUIDNext;
 
 namespace PostgreSqlModule;
@@ -39,6 +40,7 @@ public static class InjectionSetup
         services.RegisterEventSourcingPersistence(
             CreateProviderNeutralConfiguration(configuration)
         );
+        services.AddScoped<IEntityRelationRepository, EntityRelationRepository>();
         services.RegisterAdministrationModulePersistence();
         services.RegisterFeatureModulePersistence();
         services.AddScoped<
@@ -99,6 +101,11 @@ public static class InjectionSetup
         services.AddScoped<IFeatureModuleDbContext>(
             serviceProvider =>
                 (IFeatureModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
+        services.AddScoped<IEntityRelationDbContext>(
+            serviceProvider =>
+                (IEntityRelationDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
         services.AddScoped<
