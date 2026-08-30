@@ -81,6 +81,7 @@ const CONVERSATION_SORT_OPTIONS: readonly ListControlOption[] = [
 
 type FeatureAction =
   | { readonly kind: 'status'; readonly featureId: string; readonly status: string }
+  | { readonly kind: 'summary'; readonly featureId: string; readonly summary: string }
   | { readonly kind: 'add-skill'; readonly featureId: string; readonly skillId: string }
   | { readonly kind: 'remove-skill'; readonly featureId: string; readonly skillId: string }
   | {
@@ -337,6 +338,10 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'status', featureId, status: status.trim() });
   }
 
+  protected updateSummary(featureId: string, summary: string): void {
+    this.actions.next({ kind: 'summary', featureId, summary: summary.trim() });
+  }
+
   protected addSkill(featureId: string, skillId: string): void {
     this.actions.next({ kind: 'add-skill', featureId, skillId });
   }
@@ -441,6 +446,8 @@ export class FeatureDetailsPage {
     switch (action.kind) {
       case 'status':
         return this.features.updateStatus(action.featureId, action.status);
+      case 'summary':
+        return this.features.updateSummary(action.featureId, action.summary);
       case 'add-skill':
         return this.features.addSkill(action.featureId, action.skillId);
       case 'remove-skill':

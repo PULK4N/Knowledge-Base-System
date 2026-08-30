@@ -79,14 +79,21 @@ type ProjectConnectionAction =
       readonly kind: 'topic';
       readonly projectId: string;
       readonly value: string;
+    }
+  | {
+      readonly kind: 'remove-topic';
+      readonly projectId: string;
+      readonly value: string;
     };
+
+type ProjectConnectionKind = ProjectConnectionAction['kind'];
 
 type ProjectConnectionState =
   | { readonly status: 'idle' }
-  | { readonly status: 'saving'; readonly kind: 'repository' | 'topic' }
+  | { readonly status: 'saving'; readonly kind: ProjectConnectionKind }
   | {
       readonly status: 'error';
-      readonly kind: 'repository' | 'topic';
+      readonly kind: ProjectConnectionKind;
       readonly message: string;
     };
 
@@ -135,6 +142,7 @@ export class PolicyListPage {
 
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly confirmingPolicyId = signal<string | null>(null);
+  protected readonly confirmingProjectTopicName = signal<string | null>(null);
   protected readonly searchText = signal('');
 
   private readonly scope$ = combineLatest([
@@ -218,12 +226,14 @@ export class PolicyListPage {
   private readonly connectionMutation$: Observable<ProjectConnectionState> =
     this.connectionRequests.pipe(
       exhaustMap(action => {
-        const request$ =
-          action.kind === 'repository'
-            ? this.policies.addProjectRepository(action.projectId, action.value)
-            : this.policies.addProjectTopic(action.projectId, action.value);
+        const request$ = this.executeConnectionAction(action);
 
         return request$.pipe(
+          tap(() => {
+            if (action.kind === 'remove-topic') {
+              this.confirmingProjectTopicName.set(null);
+            }
+          }),
           map(() => ({ status: 'idle' }) as const),
           startWith({ status: 'saving', kind: action.kind } as const),
           catchError(error =>
@@ -304,6 +314,41 @@ export class PolicyListPage {
     if (!value) return;
 
     this.connectionRequests.next({ kind: 'topic', projectId, value });
+  }
+
+  protected startRemovingProjectTopic(topicName: string): void {
+    this.confirmingProjectTopicName.set(topicName);
+  }
+
+  protected cancelRemovingProjectTopic(): void {
+    this.confirmingProjectTopicName.set(null);
+  }
+
+  protected removeProjectTopic(projectId: string, topicName: string): void {
+    this.connectionRequests.next({
+      kind: 'remove-topic',
+      projectId,
+      value: topicName,
+    });
+  }
+
+  private executeConnectionAction(
+    action: ProjectConnectionAction,
+  ): Observable<PolicyProjectDetails> {
+    switch (action.kind) {
+      case 'repository':
+        return this.policies.addProjectRepository(
+          action.projectId,
+          action.value,
+        );
+      case 'topic':
+        return this.policies.addProjectTopic(action.projectId, action.value);
+      case 'remove-topic':
+        return this.policies.removeProjectTopic(
+          action.projectId,
+          action.value,
+        );
+    }
   }
 
   private load(

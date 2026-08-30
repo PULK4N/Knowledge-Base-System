@@ -18,6 +18,9 @@ events:
   FeatureStatusUpdatedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
+  FeatureSummaryUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
   FeatureParentSetV1:
     preEventValidators:
       - FeatureMustBeActiveValidator

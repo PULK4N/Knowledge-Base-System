@@ -46,14 +46,22 @@ describe('FeatureDetailsPage research discoveries', () => {
   let harness: RouterTestingHarness;
   let features: {
     watch: ReturnType<typeof vi.fn>;
+    updateSummary: ReturnType<typeof vi.fn>;
     addResearchDiscovery: ReturnType<typeof vi.fn>;
     updateResearchDiscovery: ReturnType<typeof vi.fn>;
     removeResearchDiscovery: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
+    Object.assign(globalThis, {
+      mermaid: {
+        initialize: vi.fn(),
+        run: vi.fn(),
+      },
+    });
     features = {
       watch: vi.fn(() => of(feature)),
+      updateSummary: vi.fn(() => of(feature)),
       addResearchDiscovery: vi.fn(() => of(feature)),
       updateResearchDiscovery: vi.fn(() => of(feature)),
       removeResearchDiscovery: vi.fn(() => of(feature)),
@@ -91,6 +99,30 @@ describe('FeatureDetailsPage research discoveries', () => {
 
     harness = await RouterTestingHarness.create(
       '/features/feature-1?tab=research',
+    );
+  });
+
+  it('updates the feature summary from the overview', async () => {
+    await harness.navigateByUrl(
+      '/features/feature-1?tab=overview',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    setControlValue(
+      element,
+      '[name="summary"]',
+      ' Updated implementation summary. ',
+    );
+
+    const form = element.querySelector('form.summary-block') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.updateSummary).toHaveBeenCalledWith(
+      feature.id,
+      'Updated implementation summary.',
     );
   });
 
@@ -247,13 +279,18 @@ describe('FeatureDetailsPage research discoveries', () => {
     harness.detectChanges();
 
     const element = harness.routeNativeElement as HTMLElement;
-    const documents = element.querySelectorAll(
-      '.record-item app-markdown-content.readme-document',
-    );
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      const documents = element.querySelectorAll(
+        '.record-item app-markdown-content.readme-document',
+      );
 
-    expect(documents).toHaveLength(2);
-    expect(documents[0].querySelector('strong')?.textContent).toBe('Markdown');
-    expect(documents[1].querySelector('p')?.textContent).toBe('Yes.');
+      expect(documents).toHaveLength(2);
+      expect(documents[0].querySelector('strong')?.textContent).toBe(
+        'Markdown',
+      );
+      expect(documents[1].querySelector('p')?.textContent).toBe('Yes.');
+    });
   });
 });
 

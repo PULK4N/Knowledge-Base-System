@@ -189,6 +189,14 @@ export class PolicyService {
       );
   }
 
+  removeTopic(topicName: string): Observable<PolicyCommandResult> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/topics/remove', {
+        topicName,
+      })
+      .pipe(tap(() => this.store.remove(TOPIC_ENTITY_TYPE, topicName)));
+  }
+
   createAgentFamily(
     request: CreateAgentFamilyRequest,
   ): Observable<PolicyAgentFamilySummary> {
@@ -242,6 +250,18 @@ export class PolicyService {
   ): Observable<PolicyProjectDetails> {
     return this.http
       .post<PolicyCommandResult>('/api/policies/projects/topics', {
+        projectId,
+        topicName,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  removeProjectTopic(
+    projectId: string,
+    topicName: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/topics/remove', {
         projectId,
         topicName,
       })

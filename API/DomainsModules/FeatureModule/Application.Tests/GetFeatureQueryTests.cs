@@ -26,10 +26,11 @@ public sealed class GetFeatureQueryTests
     private static readonly Executor Executor = new() { Id = EventExecutor };
 
     [Theory]
-    [InlineData(0U, "Backend implementation is complete.", 1)]
-    [InlineData(2U, "Backend implementation has started.", 0)]
+    [InlineData(0U, "Updated implementation summary.", "Backend implementation is complete.", 1)]
+    [InlineData(2U, "Trace implementation decisions.", "Backend implementation has started.", 0)]
     public async Task Execute_ReturnsFeatureAtRequestedOrder(
         uint orderNumber,
+        string expectedSummary,
         string expectedStatus,
         int expectedDiscoveryCount
     )
@@ -40,6 +41,7 @@ public sealed class GetFeatureQueryTests
             await query.Execute(Executor)
         );
 
+        Assert.Equal(expectedSummary, feature.Summary);
         Assert.Equal(expectedStatus, feature.Status);
         Assert.Equal(
             Guid.Parse("33333333-3333-3333-3333-333333333333"),
@@ -124,6 +126,12 @@ public sealed class GetFeatureQueryTests
         ),
         CreatePayload(
             4,
+            new FeatureSummaryUpdatedV1(
+                "Updated implementation summary."
+            )
+        ),
+        CreatePayload(
+            5,
             new FeatureResearchDiscoveryAddedV1(
                 FeatureResearchDiscoveryId.FromDatabaseGuid(
                     Guid.Parse("44444444-4444-4444-4444-444444444444")

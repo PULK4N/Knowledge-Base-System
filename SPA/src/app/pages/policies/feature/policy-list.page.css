@@ -72,6 +72,45 @@
   gap: 10px 13px;
 }
 
+.topic-connection,
+.topic-removal-confirmation {
+  display: inline-flex;
+  align-items: center;
+}
+
+.topic-connection {
+  gap: 6px;
+}
+
+.topic-removal-confirmation {
+  gap: 5px;
+  color: #842936;
+  font-size: 13px;
+}
+
+.topic-remove-button,
+.topic-removal-confirmation button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid #d4aab1;
+  border-radius: 5px;
+  color: #9d2b3d;
+  background: white;
+  cursor: pointer;
+  font-weight: 640;
+}
+
+.topic-removal-confirmation .danger-action {
+  color: white;
+  border-color: #a6293b;
+  background: #a6293b;
+}
+
+.topic-removal-confirmation button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .connection-management,
 .repository-list {
   display: grid;

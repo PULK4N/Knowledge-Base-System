@@ -76,3 +76,13 @@ public sealed class UpdateFeatureStatusCommand(
     protected override Task<object> ExecuteInternal(Executor executor) =>
         ExecuteEvent(executor, new FeatureStatusUpdatedV1(Status));
 }
+
+public sealed class UpdateFeatureSummaryCommand(
+    StateMachineHandler stateMachineHandler
+) : ExistingFeatureCommand(stateMachineHandler)
+{
+    public required string Summary { get; set; }
+
+    protected override Task<object> ExecuteInternal(Executor executor) =>
+        ExecuteEvent(executor, new FeatureSummaryUpdatedV1(Summary));
+}

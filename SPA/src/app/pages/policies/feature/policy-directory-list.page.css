@@ -26,7 +26,7 @@
 }
 
 .list-heading,
-.directory-row {
+.directory-entry-link {
   display: grid;
   grid-template-columns: minmax(280px, 1.5fr) minmax(150px, 0.7fr) 40px;
   align-items: center;
@@ -42,16 +42,73 @@
 }
 
 .directory-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
   min-height: 102px;
   padding: 14px 2px;
   border-bottom: 1px solid #e1e5ec;
+  transition: background-color 140ms ease;
+}
+
+.directory-entry-link {
+  grid-column: 1 / -1;
   color: var(--navy);
   text-decoration: none;
-  transition: background-color 140ms ease;
+}
+
+.directory-row.with-actions .directory-entry-link {
+  grid-column: 1;
 }
 
 .directory-row:hover {
   background: #fafbff;
+}
+
+.directory-actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 8px;
+}
+
+.directory-actions > span,
+.directory-error {
+  color: #842936;
+  font-size: 13px;
+}
+
+.directory-actions button {
+  padding: 8px 11px;
+  border: 1px solid #cbd2df;
+  border-radius: 7px;
+  color: #344260;
+  background: white;
+  cursor: pointer;
+  font-weight: 640;
+}
+
+.directory-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.directory-actions .danger-link {
+  color: #a6293b;
+  border-color: #e0b1b8;
+}
+
+.directory-actions .danger-action {
+  color: white;
+  border-color: #a6293b;
+  background: #a6293b;
+}
+
+.directory-error {
+  grid-column: 1 / -1;
+  margin: -8px 0 4px;
+  padding-left: 76px;
 }
 
 .entry-copy {
@@ -127,8 +184,12 @@
   }
 
   .directory-row {
-    grid-template-columns: minmax(0, 1fr) 26px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .directory-entry-link {
+    grid-template-columns: minmax(0, 1fr) 26px;
   }
 
   .metadata {
@@ -139,5 +200,11 @@
   .chevron {
     grid-column: 2;
     grid-row: 1 / 3;
+  }
+
+  .directory-actions {
+    grid-column: 1;
+    justify-content: start;
+    padding-left: 76px;
   }
 }

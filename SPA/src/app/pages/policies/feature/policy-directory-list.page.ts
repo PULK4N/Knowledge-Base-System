@@ -12,11 +12,13 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
+  exhaustMap,
   map,
   of,
   shareReplay,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { PagedResult } from '../../../core/store/entity-store.service';
@@ -51,6 +53,15 @@ interface DirectoryListView {
   readonly result: PagedResult<DirectoryEntry>;
 }
 
+type TopicRemovalState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'deleting'; readonly topicName: string }
+  | {
+      readonly status: 'error';
+      readonly topicName: string;
+      readonly message: string;
+    };
+
 
 function policyCountLabel(policyCount: number): string {
   return `${policyCount} ${policyCount === 1 ? 'policy' : 'policies'}`;
@@ -75,14 +86,16 @@ export class PolicyDirectoryListPage {
     this.searchRequests,
     this.pageRequests,
   );
+  private readonly topicRemovalRequests = new Subject<string>();
   protected readonly searchText = signal('');
+  protected readonly confirmingTopicName = signal<string | null>(null);
 
   private readonly kind$ = this.route.data.pipe(
     map(data => directoryKindFromRoute(data['directoryKind'])),
     distinctUntilChanged(),
   );
 
-  protected readonly state$: Observable<LoadState<DirectoryListView>> =
+  private readonly state$: Observable<LoadState<DirectoryListView>> =
     combineLatest({ kind: this.kind$, request: this.request$ }).pipe(
       distinctUntilChanged(
         (previous, current) =>
@@ -105,6 +118,30 @@ export class PolicyDirectoryListPage {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
+  private readonly topicRemoval$: Observable<TopicRemovalState> =
+    this.topicRemovalRequests.pipe(
+      exhaustMap(topicName =>
+        this.policies.removeTopic(topicName).pipe(
+          tap(() => this.confirmingTopicName.set(null)),
+          map(() => ({ status: 'idle' }) as const),
+          startWith({ status: 'deleting', topicName } as const),
+          catchError(error =>
+            of({
+              status: 'error',
+              topicName,
+              message: toUserMessage(error),
+            } as const),
+          ),
+        ),
+      ),
+      startWith({ status: 'idle' } as const),
+    );
+
+  protected readonly vm$ = combineLatest({
+    state: this.state$,
+    topicRemoval: this.topicRemoval$,
+  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
   protected search(search: string): void {
     this.searchText.set(search);
     this.searchRequests.next(search);
@@ -112,6 +149,18 @@ export class PolicyDirectoryListPage {
 
   protected goToPage(page: number): void {
     this.pageRequests.next(page);
+  }
+
+  protected startRemovingTopic(topicName: string): void {
+    this.confirmingTopicName.set(topicName);
+  }
+
+  protected cancelRemovingTopic(): void {
+    this.confirmingTopicName.set(null);
+  }
+
+  protected removeTopic(topicName: string): void {
+    this.topicRemovalRequests.next(topicName);
   }
 
   private load(

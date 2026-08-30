@@ -152,6 +152,13 @@ describe('FeatureService', () => {
       action: (api: FeatureService) => api.updateStatus(feature.id, 'Complete'),
     },
     {
+      name: 'updates summary',
+      path: 'summary',
+      body: { summary: 'Updated feature summary.' },
+      action: (api: FeatureService) =>
+        api.updateSummary(feature.id, 'Updated feature summary.'),
+    },
+    {
       name: 'adds a skill',
       path: 'skills',
       body: { skillId: 'skill-2' },

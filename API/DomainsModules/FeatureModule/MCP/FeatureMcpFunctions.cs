@@ -62,6 +62,11 @@ public static class FeatureMcpFunctions
             "Replaces a feature's free-form progress description."
         ),
         CreateFunction(
+            (Func<IServiceProvider, Guid, string, Task<FeatureCommandResult>>)UpdateSummary,
+            "feature_summary_update",
+            "Replaces a feature's summary."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)AddSkill,
             "feature_skill_add",
             "Adds a skill ID that provides useful context for the feature."
@@ -290,6 +295,23 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.Status = status;
+            }
+        );
+
+    private static Task<FeatureCommandResult> UpdateSummary(
+        IServiceProvider services,
+        Guid featureId,
+        string summary
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            UpdateFeatureSummaryCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.Summary = summary;
             }
         );
 

@@ -37,13 +37,49 @@
           <div class="connection-management">
             <div class="topic-chips">
               @for (topicName of vm.state.data.topicNames; track topicName) {
-                <a
-                  class="topic-chip"
-                  [routerLink]="['/policies', 'topics', topicName]"
-                >
-                  <span>{{ topicName }}</span>
-                  <span aria-hidden="true">→</span>
-                </a>
+                <span class="topic-connection">
+                  <a
+                    class="topic-chip"
+                    [routerLink]="['/policies', 'topics', topicName]"
+                  >
+                    <span>{{ topicName }}</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                  @if (confirmingProjectTopicName() === topicName) {
+                    <span class="topic-removal-confirmation">
+                      <span>Disconnect?</span>
+                      <button
+                        class="danger-action"
+                        type="button"
+                        [disabled]="vm.connectionMutation.status === 'saving'"
+                        (click)="
+                          removeProjectTopic(
+                            vm.state.data.scope.projectId,
+                            topicName
+                          )
+                        "
+                      >
+                        {{
+                          vm.connectionMutation.status === 'saving' &&
+                          vm.connectionMutation.kind === 'remove-topic'
+                            ? 'Removing…'
+                            : 'Confirm'
+                        }}
+                      </button>
+                      <button type="button" (click)="cancelRemovingProjectTopic()">
+                        Cancel
+                      </button>
+                    </span>
+                  } @else {
+                    <button
+                      class="topic-remove-button"
+                      type="button"
+                      (click)="startRemovingProjectTopic(topicName)"
+                    >
+                      Remove
+                    </button>
+                  }
+                </span>
               } @empty {
                 <span class="no-topics">No topics connected.</span>
               }
@@ -81,7 +117,8 @@
             </form>
             @if (
               vm.connectionMutation.status === 'error' &&
-              vm.connectionMutation.kind === 'topic'
+              (vm.connectionMutation.kind === 'topic' ||
+                vm.connectionMutation.kind === 'remove-topic')
             ) {
               <p class="connection-error" role="alert">
                 {{ vm.connectionMutation.message }}

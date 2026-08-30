@@ -85,6 +85,17 @@ describe('PolicyService', () => {
     });
   });
 
+  it('removes a topic', async () => {
+    const resultPromise = firstValueFrom(service.removeTopic('Angular'));
+    const request = http.expectOne('/api/policies/topics/remove');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ topicName: 'Angular' });
+    request.flush({ status: 'OK' });
+
+    await expect(resultPromise).resolves.toEqual({ status: 'OK' });
+  });
+
   it('creates an agent family', async () => {
     const agentFamily = {
       agentFamilyName: 'claude',
@@ -171,6 +182,34 @@ describe('PolicyService', () => {
       id: 'project-1',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
+    });
+  });
+
+  it('removes a project topic and refreshes details', async () => {
+    const resultPromise = firstValueFrom(
+      service.removeProjectTopic('project-1', 'Angular'),
+    );
+    const mutation = http.expectOne('/api/policies/projects/topics/remove');
+
+    expect(mutation.request.method).toBe('POST');
+    expect(mutation.request.body).toEqual({
+      projectId: 'project-1',
+      topicName: 'Angular',
+    });
+    mutation.flush({ status: 'OK' });
+
+    const refresh = http.expectOne('/api/policies/projects/project-1');
+    refresh.flush({
+      projectId: 'project-1',
+      projectName: 'Knowledge Base System',
+      projectDescription: 'Agent knowledge application.',
+      repositoryPaths: ['/workspace/knowledge-base'],
+      topicNames: [],
+    });
+
+    await expect(resultPromise).resolves.toMatchObject({
+      id: 'project-1',
+      topicNames: [],
     });
   });
 

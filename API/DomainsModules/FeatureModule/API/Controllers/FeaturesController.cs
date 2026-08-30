@@ -102,6 +102,18 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
+    [HttpPost("{featureId:guid}/summary")]
+    public async Task<ActionResult<FeatureCommandResult>> UpdateSummary(
+        Guid featureId,
+        [FromBody] UpdateFeatureSummaryRequest request,
+        [FromServices] UpdateFeatureSummaryCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.Summary = request.Summary;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
     [HttpPost("{featureId:guid}/skills")]
     public async Task<ActionResult<FeatureCommandResult>> AddSkill(
         Guid featureId,

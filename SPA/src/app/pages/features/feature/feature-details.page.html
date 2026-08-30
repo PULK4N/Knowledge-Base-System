@@ -77,8 +77,32 @@
         <section class="feature-overview surface-card">
         <div class="overview-main">
           <span class="feature-icon large" aria-hidden="true">◇</span>
-          <div>
-            <p class="summary-text">{{ vm.state.data.summary }}</p>
+          <div class="overview-copy">
+            <form
+              class="overview-editor summary-block"
+              #summaryForm="ngForm"
+              (ngSubmit)="updateSummary(vm.state.data.id, summary.value)"
+            >
+              <label for="feature-summary">Feature summary</label>
+              <textarea
+                #summary="ngModel"
+                id="feature-summary"
+                name="summary"
+                rows="4"
+                [ngModel]="vm.state.data.summary"
+              ></textarea>
+              <button
+                type="submit"
+                [disabled]="summaryForm.invalid || vm.mutation.status === 'saving'"
+              >
+                {{
+                  vm.mutation.status === 'saving' &&
+                  vm.mutation.kind === 'summary'
+                    ? 'Updating…'
+                    : 'Update summary'
+                }}
+              </button>
+            </form>
             <a
               class="project-link"
               [routerLink]="[
@@ -92,7 +116,7 @@
           </div>
         </div>
         <form
-          class="status-block"
+          class="overview-editor status-block"
           #statusForm="ngForm"
           (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
         >
@@ -109,7 +133,11 @@
             type="submit"
             [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
           >
-            Update status
+            {{
+              vm.mutation.status === 'saving' && vm.mutation.kind === 'status'
+                ? 'Updating…'
+                : 'Update status'
+            }}
           </button>
         </form>
         </section>

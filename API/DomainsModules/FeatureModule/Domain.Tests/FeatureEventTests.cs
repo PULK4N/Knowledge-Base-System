@@ -64,6 +64,9 @@ public sealed class FeatureEventTests
         new FeatureStatusUpdatedV1(
             "Domain implementation is complete."
         ).Apply(state, executionInfo);
+        new FeatureSummaryUpdatedV1(
+            "Trace implementation decisions and outcomes."
+        ).Apply(state, executionInfo);
         new FeatureRecordAddedV1(
             RecordId,
             "Why keep previous plans?",
@@ -112,6 +115,10 @@ public sealed class FeatureEventTests
 
         Assert.Equal(ProjectId, state.ProjectId);
         Assert.Equal("Feature journal", state.Name);
+        Assert.Equal(
+            "Trace implementation decisions and outcomes.",
+            state.Summary
+        );
         Assert.Equal("Domain implementation is complete.", state.Status);
         Assert.Equal(SkillId, Assert.Single(state.RelatedSkillIds));
         var record = Assert.Single(state.Records);

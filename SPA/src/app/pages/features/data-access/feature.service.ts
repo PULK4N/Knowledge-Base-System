@@ -135,6 +135,10 @@ export class FeatureService {
     return this.postAndRefresh(id, 'status', { status });
   }
 
+  updateSummary(id: string, summary: string): Observable<Feature> {
+    return this.postAndRefresh(id, 'summary', { summary });
+  }
+
   addSkill(id: string, skillId: string): Observable<Feature> {
     return this.postAndRefresh(id, 'skills', { skillId });
   }

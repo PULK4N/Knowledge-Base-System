@@ -36,8 +36,13 @@
 
 .overview-main {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 24px;
+}
+
+.overview-copy {
+  min-width: 0;
+  flex: 1;
 }
 
 .feature-icon.large {
@@ -52,13 +57,6 @@
   font-size: 38px;
 }
 
-.summary-text {
-  margin: 0;
-  color: #192039;
-  font-size: 18px;
-  line-height: 1.6;
-}
-
 .project-link {
   display: inline-block;
   margin-top: 12px;
@@ -67,14 +65,19 @@
   text-decoration: none;
 }
 
-.status-block {
+.overview-editor {
   padding: 18px 20px;
   border-left: 3px solid var(--teal);
   border-radius: 7px;
   background: #f1fafc;
 }
 
-.status-block > label {
+.summary-block {
+  border-left-color: var(--indigo);
+  background: #f5f5ff;
+}
+
+.overview-editor > label {
   color: #51707a;
   font-size: 12px;
   font-weight: 760;
@@ -82,7 +85,7 @@
   text-transform: uppercase;
 }
 
-.status-block textarea,
+.overview-editor textarea,
 .inline-editor textarea,
 .inline-editor input,
 .inline-editor select,
@@ -102,11 +105,11 @@
   resize: vertical;
 }
 
-.status-block textarea {
+.overview-editor textarea {
   margin-top: 8px;
 }
 
-.status-block textarea:focus,
+.overview-editor textarea:focus,
 .inline-editor textarea:focus,
 .inline-editor input:focus,
 .inline-editor select:focus,
@@ -118,7 +121,7 @@
   box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
 }
 
-.status-block button,
+.overview-editor button,
 .inline-editor > button,
 .record-editor button[type='submit'],
 .skill-picker button {
@@ -132,7 +135,7 @@
   font-weight: 680;
 }
 
-.status-block > button {
+.overview-editor > button {
   margin-top: 10px;
 }
 
@@ -288,7 +291,7 @@ button:disabled {
   background: white;
 }
 
-.status-block p {
+.overview-editor p {
   margin: 8px 0 0;
   color: #263c46;
   line-height: 1.55;

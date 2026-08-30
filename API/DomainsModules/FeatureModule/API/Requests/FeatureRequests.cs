@@ -19,6 +19,11 @@ public sealed record UpdateFeatureStatusRequest
     public required string Status { get; init; }
 }
 
+public sealed record UpdateFeatureSummaryRequest
+{
+    public required string Summary { get; init; }
+}
+
 public sealed record FeatureSkillRequest
 {
     public required Guid SkillId { get; init; }
