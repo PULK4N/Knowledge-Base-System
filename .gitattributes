@@ -1,0 +1,15 @@
+# Interpreter-driven scripts must retain LF endings so their shebangs remain valid
+# when contributors check out the repository on Windows.
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.py text eol=lf
+
+# These files are interpreted inside Linux containers.
+Dockerfile text eol=lf
+Dockerfile.* text eol=lf
+
+# Preserve native Windows script endings if they are added later.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

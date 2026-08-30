@@ -1,0 +1,17 @@
+root = true
+
+[*.{sh,bash,zsh,py}]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[{Dockerfile,Dockerfile.*}]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+insert_final_newline = true

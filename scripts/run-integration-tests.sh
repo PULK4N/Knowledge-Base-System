@@ -40,7 +40,7 @@ trap cleanup EXIT
 "${compose_command[@]}" down --volumes --remove-orphans
 "${compose_command[@]}" up --build --detach --renew-anon-volumes
 
-for attempt in $(seq 1 300); do
+for ((attempt = 1; attempt <= 300; attempt++)); do
     if curl --fail --silent \
         "http://localhost:${api_port}/swagger/v1/swagger.json" \
         >/dev/null; then
