@@ -24,10 +24,6 @@
             <span [title]="vm.state.data.id">{{ vm.state.data.id | shortId: 8 }}</span>
           </p>
         </div>
-        <a class="plans-link" [routerLink]="['/features', vm.state.data.id, 'plans']">
-          Manage plans
-          <span>{{ vm.state.data.plans.length }}</span>
-        </a>
       </header>
 
       <nav class="feature-tabs" role="tablist" aria-label="Feature sections">
@@ -257,14 +253,79 @@
               <span class="eyebrow">Implementation history</span>
               <h2>Plans</h2>
             </div>
-            <a [routerLink]="['/features', vm.state.data.id, 'plans']">
-              Manage plans →
-            </a>
+            <div class="section-actions">
+              <span class="count-badge">{{ vm.state.data.plans.length }}</span>
+              <button
+                type="button"
+                class="add-toggle"
+                [attr.aria-expanded]="addingPlan()"
+                (click)="addingPlan.set(!addingPlan())"
+              >
+                {{ addingPlan() ? 'Cancel' : 'Add plan' }}
+              </button>
+            </div>
           </div>
           <p class="section-description">
             Search plan content, filter by format, and sort the loaded feature
             projection without another API request.
           </p>
+
+          @if (addingPlan()) {
+            <form
+              class="inline-editor plan-editor"
+              #planForm="ngForm"
+              (ngSubmit)="addPlan(
+                vm.state.data.id,
+                planTitle.value,
+                planContent.value,
+                planContentType.value
+              )"
+            >
+              <label>
+                <span>Title</span>
+                <input
+                  #planTitle="ngModel"
+                  name="planTitle"
+                  type="text"
+                  required
+                  ngModel
+                />
+              </label>
+              <label>
+                <span>Content type</span>
+                <select
+                  #planContentType="ngModel"
+                  name="planContentType"
+                  required
+                  ngModel="Markdown"
+                >
+                  <option value="Markdown">Markdown</option>
+                  <option value="Html">HTML</option>
+                </select>
+              </label>
+              <label>
+                <span>Plan content</span>
+                <textarea
+                  #planContent="ngModel"
+                  name="planContent"
+                  rows="16"
+                  required
+                  ngModel
+                ></textarea>
+              </label>
+              <small class="editor-note">
+                The new plan becomes the current plan; the existing plan remains
+                in history.
+              </small>
+              <button
+                type="submit"
+                [disabled]="planForm.invalid || vm.mutation.status === 'saving'"
+              >
+                Create plan
+              </button>
+            </form>
+          }
+
           <app-list-controls
             class="tab-list-controls"
             [search]="vm.listState.plans.search"
@@ -287,23 +348,63 @@
           </p>
           <div class="tab-plan-list">
             @for (plan of vm.collections.plans; track plan.id) {
-              <a
-                class="tab-plan-row"
-                [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
-              >
+              <article class="tab-plan-row">
                 <span class="plan-document-icon" aria-hidden="true">▤</span>
-                <span>
+                <a
+                  class="tab-plan-title"
+                  [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
+                >
                   <strong>{{ plan.title }}</strong>
                   <small>
                     {{ plan.contentType }} · Updated
                     {{ plan.updatedAt | date: 'medium' }}
                   </small>
-                </span>
+                </a>
                 @if (plan.id === vm.state.data.currentPlanId) {
                   <span class="current-badge">Current</span>
                 }
-                <span class="open-plan" aria-hidden="true">→</span>
-              </a>
+                <div class="plan-row-actions">
+                  @if (plan.id !== vm.state.data.currentPlanId) {
+                    <button
+                      type="button"
+                      [disabled]="vm.mutation.status === 'saving'"
+                      (click)="selectPlan(vm.state.data.id, plan.id)"
+                    >
+                      Make current
+                    </button>
+                  }
+                  <a
+                    class="plan-row-link"
+                    [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
+                  >
+                    {{ plan.id === vm.state.data.currentPlanId ? 'Edit' : 'View' }}
+                  </a>
+                  @if (confirmingPlanRemoval() === plan.id) {
+                    <button
+                      type="button"
+                      class="danger-button"
+                      [disabled]="vm.mutation.status === 'saving'"
+                      (click)="removePlan(vm.state.data.id, plan.id)"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      (click)="confirmingPlanRemoval.set(null)"
+                    >
+                      Cancel
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="danger-link"
+                      (click)="confirmingPlanRemoval.set(plan.id)"
+                    >
+                      Delete
+                    </button>
+                  }
+                </div>
+              </article>
             } @empty {
               <div class="empty-section">
                 @if (vm.state.data.plans.length === 0) {
@@ -324,9 +425,19 @@
             <span class="eyebrow">Research trail</span>
             <h2>Research discoveries</h2>
           </div>
-          <span class="count-badge">
-            {{ vm.state.data.researchDiscoveries.length }}
-          </span>
+          <div class="section-actions">
+            <span class="count-badge">
+              {{ vm.state.data.researchDiscoveries.length }}
+            </span>
+            <button
+              type="button"
+              class="add-toggle"
+              [attr.aria-expanded]="addingResearchDiscovery()"
+              (click)="addingResearchDiscovery.set(!addingResearchDiscovery())"
+            >
+              {{ addingResearchDiscovery() ? 'Cancel' : 'Add discovery' }}
+            </button>
+          </div>
         </div>
 
         <p class="section-description">
@@ -334,69 +445,71 @@
           other sources as README-style Markdown documents attached to this feature.
         </p>
 
-        <form
-          class="inline-editor research-discovery-editor"
-          #newDiscoveryForm="ngForm"
-          (ngSubmit)="addResearchDiscovery(
-            vm.state.data.id,
-            newDiscoveryTitle.value,
-            newDiscoveryContent.value,
-            newDiscoverySourceType.value,
-            newDiscoverySourceReference.value
-          )"
-        >
-          <label class="discovery-title-field">
-            <span>Title</span>
-            <input
-              #newDiscoveryTitle="ngModel"
-              name="researchDiscoveryTitle"
-              type="text"
-              required
-              ngModel
-            />
-          </label>
-          <label class="discovery-content-field">
-            <span>Research Discovery Findings</span>
-            <textarea
-              #newDiscoveryContent="ngModel"
-              name="researchDiscoveryContent"
-              rows="10"
-              required
-              placeholder="Write the discovery using README-style Markdown."
-              ngModel
-            ></textarea>
-          </label>
-          <label>
-            <span>Source type</span>
-            <select
-              #newDiscoverySourceType="ngModel"
-              name="researchDiscoverySourceType"
-              required
-              ngModel="Other"
-            >
-              <option value="Other">Other</option>
-              <option value="Code">Code</option>
-              <option value="Web">Web</option>
-              <option value="Mcp">MCP</option>
-            </select>
-          </label>
-          <label>
-            <span>Source reference</span>
-            <input
-              #newDiscoverySourceReference="ngModel"
-              name="researchDiscoverySourceReference"
-              type="text"
-              placeholder="File path, URL, MCP tool, or other reference"
-              ngModel
-            />
-          </label>
-          <button
-            type="submit"
-            [disabled]="newDiscoveryForm.invalid || vm.mutation.status === 'saving'"
+        @if (addingResearchDiscovery()) {
+          <form
+            class="inline-editor research-discovery-editor"
+            #newDiscoveryForm="ngForm"
+            (ngSubmit)="addResearchDiscovery(
+              vm.state.data.id,
+              newDiscoveryTitle.value,
+              newDiscoveryContent.value,
+              newDiscoverySourceType.value,
+              newDiscoverySourceReference.value
+            )"
           >
-            Add discovery
-          </button>
-        </form>
+            <label class="discovery-title-field">
+              <span>Title</span>
+              <input
+                #newDiscoveryTitle="ngModel"
+                name="researchDiscoveryTitle"
+                type="text"
+                required
+                ngModel
+              />
+            </label>
+            <label class="discovery-content-field">
+              <span>Research Discovery Findings</span>
+              <textarea
+                #newDiscoveryContent="ngModel"
+                name="researchDiscoveryContent"
+                rows="10"
+                required
+                placeholder="Write the discovery using README-style Markdown."
+                ngModel
+              ></textarea>
+            </label>
+            <label>
+              <span>Source type</span>
+              <select
+                #newDiscoverySourceType="ngModel"
+                name="researchDiscoverySourceType"
+                required
+                ngModel="Other"
+              >
+                <option value="Other">Other</option>
+                <option value="Code">Code</option>
+                <option value="Web">Web</option>
+                <option value="Mcp">MCP</option>
+              </select>
+            </label>
+            <label>
+              <span>Source reference</span>
+              <input
+                #newDiscoverySourceReference="ngModel"
+                name="researchDiscoverySourceReference"
+                type="text"
+                placeholder="File path, URL, MCP tool, or other reference"
+                ngModel
+              />
+            </label>
+            <button
+              type="submit"
+              [disabled]="newDiscoveryForm.invalid || vm.mutation.status === 'saving'"
+            >
+              Add discovery
+            </button>
+          </form>
+        }
 
         <app-list-controls
           class="tab-list-controls"
@@ -571,7 +684,17 @@
             <span class="eyebrow">Decision trail</span>
             <h2>Conversation records</h2>
           </div>
-          <span class="count-badge">{{ vm.state.data.records.length }}</span>
+          <div class="section-actions">
+            <span class="count-badge">{{ vm.state.data.records.length }}</span>
+            <button
+              type="button"
+              class="add-toggle"
+              [attr.aria-expanded]="addingRecord()"
+              (click)="addingRecord.set(!addingRecord())"
+            >
+              {{ addingRecord() ? 'Cancel' : 'Add record' }}
+            </button>
+          </div>
         </div>
 
         <p class="section-description">
@@ -579,40 +702,42 @@
           Markdown. Short plain-text records remain valid Markdown documents.
         </p>
 
-        <form
-          class="inline-editor"
-          #newRecordForm="ngForm"
-          (ngSubmit)="addRecord(vm.state.data.id, newUserMessage.value, newAiAnswer.value)"
-        >
-          <label>
-            <span>User message (Markdown)</span>
-            <textarea
-              #newUserMessage="ngModel"
-              name="userMessage"
-              rows="8"
-              required
-              placeholder="Write the user message using README-style Markdown."
-              ngModel
-            ></textarea>
-          </label>
-          <label>
-            <span>AI answer (Markdown)</span>
-            <textarea
-              #newAiAnswer="ngModel"
-              name="aiAnswer"
-              rows="10"
-              required
-              placeholder="Write the AI answer using README-style Markdown."
-              ngModel
-            ></textarea>
-          </label>
-          <button
-            type="submit"
-            [disabled]="newRecordForm.invalid || vm.mutation.status === 'saving'"
+        @if (addingRecord()) {
+          <form
+            class="inline-editor"
+            #newRecordForm="ngForm"
+            (ngSubmit)="addRecord(vm.state.data.id, newUserMessage.value, newAiAnswer.value)"
           >
-            Add record
-          </button>
-        </form>
+            <label>
+              <span>User message (Markdown)</span>
+              <textarea
+                #newUserMessage="ngModel"
+                name="userMessage"
+                rows="8"
+                required
+                placeholder="Write the user message using README-style Markdown."
+                ngModel
+              ></textarea>
+            </label>
+            <label>
+              <span>AI answer (Markdown)</span>
+              <textarea
+                #newAiAnswer="ngModel"
+                name="aiAnswer"
+                rows="10"
+                required
+                placeholder="Write the AI answer using README-style Markdown."
+                ngModel
+              ></textarea>
+            </label>
+            <button
+              type="submit"
+              [disabled]="newRecordForm.invalid || vm.mutation.status === 'saving'"
+            >
+              Add record
+            </button>
+          </form>
+        }
 
         <app-list-controls
           class="tab-list-controls"

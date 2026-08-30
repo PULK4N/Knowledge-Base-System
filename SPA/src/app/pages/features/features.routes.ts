@@ -24,13 +24,6 @@ export const FEATURES_ROUTES: Routes = [
       ),
   },
   {
-    path: ':featureId/plans',
-    loadComponent: () =>
-      import('./feature/feature-plans.page').then(
-        module => module.FeaturePlansPage,
-      ),
-  },
-  {
     path: ':featureId',
     loadComponent: () =>
       import('./feature/feature-details.page').then(

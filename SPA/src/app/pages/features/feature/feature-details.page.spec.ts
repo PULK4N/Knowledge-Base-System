@@ -42,6 +42,30 @@ const feature: Feature = {
   plans: [],
 };
 
+const featureWithPlans: Feature = {
+  ...feature,
+  currentPlanId: 'plan-current',
+  planCount: 2,
+  plans: [
+    {
+      id: 'plan-current',
+      title: 'Current plan',
+      content: '# Current',
+      contentType: 'Markdown',
+      createdAt: '2026-08-20T10:00:00Z',
+      updatedAt: '2026-08-22T10:00:00Z',
+    },
+    {
+      id: 'plan-previous',
+      title: 'Previous plan',
+      content: '# Previous',
+      contentType: 'Markdown',
+      createdAt: '2026-08-18T10:00:00Z',
+      updatedAt: '2026-08-19T10:00:00Z',
+    },
+  ],
+};
+
 describe('FeatureDetailsPage research discoveries', () => {
   let harness: RouterTestingHarness;
   let features: {
@@ -50,6 +74,9 @@ describe('FeatureDetailsPage research discoveries', () => {
     addResearchDiscovery: ReturnType<typeof vi.fn>;
     updateResearchDiscovery: ReturnType<typeof vi.fn>;
     removeResearchDiscovery: ReturnType<typeof vi.fn>;
+    addPlan: ReturnType<typeof vi.fn>;
+    changeCurrentPlan: ReturnType<typeof vi.fn>;
+    removePlan: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -65,6 +92,9 @@ describe('FeatureDetailsPage research discoveries', () => {
       addResearchDiscovery: vi.fn(() => of(feature)),
       updateResearchDiscovery: vi.fn(() => of(feature)),
       removeResearchDiscovery: vi.fn(() => of(feature)),
+      addPlan: vi.fn(() => of(feature)),
+      changeCurrentPlan: vi.fn(() => of(feature)),
+      removePlan: vi.fn(() => of(feature)),
     };
 
     await TestBed.configureTestingModule({
@@ -191,9 +221,18 @@ describe('FeatureDetailsPage research discoveries', () => {
     ).toBe('Show less');
   });
 
-  it('renders provenance and submits a new research discovery', () => {
+  it('renders provenance and submits a new research discovery', async () => {
     const element = harness.routeNativeElement as HTMLElement;
     expect(element.textContent).toContain('Research discoveries');
+    expect(element.querySelector('form.research-discovery-editor')).toBeNull();
+
+    element
+      .querySelector<HTMLButtonElement>('.section-actions .add-toggle')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
     expect(element.textContent).toContain('YAML configuration');
     expect(element.textContent).toContain(
       'Feature transitions are configured in YAML.',
@@ -322,6 +361,98 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(discovery.open).toBe(false);
   });
 
+  it('offers edit, make current, and delete on each plans-tab row', async () => {
+    const element = await openPlansTab(harness, features);
+    const rows = element.querySelectorAll<HTMLElement>('.tab-plan-row');
+
+    expect(rows).toHaveLength(2);
+    expect(
+      rows[0].querySelector('.plan-row-actions .plan-row-link')?.textContent?.trim(),
+    ).toBe('Edit');
+    expect(
+      rows[1].querySelector('.plan-row-actions .plan-row-link')?.textContent?.trim(),
+    ).toBe('View');
+    expect(rows[0].querySelector('.current-badge')).not.toBeNull();
+
+    planAction(rows[1], 'Make current')?.click();
+    harness.detectChanges();
+
+    expect(features.changeCurrentPlan).toHaveBeenCalledWith(
+      featureWithPlans.id,
+      'plan-previous',
+    );
+  });
+
+  it('requires confirmation before deleting a plan from the tab', async () => {
+    const element = await openPlansTab(harness, features);
+    const row = element.querySelector('.tab-plan-row') as HTMLElement;
+
+    planAction(row, 'Delete')?.click();
+    harness.detectChanges();
+
+    expect(features.removePlan).not.toHaveBeenCalled();
+
+    planAction(row, 'Confirm')?.click();
+    harness.detectChanges();
+
+    expect(features.removePlan).toHaveBeenCalledWith(
+      featureWithPlans.id,
+      'plan-current',
+    );
+  });
+
+  it('adds a plan from the collapsed plans-tab editor', async () => {
+    const element = await openPlansTab(harness, features);
+
+    expect(element.querySelector('form.plan-editor')).toBeNull();
+
+    element
+      .querySelector<HTMLButtonElement>('.section-actions .add-toggle')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    setControlValue(element, '[name="planTitle"]', ' Follow-up plan ');
+    setControlValue(element, '[name="planContent"]', '# Follow-up');
+
+    const form = element.querySelector('form.plan-editor') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.addPlan).toHaveBeenCalledWith(featureWithPlans.id, {
+      title: 'Follow-up plan',
+      content: '# Follow-up',
+      contentType: 'Markdown',
+    });
+  });
+
+  it('keeps the conversation record editor collapsed until Add record', async () => {
+    await harness.navigateByUrl(
+      '/features/feature-1?tab=conversations',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const toggle = element.querySelector(
+      '.section-actions .add-toggle',
+    ) as HTMLButtonElement;
+
+    expect(element.querySelector('[name="userMessage"]')).toBeNull();
+    expect(toggle.textContent?.trim()).toBe('Add record');
+
+    toggle.click();
+    harness.detectChanges();
+
+    expect(element.querySelector('[name="userMessage"]')).not.toBeNull();
+    expect(
+      element
+        .querySelector('.section-actions .add-toggle')
+        ?.textContent?.trim(),
+    ).toBe('Cancel');
+  });
+
   it('keeps tab-only list state on the client without reloading the feature', async () => {
     await harness.navigateByUrl(
       '/features/feature-1?tab=research&researchSource=Web',
@@ -358,6 +489,31 @@ describe('FeatureDetailsPage research discoveries', () => {
     });
   });
 });
+
+async function openPlansTab(
+  harness: RouterTestingHarness,
+  features: { watch: ReturnType<typeof vi.fn> },
+): Promise<HTMLElement> {
+  features.watch.mockReturnValue(of(featureWithPlans));
+  await harness.navigateByUrl(
+    '/features/feature-plans?tab=plans',
+    FeatureDetailsPage,
+  );
+  harness.detectChanges();
+  await harness.fixture.whenStable();
+  harness.detectChanges();
+
+  return harness.routeNativeElement as HTMLElement;
+}
+
+function planAction(
+  row: HTMLElement,
+  label: string,
+): HTMLButtonElement | undefined {
+  return Array.from(
+    row.querySelectorAll<HTMLButtonElement>('.plan-row-actions button'),
+  ).find(button => button.textContent?.trim() === label);
+}
 
 function setControlValue(
   element: HTMLElement,

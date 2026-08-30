@@ -1,31 +1,3 @@
-.plans-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 15px;
-  border: 1px solid #cbd2e0;
-  border-radius: 9px;
-  color: #273860;
-  background: white;
-  font-weight: 680;
-  text-decoration: none;
-}
-
-.plans-link:hover {
-  color: var(--indigo);
-  border-color: #929aff;
-}
-
-.plans-link span {
-  display: grid;
-  min-width: 25px;
-  height: 25px;
-  place-items: center;
-  border-radius: 50%;
-  background: #eef0f6;
-  font-size: 13px;
-}
-
 .feature-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

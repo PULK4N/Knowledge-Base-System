@@ -17,7 +17,8 @@
     @case ('success') {
       <a
         class="back-link"
-        [routerLink]="['/features', vm.state.data.feature.id, 'plans']"
+        [routerLink]="['/features', vm.state.data.feature.id]"
+        [queryParams]="{ tab: 'plans' }"
       >
         <span aria-hidden="true">←</span> Back to plans
       </a>

@@ -125,7 +125,9 @@ export class FeaturePlanDetailsPage {
         tap(() => {
           if (action.kind === 'update') this.editing.set(false);
           if (action.kind === 'remove') {
-            void this.router.navigate(['/features', action.featureId, 'plans']);
+            void this.router.navigate(['/features', action.featureId], {
+              queryParams: { tab: 'plans' },
+            });
           }
         }),
         map(() => ({ status: 'idle' }) as const),
