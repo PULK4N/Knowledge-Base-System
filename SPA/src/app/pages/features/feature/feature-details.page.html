@@ -75,71 +75,155 @@
 
       @if (vm.listState.activeTab === 'overview') {
         <section class="feature-overview surface-card">
-        <div class="overview-main">
+        <div class="overview-identity">
           <span class="feature-icon large" aria-hidden="true">◇</span>
-          <div class="overview-copy">
+          <a
+            class="project-link"
+            [routerLink]="[
+              '/policies',
+              'projects',
+              vm.state.data.projectId,
+            ]"
+          >
+            Project · {{ vm.state.data.projectId | shortId: 8 }}
+          </a>
+        </div>
+
+        <div class="overview-editor overview-field summary-block">
+          <div class="overview-field-heading">
+            <h2 class="overview-field-label" id="feature-summary-label">
+              Feature summary
+            </h2>
+            @if (!editingSummary()) {
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="editingSummary.set(true)"
+              >
+                Edit
+              </button>
+            }
+          </div>
+          @if (editingSummary()) {
             <form
-              class="overview-editor summary-block"
+              class="overview-form"
               #summaryForm="ngForm"
               (ngSubmit)="updateSummary(vm.state.data.id, summary.value)"
             >
-              <label for="feature-summary">Feature summary</label>
               <textarea
                 #summary="ngModel"
                 id="feature-summary"
                 name="summary"
-                rows="4"
+                rows="6"
+                aria-labelledby="feature-summary-label"
                 [ngModel]="vm.state.data.summary"
               ></textarea>
-              <button
-                type="submit"
-                [disabled]="summaryForm.invalid || vm.mutation.status === 'saving'"
-              >
-                {{
-                  vm.mutation.status === 'saving' &&
-                  vm.mutation.kind === 'summary'
-                    ? 'Updating…'
-                    : 'Update summary'
-                }}
-              </button>
+              <div class="editor-actions">
+                <button
+                  type="submit"
+                  [disabled]="summaryForm.invalid || vm.mutation.status === 'saving'"
+                >
+                  {{
+                    vm.mutation.status === 'saving' &&
+                    vm.mutation.kind === 'summary'
+                      ? 'Saving…'
+                      : 'Save summary'
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="editingSummary.set(false)"
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
-            <a
-              class="project-link"
-              [routerLink]="[
-                '/policies',
-                'projects',
-                vm.state.data.projectId,
-              ]"
-            >
-              Project · {{ vm.state.data.projectId | shortId: 8 }}
-            </a>
-          </div>
+          } @else {
+            <p
+              class="overview-field-text"
+              [class.clamped]="!expandedSummary()"
+            >{{ fieldText(vm.state.data.summary, 'No summary has been written yet.') }}</p>
+            @if (isClampable(vm.state.data.summary)) {
+              <button
+                type="button"
+                class="text-toggle"
+                [attr.aria-expanded]="expandedSummary()"
+                (click)="expandedSummary.set(!expandedSummary())"
+              >
+                {{ expandedSummary() ? 'Show less' : 'Show more' }}
+              </button>
+            }
+          }
         </div>
-        <form
-          class="overview-editor status-block"
-          #statusForm="ngForm"
-          (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
-        >
-          <label for="feature-status">Current status</label>
-          <textarea
-            #status="ngModel"
-            id="feature-status"
-            name="status"
-            rows="4"
-            required
-            [ngModel]="vm.state.data.status"
-          ></textarea>
-          <button
-            type="submit"
-            [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
-          >
-            {{
-              vm.mutation.status === 'saving' && vm.mutation.kind === 'status'
-                ? 'Updating…'
-                : 'Update status'
-            }}
-          </button>
-        </form>
+
+        <div class="overview-editor overview-field status-block">
+          <div class="overview-field-heading">
+            <h2 class="overview-field-label" id="feature-status-label">
+              Current status
+            </h2>
+            @if (!editingStatus()) {
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="editingStatus.set(true)"
+              >
+                Edit
+              </button>
+            }
+          </div>
+          @if (editingStatus()) {
+            <form
+              class="overview-form"
+              #statusForm="ngForm"
+              (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
+            >
+              <textarea
+                #status="ngModel"
+                id="feature-status"
+                name="status"
+                rows="6"
+                required
+                aria-labelledby="feature-status-label"
+                [ngModel]="vm.state.data.status"
+              ></textarea>
+              <div class="editor-actions">
+                <button
+                  type="submit"
+                  [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
+                >
+                  {{
+                    vm.mutation.status === 'saving' && vm.mutation.kind === 'status'
+                      ? 'Saving…'
+                      : 'Save status'
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="editingStatus.set(false)"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          } @else {
+            <p
+              class="overview-field-text"
+              [class.clamped]="!expandedStatus()"
+            >{{ fieldText(vm.state.data.status, 'No status has been written yet.') }}</p>
+            @if (isClampable(vm.state.data.status)) {
+              <button
+                type="button"
+                class="text-toggle"
+                [attr.aria-expanded]="expandedStatus()"
+                (click)="expandedStatus.set(!expandedStatus())"
+              >
+                {{ expandedStatus() ? 'Show less' : 'Show more' }}
+              </button>
+            }
+          }
+        </div>
         </section>
 
         @if (vm.state.data.currentPlanId; as currentPlanId) {

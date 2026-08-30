@@ -110,13 +110,26 @@ describe('FeatureDetailsPage research discoveries', () => {
     harness.detectChanges();
 
     const element = harness.routeNativeElement as HTMLElement;
+    const summaryBlock = element.querySelector('.summary-block') as HTMLElement;
+    expect(summaryBlock.querySelector('.overview-field-text')?.textContent).toContain(
+      'Trace implementation decisions.',
+    );
+    expect(summaryBlock.querySelector('textarea')).toBeNull();
+
+    summaryBlock
+      .querySelector<HTMLButtonElement>('.overview-field-heading button')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
     setControlValue(
       element,
       '[name="summary"]',
       ' Updated implementation summary. ',
     );
 
-    const form = element.querySelector('form.summary-block') as HTMLFormElement;
+    const form = summaryBlock.querySelector('form') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
     harness.detectChanges();
 
@@ -124,6 +137,58 @@ describe('FeatureDetailsPage research discoveries', () => {
       feature.id,
       'Updated implementation summary.',
     );
+    expect(summaryBlock.querySelector('textarea')).toBeNull();
+    expect(summaryBlock.querySelector('.overview-field-text')).not.toBeNull();
+  });
+
+  it('trims stored text and shows short overview fields without a toggle', async () => {
+    features.watch.mockReturnValue(
+      of({ ...feature, summary: '  Padded summary.  ' }),
+    );
+    await harness.navigateByUrl(
+      '/features/feature-2?tab=overview',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const summaryText = element.querySelector(
+      '.summary-block .overview-field-text',
+    ) as HTMLElement;
+
+    expect(summaryText.textContent).toBe('Padded summary.');
+    expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
+    expect(element.querySelector('.status-block .text-toggle')).toBeNull();
+  });
+
+  it('clamps a long status until Show more is used', async () => {
+    features.watch.mockReturnValue(
+      of({ ...feature, status: 'Status line.\n'.repeat(12) }),
+    );
+    await harness.navigateByUrl(
+      '/features/feature-3?tab=overview',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const statusText = element.querySelector(
+      '.status-block .overview-field-text',
+    ) as HTMLElement;
+    const toggle = element.querySelector(
+      '.status-block .text-toggle',
+    ) as HTMLButtonElement;
+
+    expect(statusText.classList).toContain('clamped');
+    expect(toggle.textContent?.trim()).toBe('Show more');
+
+    toggle.click();
+    harness.detectChanges();
+
+    expect(statusText.classList).not.toContain('clamped');
+    expect(
+      element.querySelector('.status-block .text-toggle')?.textContent?.trim(),
+    ).toBe('Show less');
   });
 
   it('renders provenance and submits a new research discovery', () => {

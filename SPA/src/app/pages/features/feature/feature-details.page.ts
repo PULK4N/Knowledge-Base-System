@@ -73,6 +73,10 @@ const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'Edited', label: 'Edited records' },
   { value: 'Original', label: 'Original records' },
 ];
+/** Read-only overview text longer than this is clamped behind a Show more toggle. */
+const OVERVIEW_CLAMP_LINES = 6;
+const OVERVIEW_CLAMP_CHARACTERS = 340;
+
 const CONVERSATION_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'updatedAt', label: 'Last updated' },
   { value: 'createdAt', label: 'Created date' },
@@ -153,6 +157,10 @@ export class FeatureDetailsPage {
   private readonly skills = inject(SkillService);
   private readonly actions = new Subject<FeatureAction>();
 
+  protected readonly editingSummary = signal(false);
+  protected readonly editingStatus = signal(false);
+  protected readonly expandedSummary = signal(false);
+  protected readonly expandedStatus = signal(false);
   protected readonly editingRecordId = signal<string | null>(null);
   protected readonly editingResearchDiscoveryId = signal<string | null>(null);
   protected readonly confirmingFeatureRemoval = signal(false);
@@ -215,6 +223,12 @@ export class FeatureDetailsPage {
     exhaustMap(action =>
       this.execute(action).pipe(
         tap(() => {
+          if (action.kind === 'summary') {
+            this.editingSummary.set(false);
+          }
+          if (action.kind === 'status') {
+            this.editingStatus.set(false);
+          }
           if (action.kind === 'update-record') {
             this.editingRecordId.set(null);
           }
@@ -332,6 +346,21 @@ export class FeatureDetailsPage {
     this.updateListQuery({
       conversationDirection: omitDefault(direction, 'Descending'),
     });
+  }
+
+  protected fieldText(value: string, fallback: string): string {
+    const text = value.trim();
+
+    return text.length > 0 ? text : fallback;
+  }
+
+  protected isClampable(value: string): boolean {
+    const text = value.trim();
+
+    return (
+      text.length > OVERVIEW_CLAMP_CHARACTERS ||
+      text.split('\n').length > OVERVIEW_CLAMP_LINES
+    );
   }
 
   protected updateStatus(featureId: string, status: string): void {
