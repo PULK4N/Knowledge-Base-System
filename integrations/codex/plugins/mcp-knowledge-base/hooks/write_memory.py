@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import subprocess
@@ -15,7 +14,13 @@ import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
-from typing import Any, Callable
+from typing import IO, Any, Callable
+
+try:
+    import fcntl
+except ImportError:  # Windows has no fcntl; msvcrt locks the same byte range.
+    fcntl = None
+    import msvcrt
 
 
 DEFAULT_MEMORY_HOOK_URL = (
@@ -74,33 +79,37 @@ class MemoryHookQueue:
         lock_path = self._root / "drain.lock"
         with lock_path.open("a+", encoding="utf-8") as lock:
             lock_path.chmod(0o600)
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            if not _acquire_drain_lock(lock):
+                return
 
-            while True:
-                queued = sorted(self._root.glob("*.json"))
-                if not queued:
-                    self._failure_path().unlink(missing_ok=True)
-                    return
+            try:
+                while True:
+                    queued = sorted(self._root.glob("*.json"))
+                    if not queued:
+                        self._failure_path().unlink(missing_ok=True)
+                        return
 
-                for path in queued:
-                    claimed = path.with_suffix(".sending")
-                    try:
-                        path.replace(claimed)
-                    except FileNotFoundError:
-                        continue
+                    for path in queued:
+                        claimed = path.with_suffix(".sending")
+                        try:
+                            path.replace(claimed)
+                        except FileNotFoundError:
+                            continue
 
-                    try:
-                        payload = json.loads(claimed.read_text(encoding="utf-8"))
-                        if not isinstance(payload, dict):
-                            raise MemoryHookError(
-                                f"Queued hook payload '{claimed.name}' is not an object."
-                            )
-                        client.record(payload)
-                    except Exception:
-                        claimed.replace(path)
-                        raise
-                    else:
-                        claimed.unlink(missing_ok=True)
+                        try:
+                            payload = json.loads(claimed.read_text(encoding="utf-8"))
+                            if not isinstance(payload, dict):
+                                raise MemoryHookError(
+                                    f"Queued hook payload '{claimed.name}' is not an object."
+                                )
+                            client.record(payload)
+                        except Exception:
+                            claimed.replace(path)
+                            raise
+                        else:
+                            claimed.unlink(missing_ok=True)
+            finally:
+                _release_drain_lock(lock)
 
     def record_failure(self, error: Exception) -> None:
         failure = self._failure_path()
@@ -116,6 +125,34 @@ class MemoryHookQueue:
 
     def _failure_path(self) -> Path:
         return self._root / "last-error.txt"
+
+
+def _acquire_drain_lock(lock: IO[str]) -> bool:
+    """Take the exclusive drain lock, or report that another worker holds it.
+
+    Only one worker may send queued records at a time. POSIX waits on ``flock``;
+    Windows has no ``fcntl``, and ``msvcrt.locking`` gives up after its own retry
+    window, in which case the worker that owns the lock drains the same queue.
+    """
+    if fcntl is not None:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        return True
+
+    lock.seek(0)
+    try:
+        msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+    except OSError:
+        return False
+    return True
+
+
+def _release_drain_lock(lock: IO[str]) -> None:
+    if fcntl is not None:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+        return
+
+    lock.seek(0)
+    msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def process_hook(
@@ -237,8 +274,23 @@ def _start_worker() -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=True,
-        start_new_session=True,
+        **_detached_process_options(),
     )
+
+
+def _detached_process_options() -> dict[str, Any]:
+    """Keep the drain worker alive and silent after the hook process exits.
+
+    ``start_new_session`` is POSIX-only and is ignored on Windows, where the
+    equivalent is detaching the child from the console it would inherit.
+    """
+    if hasattr(subprocess, "DETACHED_PROCESS"):
+        return {
+            "creationflags": (
+                subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+            )
+        }
+    return {"start_new_session": True}
 
 
 def main() -> int:

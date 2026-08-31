@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Restoring MCP policies",
             "additionalContextLimit": 25000
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
             "timeout": 5,
             "statusMessage": "Preparing compacted chat summary",
             "additionalContextLimit": 2000
@@ -32,14 +32,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Loading MCP policies",
             "additionalContextLimit": 25000
           },
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
             "timeout": 5,
             "statusMessage": "Queuing chat memory"
           }
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 30,
             "statusMessage": "Refreshing MCP policies",
             "additionalContextLimit": 25000
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
             "timeout": 5,
             "statusMessage": "Queuing assistant memory"
           }
@@ -77,12 +77,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/load_policies.py\"",
             "timeout": 1
           },
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_memory.py\"",
             "timeout": 3
           }
         ]
