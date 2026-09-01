@@ -30,6 +30,21 @@ class FailingClient:
         raise write_memory.MemoryHookError("API offline")
 
 
+class RejectingClient:
+    """Answers like the Memory API does for a payload it can never accept."""
+
+    def __init__(self, rejected_prompt):
+        self._rejected_prompt = rejected_prompt
+        self.payloads = []
+
+    def record(self, payload):
+        if payload.get("prompt") == self._rejected_prompt:
+            raise write_memory.MemoryHookRejected(
+                "Memory API returned HTTP 400: payload rejected"
+            )
+        self.payloads.append(payload)
+
+
 class WriteMemoryTests(unittest.TestCase):
     def test_memory_hook_url_uses_knowledge_base_override(self):
         with mock.patch.dict(
@@ -240,6 +255,75 @@ class WriteMemoryTests(unittest.TestCase):
                 )
 
             self.assertEqual([], list((Path(data) / "queue").glob("*.json")))
+
+    def test_lone_surrogates_are_replaced_before_a_record_is_queued(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, turns = self.storage(data)
+
+            write_memory.process_hook(
+                self.event("UserPromptSubmit", prompt="caf\udc90 latte"),
+                queue=queue,
+                turns=turns,
+                worker_starter=lambda: None,
+            )
+
+            self.assertEqual(
+                "caf� latte", self.queued_payload(data)["prompt"]
+            )
+
+    def test_a_queued_lone_surrogate_is_repaired_before_delivery(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, _ = self.storage(data)
+            self.queue_raw(
+                data,
+                '{"hook_event_name": "Stop", '
+                '"last_assistant_message": "caf\\udc90"}',
+            )
+            client = FakeClient()
+
+            queue.drain(client)
+
+            self.assertEqual(
+                "caf�", client.payloads[0]["last_assistant_message"]
+            )
+            self.assertEqual([], list((Path(data) / "queue").glob("*.json")))
+
+    def test_a_rejected_record_does_not_block_the_rest_of_the_queue(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, _ = self.storage(data)
+            kept = self.event("UserPromptSubmit", prompt="Keep me")
+            queue.enqueue(self.event("UserPromptSubmit", prompt="Reject me"))
+            queue.enqueue(kept)
+            client = RejectingClient("Reject me")
+
+            queue.drain(client)
+
+            self.assertEqual([kept], client.payloads)
+            self.assertEqual([], list((Path(data) / "queue").glob("*.json")))
+            self.assertEqual(
+                1, len(list((Path(data) / "queue").glob("*.rejected")))
+            )
+            self.assertIn("HTTP 400", queue.last_failure())
+
+    def test_an_unreadable_record_does_not_block_the_rest_of_the_queue(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, _ = self.storage(data)
+            self.queue_raw(data, "not json at all")
+            kept = self.event("Stop")
+            queue.enqueue(kept)
+            client = FakeClient()
+
+            queue.drain(client)
+
+            self.assertEqual([kept], client.payloads)
+            self.assertEqual([], list((Path(data) / "queue").glob("*.json")))
+            self.assertIn("not valid JSON", queue.last_failure())
+
+    @staticmethod
+    def queue_raw(data, content):
+        (Path(data) / "queue" / "00000000000000000001-raw.json").write_text(
+            content, encoding="utf-8"
+        )
 
     @staticmethod
     def storage(data):

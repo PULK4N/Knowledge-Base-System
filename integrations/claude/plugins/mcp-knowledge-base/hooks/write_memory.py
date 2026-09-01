@@ -34,6 +34,14 @@ class MemoryHookError(RuntimeError):
     pass
 
 
+class MemoryHookRejected(MemoryHookError):
+    """A queued record the Memory API can never accept, however often it is sent.
+
+    Retrying such a record forever would block every record queued behind it, so
+    the drain worker sets it aside and carries on with the rest of the queue.
+    """
+
+
 class MemoryApiClient:
     def __init__(self, url: str, timeout_seconds: int = 20) -> None:
         self._url = url
@@ -54,7 +62,12 @@ class MemoryApiClient:
                 response.read()
         except urllib.error.HTTPError as error:
             details = error.read().decode("utf-8", errors="replace")
-            raise MemoryHookError(
+            failure = (
+                MemoryHookRejected
+                if 400 <= error.code < 500
+                else MemoryHookError
+            )
+            raise failure(
                 f"Memory API returned HTTP {error.code}: "
                 f"{details[:500] or error.reason}"
             ) from error
@@ -117,7 +130,9 @@ class MemoryHookQueue:
         name = f"{time.time_ns():020d}-{uuid.uuid4().hex}"
         temporary = self._root / f"{name}.tmp"
         queued = self._root / f"{name}.json"
-        temporary.write_text(json.dumps(payload), encoding="utf-8")
+        temporary.write_text(
+            json.dumps(_without_lone_surrogates(payload)), encoding="utf-8"
+        )
         temporary.chmod(0o600)
         temporary.replace(queued)
 
@@ -128,11 +143,15 @@ class MemoryHookQueue:
             if not _acquire_drain_lock(lock):
                 return
 
+            rejected: MemoryHookRejected | None = None
             try:
                 while True:
                     queued = sorted(self._root.glob("*.json"))
                     if not queued:
-                        self._failure_path().unlink(missing_ok=True)
+                        if rejected is None:
+                            self._failure_path().unlink(missing_ok=True)
+                        else:
+                            self.record_failure(rejected)
                         return
 
                     for path in queued:
@@ -143,12 +162,10 @@ class MemoryHookQueue:
                             continue
 
                         try:
-                            payload = json.loads(claimed.read_text(encoding="utf-8"))
-                            if not isinstance(payload, dict):
-                                raise MemoryHookError(
-                                    f"Queued hook payload '{claimed.name}' is not an object."
-                                )
-                            client.record(payload)
+                            client.record(self._read(claimed))
+                        except MemoryHookRejected as error:
+                            rejected = error
+                            claimed.replace(claimed.with_suffix(".rejected"))
                         except Exception:
                             claimed.replace(path)
                             raise
@@ -156,6 +173,21 @@ class MemoryHookQueue:
                             claimed.unlink(missing_ok=True)
             finally:
                 _release_drain_lock(lock)
+
+    def _read(self, path: Path) -> dict[str, Any]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            raise MemoryHookRejected(
+                f"Queued hook payload '{path.name}' is not valid JSON: {error}"
+            ) from error
+
+        if not isinstance(payload, dict):
+            raise MemoryHookRejected(
+                f"Queued hook payload '{path.name}' is not an object."
+            )
+
+        return _without_lone_surrogates(payload)
 
     def record_failure(self, error: Exception) -> None:
         failure = self._failure_path()
@@ -199,6 +231,46 @@ def _release_drain_lock(lock: IO[str]) -> None:
 
     lock.seek(0)
     msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+def _without_lone_surrogates(value: Any) -> Any:
+    """Replace unpaired surrogates anywhere in a hook payload.
+
+    Hook input that is not valid UTF-8, such as a multi-byte character split
+    across a truncation boundary, decodes to lone surrogates like U+DC90 under
+    Python's surrogateescape handler. json.dumps writes those out as escaped
+    surrogates, which System.Text.Json parses but then refuses either to read as
+    a string or to write back out, so the Memory API answers HTTP 500.
+    """
+    if isinstance(value, str):
+        return _replace_lone_surrogates(value)
+
+    if isinstance(value, dict):
+        return {
+            _without_lone_surrogates(key): _without_lone_surrogates(item)
+            for key, item in value.items()
+        }
+
+    if isinstance(value, list):
+        return [_without_lone_surrogates(item) for item in value]
+
+    return value
+
+
+def _replace_lone_surrogates(text: str) -> str:
+    """Turn each undecodable byte back into one replacement character.
+
+    surrogateescape maps bytes 0x80-0xFF to U+DC80-U+DCFF, so encoding with the
+    same handler recovers the original bytes and decoding them leniently marks
+    only the broken ones. Surrogates from any other source cannot be encoded
+    that way and are replaced individually instead.
+    """
+    try:
+        return text.encode("utf-8", "surrogateescape").decode(
+            "utf-8", "replace"
+        )
+    except UnicodeEncodeError:
+        return text.encode("utf-8", "replace").decode("utf-8")
 
 
 def process_hook(
