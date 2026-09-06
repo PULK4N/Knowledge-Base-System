@@ -28,13 +28,41 @@ services:
       Embeddings__NumGpu: 999
       Embeddings__MainGpu: 0
       Embeddings__NumCtx: 4096
+      OutboxProcessing__BrokerUri: amqp://artemis:5672
+      OutboxProcessing__UserName: artemis
+      OutboxProcessing__Password: artemis
+      OutboxProcessing__BatchSize: 10
     ports:
       - "5231:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      artemis:
+        condition: service_healthy
       ollama-model-init:
         condition: service_completed_successfully
+
+  artemis:
+    image: apache/activemq-artemis:2.44.0-alpine
+    container_name: knowledge-base-artemis
+    restart: unless-stopped
+    environment:
+      ARTEMIS_USER: artemis
+      ARTEMIS_PASSWORD: artemis
+      ANONYMOUS_LOGIN: "false"
+    ports:
+      - "5672:5672"
+      - "8161:8161"
+    volumes:
+      - ./integrations/artemis/broker.xml:/var/lib/artemis-instance/etc-override/broker.xml:ro
+      - knowledge-base-artemis-data:/var/lib/artemis-instance
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /var/lib/artemis-instance/bin/artemis check node --up --user artemis --password artemis
+      interval: 5s
+      timeout: 10s
+      retries: 20
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -124,6 +152,8 @@ services:
       - qwen3-embedding:0.6b
 
 volumes:
+  knowledge-base-artemis-data:
+
   knowledge-base-postgres-data:
     external: true
     name: mcp-skill-system_skill-memory-postgres-data

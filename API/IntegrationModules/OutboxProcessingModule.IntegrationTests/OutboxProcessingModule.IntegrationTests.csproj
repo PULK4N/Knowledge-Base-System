@@ -5,13 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyName>OutboxProcessingModule.Tests</AssemblyName>
-    <RootNamespace>OutboxProcessingModule.Tests</RootNamespace>
+    <AssemblyName>OutboxProcessingModule.IntegrationTests</AssemblyName>
+    <RootNamespace>OutboxProcessingModule.IntegrationTests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.16" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../OutboxProcessingModule/OutboxProcessingModule.csproj" />
+    <ProjectReference Include="../OutboxProcessingModule.Tests/OutboxProcessingModule.Tests.csproj" />
   </ItemGroup>
 
 </Project>
