@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
-    <ProjectReference Include="../../../EmbeddingModule/EmbeddingModule.csproj" />
+    <ProjectReference Include="../../../IntegrationModules/EmbeddingModule/EmbeddingModule.csproj" />
   </ItemGroup>
 
 </Project>

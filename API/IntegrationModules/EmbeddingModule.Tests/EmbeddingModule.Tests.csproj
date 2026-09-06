@@ -5,10 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>EmbeddingModule.Tests</AssemblyName>
+    <RootNamespace>EmbeddingModule.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -18,11 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DomainsModules/AdministrationModule/Application/Application.csproj" />
-    <ProjectReference Include="../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
-    <ProjectReference Include="../DomainsModules/FeatureModule/Contracts/Contracts.csproj" />
-    <ProjectReference Include="../DomainsModules/SkillsModule/Contracts/Contracts.csproj" />
-    <ProjectReference Include="../PostgreSqlModule/PostgreSqlModule.csproj" />
+    <ProjectReference Include="../EmbeddingModule/EmbeddingModule.csproj" />
+    <ProjectReference Include="../../EventSourcing/Shared/Shared.csproj" />
   </ItemGroup>
 
 </Project>
