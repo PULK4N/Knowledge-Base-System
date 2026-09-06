@@ -5,6 +5,8 @@ using AdministrationModule.Application.Commands;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
 using EventSourcing.Optimizations;
+using OutboxProcessingModule;
+using OutboxProcessingModule.Application;
 using FeatureModule.API.Controllers;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
@@ -21,6 +23,8 @@ using PolicyModule.Application.Commands;
 using PolicyModule.Domain;
 using PolicyModule.MCP;
 using PostgreSqlModule;
+using SharedModule.DistributedMessaging.Consuming;
+using SharedModule.DistributedMessaging.Queues;
 using SkillsModule.API.Controllers;
 using SkillsModule.Application.Commands;
 using SkillsModule.Domain;
@@ -76,6 +80,22 @@ builder.Services.RegisterActions(
     typeof(AddGeneralPolicyCommand).Assembly
 );
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
+
+builder.Services.RegisterOutboxProcessing(builder.Configuration);
+
+// The queue set is fixed by the YAML definitions, so it is known before the
+// container exists and each queue can get its own worker.
+var provisionedQueues = new ProvisionedQueueProvider(
+    new YamlStateMachineDefinitionProvider(builder.Configuration)
+).GetAll();
+
+// Hook deliveries have no handler yet, so only the projection queues are
+// consumed. Their messages still publish and wait in the broker.
+builder.Services.AddStateMachineConsumers(
+    provisionedQueues
+        .Where(queue => queue.Role == DeliveryRole.Projections)
+        .ToList()
+);
 builder.Services
     .AddMcpServer()
     .WithHttpTransport()
