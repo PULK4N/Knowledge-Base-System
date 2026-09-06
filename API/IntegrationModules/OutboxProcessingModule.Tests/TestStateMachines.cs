@@ -35,7 +35,13 @@ public sealed class RecordingProjector : IProjector
 
 public sealed class SecondRecordingProjector : IProjector
 {
-    public Task Update(List<StateInfo> stateInfo) => Task.CompletedTask;
+    public List<StateInfo> Received { get; } = [ ];
+
+    public Task Update(List<StateInfo> stateInfo)
+    {
+        Received.AddRange(stateInfo);
+        return Task.CompletedTask;
+    }
 }
 
 public static class TestData

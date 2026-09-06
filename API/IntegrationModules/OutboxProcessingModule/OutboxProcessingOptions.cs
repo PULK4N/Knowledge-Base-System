@@ -19,6 +19,12 @@ public sealed class OutboxProcessingOptions
 
     public TimeSpan MaxRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// Messages a consumer may hold. One keeps a failing delivery from taking
+    /// the rest of the queue down with it into the dead-letter queue.
+    /// </summary>
+    public int QueuePrefetch { get; set; } = 1;
+
     /// <summary>Budget for returning rows to New after a cycle was cancelled.</summary>
     public TimeSpan CleanupTimeout { get; set; } = TimeSpan.FromSeconds(5);
 }

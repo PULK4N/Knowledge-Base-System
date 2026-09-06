@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OutboxProcessingModule.Application;
 using OutboxProcessingModule.Hosting;
 using OutboxProcessingModule.Persistence;
+using SharedModule.DistributedMessaging.Consuming;
 
 namespace OutboxProcessingModule;
 
@@ -28,6 +29,10 @@ public static class Registration
         services.AddScoped<IOutboxPublisher, TransactionalOutboxPublisher>();
 
         services.AddHostedService<OutboxPublisherWorker>();
+
+        services.AddSingleton<ProvisionedQueueProvider>();
+        services.AddSingleton<IQueueSubscriptionFactory, NmsQueueSubscriptionFactory>();
+        services.AddScoped<IDeliveryHandler, ProjectionDeliveryHandler>();
 
         return services;
     }

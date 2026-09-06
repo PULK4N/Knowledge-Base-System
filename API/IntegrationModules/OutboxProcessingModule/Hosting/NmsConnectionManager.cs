@@ -30,6 +30,7 @@ public sealed class NmsConnectionManager(
             var settings = _options.Value;
             var factory = new NmsConnectionFactory(
                 settings.UserName, settings.Password, settings.BrokerUri);
+            factory.PrefetchPolicy.QueuePrefetch = settings.QueuePrefetch;
 
             var connection = factory.CreateConnection();
             connection.ExceptionListener += OnConnectionFailed;
