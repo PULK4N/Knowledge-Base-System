@@ -2,7 +2,8 @@
   <p class="eyebrow">Operations</p>
   <h1 class="page-heading">Administration</h1>
   <p class="page-subtitle">
-    Manage projection processing and inspect queued outbox work
+    Manage projection processing, inspect queued outbox work, and open the
+    database and queue consoles
   </p>
 </header>
 
@@ -42,6 +43,30 @@
     [attr.aria-selected]="outboxLink.isActive"
   >
     Outbox
+  </a>
+  <a
+    role="tab"
+    id="database-tab"
+    aria-controls="administration-panel"
+    routerLink="database"
+    routerLinkActive="active"
+    #databaseLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="databaseLink.isActive"
+  >
+    Database
+  </a>
+  <a
+    role="tab"
+    id="queues-tab"
+    aria-controls="administration-panel"
+    routerLink="queues"
+    routerLinkActive="active"
+    #queuesLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="queuesLink.isActive"
+  >
+    Queues
   </a>
 </nav>
 

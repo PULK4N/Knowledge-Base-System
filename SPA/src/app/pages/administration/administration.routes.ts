@@ -28,6 +28,20 @@ export const ADMINISTRATION_ROUTES: Routes = [
           ),
       },
       {
+        path: 'database',
+        loadComponent: () =>
+          import('./feature/database-administration.page').then(
+            module => module.DatabaseAdministrationPage,
+          ),
+      },
+      {
+        path: 'queues',
+        loadComponent: () =>
+          import('./feature/queue-administration.page').then(
+            module => module.QueueAdministrationPage,
+          ),
+      },
+      {
         path: 'projection-runner',
         loadComponent: () =>
           import('./feature/projection-runner.page').then(

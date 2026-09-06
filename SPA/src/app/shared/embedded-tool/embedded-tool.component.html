@@ -1,0 +1,41 @@
+<section
+  #viewport
+  class="embedded-tool surface-card"
+  [class.overlay]="overlayActive()"
+>
+  <div class="tool-heading">
+    <div class="tool-identity">
+      <h2>{{ toolName() }}</h2>
+      @if (description()) {
+        <p>{{ description() }}</p>
+      }
+    </div>
+
+    <div class="tool-actions">
+      <a [href]="url()" target="_blank" rel="noopener noreferrer">
+        Open in new tab
+      </a>
+      <button type="button" (click)="reload()">Reload</button>
+      <button
+        type="button"
+        class="icon-button"
+        [attr.aria-pressed]="fullscreen()"
+        [title]="fullscreenLabel()"
+        (click)="toggleFullscreen()"
+      >
+        <span class="sr-only">{{ fullscreenLabel() }}</span>
+        @if (fullscreen()) {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+          </svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  <iframe #frame [src]="safeUrl()" [title]="frameTitle()"></iframe>
+</section>

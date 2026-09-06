@@ -5,9 +5,11 @@ import { of } from 'rxjs';
 import { OutboxAdministrationService } from '../data-access/outbox-administration.service';
 import { ProjectionAdministrationService } from '../data-access/projection-administration.service';
 import { AdministrationPage } from './administration.page';
+import { DatabaseAdministrationPage } from './database-administration.page';
 import { OutboxAdministrationPage } from './outbox-administration.page';
 import { ProjectionAdministrationPage } from './projection-administration.page';
 import { ProjectionRunnerPage } from './projection-runner.page';
+import { QueueAdministrationPage } from './queue-administration.page';
 
 describe('AdministrationPage', () => {
   beforeEach(async () => {
@@ -34,6 +36,14 @@ describe('AdministrationPage', () => {
               {
                 path: 'projection-runner',
                 component: ProjectionRunnerPage,
+              },
+              {
+                path: 'database',
+                component: DatabaseAdministrationPage,
+              },
+              {
+                path: 'queues',
+                component: QueueAdministrationPage,
               },
             ],
           },
@@ -100,5 +110,28 @@ describe('AdministrationPage', () => {
     expect(router.url).toBe('/administration/projection-runner');
     expect(projectionRunnerTab.getAttribute('aria-selected')).toBe('true');
     expect(element.textContent).toContain('Run one projection');
+  });
+
+  it('frames the database and queue consoles from their own tabs', async () => {
+    const harness = await RouterTestingHarness.create('/administration/database');
+    harness.detectChanges();
+    const element = harness.routeNativeElement as HTMLElement;
+    const databaseTab = element.querySelector(
+      '#database-tab',
+    ) as HTMLAnchorElement;
+
+    expect(databaseTab.getAttribute('aria-selected')).toBe('true');
+    expect(
+      element.querySelector('iframe')?.getAttribute('src'),
+    ).toBe('/pgweb/');
+
+    await harness.navigateByUrl('/administration/queues');
+    harness.detectChanges();
+
+    const queuesTab = element.querySelector('#queues-tab') as HTMLAnchorElement;
+    expect(queuesTab.getAttribute('aria-selected')).toBe('true');
+    expect(
+      element.querySelector('iframe')?.getAttribute('src'),
+    ).toBe('/console/');
   });
 });
