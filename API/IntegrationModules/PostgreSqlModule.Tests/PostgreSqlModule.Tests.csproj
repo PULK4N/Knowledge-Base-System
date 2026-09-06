@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <AssemblyName>PostgreSqlModule.Tests</AssemblyName>
+    <RootNamespace>PostgreSqlModule.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DomainsModules/AdministrationModule/Application/Application.csproj" />
-    <ProjectReference Include="../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
-    <ProjectReference Include="../DomainsModules/FeatureModule/Contracts/Contracts.csproj" />
-    <ProjectReference Include="../DomainsModules/SkillsModule/Contracts/Contracts.csproj" />
+    <ProjectReference Include="../../DomainsModules/AdministrationModule/Application/Application.csproj" />
+    <ProjectReference Include="../../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
+    <ProjectReference Include="../../DomainsModules/FeatureModule/Contracts/Contracts.csproj" />
+    <ProjectReference Include="../../DomainsModules/SkillsModule/Contracts/Contracts.csproj" />
     <ProjectReference Include="../PostgreSqlModule/PostgreSqlModule.csproj" />
   </ItemGroup>
 
