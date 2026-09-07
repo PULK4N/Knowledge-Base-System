@@ -11,7 +11,7 @@ namespace OutboxProcessingModule.IntegrationTests;
 /// </summary>
 public static class ArtemisBroker
 {
-    public const string Uri = "amqp://localhost:5672";
+    public const string Uri = "amqp://localhost:5673";
     public const string UserName = "artemis";
     public const string Password = "artemis";
 

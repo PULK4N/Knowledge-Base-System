@@ -53,8 +53,8 @@ services:
       ARTEMIS_PASSWORD: artemis
       ANONYMOUS_LOGIN: "false"
     ports:
-      - "5672:5672"
-      - "8161:8161"
+      - "5673:5672"
+      - "8162:8161"
     volumes:
       - ./integrations/artemis/broker.xml:/var/lib/artemis-instance/etc-override/broker.xml:ro
       - knowledge-base-artemis-data:/var/lib/artemis-instance
