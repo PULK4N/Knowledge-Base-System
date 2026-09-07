@@ -21,6 +21,9 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeatureRecordDto> Records { get; init; }
 
+    public required IReadOnlyCollection<FeatureReviewNoteDto>
+        ReviewNotes { get; init; }
+
     public required IReadOnlyCollection<FeatureResearchDiscoveryDto>
         ResearchDiscoveries { get; init; }
 
@@ -42,6 +45,9 @@ public sealed record FeatureDto
                 .ToList(),
             Records = state.Records
                 .Select(FeatureRecordDto.FromModel)
+                .ToList(),
+            ReviewNotes = state.ReviewNotes
+                .Select(FeatureReviewNoteDto.FromModel)
                 .ToList(),
             ResearchDiscoveries = state.ResearchDiscoveries
                 .Select(FeatureResearchDiscoveryDto.FromModel)
@@ -75,6 +81,31 @@ public sealed record FeatureRecordDto
             AiAnswer = record.AiAnswer,
             CreatedAt = record.CreatedAt,
             UpdatedAt = record.UpdatedAt
+        };
+}
+
+public sealed record FeatureReviewNoteDto
+{
+    public required Guid Id { get; init; }
+
+    public required string Title { get; init; }
+
+    public required string Content { get; init; }
+
+    public required DateTime CreatedAt { get; init; }
+
+    public required DateTime UpdatedAt { get; init; }
+
+    public static FeatureReviewNoteDto FromModel(
+        FeatureReviewNote reviewNote
+    ) =>
+        new()
+        {
+            Id = reviewNote.Id.Value,
+            Title = reviewNote.Title,
+            Content = reviewNote.Content,
+            CreatedAt = reviewNote.CreatedAt,
+            UpdatedAt = reviewNote.UpdatedAt
         };
 }
 

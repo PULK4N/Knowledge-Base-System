@@ -45,6 +45,18 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeatureRecordMustExistValidator
+  FeatureReviewNoteAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewNoteMustNotExistValidator
+  FeatureReviewNoteUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewNoteMustExistValidator
+  FeatureReviewNoteRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewNoteMustExistValidator
   FeatureResearchDiscoveryAddedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator

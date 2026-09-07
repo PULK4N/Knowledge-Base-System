@@ -23,6 +23,15 @@ public sealed record FeatureRecordCreatedCommandResult(
         new("OK", recordId);
 }
 
+public sealed record FeatureReviewNoteCreatedCommandResult(
+    string Status,
+    Guid ReviewNoteId
+)
+{
+    public static FeatureReviewNoteCreatedCommandResult Ok(Guid reviewNoteId) =>
+        new("OK", reviewNoteId);
+}
+
 public sealed record FeatureResearchDiscoveryCreatedCommandResult(
     string Status,
     Guid DiscoveryId

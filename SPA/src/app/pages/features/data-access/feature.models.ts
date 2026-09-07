@@ -27,6 +27,14 @@ export interface FeatureRecord {
   readonly updatedAt: string;
 }
 
+export interface FeatureReviewNote {
+  readonly id: string;
+  readonly title: string;
+  readonly content: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export interface FeatureResearchDiscovery {
   readonly id: string;
   readonly title: string;
@@ -50,6 +58,7 @@ export interface Feature extends FeatureSummary {
   readonly isDeleted: boolean;
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
+  readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
 }
@@ -87,6 +96,7 @@ export interface FeatureDto {
   readonly status: string;
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
+  readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
   readonly currentPlanId: string | null;
@@ -112,6 +122,11 @@ export interface FeatureRecordCreatedCommandResult extends FeatureCommandResult 
   readonly recordId: string;
 }
 
+export interface FeatureReviewNoteCreatedCommandResult
+  extends FeatureCommandResult {
+  readonly reviewNoteId: string;
+}
+
 export interface FeatureResearchDiscoveryCreatedCommandResult
   extends FeatureCommandResult {
   readonly discoveryId: string;
@@ -128,6 +143,16 @@ export interface FeatureRecordContentRequest {
 
 export interface UpdateFeatureRecordRequest extends FeatureRecordContentRequest {
   readonly recordId: string;
+}
+
+export interface FeatureReviewNoteContentRequest {
+  readonly title: string;
+  readonly content: string;
+}
+
+export interface UpdateFeatureReviewNoteRequest
+  extends FeatureReviewNoteContentRequest {
+  readonly reviewNoteId: string;
 }
 
 export interface FeatureResearchDiscoveryContentRequest {

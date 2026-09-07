@@ -29,8 +29,11 @@ import {
   FeatureRecordCreatedCommandResult,
   FeatureResearchDiscoveryContentRequest,
   FeatureResearchDiscoveryCreatedCommandResult,
+  FeatureReviewNoteContentRequest,
+  FeatureReviewNoteCreatedCommandResult,
   UpdateFeatureRecordRequest,
   UpdateFeatureResearchDiscoveryRequest,
+  UpdateFeatureReviewNoteRequest,
 } from './feature.models';
 
 const FEATURE_ENTITY_TYPE = 'feature';
@@ -39,6 +42,7 @@ function isFeature(entity: FeatureSummary | undefined): entity is Feature {
   return (
     !!entity &&
     'records' in entity &&
+    'reviewNotes' in entity &&
     'researchDiscoveries' in entity &&
     'plans' in entity
   );
@@ -168,6 +172,29 @@ export class FeatureService {
 
   removeRecord(id: string, recordId: string): Observable<Feature> {
     return this.postAndRefresh(id, 'records/remove', { recordId });
+  }
+
+  addReviewNote(
+    id: string,
+    request: FeatureReviewNoteContentRequest,
+  ): Observable<Feature> {
+    return this.http
+      .post<FeatureReviewNoteCreatedCommandResult>(
+        `${this.featurePath(id)}/review-notes`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  updateReviewNote(
+    id: string,
+    request: UpdateFeatureReviewNoteRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, 'review-notes/update', request);
+  }
+
+  removeReviewNote(id: string, reviewNoteId: string): Observable<Feature> {
+    return this.postAndRefresh(id, 'review-notes/remove', { reviewNoteId });
   }
 
   addResearchDiscovery(

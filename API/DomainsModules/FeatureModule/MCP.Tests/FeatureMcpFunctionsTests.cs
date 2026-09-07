@@ -13,6 +13,7 @@ public sealed class FeatureMcpFunctionsTests
         "feature_research_discovery_get",
         "feature_research_discovery_search",
         "feature_record_list",
+        "feature_review_note_list",
         "feature_add",
         "feature_remove",
         "feature_status_update",
@@ -22,6 +23,9 @@ public sealed class FeatureMcpFunctionsTests
         "feature_record_add",
         "feature_record_update",
         "feature_record_remove",
+        "feature_review_note_add",
+        "feature_review_note_update",
+        "feature_review_note_remove",
         "feature_research_discovery_add",
         "feature_research_discovery_update",
         "feature_research_discovery_remove",
@@ -193,6 +197,20 @@ public sealed class FeatureMcpFunctionsTests
 
         Assert.Contains("featureId", required);
         Assert.Contains("discoveryIds", required);
+        Assert.DoesNotContain("orderNumber", required);
+    }
+
+    [Fact]
+    public void ReviewNoteList_RequiresFeatureIdButNotOrderNumber()
+    {
+        var required = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == "feature_review_note_list")
+            .JsonSchema.GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.Contains("featureId", required);
         Assert.DoesNotContain("orderNumber", required);
     }
 

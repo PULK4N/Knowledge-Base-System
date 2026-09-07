@@ -44,6 +44,7 @@ import {
   selectFeaturePlans,
   selectFeatureRecords,
   selectFeatureResearch,
+  selectFeatureReviewNotes,
 } from './feature-detail-list-state';
 
 const PLAN_FILTER_OPTIONS: readonly ListControlOption[] = [
@@ -74,9 +75,20 @@ const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'Edited', label: 'Edited records' },
   { value: 'Original', label: 'Original records' },
 ];
-/** Read-only overview text longer than this is clamped behind a Show more toggle. */
-const OVERVIEW_CLAMP_LINES = 6;
-const OVERVIEW_CLAMP_CHARACTERS = 340;
+/** Read-only status text longer than this is clamped behind a Show more toggle. */
+const STATUS_CLAMP_LINES = 6;
+const STATUS_CLAMP_CHARACTERS = 340;
+
+const REVIEW_NOTE_FILTER_OPTIONS: readonly ListControlOption[] = [
+  { value: 'All', label: 'All review notes' },
+  { value: 'Edited', label: 'Edited notes' },
+  { value: 'Original', label: 'Original notes' },
+];
+const REVIEW_NOTE_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'updatedAt', label: 'Last updated' },
+  { value: 'createdAt', label: 'Created date' },
+  { value: 'title', label: 'Title' },
+];
 
 const CONVERSATION_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'updatedAt', label: 'Last updated' },
@@ -103,6 +115,24 @@ type FeatureAction =
       readonly aiAnswer: string;
     }
   | { readonly kind: 'remove-record'; readonly featureId: string; readonly recordId: string }
+  | {
+      readonly kind: 'add-review-note';
+      readonly featureId: string;
+      readonly title: string;
+      readonly content: string;
+    }
+  | {
+      readonly kind: 'update-review-note';
+      readonly featureId: string;
+      readonly reviewNoteId: string;
+      readonly title: string;
+      readonly content: string;
+    }
+  | {
+      readonly kind: 'remove-review-note';
+      readonly featureId: string;
+      readonly reviewNoteId: string;
+    }
   | {
       readonly kind: 'add-research-discovery';
       readonly featureId: string;
@@ -169,9 +199,10 @@ export class FeatureDetailsPage {
 
   protected readonly editingSummary = signal(false);
   protected readonly editingStatus = signal(false);
-  protected readonly expandedSummary = signal(false);
   protected readonly expandedStatus = signal(false);
   protected readonly editingRecordId = signal<string | null>(null);
+  protected readonly editingReviewNoteId = signal<string | null>(null);
+  protected readonly addingReviewNote = signal(false);
   protected readonly editingResearchDiscoveryId = signal<string | null>(null);
   protected readonly addingPlan = signal(false);
   protected readonly addingResearchDiscovery = signal(false);
@@ -186,6 +217,8 @@ export class FeatureDetailsPage {
   protected readonly researchSortOptions = RESEARCH_SORT_OPTIONS;
   protected readonly conversationFilterOptions = CONVERSATION_FILTER_OPTIONS;
   protected readonly conversationSortOptions = CONVERSATION_SORT_OPTIONS;
+  protected readonly reviewNoteFilterOptions = REVIEW_NOTE_FILTER_OPTIONS;
+  protected readonly reviewNoteSortOptions = REVIEW_NOTE_SORT_OPTIONS;
 
   private readonly listState$ = this.route.queryParamMap.pipe(
     map(parseFeatureDetailListState),
@@ -246,6 +279,12 @@ export class FeatureDetailsPage {
           if (action.kind === 'update-record') {
             this.editingRecordId.set(null);
           }
+          if (action.kind === 'update-review-note') {
+            this.editingReviewNoteId.set(null);
+          }
+          if (action.kind === 'add-review-note') {
+            this.addingReviewNote.set(false);
+          }
           if (action.kind === 'update-research-discovery') {
             this.editingResearchDiscoveryId.set(null);
           }
@@ -298,8 +337,17 @@ export class FeatureDetailsPage {
                 vm.state.data.records,
                 vm.listState.conversations,
               ),
+              reviewNotes: selectFeatureReviewNotes(
+                vm.state.data.reviewNotes,
+                vm.listState.reviewNotes,
+              ),
             }
-          : { plans: [], research: [], conversations: [] },
+          : {
+              plans: [],
+              research: [],
+              conversations: [],
+              reviewNotes: [],
+            },
     })),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
@@ -374,6 +422,30 @@ export class FeatureDetailsPage {
     });
   }
 
+  protected updateReviewNoteSearch(search: string): void {
+    this.updateListQuery({ reviewNoteSearch: omitEmpty(search) }, true);
+  }
+
+  protected updateReviewNoteFilter(filter: string): void {
+    if (!REVIEW_NOTE_FILTER_OPTIONS.some(option => option.value === filter)) {
+      return;
+    }
+    this.updateListQuery({ reviewNoteFilter: omitDefault(filter, 'All') });
+  }
+
+  protected updateReviewNoteSort(sortBy: string): void {
+    if (!REVIEW_NOTE_SORT_OPTIONS.some(option => option.value === sortBy)) {
+      return;
+    }
+    this.updateListQuery({ reviewNoteSort: omitDefault(sortBy, 'updatedAt') });
+  }
+
+  protected updateReviewNoteDirection(direction: ListSortDirection): void {
+    this.updateListQuery({
+      reviewNoteDirection: omitDefault(direction, 'Descending'),
+    });
+  }
+
   protected fieldText(value: string, fallback: string): string {
     const text = value.trim();
 
@@ -384,8 +456,8 @@ export class FeatureDetailsPage {
     const text = value.trim();
 
     return (
-      text.length > OVERVIEW_CLAMP_CHARACTERS ||
-      text.split('\n').length > OVERVIEW_CLAMP_LINES
+      text.length > STATUS_CLAMP_CHARACTERS ||
+      text.split('\n').length > STATUS_CLAMP_LINES
     );
   }
 
@@ -435,6 +507,42 @@ export class FeatureDetailsPage {
 
   protected removeRecord(featureId: string, recordId: string): void {
     this.actions.next({ kind: 'remove-record', featureId, recordId });
+  }
+
+  protected addReviewNote(
+    featureId: string,
+    title: string,
+    content: string,
+  ): void {
+    this.actions.next({
+      kind: 'add-review-note',
+      featureId,
+      title: title.trim(),
+      content: content.trim(),
+    });
+  }
+
+  protected updateReviewNote(
+    featureId: string,
+    reviewNoteId: string,
+    title: string,
+    content: string,
+  ): void {
+    this.actions.next({
+      kind: 'update-review-note',
+      featureId,
+      reviewNoteId,
+      title: title.trim(),
+      content: content.trim(),
+    });
+  }
+
+  protected removeReviewNote(featureId: string, reviewNoteId: string): void {
+    this.actions.next({
+      kind: 'remove-review-note',
+      featureId,
+      reviewNoteId,
+    });
   }
 
   protected addResearchDiscovery(
@@ -543,6 +651,22 @@ export class FeatureDetailsPage {
         });
       case 'remove-record':
         return this.features.removeRecord(action.featureId, action.recordId);
+      case 'add-review-note':
+        return this.features.addReviewNote(action.featureId, {
+          title: action.title,
+          content: action.content,
+        });
+      case 'update-review-note':
+        return this.features.updateReviewNote(action.featureId, {
+          reviewNoteId: action.reviewNoteId,
+          title: action.title,
+          content: action.content,
+        });
+      case 'remove-review-note':
+        return this.features.removeReviewNote(
+          action.featureId,
+          action.reviewNoteId,
+        );
       case 'add-research-discovery':
         return this.features.addResearchDiscovery(action.featureId, {
           title: action.title,

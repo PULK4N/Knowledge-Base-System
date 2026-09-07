@@ -46,6 +46,9 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureRecordAddedV1),
                 nameof(FeatureRecordUpdatedV1),
                 nameof(FeatureRecordRemovedV1),
+                nameof(FeatureReviewNoteAddedV1),
+                nameof(FeatureReviewNoteUpdatedV1),
+                nameof(FeatureReviewNoteRemovedV1),
                 nameof(FeatureResearchDiscoveryAddedV1),
                 nameof(FeatureResearchDiscoveryAddedV2),
                 nameof(FeatureResearchDiscoveryUpdatedV1),
@@ -199,6 +202,34 @@ public sealed class FeatureStateMachineDefinitionTests
         );
     }
 
+    [Fact]
+    public async Task ResolvesReviewNoteValidatorsFromYaml()
+    {
+        RegisterTypesOnce();
+        var provider = new EventValidatorProvider(
+            CreateDefinitionProvider()
+        );
+        var payload = CreatePayload(
+            new FeatureReviewNoteUpdatedV1(
+                FeatureReviewNoteId.FromDatabaseGuid(Guid.NewGuid()),
+                "Outbox retries are intentional",
+                "The projector retries by design; it is not a defect."
+            )
+        );
+
+        var validators = await provider.GetPreEventStateValidators(payload);
+
+        Assert.Collection(
+            validators,
+            validator =>
+                Assert.IsType<FeatureMustBeActiveValidator>(validator),
+            validator =>
+                Assert.IsType<FeatureReviewNoteMustExistValidator>(
+                    validator
+                )
+        );
+    }
+
     private static YamlStateMachineDefinitionProvider
         CreateDefinitionProvider() =>
             new(
@@ -254,6 +285,9 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureRecordAddedV1),
         typeof(FeatureRecordUpdatedV1),
         typeof(FeatureRecordRemovedV1),
+        typeof(FeatureReviewNoteAddedV1),
+        typeof(FeatureReviewNoteUpdatedV1),
+        typeof(FeatureReviewNoteRemovedV1),
         typeof(FeatureResearchDiscoveryAddedV1),
         typeof(FeatureResearchDiscoveryAddedV2),
         typeof(FeatureResearchDiscoveryUpdatedV1),
@@ -273,6 +307,8 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureSkillMustExistValidator),
         typeof(FeatureRecordMustNotExistValidator),
         typeof(FeatureRecordMustExistValidator),
+        typeof(FeatureReviewNoteMustNotExistValidator),
+        typeof(FeatureReviewNoteMustExistValidator),
         typeof(FeatureResearchDiscoveryMustNotExistValidator),
         typeof(FeatureResearchDiscoveryMustExistValidator),
         typeof(FeaturePlanMustNotExistValidator),

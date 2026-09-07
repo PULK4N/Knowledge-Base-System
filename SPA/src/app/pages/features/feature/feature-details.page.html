@@ -67,6 +67,16 @@
         >
           Conversations <span>{{ vm.state.data.records.length }}</span>
         </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'review-notes' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'review-notes'"
+          [class.active]="vm.listState.activeTab === 'review-notes'"
+        >
+          Review notes <span>{{ vm.state.data.reviewNotes.length }}</span>
+        </a>
       </nav>
 
       @if (vm.listState.activeTab === 'overview') {
@@ -88,7 +98,7 @@
         <div class="overview-editor overview-field summary-block">
           <div class="overview-field-heading">
             <h2 class="overview-field-label" id="feature-summary-label">
-              Feature summary
+              Overview
             </h2>
             @if (!editingSummary()) {
               <button
@@ -123,7 +133,7 @@
                     vm.mutation.status === 'saving' &&
                     vm.mutation.kind === 'summary'
                       ? 'Saving…'
-                      : 'Save summary'
+                      : 'Save overview'
                   }}
                 </button>
                 <button
@@ -136,20 +146,12 @@
               </div>
             </form>
           } @else {
-            <p
-              class="overview-field-text"
-              [class.clamped]="!expandedSummary()"
-            >{{ fieldText(vm.state.data.summary, 'No summary has been written yet.') }}</p>
-            @if (isClampable(vm.state.data.summary)) {
-              <button
-                type="button"
-                class="text-toggle"
-                [attr.aria-expanded]="expandedSummary()"
-                (click)="expandedSummary.set(!expandedSummary())"
-              >
-                {{ expandedSummary() ? 'Show less' : 'Show more' }}
-              </button>
-            }
+            <p class="overview-field-text">{{
+              fieldText(
+                vm.state.data.summary,
+                'No overview has been written yet.'
+              )
+            }}</p>
           }
         </div>
 
@@ -221,29 +223,6 @@
           }
         </div>
         </section>
-
-        @if (vm.state.data.currentPlanId; as currentPlanId) {
-          @for (plan of vm.state.data.plans; track plan.id) {
-            @if (plan.id === currentPlanId) {
-              <section class="section-card surface-card current-plan">
-                <div class="section-heading">
-                  <div>
-                    <span class="eyebrow">Current plan</span>
-                    <h2>{{ plan.title }}</h2>
-                  </div>
-                  <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
-                    Open plan →
-                  </a>
-                </div>
-                <app-markdown-content
-                  [blocks]="emptyBlocks"
-                  [markdown]="plan.contentType === 'Markdown' ? plan.content : ''"
-                  emptyMessage="Open the plan to view its HTML content."
-                />
-              </section>
-            }
-          }
-        }
       }
 
       @if (vm.listState.activeTab === 'plans') {
@@ -842,6 +821,199 @@
                 No conversation records have been saved.
               } @else {
                 No records match the current search and filter.
+              }
+            </div>
+          }
+        </div>
+        </section>
+      }
+
+      @if (vm.listState.activeTab === 'review-notes') {
+        <section class="section-card surface-card review-notes tab-section">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Settled review decisions</span>
+            <h2>Review notes</h2>
+          </div>
+          <div class="section-actions">
+            <span class="count-badge">{{ vm.state.data.reviewNotes.length }}</span>
+            <button
+              type="button"
+              class="add-toggle"
+              [attr.aria-expanded]="addingReviewNote()"
+              (click)="addingReviewNote.set(!addingReviewNote())"
+            >
+              {{ addingReviewNote() ? 'Cancel' : 'Add review note' }}
+            </button>
+          </div>
+        </div>
+
+        <p class="section-description">
+          Record decisions that behaviour works a particular way on purpose, as
+          README-style Markdown, so a later review does not report the same
+          finding as an issue again.
+        </p>
+
+        @if (addingReviewNote()) {
+          <form
+            class="inline-editor review-note-editor"
+            #newReviewNoteForm="ngForm"
+            (ngSubmit)="addReviewNote(
+              vm.state.data.id,
+              newReviewNoteTitle.value,
+              newReviewNoteContent.value
+            )"
+          >
+            <label class="review-note-title-field">
+              <span>Title</span>
+              <input
+                #newReviewNoteTitle="ngModel"
+                name="reviewNoteTitle"
+                type="text"
+                required
+                ngModel
+              />
+            </label>
+            <label class="review-note-content-field">
+              <span>Decision (Markdown)</span>
+              <textarea
+                #newReviewNoteContent="ngModel"
+                name="reviewNoteContent"
+                rows="10"
+                required
+                placeholder="Explain what was reviewed and why it is intended behaviour."
+                ngModel
+              ></textarea>
+            </label>
+            <button
+              type="submit"
+              [disabled]="newReviewNoteForm.invalid || vm.mutation.status === 'saving'"
+            >
+              Add review note
+            </button>
+          </form>
+        }
+
+        <app-list-controls
+          class="tab-list-controls"
+          [search]="vm.listState.reviewNotes.search"
+          searchLabel="Search review notes"
+          searchPlaceholder="Search titles and decisions"
+          [filter]="vm.listState.reviewNotes.filter"
+          filterLabel="Note type"
+          [filterOptions]="reviewNoteFilterOptions"
+          [sortBy]="vm.listState.reviewNotes.sortBy"
+          [sortOptions]="reviewNoteSortOptions"
+          [sortDirection]="vm.listState.reviewNotes.sortDirection"
+          (searchChanged)="updateReviewNoteSearch($event)"
+          (filterChanged)="updateReviewNoteFilter($event)"
+          (sortByChanged)="updateReviewNoteSort($event)"
+          (sortDirectionChanged)="updateReviewNoteDirection($event)"
+        />
+        <p class="visible-count">
+          Showing {{ vm.collections.reviewNotes.length }} of
+          {{ vm.state.data.reviewNotes.length }} review notes
+        </p>
+
+        <div class="review-note-list">
+          @for (reviewNote of vm.collections.reviewNotes; track reviewNote.id) {
+            <article class="review-note-item">
+              <header>
+                <span>Updated {{ reviewNote.updatedAt | date: 'medium' }}</span>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    (click)="editingReviewNoteId.set(reviewNote.id)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="danger-text"
+                    [disabled]="vm.mutation.status === 'saving'"
+                    (click)="removeReviewNote(vm.state.data.id, reviewNote.id)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </header>
+
+              @if (editingReviewNoteId() === reviewNote.id) {
+                <form
+                  class="record-editor review-note-editor"
+                  #editReviewNoteForm="ngForm"
+                  (ngSubmit)="updateReviewNote(
+                    vm.state.data.id,
+                    reviewNote.id,
+                    editReviewNoteTitle.value,
+                    editReviewNoteContent.value
+                  )"
+                >
+                  <label class="review-note-title-field">
+                    <span>Title</span>
+                    <input
+                      #editReviewNoteTitle="ngModel"
+                      name="editReviewNoteTitle"
+                      type="text"
+                      required
+                      [ngModel]="reviewNote.title"
+                    />
+                  </label>
+                  <label class="review-note-content-field">
+                    <span>Decision (Markdown)</span>
+                    <textarea
+                      #editReviewNoteContent="ngModel"
+                      name="editReviewNoteContent"
+                      rows="10"
+                      required
+                      [ngModel]="reviewNote.content"
+                    ></textarea>
+                  </label>
+                  <div class="editor-actions">
+                    <button
+                      type="submit"
+                      [disabled]="editReviewNoteForm.invalid || vm.mutation.status === 'saving'"
+                    >
+                      Save review note
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-button"
+                      (click)="editingReviewNoteId.set(null)"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <details class="review-note-document">
+                  <summary class="review-note-toggle">
+                    <h3>{{ reviewNote.title }}</h3>
+                    <svg
+                      class="discovery-chevron"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="m7 9 5 5 5-5" />
+                    </svg>
+                  </summary>
+                  <div class="review-note-body">
+                    <app-markdown-content
+                      class="readme-document"
+                      [blocks]="emptyBlocks"
+                      [markdown]="reviewNote.content"
+                      emptyMessage="This review note has no content."
+                    />
+                  </div>
+                </details>
+              }
+            </article>
+          } @empty {
+            <div class="empty-section">
+              @if (vm.state.data.reviewNotes.length === 0) {
+                No review notes have been saved.
+              } @else {
+                No review notes match the current search and filter.
               }
             </div>
           }

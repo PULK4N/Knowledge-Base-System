@@ -28,6 +28,15 @@ const feature: Feature = {
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
+  reviewNotes: [
+    {
+      id: 'review-note-1',
+      title: 'Replay reloads state',
+      content: '## Decision\n\nState replay is **intentional**.',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T11:00:00Z',
+    },
+  ],
   researchDiscoveries: [
     {
       id: 'discovery-1',
@@ -74,6 +83,9 @@ describe('FeatureDetailsPage research discoveries', () => {
     addResearchDiscovery: ReturnType<typeof vi.fn>;
     updateResearchDiscovery: ReturnType<typeof vi.fn>;
     removeResearchDiscovery: ReturnType<typeof vi.fn>;
+    addReviewNote: ReturnType<typeof vi.fn>;
+    updateReviewNote: ReturnType<typeof vi.fn>;
+    removeReviewNote: ReturnType<typeof vi.fn>;
     addPlan: ReturnType<typeof vi.fn>;
     changeCurrentPlan: ReturnType<typeof vi.fn>;
     removePlan: ReturnType<typeof vi.fn>;
@@ -92,6 +104,9 @@ describe('FeatureDetailsPage research discoveries', () => {
       addResearchDiscovery: vi.fn(() => of(feature)),
       updateResearchDiscovery: vi.fn(() => of(feature)),
       removeResearchDiscovery: vi.fn(() => of(feature)),
+      addReviewNote: vi.fn(() => of(feature)),
+      updateReviewNote: vi.fn(() => of(feature)),
+      removeReviewNote: vi.fn(() => of(feature)),
       addPlan: vi.fn(() => of(feature)),
       changeCurrentPlan: vi.fn(() => of(feature)),
       removePlan: vi.fn(() => of(feature)),
@@ -189,6 +204,27 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(summaryText.textContent).toBe('Padded summary.');
     expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
     expect(element.querySelector('.status-block .text-toggle')).toBeNull();
+  });
+
+  it('shows the whole overview and no plan on the overview tab', async () => {
+    features.watch.mockReturnValue(
+      of({ ...featureWithPlans, summary: 'Overview line.\n'.repeat(12) }),
+    );
+    await harness.navigateByUrl(
+      '/features/feature-overview?tab=overview',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const summaryText = element.querySelector(
+      '.summary-block .overview-field-text',
+    ) as HTMLElement;
+
+    expect(summaryText.classList).not.toContain('clamped');
+    expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
+    expect(element.querySelector('.current-plan')).toBeNull();
+    expect(element.textContent).not.toContain('Current plan');
   });
 
   it('clamps a long status until Show more is used', async () => {
@@ -361,6 +397,88 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(discovery.open).toBe(false);
   });
 
+  it('renders review notes as Markdown and submits a new one', async () => {
+    const element = await openReviewNotesTab(harness);
+
+    expect(element.textContent).toContain('Review notes');
+    expect(element.querySelector('form.review-note-editor')).toBeNull();
+    expect(element.textContent).toContain('Replay reloads state');
+
+    element
+      .querySelector<HTMLButtonElement>('.section-actions .add-toggle')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    setControlValue(element, '[name="reviewNoteTitle"]', ' Retry is intended ');
+    setControlValue(
+      element,
+      '[name="reviewNoteContent"]',
+      'The projector retries by design. ',
+    );
+
+    const form = element.querySelector(
+      'form.review-note-editor',
+    ) as HTMLFormElement;
+    form.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.addReviewNote).toHaveBeenCalledWith(feature.id, {
+      title: 'Retry is intended',
+      content: 'The projector retries by design.',
+    });
+  });
+
+  it('updates and removes an existing review note', async () => {
+    const element = await openReviewNotesTab(harness);
+    const item = element.querySelector('.review-note-item') as HTMLElement;
+
+    Array.from(item.querySelectorAll<HTMLButtonElement>('header button'))
+      .find(button => button.textContent?.trim() === 'Edit')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    setControlValue(
+      element,
+      '[name="editReviewNoteTitle"]',
+      'Replay reloads state by design',
+    );
+    setControlValue(
+      element,
+      '[name="editReviewNoteContent"]',
+      'State replay is intentional and is not a defect.',
+    );
+    await harness.fixture.whenStable();
+    const editForm = element.querySelector(
+      '.review-note-item form',
+    ) as HTMLFormElement;
+    editForm.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.updateReviewNote).toHaveBeenCalledWith(feature.id, {
+      reviewNoteId: 'review-note-1',
+      title: 'Replay reloads state by design',
+      content: 'State replay is intentional and is not a defect.',
+    });
+
+    Array.from(
+      element.querySelectorAll<HTMLButtonElement>(
+        '.review-note-item header button',
+      ),
+    )
+      .find(button => button.textContent?.trim() === 'Remove')
+      ?.click();
+    harness.detectChanges();
+
+    expect(features.removeReviewNote).toHaveBeenCalledWith(
+      feature.id,
+      'review-note-1',
+    );
+  });
+
   it('offers edit, make current, and delete on each plans-tab row', async () => {
     const element = await openPlansTab(harness, features);
     const rows = element.querySelectorAll<HTMLElement>('.tab-plan-row');
@@ -489,6 +607,20 @@ describe('FeatureDetailsPage research discoveries', () => {
     });
   });
 });
+
+async function openReviewNotesTab(
+  harness: RouterTestingHarness,
+): Promise<HTMLElement> {
+  await harness.navigateByUrl(
+    '/features/feature-1?tab=review-notes',
+    FeatureDetailsPage,
+  );
+  harness.detectChanges();
+  await harness.fixture.whenStable();
+  harness.detectChanges();
+
+  return harness.routeNativeElement as HTMLElement;
+}
 
 async function openPlansTab(
   harness: RouterTestingHarness,

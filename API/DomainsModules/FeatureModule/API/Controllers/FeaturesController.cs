@@ -181,6 +181,49 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
+    [HttpPost("{featureId:guid}/review-notes")]
+    public async Task<
+        ActionResult<FeatureReviewNoteCreatedCommandResult>
+    > AddReviewNote(
+        Guid featureId,
+        [FromBody] FeatureReviewNoteContentRequest request,
+        [FromServices] AddFeatureReviewNoteCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.Title = request.Title;
+        command.Content = request.Content;
+        return Ok(
+            (FeatureReviewNoteCreatedCommandResult)await Execute(command)
+        );
+    }
+
+    [HttpPost("{featureId:guid}/review-notes/update")]
+    public async Task<ActionResult<FeatureCommandResult>> UpdateReviewNote(
+        Guid featureId,
+        [FromBody] UpdateFeatureReviewNoteRequest request,
+        [FromServices] UpdateFeatureReviewNoteCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.ReviewNoteId = request.ReviewNoteId;
+        command.Title = request.Title;
+        command.Content = request.Content;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/review-notes/remove")]
+    public async Task<ActionResult<FeatureCommandResult>> RemoveReviewNote(
+        Guid featureId,
+        [FromBody] RemoveFeatureReviewNoteRequest request,
+        [FromServices] RemoveFeatureReviewNoteCommand command
+    )
+    {
+        command.FeatureId = featureId;
+        command.ReviewNoteId = request.ReviewNoteId;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
     [HttpPost("{featureId:guid}/research-discoveries")]
     public async Task<
         ActionResult<FeatureResearchDiscoveryCreatedCommandResult>

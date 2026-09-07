@@ -33,6 +33,12 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     public List<FeatureRecord> Records { get; set; } = [];
 
     /// <summary>
+    /// Reviewed decisions that intended behaviour is not a defect, so later reviews
+    /// do not report the same finding again.
+    /// </summary>
+    public List<FeatureReviewNote> ReviewNotes { get; set; } = [];
+
+    /// <summary>
     /// Discoveries made while researching or implementing the feature, with provenance.
     /// </summary>
     public List<FeatureResearchDiscovery> ResearchDiscoveries { get; set; } = [];

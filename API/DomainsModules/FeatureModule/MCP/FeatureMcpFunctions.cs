@@ -24,7 +24,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its current plan, five latest research discoveries, five latest conversation records, and title/ID references for other plans and discoveries. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, current plan, five latest research discoveries, five latest conversation records, and title/ID references for other plans and discoveries. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeaturePlanDto?>>)GetPlan,
@@ -47,9 +47,14 @@ public static class FeatureMcpFunctions
             "Gets all conversation records for a feature."
         ),
         CreateFunction(
+            (Func<IServiceProvider, Guid, uint, Task<List<FeatureReviewNoteDto>>>)ListReviewNotes,
+            "feature_review_note_list",
+            "Gets all review notes for a feature. Each note records a reviewed decision that intended behaviour is not a defect; read them before reporting review findings so a settled decision is not raised again."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, Task<FeatureCreatedCommandResult>>)Add,
             "feature_add",
-            "Creates a feature for an existing project with a name, summary, and free-form progress status."
+            "Creates a feature for an existing project with a name, an overview summary of what the feature is and does, and a free-form progress status."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Task<FeatureCommandResult>>)Remove,
@@ -64,7 +69,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, string, Task<FeatureCommandResult>>)UpdateSummary,
             "feature_summary_update",
-            "Replaces a feature's summary."
+            "Replaces a feature's overview summary of what the feature is and does."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)AddSkill,
@@ -90,6 +95,21 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveRecord,
             "feature_record_remove",
             "Removes a feature record from the current feature state."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, Task<FeatureReviewNoteCreatedCommandResult>>)AddReviewNote,
+            "feature_review_note_add",
+            "Records a reviewed decision that intended behaviour is not a defect, as a Markdown note, so a later review does not report the same finding again."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, string, string, Task<FeatureCommandResult>>)UpdateReviewNote,
+            "feature_review_note_update",
+            "Updates the title and Markdown content of an existing feature review note."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveReviewNote,
+            "feature_review_note_remove",
+            "Removes a review note from the current feature state while retaining event history."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, FeatureResearchDiscoverySourceType, string, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
@@ -232,6 +252,16 @@ public static class FeatureMcpFunctions
         (await GetFullFeature(services, featureId, orderNumber))?.Records
             .OrderByDescending(record => record.UpdatedAt)
             .ThenBy(record => record.Id)
+            .ToList() ?? [];
+
+    private static async Task<List<FeatureReviewNoteDto>> ListReviewNotes(
+        IServiceProvider services,
+        Guid featureId,
+        uint orderNumber = 0
+    ) =>
+        (await GetFullFeature(services, featureId, orderNumber))?.ReviewNotes
+            .OrderByDescending(reviewNote => reviewNote.UpdatedAt)
+            .ThenBy(reviewNote => reviewNote.Id)
             .ToList() ?? [];
 
     private static Task<FeatureDto?> GetFullFeature(
@@ -403,6 +433,63 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.RecordId = recordId;
+            }
+        );
+
+    private static Task<FeatureReviewNoteCreatedCommandResult> AddReviewNote(
+        IServiceProvider services,
+        Guid featureId,
+        string title,
+        string content
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            AddFeatureReviewNoteCommand,
+            FeatureReviewNoteCreatedCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.Title = title;
+                command.Content = content;
+            }
+        );
+
+    private static Task<FeatureCommandResult> UpdateReviewNote(
+        IServiceProvider services,
+        Guid featureId,
+        Guid reviewNoteId,
+        string title,
+        string content
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            UpdateFeatureReviewNoteCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.ReviewNoteId = reviewNoteId;
+                command.Title = title;
+                command.Content = content;
+            }
+        );
+
+    private static Task<FeatureCommandResult> RemoveReviewNote(
+        IServiceProvider services,
+        Guid featureId,
+        Guid reviewNoteId
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            RemoveFeatureReviewNoteCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.ReviewNoteId = reviewNoteId;
             }
         );
 

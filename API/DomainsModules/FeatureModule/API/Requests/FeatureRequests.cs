@@ -50,6 +50,27 @@ public sealed record RemoveFeatureRecordRequest
     public required Guid RecordId { get; init; }
 }
 
+public sealed record FeatureReviewNoteContentRequest
+{
+    public required string Title { get; init; }
+
+    public required string Content { get; init; }
+}
+
+public sealed record UpdateFeatureReviewNoteRequest
+{
+    public required Guid ReviewNoteId { get; init; }
+
+    public required string Title { get; init; }
+
+    public required string Content { get; init; }
+}
+
+public sealed record RemoveFeatureReviewNoteRequest
+{
+    public required Guid ReviewNoteId { get; init; }
+}
+
 public sealed record FeatureResearchDiscoveryContentRequest
 {
     public required string Title { get; init; }

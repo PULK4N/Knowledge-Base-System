@@ -27,6 +27,7 @@ public sealed class FeatureMcpDtoTests
             Status = "In progress",
             RelatedSkillIds = [],
             Records = records,
+            ReviewNotes = [ReviewNote("Intended behaviour", now)],
             ResearchDiscoveries = discoveries,
             Plans = [currentPlan, otherPlan],
             CurrentPlanId = currentPlan.Id
@@ -35,6 +36,10 @@ public sealed class FeatureMcpDtoTests
         var result = FeatureMcpDto.FromFeature(feature);
 
         Assert.Equal(currentPlan, result.CurrentPlan);
+        Assert.DoesNotContain(
+            typeof(FeatureMcpDto).GetProperties(),
+            property => property.Name.Contains("ReviewNote")
+        );
         Assert.Equal(records.Take(5), result.LatestConversationRecords);
         Assert.Equal(discoveries.Take(5), result.LatestResearchDiscoveries);
         Assert.Equal(
@@ -71,6 +76,19 @@ public sealed class FeatureMcpDtoTests
             Content = $"{title} content",
             SourceType = FeatureResearchDiscoverySourceType.Other,
             SourceReference = string.Empty,
+            CreatedAt = updatedAt,
+            UpdatedAt = updatedAt
+        };
+
+    private static FeatureReviewNoteDto ReviewNote(
+        string title,
+        DateTime updatedAt
+    ) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Content = $"{title} content",
             CreatedAt = updatedAt,
             UpdatedAt = updatedAt
         };

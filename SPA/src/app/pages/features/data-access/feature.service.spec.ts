@@ -25,6 +25,15 @@ const feature: FeatureDto = {
       updatedAt: '2026-08-22T10:00:00Z',
     },
   ],
+  reviewNotes: [
+    {
+      id: 'review-note-1',
+      title: 'Replay reloads state',
+      content: 'State replay is intentional.',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T11:00:00Z',
+    },
+  ],
   researchDiscoveries: [
     {
       id: 'discovery-1',

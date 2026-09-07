@@ -23,6 +23,10 @@ public sealed class FeatureEventTests
         FeatureRecordId.FromDatabaseGuid(
             Guid.Parse("44444444-4444-4444-4444-444444444444")
         );
+    private static readonly FeatureReviewNoteId ReviewNoteId =
+        FeatureReviewNoteId.FromDatabaseGuid(
+            Guid.Parse("99999999-9999-9999-9999-999999999999")
+        );
     private static readonly FeatureResearchDiscoveryId DiscoveryId =
         FeatureResearchDiscoveryId.FromDatabaseGuid(
             Guid.Parse("77777777-7777-7777-7777-777777777777")
@@ -77,6 +81,16 @@ public sealed class FeatureEventTests
             "Why keep and switch previous plans?",
             "They preserve reasoning and allow an earlier approach to become current again."
         ).Apply(state, executionInfo);
+        new FeatureReviewNoteAddedV1(
+            ReviewNoteId,
+            "Replay reloads state",
+            "State replay is intentional."
+        ).Apply(state, executionInfo);
+        new FeatureReviewNoteUpdatedV1(
+            ReviewNoteId,
+            "Replay reloads state by design",
+            "State replay is intentional and is not a defect."
+        ).Apply(state, executionInfo);
         new FeatureResearchDiscoveryAddedV2(
             DiscoveryId,
             "YAML event selection",
@@ -123,6 +137,12 @@ public sealed class FeatureEventTests
         Assert.Equal(SkillId, Assert.Single(state.RelatedSkillIds));
         var record = Assert.Single(state.Records);
         Assert.Equal("Why keep and switch previous plans?", record.UserMessage);
+        var reviewNote = Assert.Single(state.ReviewNotes);
+        Assert.Equal("Replay reloads state by design", reviewNote.Title);
+        Assert.Equal(
+            "State replay is intentional and is not a defect.",
+            reviewNote.Content
+        );
         var discovery = Assert.Single(state.ResearchDiscoveries);
         Assert.Equal("YAML events and validators", discovery.Title);
         Assert.Equal(
@@ -149,6 +169,10 @@ public sealed class FeatureEventTests
             state,
             executionInfo
         );
+        new FeatureReviewNoteRemovedV1(ReviewNoteId).Apply(
+            state,
+            executionInfo
+        );
         new FeatureRecordRemovedV1(RecordId).Apply(state, executionInfo);
         new FeatureSkillRemovedV1(SkillId).Apply(state, executionInfo);
         new FeatureRemovedV1().Apply(state, executionInfo);
@@ -156,6 +180,7 @@ public sealed class FeatureEventTests
         Assert.Null(state.CurrentPlanId);
         Assert.Equal(SecondPlanId, Assert.Single(state.Plans).Id);
         Assert.Empty(state.ResearchDiscoveries);
+        Assert.Empty(state.ReviewNotes);
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
         Assert.True(state.IsDeleted);

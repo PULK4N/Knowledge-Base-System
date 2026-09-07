@@ -14,9 +14,15 @@ import {
   FeatureRecord,
   FeatureResearchDiscovery,
   FeatureResearchDiscoverySourceType,
+  FeatureReviewNote,
 } from '../data-access/feature.models';
 
-export type FeatureTab = 'overview' | 'plans' | 'research' | 'conversations';
+export type FeatureTab =
+  | 'overview'
+  | 'plans'
+  | 'research'
+  | 'conversations'
+  | 'review-notes';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
 export type FeatureResearchSort =
@@ -29,6 +35,8 @@ export type FeatureResearchFilter =
   | FeatureResearchDiscoverySourceType;
 export type FeatureRecordSort = 'updatedAt' | 'createdAt' | 'userMessage';
 export type FeatureRecordFilter = 'All' | 'Edited' | 'Original';
+export type FeatureReviewNoteSort = 'updatedAt' | 'createdAt' | 'title';
+export type FeatureReviewNoteFilter = 'All' | 'Edited' | 'Original';
 
 export interface FeatureDetailListState {
   readonly activeTab: FeatureTab;
@@ -41,6 +49,10 @@ export interface FeatureDetailListState {
     FeatureRecordSort,
     FeatureRecordFilter
   >;
+  readonly reviewNotes: ClientListState<
+    FeatureReviewNoteSort,
+    FeatureReviewNoteFilter
+  >;
 }
 
 const FEATURE_TABS: readonly FeatureTab[] = [
@@ -48,6 +60,7 @@ const FEATURE_TABS: readonly FeatureTab[] = [
   'plans',
   'research',
   'conversations',
+  'review-notes',
 ];
 const SORT_DIRECTIONS: readonly ListSortDirection[] = [
   'Ascending',
@@ -82,6 +95,16 @@ const RECORD_SORTS: readonly FeatureRecordSort[] = [
   'userMessage',
 ];
 const RECORD_FILTERS: readonly FeatureRecordFilter[] = [
+  'All',
+  'Edited',
+  'Original',
+];
+const REVIEW_NOTE_SORTS: readonly FeatureReviewNoteSort[] = [
+  'updatedAt',
+  'createdAt',
+  'title',
+];
+const REVIEW_NOTE_FILTERS: readonly FeatureReviewNoteFilter[] = [
   'All',
   'Edited',
   'Original',
@@ -145,7 +168,53 @@ export function parseFeatureDetailListState(
         'Descending',
       ),
     },
+    reviewNotes: {
+      search: params.get('reviewNoteSearch')?.trim() ?? '',
+      filter: readAllowedValue(
+        params,
+        'reviewNoteFilter',
+        REVIEW_NOTE_FILTERS,
+        'All',
+      ),
+      sortBy: readAllowedValue(
+        params,
+        'reviewNoteSort',
+        REVIEW_NOTE_SORTS,
+        'updatedAt',
+      ),
+      sortDirection: readAllowedValue(
+        params,
+        'reviewNoteDirection',
+        SORT_DIRECTIONS,
+        'Descending',
+      ),
+    },
   };
+}
+
+export function selectFeatureReviewNotes(
+  reviewNotes: readonly FeatureReviewNote[],
+  state: FeatureDetailListState['reviewNotes'],
+): readonly FeatureReviewNote[] {
+  return selectClientList(reviewNotes, state, {
+    searchText: reviewNote => `${reviewNote.title}\n${reviewNote.content}`,
+    matchesFilter: (reviewNote, filter) => {
+      if (filter === 'All') return true;
+
+      const edited = reviewNote.createdAt !== reviewNote.updatedAt;
+      return filter === 'Edited' ? edited : !edited;
+    },
+    compare: (left, right, sortBy) => {
+      switch (sortBy) {
+        case 'title':
+          return compareText(left.title, right.title);
+        case 'createdAt':
+          return compareIsoDate(left.createdAt, right.createdAt);
+        case 'updatedAt':
+          return compareIsoDate(left.updatedAt, right.updatedAt);
+      }
+    },
+  });
 }
 
 export function selectFeaturePlans(

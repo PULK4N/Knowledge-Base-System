@@ -355,30 +355,38 @@ button:disabled {
   line-height: 1.6;
 }
 
-.research-discovery-editor {
+.research-discovery-editor,
+.review-note-editor {
   grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
 }
 
 .research-discovery-editor .discovery-title-field,
 .research-discovery-editor .discovery-content-field,
 .research-discovery-editor > button,
-.research-discovery-editor .discovery-editor-actions {
+.research-discovery-editor .discovery-editor-actions,
+.review-note-editor .review-note-title-field,
+.review-note-editor .review-note-content-field,
+.review-note-editor > button,
+.review-note-editor .editor-actions {
   grid-column: 1 / -1;
 }
 
-.research-discovery-list {
+.research-discovery-list,
+.review-note-list {
   display: grid;
   gap: 14px;
   margin-top: 22px;
 }
 
-.research-discovery-item {
+.research-discovery-item,
+.review-note-item {
   overflow: hidden;
   border: 1px solid #dfe4ed;
   border-radius: 11px;
 }
 
-.research-discovery-item > header {
+.research-discovery-item > header,
+.review-note-item > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -420,12 +428,14 @@ button:disabled {
   background: #fff0d9;
 }
 
-.research-discovery-body {
+.research-discovery-body,
+.review-note-body {
   padding: 18px 20px;
   background: white;
 }
 
-.research-discovery-toggle {
+.research-discovery-toggle,
+.review-note-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -439,20 +449,24 @@ button:disabled {
   transition: background 160ms ease;
 }
 
-.research-discovery-toggle::-webkit-details-marker {
+.research-discovery-toggle::-webkit-details-marker,
+.review-note-toggle::-webkit-details-marker {
   display: none;
 }
 
-.research-discovery-toggle:hover {
+.research-discovery-toggle:hover,
+.review-note-toggle:hover {
   background: #e7ecf5;
 }
 
-.research-discovery-toggle:focus-visible {
+.research-discovery-toggle:focus-visible,
+.review-note-toggle:focus-visible {
   outline: 3px solid rgb(48 60 255 / 22%);
   outline-offset: -3px;
 }
 
-.research-discovery-toggle h3 {
+.research-discovery-toggle h3,
+.review-note-toggle h3 {
   margin: 0;
   color: #18223c;
   font-size: 17px;
@@ -470,15 +484,18 @@ button:disabled {
   transition: transform 160ms ease;
 }
 
-.research-discovery-document[open] .research-discovery-toggle {
+.research-discovery-document[open] .research-discovery-toggle,
+.review-note-document[open] .review-note-toggle {
   background: #e8ecfa;
 }
 
-.research-discovery-document[open] .discovery-chevron {
+.research-discovery-document[open] .discovery-chevron,
+.review-note-document[open] .discovery-chevron {
   transform: rotate(180deg);
 }
 
-.research-discovery-body .readme-document {
+.research-discovery-body .readme-document,
+.review-note-body .readme-document {
   display: block;
   min-width: 0;
 }
@@ -609,18 +626,24 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .research-discovery-editor {
+  .research-discovery-editor,
+  .review-note-editor {
     grid-template-columns: 1fr;
   }
 
   .research-discovery-editor .discovery-title-field,
   .research-discovery-editor .discovery-content-field,
   .research-discovery-editor > button,
-  .research-discovery-editor .discovery-editor-actions {
+  .research-discovery-editor .discovery-editor-actions,
+  .review-note-editor .review-note-title-field,
+  .review-note-editor .review-note-content-field,
+  .review-note-editor > button,
+  .review-note-editor .editor-actions {
     grid-column: auto;
   }
 
   .research-discovery-item > header,
+  .review-note-item > header,
   .discovery-meta {
     align-items: flex-start;
     flex-direction: column;
