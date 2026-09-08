@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -30,6 +31,40 @@ class FailingClient:
 
 
 class WriteMemoryTests(unittest.TestCase):
+    def test_delivery_filters_invalid_unicode_including_existing_queue_records(self):
+        cases = [
+            ("before\udc9dafter", "beforeafter"),
+            ("\ud800hello\udfff", "hello"),
+            ("\ud800\ud83d\ude00\udc9d", "\U0001f600"),
+            ("\U0001f600 caf\u00e9 \u4f60\u597d", "\U0001f600 caf\u00e9 \u4f60\u597d"),
+            (r"literal \uDC9D", r"literal \uDC9D"),
+        ]
+        for original, expected in cases:
+            with self.subTest(original=repr(original)), tempfile.TemporaryDirectory() as data:
+                queue = write_memory.MemoryHookQueue(Path(data))
+                event = self.event(
+                    "Stop", nested=[{"text\udc9d": original}, None, True, 42]
+                )
+                queue.enqueue(event)
+                with mock.patch.object(write_memory.urllib.request, "urlopen") as send:
+                    queue.drain(write_memory.MemoryApiClient("http://localhost/memory"))
+
+                request = send.call_args.args[0]
+                sent = json.loads(request.data)
+                self.assertEqual(
+                    [{"text": expected}, None, True, 42], sent["nested"]
+                )
+                self.assertEqual(SESSION_ID, sent["session_id"])
+                self.assertEqual([], list(Path(data).glob("*.json")))
+
+    def test_filter_does_not_silently_overwrite_colliding_keys(self):
+        with mock.patch.object(write_memory.urllib.request, "urlopen") as send:
+            with self.assertRaisesRegex(write_memory.MemoryHookError, "duplicate"):
+                write_memory.MemoryApiClient("http://localhost/memory").record(
+                    {"text": "first", "text\udc9d": "second"}
+                )
+            send.assert_not_called()
+
     def test_memory_hook_url_uses_knowledge_base_override(self):
         with mock.patch.dict(
             write_memory.os.environ,

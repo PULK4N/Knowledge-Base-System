@@ -33,12 +33,34 @@ class MemoryHookError(RuntimeError):
     pass
 
 
+def _filter_unpaired_surrogates(value: Any) -> Any:
+    """Remove orphaned UTF-16 halves while preserving valid Unicode pairs."""
+    if isinstance(value, str):
+        return value.encode("utf-16-le", errors="surrogatepass").decode(
+            "utf-16-le", errors="ignore"
+        )
+    if isinstance(value, list):
+        return [_filter_unpaired_surrogates(item) for item in value]
+    if isinstance(value, dict):
+        filtered = {}
+        for key, item in value.items():
+            clean_key = _filter_unpaired_surrogates(key)
+            if clean_key in filtered:
+                raise MemoryHookError(
+                    "Filtering invalid Unicode produced duplicate payload keys."
+                )
+            filtered[clean_key] = _filter_unpaired_surrogates(item)
+        return filtered
+    return value
+
+
 class MemoryApiClient:
     def __init__(self, url: str, timeout_seconds: int = 20) -> None:
         self._url = url
         self._timeout_seconds = timeout_seconds
 
     def record(self, payload: dict[str, Any]) -> None:
+        payload = _filter_unpaired_surrogates(payload)
         request = urllib.request.Request(
             self._url,
             data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
