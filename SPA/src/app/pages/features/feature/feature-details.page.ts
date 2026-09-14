@@ -23,6 +23,7 @@ import {
   tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
+import { ClampOverflowDirective } from '../../../shared/clamp-overflow/clamp-overflow.directive';
 import {
   ListControlOption,
   ListControlsComponent,
@@ -75,10 +76,6 @@ const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'Edited', label: 'Edited records' },
   { value: 'Original', label: 'Original records' },
 ];
-/** Read-only status text longer than this is clamped behind a Show more toggle. */
-const STATUS_CLAMP_LINES = 6;
-const STATUS_CLAMP_CHARACTERS = 340;
-
 const REVIEW_NOTE_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'All', label: 'All review notes' },
   { value: 'Edited', label: 'Edited notes' },
@@ -175,6 +172,7 @@ type MutationState =
   selector: 'app-feature-details-page',
   imports: [
     AsyncPipe,
+    ClampOverflowDirective,
     DatePipe,
     FormsModule,
     ListControlsComponent,
@@ -200,6 +198,8 @@ export class FeatureDetailsPage {
   protected readonly editingSummary = signal(false);
   protected readonly editingStatus = signal(false);
   protected readonly expandedStatus = signal(false);
+  /** Set from the clamped status element; the toggle only shows when text is hidden. */
+  protected readonly statusOverflows = signal(false);
   protected readonly editingRecordId = signal<string | null>(null);
   protected readonly editingReviewNoteId = signal<string | null>(null);
   protected readonly addingReviewNote = signal(false);
@@ -455,15 +455,6 @@ export class FeatureDetailsPage {
     const text = value.trim();
 
     return text.length > 0 ? text : fallback;
-  }
-
-  protected isClampable(value: string): boolean {
-    const text = value.trim();
-
-    return (
-      text.length > STATUS_CLAMP_CHARACTERS ||
-      text.split('\n').length > STATUS_CLAMP_LINES
-    );
   }
 
   protected updateStatus(featureId: string, status: string): void {

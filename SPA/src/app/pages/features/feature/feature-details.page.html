@@ -137,8 +137,10 @@
               <p
                 class="overview-field-text"
                 [class.clamped]="!expandedStatus()"
+                [appClampOverflow]="!expandedStatus()"
+                (overflowChanged)="statusOverflows.set($event)"
               >{{ fieldText(vm.state.data.status, 'No status has been written yet.') }}</p>
-              @if (isClampable(vm.state.data.status)) {
+              @if (statusOverflows()) {
                 <button
                   type="button"
                   class="text-toggle"

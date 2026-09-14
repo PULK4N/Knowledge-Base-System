@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -252,7 +253,7 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(names).toEqual(['Angular code writer', 'skill-unknown']);
   });
 
-  it('clamps a long status until Show more is used', async () => {
+  it('offers Show more only when the clamped status hides text', async () => {
     features.watch.mockReturnValue(
       of({ ...feature, status: 'Status line.\n'.repeat(12) }),
     );
@@ -266,6 +267,14 @@ describe('FeatureDetailsPage research discoveries', () => {
     const statusText = element.querySelector(
       '.status-block .overview-field-text',
     ) as HTMLElement;
+
+    expect(element.querySelector('.status-block .text-toggle')).toBeNull();
+
+    Object.defineProperty(statusText, 'scrollHeight', { value: 240 });
+    Object.defineProperty(statusText, 'clientHeight', { value: 120 });
+    TestBed.inject(ApplicationRef).tick();
+    harness.detectChanges();
+
     const toggle = element.querySelector(
       '.status-block .text-toggle',
     ) as HTMLButtonElement;
