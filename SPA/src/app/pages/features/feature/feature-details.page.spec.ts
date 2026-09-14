@@ -156,9 +156,12 @@ describe('FeatureDetailsPage research discoveries', () => {
 
     const element = harness.routeNativeElement as HTMLElement;
     const summaryBlock = element.querySelector('.summary-block') as HTMLElement;
-    expect(summaryBlock.querySelector('.overview-field-text')?.textContent).toContain(
-      'Trace implementation decisions.',
-    );
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect(
+        summaryBlock.querySelector('.overview-document')?.textContent,
+      ).toContain('Trace implementation decisions.');
+    });
     expect(summaryBlock.querySelector('textarea')).toBeNull();
 
     summaryBlock
@@ -183,25 +186,31 @@ describe('FeatureDetailsPage research discoveries', () => {
       'Updated implementation summary.',
     );
     expect(summaryBlock.querySelector('textarea')).toBeNull();
-    expect(summaryBlock.querySelector('.overview-field-text')).not.toBeNull();
+    expect(summaryBlock.querySelector('.overview-document')).not.toBeNull();
   });
 
-  it('trims stored text and shows short overview fields without a toggle', async () => {
+  it('renders the overview as a Markdown document without a toggle', async () => {
     features.watch.mockReturnValue(
-      of({ ...feature, summary: '  Padded summary.  ' }),
+      of({ ...feature, summary: '## Purpose\n\nA **short** overview.' }),
     );
     await harness.navigateByUrl(
       '/features/feature-2?tab=overview',
       FeatureDetailsPage,
     );
     harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
 
     const element = harness.routeNativeElement as HTMLElement;
-    const summaryText = element.querySelector(
-      '.summary-block .overview-field-text',
-    ) as HTMLElement;
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      const document = element.querySelector(
+        '.summary-block .overview-document',
+      ) as HTMLElement;
 
-    expect(summaryText.textContent).toBe('Padded summary.');
+      expect(document.querySelector('h2')?.textContent).toBe('Purpose');
+      expect(document.querySelector('strong')?.textContent).toBe('short');
+    });
     expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
     expect(element.querySelector('.status-block .text-toggle')).toBeNull();
   });
@@ -217,11 +226,9 @@ describe('FeatureDetailsPage research discoveries', () => {
     harness.detectChanges();
 
     const element = harness.routeNativeElement as HTMLElement;
-    const summaryText = element.querySelector(
-      '.summary-block .overview-field-text',
-    ) as HTMLElement;
 
-    expect(summaryText.classList).not.toContain('clamped');
+    expect(element.querySelector('.summary-block .overview-document')).not.toBeNull();
+    expect(element.querySelector('.summary-block .clamped')).toBeNull();
     expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
     expect(element.querySelector('.current-plan')).toBeNull();
     expect(element.textContent).not.toContain('Current plan');
