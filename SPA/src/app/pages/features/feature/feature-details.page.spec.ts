@@ -128,11 +128,11 @@ describe('FeatureDetailsPage research discoveries', () => {
           useValue: {
             search: vi.fn(() =>
               of({
-                items: [],
+                items: [{ id: 'skill-1', name: 'Angular code writer' }],
                 page: 1,
                 pageSize: 100,
-                totalCount: 0,
-                totalPages: 0,
+                totalCount: 1,
+                totalPages: 1,
                 hasPreviousPage: false,
                 hasNextPage: false,
               }),
@@ -232,6 +232,24 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
     expect(element.querySelector('.current-plan')).toBeNull();
     expect(element.textContent).not.toContain('Current plan');
+  });
+
+  it('shows related skills by name and falls back to a short ID', async () => {
+    features.watch.mockReturnValue(
+      of({ ...feature, relatedSkillIds: ['skill-1', 'skill-unknown'] }),
+    );
+    await harness.navigateByUrl(
+      '/features/feature-skills?tab=overview',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const names = Array.from(
+      element.querySelectorAll('.skill-link-item strong'),
+    ).map(item => item.textContent?.trim());
+
+    expect(names).toEqual(['Angular code writer', 'skill-unknown']);
   });
 
   it('clamps a long status until Show more is used', async () => {

@@ -7,10 +7,19 @@
 
 .overview-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
   padding: 18px 28px;
+}
+
+.identity-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.identity-status .overview-field-label {
+  font-size: 17px;
 }
 
 .feature-icon.large {
@@ -26,6 +35,8 @@
 }
 
 .project-link {
+  flex: 0 0 auto;
+  white-space: nowrap;
   color: #52617d;
   font-size: 14px;
   text-decoration: none;
@@ -93,7 +104,8 @@
   line-clamp: 6;
 }
 
-.overview-editor .text-toggle {
+.overview-editor .text-toggle,
+.identity-status .text-toggle {
   min-height: 0;
   margin-top: 8px;
   padding: 0;
@@ -105,11 +117,13 @@
   font-weight: 680;
 }
 
-.overview-editor .text-toggle:hover {
+.overview-editor .text-toggle:hover,
+.identity-status .text-toggle:hover {
   text-decoration: underline;
 }
 
 .overview-editor textarea,
+.identity-status textarea,
 .inline-editor textarea,
 .inline-editor input,
 .inline-editor select,

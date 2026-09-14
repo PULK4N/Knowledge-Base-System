@@ -322,6 +322,11 @@ export class FeatureDetailsPage {
   }).pipe(
     map(vm => ({
       ...vm,
+      skillNames: new Map(
+        vm.skills.status === 'success'
+          ? vm.skills.data.items.map(skill => [skill.id, skill.name] as const)
+          : [],
+      ),
       collections:
         vm.state.status === 'success'
           ? {

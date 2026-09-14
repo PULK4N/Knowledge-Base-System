@@ -83,6 +83,73 @@
         <section class="feature-overview surface-card">
         <div class="overview-identity">
           <span class="feature-icon large" aria-hidden="true">◇</span>
+          <div class="overview-field status-block identity-status">
+            <div class="overview-field-heading">
+              <h2 class="overview-field-label" id="feature-status-label">
+                Current status
+              </h2>
+              @if (!editingStatus()) {
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="editingStatus.set(true)"
+                >
+                  Edit
+                </button>
+              }
+            </div>
+            @if (editingStatus()) {
+              <form
+                class="overview-form"
+                #statusForm="ngForm"
+                (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
+              >
+                <textarea
+                  #status="ngModel"
+                  id="feature-status"
+                  name="status"
+                  rows="6"
+                  required
+                  aria-labelledby="feature-status-label"
+                  [ngModel]="vm.state.data.status"
+                ></textarea>
+                <div class="editor-actions">
+                  <button
+                    type="submit"
+                    [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
+                  >
+                    {{
+                      vm.mutation.status === 'saving' && vm.mutation.kind === 'status'
+                        ? 'Saving…'
+                        : 'Save status'
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary-button"
+                    (click)="editingStatus.set(false)"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <p
+                class="overview-field-text"
+                [class.clamped]="!expandedStatus()"
+              >{{ fieldText(vm.state.data.status, 'No status has been written yet.') }}</p>
+              @if (isClampable(vm.state.data.status)) {
+                <button
+                  type="button"
+                  class="text-toggle"
+                  [attr.aria-expanded]="expandedStatus()"
+                  (click)="expandedStatus.set(!expandedStatus())"
+                >
+                  {{ expandedStatus() ? 'Show less' : 'Show more' }}
+                </button>
+              }
+            }
+          </div>
           <a
             class="project-link"
             [routerLink]="[
@@ -153,74 +220,6 @@
               [markdown]="vm.state.data.summary"
               emptyMessage="No overview has been written yet."
             />
-          }
-        </div>
-
-        <div class="overview-editor overview-field status-block">
-          <div class="overview-field-heading">
-            <h2 class="overview-field-label" id="feature-status-label">
-              Current status
-            </h2>
-            @if (!editingStatus()) {
-              <button
-                type="button"
-                class="secondary-button"
-                (click)="editingStatus.set(true)"
-              >
-                Edit
-              </button>
-            }
-          </div>
-          @if (editingStatus()) {
-            <form
-              class="overview-form"
-              #statusForm="ngForm"
-              (ngSubmit)="updateStatus(vm.state.data.id, status.value)"
-            >
-              <textarea
-                #status="ngModel"
-                id="feature-status"
-                name="status"
-                rows="6"
-                required
-                aria-labelledby="feature-status-label"
-                [ngModel]="vm.state.data.status"
-              ></textarea>
-              <div class="editor-actions">
-                <button
-                  type="submit"
-                  [disabled]="statusForm.invalid || vm.mutation.status === 'saving'"
-                >
-                  {{
-                    vm.mutation.status === 'saving' && vm.mutation.kind === 'status'
-                      ? 'Saving…'
-                      : 'Save status'
-                  }}
-                </button>
-                <button
-                  type="button"
-                  class="secondary-button"
-                  (click)="editingStatus.set(false)"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          } @else {
-            <p
-              class="overview-field-text"
-              [class.clamped]="!expandedStatus()"
-            >{{ fieldText(vm.state.data.status, 'No status has been written yet.') }}</p>
-            @if (isClampable(vm.state.data.status)) {
-              <button
-                type="button"
-                class="text-toggle"
-                [attr.aria-expanded]="expandedStatus()"
-                (click)="expandedStatus.set(!expandedStatus())"
-              >
-                {{ expandedStatus() ? 'Show less' : 'Show more' }}
-              </button>
-            }
           }
         </div>
         </section>
@@ -1069,9 +1068,9 @@
         <div class="skill-links">
           @for (skillId of vm.state.data.relatedSkillIds; track skillId) {
             <div class="skill-link-item">
-              <a [routerLink]="['/skills', skillId]">
+              <a [routerLink]="['/skills', skillId]" [title]="skillId">
                 <span aria-hidden="true">&lt;/&gt;</span>
-                <strong>{{ skillId | shortId: 8 }}</strong>
+                <strong>{{ vm.skillNames.get(skillId) ?? (skillId | shortId: 8) }}</strong>
                 <span aria-hidden="true">→</span>
               </a>
               <button
