@@ -6,7 +6,10 @@ import {
   convertToParamMap,
 } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
-import { OutboxPayload } from '../data-access/outbox-administration.models';
+import {
+  OutboxPayload,
+  OutboxRequeueSummary,
+} from '../data-access/outbox-administration.models';
 import { OutboxAdministrationService } from '../data-access/outbox-administration.service';
 import { OutboxAdministrationPage } from './outbox-administration.page';
 
@@ -29,15 +32,18 @@ describe('OutboxAdministrationPage', () => {
   let fixture: ComponentFixture<OutboxAdministrationPage>;
   let params: BehaviorSubject<ParamMap>;
   let requeueResult: Subject<OutboxPayload>;
+  let requeueAllResult: Subject<OutboxRequeueSummary>;
   let router: { navigate: ReturnType<typeof vi.fn> };
   let administration: {
     search: ReturnType<typeof vi.fn>;
     requeue: ReturnType<typeof vi.fn>;
+    requeueIncomplete: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     params = new BehaviorSubject(convertToParamMap({}));
     requeueResult = new Subject<OutboxPayload>();
+    requeueAllResult = new Subject<OutboxRequeueSummary>();
     router = { navigate: vi.fn() };
     administration = {
       search: vi.fn(() =>
@@ -52,6 +58,7 @@ describe('OutboxAdministrationPage', () => {
         }),
       ),
       requeue: vi.fn(() => requeueResult),
+      requeueIncomplete: vi.fn(() => requeueAllResult),
     };
 
     await TestBed.configureTestingModule({
@@ -133,6 +140,30 @@ describe('OutboxAdministrationPage', () => {
 
     expect(element.textContent).toContain('Ready to retry');
     expect(button.disabled).toBe(false);
+  });
+
+  it('requeues every incomplete payload once and reloads the list', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const searchCalls = administration.search.mock.calls.length;
+    const button = element.querySelector(
+      '.requeue-all',
+    ) as HTMLButtonElement;
+
+    button.click();
+    button.click();
+    fixture.detectChanges();
+    expect(administration.requeueIncomplete).toHaveBeenCalledOnce();
+    expect(button.textContent).toContain('Requeuing…');
+    expect(button.disabled).toBe(true);
+    expect(administration.search).toHaveBeenCalledTimes(searchCalls);
+
+    requeueAllResult.next({ requeuedCount: 2 });
+    requeueAllResult.complete();
+    fixture.detectChanges();
+
+    expect(element.textContent).toContain('2 payloads ready to retry');
+    expect(button.disabled).toBe(false);
+    expect(administration.search).toHaveBeenCalledTimes(searchCalls + 1);
   });
 
   it('publishes filter and sort changes as query parameters', () => {

@@ -8,12 +8,38 @@
           Select a payload row to inspect its JSON.
         </p>
       </div>
-      @if (vm.payloads.status === 'success') {
-        <span class="payload-count">
-          {{ vm.payloads.data.totalCount }}
-          {{ vm.payloads.data.totalCount === 1 ? 'payload' : 'payloads' }}
-        </span>
-      }
+      <div class="heading-actions">
+        @if (vm.payloads.status === 'success') {
+          <span class="payload-count">
+            {{ vm.payloads.data.totalCount }}
+            {{ vm.payloads.data.totalCount === 1 ? 'payload' : 'payloads' }}
+          </span>
+        }
+        <button
+          type="button"
+          class="requeue-all"
+          [disabled]="vm.requeueAll.status === 'requeuing'"
+          (click)="requeueAll()"
+        >
+          @if (vm.requeueAll.status === 'requeuing') {
+            Requeuing…
+          } @else {
+            Requeue all not completed
+          }
+        </button>
+        @if (vm.requeueAll.status === 'success') {
+          <span class="row-status success" role="status">
+            {{ vm.requeueAll.requeuedCount }}
+            {{ vm.requeueAll.requeuedCount === 1 ? 'payload' : 'payloads' }}
+            ready to retry
+          </span>
+        }
+        @if (vm.requeueAll.status === 'error') {
+          <span class="row-status error" role="alert">
+            {{ vm.requeueAll.message }}
+          </span>
+        }
+      </div>
     </div>
 
     <div class="toolbar">

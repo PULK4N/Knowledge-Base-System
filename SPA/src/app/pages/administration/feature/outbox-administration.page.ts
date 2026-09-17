@@ -13,6 +13,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   exhaustMap,
+  filter,
   map,
   of,
   shareReplay,
@@ -60,6 +61,12 @@ const STATE_FILTER_OPTIONS: readonly ListControlOption[] = [
   ...OUTBOX_STATES.map(state => ({ value: state, label: state })),
 ];
 
+type RequeueAllState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'requeuing' }
+  | { readonly status: 'success'; readonly requeuedCount: number }
+  | { readonly status: 'error'; readonly message: string };
+
 type RequeueState =
   | { readonly status: 'idle' }
   | { readonly status: 'requeuing'; readonly outboxPayloadId: string }
@@ -88,6 +95,7 @@ export class OutboxAdministrationPage {
   private readonly router = inject(Router);
   private readonly administration = inject(OutboxAdministrationService);
   private readonly requeueRequests = new Subject<string>();
+  private readonly requeueAllRequests = new Subject<void>();
 
   protected readonly sortOptions = OUTBOX_SORT_OPTIONS;
   protected readonly pageSizes = OUTBOX_PAGE_SIZES;
@@ -99,10 +107,41 @@ export class OutboxAdministrationPage {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  private readonly requeueAll$: Observable<RequeueAllState> =
+    this.requeueAllRequests.pipe(
+      exhaustMap(() =>
+        this.administration.requeueIncomplete().pipe(
+          map(
+            summary =>
+              ({
+                status: 'success',
+                requeuedCount: summary.requeuedCount,
+              }) as const,
+          ),
+          startWith({ status: 'requeuing' } as const),
+          catchError(error =>
+            of({
+              status: 'error',
+              message: toUserMessage(error),
+            } as const),
+          ),
+        ),
+      ),
+      startWith({ status: 'idle' } as const),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+  // A bulk requeue changes rows the list does not get back, so the current
+  // search is run again after every successful one.
+  private readonly reload$ = this.requeueAll$.pipe(
+    filter(state => state.status === 'success'),
+    startWith(undefined),
+  );
+
   private readonly payloads$: Observable<
     LoadState<OutboxPayloadSearchResult>
-  > = this.request$.pipe(
-    switchMap(request =>
+  > = combineLatest([this.request$, this.reload$]).pipe(
+    switchMap(([request]) =>
       this.administration.search(request).pipe(
         map(data => ({ status: 'success', data }) as const),
         startWith({ status: 'loading' } as const),
@@ -142,6 +181,7 @@ export class OutboxAdministrationPage {
     request: this.request$,
     payloads: this.payloads$,
     requeue: this.requeue$,
+    requeueAll: this.requeueAll$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected filters(
@@ -182,6 +222,10 @@ export class OutboxAdministrationPage {
   protected requeue(event: Event, outboxPayloadId: string): void {
     event.stopPropagation();
     this.requeueRequests.next(outboxPayloadId);
+  }
+
+  protected requeueAll(): void {
+    this.requeueAllRequests.next();
   }
 
   protected search(

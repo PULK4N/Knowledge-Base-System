@@ -33,6 +33,12 @@ public sealed class OutboxAdministrationController(
         return Ok(await Execute(query));
     }
 
+    [HttpPost("requeue-incomplete")]
+    public async Task<ActionResult<OutboxRequeueSummaryDto>> RequeueIncomplete(
+        [FromServices] RequeueIncompleteOutboxPayloadsCommand command
+    ) =>
+        Ok(await Execute(command));
+
     [HttpPost("{outboxPayloadId:long}/requeue")]
     public async Task<ActionResult<OutboxPayloadDto>> Requeue(
         long outboxPayloadId,

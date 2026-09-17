@@ -56,6 +56,26 @@ public sealed class OutboxAdministrationRepository(
         return ToEntry(ToRow(message));
     }
 
+    public async Task<int> RequeueIncomplete(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var messages = await dbContext
+            .Set<SerializedPayloadMessage>()
+            .Where(candidate => candidate.Status != MessageStatus.Sent)
+            .ToListAsync(cancellationToken);
+
+        foreach (var message in messages)
+        {
+            message.Status = MessageStatus.New;
+            message.ExecutionAttempts = 0;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return messages.Count;
+    }
+
     /// <summary>
     /// Only the execution info is deserialized so payloads of events that are
     /// no longer registered can still be listed and requeued.

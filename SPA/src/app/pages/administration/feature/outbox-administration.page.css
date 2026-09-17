@@ -30,9 +30,40 @@
   line-height: 1.5;
 }
 
+.heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.heading-actions .row-status {
+  margin-top: 0;
+}
+
 .payload-count {
   flex: 0 0 auto;
   color: #344260;
+}
+
+.requeue-all {
+  padding: 9px 13px;
+  border: 1px solid #b9c0ff;
+  border-radius: 8px;
+  color: #2632d9;
+  background: white;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.requeue-all:hover:not(:disabled) {
+  background: #f4f5ff;
+}
+
+.requeue-all:disabled {
+  cursor: wait;
+  opacity: 0.5;
 }
 
 .toolbar {

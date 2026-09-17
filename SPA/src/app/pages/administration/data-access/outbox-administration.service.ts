@@ -17,6 +17,7 @@ import {
   OutboxPayloadDto,
   OutboxPayloadSearchRequest,
   OutboxPayloadSearchResult,
+  OutboxRequeueSummary,
 } from './outbox-administration.models';
 
 const OUTBOX_PAYLOAD_ENTITY_TYPE = 'outbox-payload';
@@ -118,5 +119,16 @@ export class OutboxAdministrationService {
           this.store.upsert(OUTBOX_PAYLOAD_ENTITY_TYPE, payload),
         ),
       );
+  }
+
+  /**
+   * Resets every payload that is not Sent. The rows are not returned, so the
+   * caller re-runs its search to refresh the cached list.
+   */
+  requeueIncomplete(): Observable<OutboxRequeueSummary> {
+    return this.http.post<OutboxRequeueSummary>(
+      `${this.controllerPath}/requeue-incomplete`,
+      null,
+    );
   }
 }

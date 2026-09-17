@@ -105,6 +105,42 @@ public sealed class OutboxAdministrationRepositoryTests
         Assert.Null(await repository.Requeue(failed.Id + 1_000));
     }
 
+    [Fact]
+    public async Task RequeueIncomplete_resets_every_row_that_is_not_sent()
+    {
+        await using var dbContext = CreateDbContext();
+        Seed(dbContext);
+        Add(
+            dbContext,
+            "features-state-machine",
+            FeatureAggregateId,
+            MessageStatus.Reading,
+            1,
+            null
+        );
+        await dbContext.SaveChangesAsync();
+        var repository = new OutboxAdministrationRepository(dbContext);
+
+        var count = await repository.RequeueIncomplete();
+
+        var messages = await dbContext
+            .Set<SerializedPayloadMessage>()
+            .OrderBy(message => message.Id)
+            .ToListAsync();
+        Assert.Equal(3, count);
+        Assert.Equal(
+            [
+                MessageStatus.New,
+                MessageStatus.Sent,
+                MessageStatus.New,
+                MessageStatus.New
+            ],
+            messages.Select(message => message.Status)
+        );
+        Assert.Equal([0, 1, 0, 0], messages.Select(message => message.ExecutionAttempts));
+        Assert.Equal(3, await repository.RequeueIncomplete());
+    }
+
     private static EntityQuery<
         OutboxPayloadSearchFilters,
         OutboxPayloadSortField

@@ -33,3 +33,5 @@ public sealed record OutboxPayloadDto(
             entry.EventDataJson
         );
 }
+
+public sealed record OutboxRequeueSummaryDto(int RequeuedCount);

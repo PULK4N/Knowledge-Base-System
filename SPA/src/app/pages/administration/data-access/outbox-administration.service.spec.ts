@@ -80,6 +80,19 @@ describe('OutboxAdministrationService', () => {
     );
   });
 
+  it('requeues every incomplete payload and returns the count', async () => {
+    const resultPromise = firstValueFrom(service.requeueIncomplete());
+    const request = http.expectOne(
+      '/api/administration/outbox/requeue-incomplete',
+    );
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toBeNull();
+    request.flush({ requeuedCount: 3 });
+
+    await expect(resultPromise).resolves.toEqual({ requeuedCount: 3 });
+  });
+
   it('requeues a payload and returns the reset entity', async () => {
     const resultPromise = firstValueFrom(service.requeue('17'));
     const request = http.expectOne(

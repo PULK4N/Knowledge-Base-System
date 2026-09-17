@@ -48,3 +48,7 @@ export interface OutboxPayloadSearchRequest {
 }
 
 export type OutboxPayloadSearchResult = PagedResult<OutboxPayload>;
+
+export interface OutboxRequeueSummary {
+  readonly requeuedCount: number;
+}

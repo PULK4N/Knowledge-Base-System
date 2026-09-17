@@ -141,6 +141,20 @@ public sealed class OutboxAdministrationTests
         Assert.Equal(0, result.RetryCount);
     }
 
+    [Fact]
+    public async Task RequeueIncomplete_reports_the_repository_count()
+    {
+        var repository = new StubOutboxAdministrationRepository(
+            [CreateEntry(17, "Failed", 3), CreateEntry(18, "Reading", 1)]
+        );
+        var command = new RequeueIncompleteOutboxPayloadsCommand(repository);
+
+        var result = await command.Execute(Executor);
+
+        Assert.True(repository.RequeuedIncomplete);
+        Assert.Equal(2, result.RequeuedCount);
+    }
+
     private static OutboxPayloadEntry CreateEntry(
         long id,
         string state,
@@ -173,6 +187,7 @@ public sealed class OutboxAdministrationTests
             private set;
         }
         public long? LastRequeuedId { get; private set; }
+        public bool RequeuedIncomplete { get; private set; }
 
         public Task<PagedResult<OutboxPayloadEntry>> Search(
             EntityQuery<
@@ -212,6 +227,17 @@ public sealed class OutboxAdministrationTests
                         State = "New",
                         RetryCount = 0
                     }
+            );
+        }
+
+        public Task<int> RequeueIncomplete(
+            CancellationToken cancellationToken = default
+        )
+        {
+            RequeuedIncomplete = true;
+
+            return Task.FromResult(
+                entries.Count(candidate => candidate.State != "Sent")
             );
         }
     }

@@ -16,6 +16,16 @@ public interface IOutboxAdministrationRepository
         long outboxPayloadId,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Returns every row that is not Sent to New with a zero retry count and
+    /// reports how many rows changed. Includes rows a publisher may hold as
+    /// Reading: that publisher's completion then fails on the row version and
+    /// the row is published again, which consumers tolerate by design.
+    /// </summary>
+    Task<int> RequeueIncomplete(
+        CancellationToken cancellationToken = default
+    );
 }
 
 /// <summary>
