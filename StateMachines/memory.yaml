@@ -8,8 +8,10 @@ projections:
   - MemorySearchProjector
   - MemorySummaryProjector
   - MemoryConversationProjector
+  - MemoryEntityRelationProjector
 events:
   CodexPromptHookRecordedV1: {}
   ClaudePromptHookRecordedV1: {}
   CodexMemoryMigratedV1: {}
   ChatSummaryAddedV1: {}
+  ChatSummaryAddedV2: {}

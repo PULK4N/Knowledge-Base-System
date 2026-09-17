@@ -12,6 +12,8 @@ public sealed class MemoryStateData(AggregateId id) : ISharedStateData
     public Dictionary<PromptId, ChatPrompt> ChatPrompts { get; set; } = [];
     public ChatSummary ChatSummary { get; set; } = new();
 
+    public HashSet<MemoryRelatedEntity> RelatedEntities { get; set; } = [];
+
     [JsonIgnore]
     public bool HasSummary =>
         !string.IsNullOrWhiteSpace(ChatSummary.Summary)

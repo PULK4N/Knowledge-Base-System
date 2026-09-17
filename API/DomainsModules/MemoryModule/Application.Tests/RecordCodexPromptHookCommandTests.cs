@@ -8,6 +8,7 @@ using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Containers;
 using EventSourcing.Shared.Models;
 using MemoryModule.Application.Commands;
+using MemoryModule.Application.DTOs;
 using MemoryModule.Application.Models;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
@@ -45,7 +46,7 @@ public sealed class RecordCodexPromptHookCommandTests
             typeof(CodexMemoryMigratedV1)
         );
         EventTypeContainer.AddEventType(
-            typeof(ChatSummaryAddedV1)
+            typeof(ChatSummaryAddedV2)
         );
     }
 
@@ -133,7 +134,11 @@ public sealed class RecordCodexPromptHookCommandTests
         var command = new AddChatSummaryCommand(CreateHandler(eventStore))
         {
             ThreadId = ThreadId,
-            Summary = "The user asked to persist a chat summary."
+            Summary = "The user asked to persist a chat summary.",
+            RelatedEntities = Enum.GetValues<MemoryEntityType>()
+                .Select(type => new MemoryRelatedEntityDto(type, ThreadId.Value))
+                .Append(new MemoryRelatedEntityDto(MemoryEntityType.Feature, ThreadId.Value))
+                .ToList()
         };
 
         var result = await command.Execute(Executor);
@@ -149,12 +154,39 @@ public sealed class RecordCodexPromptHookCommandTests
             default,
             memoryState.ChatSummary.SummaryTimestamp
         );
-        var summaryAdded = Assert.IsType<ChatSummaryAddedV1>(
+        var summaryAdded = Assert.IsType<ChatSummaryAddedV2>(
             Assert.Single(
                 writtenAggregate.Value.LastExecutedPayloads
             ).EventData
         );
         Assert.Equal(command.Summary, summaryAdded.Summary);
+        command.RelatedEntities.Clear();
+        Assert.Equal(Enum.GetValues<MemoryEntityType>().Length, summaryAdded.RelatedEntities.Count);
+        Assert.True(memoryState.RelatedEntities.SetEquals(summaryAdded.RelatedEntities));
+        Assert.All(memoryState.RelatedEntities, entity => Assert.Equal(ThreadId.Value, entity.Id.Value));
+    }
+
+    [Theory]
+    [InlineData(MemoryEntityType.FeatureResearchDiscovery, true, true)]
+    [InlineData(MemoryEntityType.FeatureRecord, true, true)]
+    [InlineData(MemoryEntityType.FeatureRecord, false, false)]
+    [InlineData((MemoryEntityType)999, true, false)]
+    public async Task AddSummary_RequiresValidEntityTypeAndId(
+        MemoryEntityType type,
+        bool hasId,
+        bool expected
+    )
+    {
+        var command = new AddChatSummaryCommand(
+            CreateHandler(new CapturingEventStoreWithOutbox())
+        )
+        {
+            ThreadId = ThreadId,
+            Summary = "Summary",
+            RelatedEntities = [new(type, hasId ? ThreadId.Value : Guid.Empty)]
+        };
+
+        Assert.Equal(expected, await command.CanExecute(Executor));
     }
 
     [Fact]

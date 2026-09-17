@@ -18,6 +18,7 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(ClaudePromptHookRecordedV1));
         EventTypeContainer.AddEventType(typeof(CodexMemoryMigratedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
+        EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV2));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
@@ -29,6 +30,8 @@ public sealed class MemoryStateMachineDefinitionTests
         var definition = provider.Get("memory-state-machine");
 
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
+        Assert.Contains(nameof(ChatSummaryAddedV1), definition.Events.Keys);
+        Assert.Contains(nameof(ChatSummaryAddedV2), definition.Events.Keys);
         Assert.Equal(
             [
                 nameof(CodexPromptHookRecordedV1),
@@ -41,7 +44,8 @@ public sealed class MemoryStateMachineDefinitionTests
             [
                 nameof(MemorySearchProjector),
                 nameof(MemorySummaryProjector),
-                nameof(MemoryConversationProjector)
+                nameof(MemoryConversationProjector),
+                nameof(MemoryEntityRelationProjector)
             ],
             definition.Projections
         );
@@ -62,4 +66,5 @@ public sealed class MemoryStateMachineDefinitionTests
     private sealed class MemorySearchProjector;
     private sealed class MemorySummaryProjector;
     private sealed class MemoryConversationProjector;
+    private sealed class MemoryEntityRelationProjector;
 }

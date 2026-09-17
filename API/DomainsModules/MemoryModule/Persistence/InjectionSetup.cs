@@ -14,6 +14,8 @@ public static class InjectionSetup
         services.AddScoped<IProjector, MemorySearchProjector>();
         services.AddScoped<IProjector, MemorySummaryProjector>();
         services.AddScoped<IProjector, MemoryConversationProjector>();
+        services.AddScoped<MemoryEntityRelationRepository>();
+        services.AddScoped<IProjector, MemoryEntityRelationProjector>();
 
         return services;
     }

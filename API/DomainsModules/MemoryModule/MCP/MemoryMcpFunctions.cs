@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using MemoryModule.Application.Commands;
 using MemoryModule.Application.DTOs;
 using MemoryModule.Application.Models;
@@ -26,10 +27,11 @@ public static class MemoryMcpFunctions
                     IServiceProvider,
                     Guid,
                     string,
+                    List<MemoryRelatedEntityDto>?,
                     Task<MemoryCommandResult>
                 >)AddSummary,
                 "memory_summary_add",
-                "Adds or replaces the summary for an existing chat memory identified by its Codex thread ID."
+                "Adds or replaces the summary for an existing chat memory identified by its session/thread ID. Write a summary with IDs of entities created or updated during this session. Exclude entities only read, consulted, or used. Related entities accumulate across summaries as a deduplicated set; an omitted or empty list preserves existing references."
             )
         ];
 
@@ -67,7 +69,9 @@ public static class MemoryMcpFunctions
     private static Task<MemoryCommandResult> AddSummary(
         IServiceProvider services,
         Guid threadId,
-        string summary
+        string summary,
+        [Description("Entities created or updated in this session, each with its type and ID; exclude entities only read, consulted, or used.")]
+        List<MemoryRelatedEntityDto>? relatedEntities = null
     ) =>
         MemoryMcpActionExecutor.ExecuteCommand<AddChatSummaryCommand, MemoryCommandResult>(
             services,
@@ -75,6 +79,7 @@ public static class MemoryMcpFunctions
             {
                 command.ThreadId = new ThreadId(threadId);
                 command.Summary = summary;
+                command.RelatedEntities = relatedEntities ?? [];
             }
         );
 }
