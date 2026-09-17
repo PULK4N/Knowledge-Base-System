@@ -24,6 +24,9 @@ public static class Registration
         services.AddScoped<IOutboxDispatchRepository, OutboxDispatchRepository>();
         services.AddScoped<OutboxDispatchStep>();
 
+        // One way to connect for publisher and consumers alike.
+        services.AddSingleton<BrokerConnectionFactory>();
+
         // The connection outlives every cycle; the publisher only borrows it.
         services.AddSingleton<NmsConnectionManager>();
         services.AddScoped<IOutboxPublisher, TransactionalOutboxPublisher>();

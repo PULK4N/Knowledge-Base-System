@@ -11,7 +11,7 @@ namespace OutboxProcessingModule.IntegrationTests;
 public sealed class TransactionalOutboxPublisherTests : IDisposable
 {
     private readonly NmsConnectionManager _connections = new(
-        ArtemisBroker.Options(), NullLogger<NmsConnectionManager>.Instance);
+        ArtemisBroker.ConnectionFactory(), NullLogger<NmsConnectionManager>.Instance);
 
     private readonly TransactionalOutboxPublisher _publisher;
 
@@ -114,6 +114,34 @@ public sealed class TransactionalOutboxPublisherTests : IDisposable
         Assert.Equal(
             row.SerializedEventExecutionInfo, wireRow.SerializedEventExecutionInfo);
         Assert.Equal(row.SerializedEventData, wireRow.SerializedEventData);
+    }
+
+    /// <summary>
+    /// The bug this guards: the manager kept a connection whose socket the
+    /// broker had closed, and every later cycle failed with "TcpTransport is
+    /// closed" until the process restarted.
+    /// </summary>
+    [BrokerFact]
+    public async Task APublishSucceedsAfterTheBrokerDroppedTheConnection()
+    {
+        var others = await ArtemisBroker.ConnectionIds();
+
+        var first = Row();
+        await _publisher.Publish(
+            [ new OutboxDispatch(first, [ ArtemisBroker.ProjectionsQueue ]) ],
+            CancellationToken.None);
+
+        var mine = (await ArtemisBroker.ConnectionIds()).Except(others).ToList();
+        Assert.NotEmpty(mine);
+        await ArtemisBroker.CloseConnections(mine);
+
+        var second = Row();
+        await _publisher.Publish(
+            [ new OutboxDispatch(second, [ ArtemisBroker.ProjectionsQueue ]) ],
+            CancellationToken.None);
+
+        var bodies = ArtemisBroker.ReceiveAll(ArtemisBroker.ProjectionsQueue, 2);
+        Assert.Equal([ first.Id, second.Id ], bodies.Select(IdOf));
     }
 
     private static long _nextId = 1;

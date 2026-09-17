@@ -14,7 +14,7 @@ public sealed class OutboxDispatchStepTests : IDisposable
     private readonly OutboxDatabase _database = new();
 
     private readonly NmsConnectionManager _connections = new(
-        ArtemisBroker.Options(), NullLogger<NmsConnectionManager>.Instance);
+        ArtemisBroker.ConnectionFactory(), NullLogger<NmsConnectionManager>.Instance);
 
     public OutboxDispatchStepTests()
     {

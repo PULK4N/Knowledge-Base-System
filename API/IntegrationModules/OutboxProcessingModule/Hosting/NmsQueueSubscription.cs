@@ -1,28 +1,24 @@
 using Apache.NMS;
-using Apache.NMS.AMQP;
-using Microsoft.Extensions.Options;
 using SharedModule.DistributedMessaging.Consuming;
 
 namespace OutboxProcessingModule.Hosting;
 
 /// <summary>
 /// Each subscription owns its connection, so one queue's broker failure never
-/// disturbs another queue's consumer or the publisher.
+/// disturbs another queue's consumer or the publisher. The connection comes
+/// from the shared factory, so consumers get the same failover reconnect as
+/// the publisher: a dropped socket is re-established and the consumer link
+/// re-created by the client, and the worker only sees a transaction it must
+/// roll back and receive again.
 /// </summary>
 public sealed class NmsQueueSubscriptionFactory(
-    IOptions<OutboxProcessingOptions> _options
+    BrokerConnectionFactory _factory
 ) : IQueueSubscriptionFactory
 {
     public Task<IQueueSubscription> Subscribe(
         string queueName, CancellationToken cancellationToken)
     {
-        var settings = _options.Value;
-
-        var factory = new NmsConnectionFactory(
-            settings.UserName, settings.Password, settings.BrokerUri);
-        factory.PrefetchPolicy.QueuePrefetch = settings.QueuePrefetch;
-
-        var connection = factory.CreateConnection();
+        var connection = _factory.Create().CreateConnection();
 
         try
         {

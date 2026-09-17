@@ -10,10 +10,10 @@ namespace OutboxProcessingModule.IntegrationTests;
 public sealed class NmsQueueSubscriptionTests : IDisposable
 {
     private readonly NmsConnectionManager _connections = new(
-        ArtemisBroker.Options(), NullLogger<NmsConnectionManager>.Instance);
+        ArtemisBroker.ConnectionFactory(), NullLogger<NmsConnectionManager>.Instance);
 
     private readonly NmsQueueSubscriptionFactory _subscriptions =
-        new(ArtemisBroker.Options());
+        new(ArtemisBroker.ConnectionFactory());
 
     public NmsQueueSubscriptionTests()
     {

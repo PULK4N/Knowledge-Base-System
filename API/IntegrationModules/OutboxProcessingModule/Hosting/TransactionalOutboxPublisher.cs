@@ -19,10 +19,15 @@ public sealed class TransactionalOutboxPublisher(
         List<OutboxDispatch> dispatches, CancellationToken cancellationToken)
     {
         var connection = await _connections.Get(cancellationToken);
-        using var session = connection.CreateSession(AcknowledgementMode.Transactional);
+        ISession? session = null;
 
         try
         {
+            // Inside the try on purpose: a connection the client has given up
+            // on fails right here, and that failure must reach Reset below or
+            // the dead object is handed to every following cycle.
+            session = connection.CreateSession(AcknowledgementMode.Transactional);
+
             foreach (var dispatch in dispatches)
             {
                 if (dispatch.Queues.Count == 0)
@@ -49,20 +54,32 @@ public sealed class TransactionalOutboxPublisher(
         }
         catch (Exception publishError)
         {
-            try
-            {
-                await session.RollbackAsync();
-            }
-            catch (Exception rollbackError)
-            {
-                _logger.LogWarning(
-                    rollbackError, "Rolling back the dispatch transaction failed.");
-            }
+            await Rollback(session);
 
             // The connection may be broken, and a failed commit response can
             // also mean the outcome is unknown.
             _connections.Reset();
             throw new BatchPublicationException(publishError);
+        }
+        finally
+        {
+            session?.Dispose();
+        }
+    }
+
+    private async Task Rollback(ISession? session)
+    {
+        if (session is null)
+            return;
+
+        try
+        {
+            await session.RollbackAsync();
+        }
+        catch (Exception rollbackError)
+        {
+            _logger.LogWarning(
+                rollbackError, "Rolling back the dispatch transaction failed.");
         }
     }
 }

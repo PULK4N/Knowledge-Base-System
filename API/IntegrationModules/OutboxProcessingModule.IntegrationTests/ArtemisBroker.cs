@@ -1,6 +1,10 @@
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using Apache.NMS;
 using Apache.NMS.AMQP;
 using Microsoft.Extensions.Options;
+using OutboxProcessingModule.Hosting;
 
 namespace OutboxProcessingModule.IntegrationTests;
 
@@ -12,6 +16,7 @@ namespace OutboxProcessingModule.IntegrationTests;
 public static class ArtemisBroker
 {
     public const string Uri = "amqp://localhost:5673";
+    public const string ManagementUri = "http://localhost:8162/console/jolokia/";
     public const string UserName = "artemis";
     public const string Password = "artemis";
 
@@ -44,6 +49,8 @@ public static class ArtemisBroker
                 BatchSize = 10
             });
 
+    public static BrokerConnectionFactory ConnectionFactory() => new(Options());
+
     /// <summary>Removes anything a previous test left behind.</summary>
     public static void Drain(params string[] queueNames)
     {
@@ -75,6 +82,58 @@ public static class ArtemisBroker
         }
 
         return bodies;
+    }
+
+    /// <summary>Broker-side ids of every open client connection.</summary>
+    public static async Task<HashSet<string>> ConnectionIds()
+    {
+        var json = await Management("listConnectionsAsJSON()");
+
+        return JsonDocument.Parse(json).RootElement
+            .EnumerateArray()
+            .Select(connection => connection.GetProperty("connectionID").GetString()!)
+            .ToHashSet();
+    }
+
+    /// <summary>
+    /// Makes the broker close the sockets of the given connections, which is
+    /// what a broker restart, a suspended host or a dropped NAT entry looks
+    /// like from the client's side.
+    /// </summary>
+    public static async Task CloseConnections(IEnumerable<string> connectionIds)
+    {
+        foreach (var connectionId in connectionIds)
+            await Management($"closeConnectionWithID(java.lang.String)", connectionId);
+    }
+
+    private static async Task<string> Management(string operation, params string[] arguments)
+    {
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Basic",
+            Convert.ToBase64String(Encoding.ASCII.GetBytes($"{UserName}:{Password}")));
+
+        var request = JsonSerializer.Serialize(new
+        {
+            type = "exec",
+            mbean = "org.apache.activemq.artemis:broker=\"0.0.0.0\"",
+            operation,
+            arguments
+        });
+
+        using var response = await client.PostAsync(
+            ManagementUri, new StringContent(request, Encoding.UTF8, "application/json"));
+        response.EnsureSuccessStatusCode();
+
+        var envelope = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+        if (envelope.RootElement.GetProperty("status").GetInt32() != 200)
+            throw new InvalidOperationException(
+                $"{operation} failed: {envelope.RootElement}");
+
+        return envelope.RootElement.TryGetProperty("value", out var value)
+            ? value.ToString()
+            : string.Empty;
     }
 
     private static bool Probe()
