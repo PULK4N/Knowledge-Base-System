@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OutboxProcessingModule.Application;
 using OutboxProcessingModule.Hosting;
 using OutboxProcessingModule.Persistence;
 using SharedModule.DistributedMessaging.Consuming;
+using SharedModule.DistributedMessaging.Projections;
 
 namespace OutboxProcessingModule;
 
@@ -19,6 +21,8 @@ public static class Registration
             .Bind(configuration.GetSection(OutboxProcessingOptions.SectionName));
 
         services.AddScoped<ProjectorRegistry>();
+        services.AddMemoryCache();
+        services.TryAddSingleton<IProjectionCheckpointCache, LocalProjectionCheckpointCache>();
         services.AddScoped<ProjectionSelector>();
         services.AddScoped<IOutboxQueueResolver, OutboxQueueResolver>();
         services.AddScoped<IOutboxDispatchRepository, OutboxDispatchRepository>();

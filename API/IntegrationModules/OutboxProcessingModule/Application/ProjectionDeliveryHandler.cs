@@ -3,19 +3,20 @@ using EventSourcing.Core;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
 using SharedModule.DistributedMessaging.Consuming;
+using SharedModule.DistributedMessaging.Projections;
 using SharedModule.DistributedMessaging.Queues;
 
 namespace OutboxProcessingModule.Application;
 
 /// <summary>
-/// Rebuilds the aggregate from committed history once per delivery and runs
-/// every projector the state machine definition selects. A redelivery
-/// recomputes the same snapshot, which costs time and changes nothing.
+/// Rebuilds the aggregate from committed history unless the selected projector
+/// set has already completed a snapshot covering the delivered event.
 /// </summary>
 public sealed class ProjectionDeliveryHandler(
     ProjectionSelector _selector,
     IEventStore _eventStore,
-    StateCalculator _calculator
+    StateCalculator _calculator,
+    IProjectionCheckpointCache _checkpoints
 ) : IDeliveryHandler
 {
     public DeliveryRole Role => DeliveryRole.Projections;
@@ -33,6 +34,15 @@ public sealed class ProjectionDeliveryHandler(
 
         var projectors = _selector.Select(info);
         if (projectors.Count == 0)
+            return;
+
+        var checkpoint = await _checkpoints.Get(
+            info.StateMachineId,
+            info.AggregateId,
+            projectors.Select(projector => projector.GetType().Name).ToList(),
+            cancellationToken
+        );
+        if (checkpoint.OrderNumber is { } completed && info.OrderNumber <= completed)
             return;
 
         var histories = await _eventStore.GetEvents([ info.AggregateId ]);
@@ -54,5 +64,7 @@ public sealed class ProjectionDeliveryHandler(
             cancellationToken.ThrowIfCancellationRequested();
             await projector.Update([ state ]);
         }
+
+        await _checkpoints.Record(checkpoint, state.CurrentOrderNumber, cancellationToken);
     }
 }

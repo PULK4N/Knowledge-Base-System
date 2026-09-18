@@ -10,6 +10,7 @@ using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using Shared.Interfaces;
+using SharedModule.DistributedMessaging.Projections;
 using Xunit;
 
 namespace AdministrationModule.Application.Tests;
@@ -119,6 +120,7 @@ public sealed class ProjectionAdministrationTests
         );
         var repository = new StubReplayRepository([first, second]);
         var outbox = new CapturingOutbox();
+        var checkpoints = new RecordingCheckpointCache();
         var command = new QueueProjectionReplayCommand(
             new StubDefinitionProvider(
                 new StateMachineDefinition
@@ -128,7 +130,8 @@ public sealed class ProjectionAdministrationTests
                 }
             ),
             repository,
-            outbox
+            outbox,
+            checkpoints
         )
         {
             StateMachineId = stateMachineId
@@ -137,6 +140,7 @@ public sealed class ProjectionAdministrationTests
         var result = await command.Execute(Executor);
 
         Assert.Equal("Queued", result.Status);
+        Assert.Equal(stateMachineId, Assert.Single(checkpoints.Invalidated));
         Assert.Equal(2, result.QueuedAggregateCount);
         Assert.Equal(stateMachineId, repository.StateMachineId);
         Assert.Collection(
@@ -448,4 +452,25 @@ public sealed class ProjectionAdministrationTests
         ) =>
             stateData;
     }
+    private sealed class RecordingCheckpointCache : IProjectionCheckpointCache
+    {
+        public List<string> Invalidated { get; } = [];
+
+        public Task<ProjectionCheckpoint> Get(
+            string stateMachineId, AggregateId aggregateId, List<string> projectorNames,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task Record(
+            ProjectionCheckpoint checkpoint, uint orderNumber,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task Invalidate(string stateMachineId, CancellationToken cancellationToken = default)
+        {
+            Invalidated.Add(stateMachineId);
+            return Task.CompletedTask;
+        }
+    }
+
 }

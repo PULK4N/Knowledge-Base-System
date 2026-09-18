@@ -5,13 +5,15 @@ using AdministrationModule.Application.Persistence;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
+using SharedModule.DistributedMessaging.Projections;
 
 namespace AdministrationModule.Application.Commands;
 
 public sealed class QueueProjectionReplayCommand(
     IStateMachineDefinitionProvider definitionProvider,
     IProjectionReplayRepository replayRepository,
-    IOutbox outbox
+    IOutbox outbox,
+    IProjectionCheckpointCache checkpoints
 ) : Command<ProjectionReplayQueuedResult>
 {
     public required string StateMachineId { get; set; }
@@ -46,7 +48,10 @@ public sealed class QueueProjectionReplayCommand(
         );
 
         if (stateInfos.Count > 0)
+        {
+            await checkpoints.Invalidate(StateMachineId);
             await outbox.Write(stateInfos);
+        }
 
         return ProjectionReplayQueuedResult.Queued(
             stateInfos.Count

@@ -8,6 +8,8 @@ using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Caching.Memory;
+using SharedModule.DistributedMessaging.Projections;
 using Moq;
 using OutboxProcessingModule.Application;
 using OutboxProcessingModule.Tests.TestModels;
@@ -24,6 +26,7 @@ public sealed class ProjectionDeliveryHandlerTests
     private readonly AggregateId _aggregateId = new(Guid.NewGuid());
     private readonly RecordingProjector _first = new();
     private readonly SecondRecordingProjector _second = new();
+    private readonly FailingProjector _failing = new();
 
     [Fact]
     public void TheHandlerOnlyServesTheProjectionsRole() =>
@@ -46,9 +49,13 @@ public sealed class ProjectionDeliveryHandlerTests
     }
 
     [Fact]
-    public async Task ARepeatedDeliveryRebuildsTheSameState()
+    public async Task ARepeatedDeliveryRebuildsTheSameStateWithoutACheckpoint()
     {
-        var handler = CreateHandler(projections: [ nameof(RecordingProjector) ]);
+        var checkpoints = new Mock<IProjectionCheckpointCache>();
+        checkpoints.Setup(cache => cache.Get(
+                It.IsAny<string>(), It.IsAny<AggregateId>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProjectionCheckpoint("uncached", null));
+        var handler = CreateHandler(projections: [ nameof(RecordingProjector) ], checkpoints: checkpoints.Object);
         var body = Body();
 
         await handler.Handle(body, CancellationToken.None);
@@ -103,6 +110,95 @@ public sealed class ProjectionDeliveryHandlerTests
             () => handler.Handle("null", CancellationToken.None));
     }
 
+    [Theory]
+    [InlineData(1u)]
+    [InlineData(2u)]
+    [InlineData(3u)]
+    public async Task CompletedSnapshotSkipsOlderOrEqualDeliveriesWithoutReadingHistory(uint deliveredOrder)
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var checkpoints = new LocalProjectionCheckpointCache(memory);
+        var history = CommittedHistory();
+        history.Add(Payload(10, 3));
+        var store = Mock.Get(CreateEventStore(history));
+        var handler = CreateHandler(
+            projections: [nameof(RecordingProjector)], eventStore: store.Object, checkpoints: checkpoints);
+
+        await handler.Handle(Body(1), CancellationToken.None);
+        // A fresh delivery scope still sees the same completed checkpoint.
+        await CreateHandler(
+            projections: [nameof(RecordingProjector)], eventStore: store.Object, checkpoints: checkpoints
+        ).Handle(Body(deliveredOrder), CancellationToken.None);
+
+        Assert.Single(_first.Received);
+        Assert.Equal(3u, _first.Received[0].CurrentOrderNumber);
+        store.Verify(value => value.GetEvents(It.IsAny<List<AggregateId>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ANewerEventRebuildsAndAdvancesTheCheckpoint()
+    {
+        var history = CommittedHistory();
+        var handler = CreateHandler(projections: [nameof(RecordingProjector)], history: history);
+        await handler.Handle(Body(), CancellationToken.None);
+        history.Add(Payload(10, 3));
+
+        await handler.Handle(Body(3), CancellationToken.None);
+        await handler.Handle(Body(3), CancellationToken.None);
+
+        Assert.Equal(2, _first.Received.Count);
+        Assert.Equal(3u, _first.Received[1].CurrentOrderNumber);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PartialFailureOrCancellationDoesNotAdvanceTheCheckpoint(bool cancelled)
+    {
+        _failing.Failure = cancelled
+            ? new OperationCanceledException()
+            : new InvalidOperationException("Projection failed");
+        var handler = CreateHandler(projections: [nameof(RecordingProjector), nameof(FailingProjector)]);
+
+        await Assert.ThrowsAnyAsync<Exception>(() => handler.Handle(Body(), CancellationToken.None));
+        _failing.Failure = null;
+        await handler.Handle(Body(), CancellationToken.None);
+        await handler.Handle(Body(), CancellationToken.None);
+
+        Assert.Equal(2, _first.Received.Count);
+        Assert.Equal(2, _failing.Calls);
+    }
+
+    [Fact]
+    public async Task ChangedProjectorSelectionAndManualReplayAreNotSkipped()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var checkpoints = new LocalProjectionCheckpointCache(memory);
+        await CreateHandler(projections: [nameof(RecordingProjector)], checkpoints: checkpoints)
+            .Handle(Body(), CancellationToken.None);
+        var handler = CreateHandler(
+            projections: [nameof(RecordingProjector), nameof(SecondRecordingProjector)], checkpoints: checkpoints);
+
+        await handler.Handle(Body(), CancellationToken.None);
+        await checkpoints.Invalidate(StateMachineId);
+        await handler.Handle(Body(), CancellationToken.None);
+
+        Assert.Equal(3, _first.Received.Count);
+        Assert.Equal(2, _second.Received.Count);
+    }
+
+    private sealed class FailingProjector : IProjector
+    {
+        public Exception? Failure { get; set; }
+        public int Calls { get; private set; }
+
+        public Task Update(List<StateInfo> states)
+        {
+            Calls++;
+            return Failure is null ? Task.CompletedTask : Task.FromException(Failure);
+        }
+    }
+
     private const float OpeningDeposit = 100f;
     private const float DeliveredDeposit = 30f;
 
@@ -110,9 +206,9 @@ public sealed class ProjectionDeliveryHandlerTests
     /// The outbox row is written in the same transaction as the event, so the
     /// delivered event is always already part of committed history.
     /// </summary>
-    private string Body()
+    private string Body(uint orderNumber = 2)
     {
-        var row = SerializedPayloadMessage.FromPayload(DeliveredPayload());
+        var row = SerializedPayloadMessage.FromPayload(Payload(DeliveredDeposit, orderNumber));
         row.Id = 7;
 
         return JsonSerializer.Serialize(row);
@@ -141,7 +237,8 @@ public sealed class ProjectionDeliveryHandlerTests
     private ProjectionDeliveryHandler CreateHandler(
         List<string>? projections = null,
         List<EventPayload>? history = null,
-        IEventStore? eventStore = null
+        IEventStore? eventStore = null,
+        IProjectionCheckpointCache? checkpoints = null
     )
     {
         var definition = new StateMachineDefinition
@@ -155,9 +252,10 @@ public sealed class ProjectionDeliveryHandlerTests
 
         return new ProjectionDeliveryHandler(
             new ProjectionSelector(
-                definitions, new ProjectorRegistry([ _first, _second ])),
+                definitions, new ProjectorRegistry([ _first, _second, _failing ])),
             eventStore ?? CreateEventStore(history ?? CommittedHistory()),
-            CreateCalculator(definitions)
+            CreateCalculator(definitions),
+            checkpoints ?? new LocalProjectionCheckpointCache(new MemoryCache(new MemoryCacheOptions()))
         );
     }
 
