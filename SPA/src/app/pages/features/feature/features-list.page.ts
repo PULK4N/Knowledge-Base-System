@@ -20,7 +20,6 @@ import {
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { PolicyService } from '../../policies/data-access/policy.service';
-import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import {
   FeatureSearchRequest,
   FeatureSearchResult,
@@ -53,7 +52,6 @@ type ProjectFilterState = LoadState<readonly ListControlOption[]>;
     ListControlsComponent,
     PaginationComponent,
     RouterLink,
-    ShortIdPipe,
   ],
   templateUrl: './features-list.page.html',
   styleUrls: ['./features-list.page.css', '../ui/feature-pages.css'],

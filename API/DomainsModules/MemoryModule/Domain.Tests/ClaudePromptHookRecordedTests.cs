@@ -64,6 +64,32 @@ public sealed class ClaudePromptHookRecordedTests
         );
     }
 
+    [Theory]
+    [InlineData("""{"session_title":"Fix session title"}""", "Fix session title")]
+    [InlineData("""{"prompt":"Remember this"}""", "Existing title")]
+    [InlineData("""{"session_title":42}""", "Existing title")]
+    [InlineData("""{"session_title":null}""", "Existing title")]
+    public void Apply_SetsSessionTitleOnlyFromStringPayloadProperty(
+        string payloadJson,
+        string expectedSessionTitle
+    )
+    {
+        var state = new MemoryStateData(MemoryAggregateId)
+        {
+            SessionTitle = "Existing title"
+        };
+        var @event = new ClaudePromptHookRecordedV1(
+            new ThreadId(SessionId),
+            new PromptId(TurnId),
+            "SessionStart",
+            JsonSerializer.Deserialize<JsonElement>(payloadJson)
+        );
+
+        @event.Apply(state, CreateExecutionInfo());
+
+        Assert.Equal(expectedSessionTitle, state.SessionTitle);
+    }
+
     private static ClaudePromptHookRecordedV1 CreateEvent(
         string hookEventName
     ) =>

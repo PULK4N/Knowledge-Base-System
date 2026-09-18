@@ -37,6 +37,7 @@ public sealed class GetMemoryConversationQuery(
             summary?.ThreadId.Value
                 ?? messages.FirstOrDefault()?.ThreadId.Value
                 ?? Guid.Empty,
+            summary?.SessionTitle ?? string.Empty,
             summary?.Summary ?? string.Empty,
             summary?.SummaryTimestamp,
             summary?.FirstPromptTimestamp,

@@ -376,6 +376,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                 memory
                     .Property(summary => summary.MemoryAggregateId)
                     .ValueGeneratedNever();
+                memory.Property(summary => summary.SessionTitle).IsRequired();
                 memory.Property(summary => summary.Summary).IsRequired();
                 memory.HasIndex(summary => summary.ThreadId);
                 memory.HasIndex(summary => summary.LastActivityTimestamp);

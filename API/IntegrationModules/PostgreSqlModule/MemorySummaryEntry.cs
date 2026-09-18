@@ -4,6 +4,7 @@ internal sealed class MemorySummaryEntry
 {
     public Guid MemoryAggregateId { get; set; }
     public Guid ThreadId { get; set; }
+    public string SessionTitle { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public int PromptCount { get; set; }
     public DateTime? FirstPromptTimestamp { get; set; }

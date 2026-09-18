@@ -115,6 +115,7 @@ export class MemoryService {
             (memory): MemorySummary => ({
               id: memory.memoryId,
               threadId: memory.threadId,
+              sessionTitle: memory.sessionTitle,
               summary: memory.summary,
               promptCount: memory.promptCount,
               firstPromptTimestamp: memory.firstPromptTimestamp,

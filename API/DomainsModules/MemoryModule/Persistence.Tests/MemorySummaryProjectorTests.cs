@@ -31,6 +31,7 @@ public sealed class MemorySummaryProjectorTests
         var summary = Assert.Single(repository.Summaries);
         Assert.Equal(active.Id, summary.MemoryAggregateId);
         Assert.Equal(active.ThreadId, summary.ThreadId);
+        Assert.Equal("Session title", summary.SessionTitle);
         Assert.Equal("Session summary", summary.Summary);
         Assert.Equal(2, summary.PromptCount);
         Assert.Equal(DateTime.UnixEpoch, summary.FirstPromptTimestamp);
@@ -51,6 +52,7 @@ public sealed class MemorySummaryProjectorTests
         )
         {
             ThreadId = new ThreadId(Guid.Parse(threadId)),
+            SessionTitle = "Session title",
             ChatSummary = new ChatSummary
             {
                 Summary = "Session summary",

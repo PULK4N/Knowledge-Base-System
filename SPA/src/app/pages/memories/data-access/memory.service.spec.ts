@@ -51,6 +51,7 @@ describe('MemoryService', () => {
         {
           memoryId: 'memory-1',
           threadId: 'thread-1',
+          sessionTitle: 'Replay-safe payloads',
           summary: 'Implemented replay-safe event payloads.',
           promptCount: 8,
           firstPromptTimestamp: '2026-08-01T08:00:00Z',
@@ -71,6 +72,7 @@ describe('MemoryService', () => {
     expect(result.items[0]).toEqual({
       id: 'memory-1',
       threadId: 'thread-1',
+      sessionTitle: 'Replay-safe payloads',
       summary: 'Implemented replay-safe event payloads.',
       promptCount: 8,
       firstPromptTimestamp: '2026-08-01T08:00:00Z',
@@ -126,6 +128,7 @@ describe('MemoryService', () => {
     request.flush({
       memoryId: 'memory-1',
       threadId: '33333333-3333-3333-3333-333333333333',
+      sessionTitle: '',
       summary: 'The chat refactored the outbox.',
       summaryTimestamp: '2026-08-22T12:00:00Z',
       firstPromptTimestamp: '2026-08-22T10:00:00Z',

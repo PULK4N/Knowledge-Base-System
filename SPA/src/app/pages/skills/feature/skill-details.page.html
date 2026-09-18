@@ -19,12 +19,6 @@
       <header class="details-heading">
         <div>
           <h1 class="page-heading">{{ vm.state.data.skill.name }}</h1>
-          <p class="skill-id">
-            Skill ID ·
-            <span [title]="vm.state.data.skill.id">
-              {{ vm.state.data.skill.id | shortId: 8 }}
-            </span>
-          </p>
         </div>
         @if (!vm.state.data.skill.isDeleted) {
           <a

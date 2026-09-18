@@ -24,6 +24,13 @@ public sealed record CodexPromptHookRecordedV1(
         if (state.ChatPrompts.Count == 0)
             state.ThreadId = ThreadId;
 
+        if (
+            Payload.ValueKind == JsonValueKind.Object
+            && Payload.TryGetProperty("session_title", out var sessionTitle)
+            && sessionTitle.ValueKind == JsonValueKind.String
+        )
+            state.SessionTitle = sessionTitle.GetString()!;
+
         var hookRecord = new PromptHookRecord
         {
             HookEventName = HookEventName,

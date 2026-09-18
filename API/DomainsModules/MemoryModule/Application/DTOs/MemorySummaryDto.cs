@@ -5,6 +5,7 @@ namespace MemoryModule.Application.DTOs;
 public sealed record MemorySummaryDto(
     Guid MemoryId,
     Guid ThreadId,
+    string SessionTitle,
     string Summary,
     int PromptCount,
     DateTime? FirstPromptTimestamp,
@@ -19,6 +20,7 @@ public sealed record MemorySummaryDto(
         new(
             memory.MemoryAggregateId.Value,
             memory.ThreadId.Value,
+            memory.SessionTitle,
             memory.Summary,
             memory.PromptCount,
             memory.FirstPromptTimestamp,

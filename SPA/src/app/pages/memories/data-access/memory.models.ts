@@ -4,6 +4,7 @@ import { ListSortDirection } from '../../../shared/list-state/list-state';
 export interface MemorySummary {
   readonly id: string;
   readonly threadId: string;
+  readonly sessionTitle: string;
   readonly summary: string;
   readonly promptCount: number;
   readonly firstPromptTimestamp: string | null;
@@ -36,6 +37,7 @@ export type MemorySearchResult = PagedResult<MemorySummary>;
 export interface MemorySummaryDto {
   readonly memoryId: string;
   readonly threadId: string;
+  readonly sessionTitle: string;
   readonly summary: string;
   readonly promptCount: number;
   readonly firstPromptTimestamp: string | null;
@@ -60,6 +62,7 @@ export interface MemoryConversationMessage {
 export interface MemoryConversation {
   readonly memoryId: string;
   readonly threadId: string;
+  readonly sessionTitle: string;
   readonly summary: string;
   readonly summaryTimestamp: string | null;
   readonly firstPromptTimestamp: string | null;
@@ -80,6 +83,7 @@ export interface MemoryConversationMessageDto {
 export interface MemoryConversationDto {
   readonly memoryId: string;
   readonly threadId: string;
+  readonly sessionTitle: string;
   readonly summary: string;
   readonly summaryTimestamp: string | null;
   readonly firstPromptTimestamp: string | null;

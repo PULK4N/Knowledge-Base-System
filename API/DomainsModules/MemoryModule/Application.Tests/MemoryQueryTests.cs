@@ -40,6 +40,7 @@ public sealed class MemoryQueryTests
                     new MemorySummary(
                         memoryId,
                         threadId,
+                        "Session title",
                         "Session summary",
                         3,
                         DateTime.UnixEpoch,
@@ -67,7 +68,9 @@ public sealed class MemoryQueryTests
         Assert.Equal(2, result.Page);
         Assert.Equal(5, result.PageSize);
         Assert.Equal(6, result.TotalCount);
-        Assert.Equal(memoryId.Value, Assert.Single(result.Items).MemoryId);
+        var item = Assert.Single(result.Items);
+        Assert.Equal(memoryId.Value, item.MemoryId);
+        Assert.Equal("Session title", item.SessionTitle);
         var request = Assert.IsType<
             EntityQuery<MemorySummaryFilters, MemorySummarySortField>
         >(repository.LastSearchRequest);
@@ -406,6 +409,7 @@ public sealed class MemoryQueryTests
         new(
             memory.AggregateId,
             memory.ThreadId,
+            string.Empty,
             summary,
             promptCount,
             DateTime.UnixEpoch,

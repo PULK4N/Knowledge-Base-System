@@ -33,6 +33,7 @@ public sealed class MemoryConversationQueryTests
         Assert.NotNull(result);
         Assert.Equal(MemoryId, result.MemoryId);
         Assert.Equal(ConversationThreadId.Value, result.ThreadId);
+        Assert.Equal("Session title", result.SessionTitle);
         Assert.Equal("Session summary", result.Summary);
         Assert.Equal(DateTime.UnixEpoch, result.FirstPromptTimestamp);
         var message = Assert.Single(result.Messages);
@@ -54,6 +55,7 @@ public sealed class MemoryConversationQueryTests
 
         Assert.NotNull(result);
         Assert.Equal(ConversationThreadId.Value, result.ThreadId);
+        Assert.Equal(string.Empty, result.SessionTitle);
         Assert.Equal(string.Empty, result.Summary);
         Assert.Single(result.Messages);
     }
@@ -112,6 +114,7 @@ public sealed class MemoryConversationQueryTests
         new(
             AggregateId.FromDatabaseGuid(MemoryId),
             ConversationThreadId,
+            "Session title",
             "Session summary",
             1,
             DateTime.UnixEpoch,

@@ -149,6 +149,32 @@ public sealed class CodexPromptHookRecordedTests
         );
     }
 
+    [Theory]
+    [InlineData("""{"session_title":"Fix session title"}""", "Fix session title")]
+    [InlineData("""{"value":"hook-data"}""", "Existing title")]
+    [InlineData("""{"session_title":42}""", "Existing title")]
+    [InlineData("""{"session_title":null}""", "Existing title")]
+    public void Apply_SetsSessionTitleOnlyFromStringPayloadProperty(
+        string payloadJson,
+        string expectedSessionTitle
+    )
+    {
+        var state = new MemoryStateData(MemoryAggregateId)
+        {
+            SessionTitle = "Existing title"
+        };
+        var @event = new CodexPromptHookRecordedV1(
+            new ThreadId(SessionId),
+            new PromptId(FirstTurnId),
+            "before_agent",
+            JsonSerializer.Deserialize<JsonElement>(payloadJson)
+        );
+
+        @event.Apply(state, CreateExecutionInfo(Timestamp));
+
+        Assert.Equal(expectedSessionTitle, state.SessionTitle);
+    }
+
     private static JsonElement CreatePayload(Guid sessionId, Guid turnId) =>
         JsonSerializer.SerializeToElement(
             new

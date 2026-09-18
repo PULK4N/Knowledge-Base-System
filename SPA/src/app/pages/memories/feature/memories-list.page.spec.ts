@@ -17,15 +17,24 @@ import { MemoriesListPage } from './memories-list.page';
 
 describe('memoryTitle', () => {
   it.each([
-    ['# Event sourcing review\nMore details', 'Event sourcing review'],
-    ['- Prefer focused tests', 'Prefer focused tests'],
-    ['  \n\n', 'Conversation memory'],
-  ])('derives a readable list title from %j', (summary, expected) => {
-    expect(memoryTitle(summary)).toBe(expected);
-  });
+    ['Fix session title', '# Event sourcing review', 'Fix session title'],
+    ['  ', '# Event sourcing review\nMore details', 'Event sourcing review'],
+    ['', '- Prefer focused tests', 'Prefer focused tests'],
+    ['', '  \n\n', 'Conversation memory'],
+  ])(
+    'prefers the session title %j, then the summary %j',
+    (sessionTitle, summary, expected) => {
+      expect(memoryTitle({ sessionTitle, summary })).toBe(expected);
+    },
+  );
 
-  it('shortens very long first lines', () => {
-    expect(memoryTitle('A'.repeat(140))).toBe(`${'A'.repeat(110)}…`);
+  it.each([
+    ['A'.repeat(140), ''],
+    ['', 'A'.repeat(140)],
+  ])('shortens very long titles', (sessionTitle, summary) => {
+    expect(memoryTitle({ sessionTitle, summary })).toBe(
+      `${'A'.repeat(110)}…`,
+    );
   });
 });
 

@@ -21,7 +21,6 @@ import {
   parseMarkdownBlocks,
 } from '../ui/markdown-blocks';
 import { MarkdownContentComponent } from '../ui/markdown-content.component';
-import { ShortIdPipe } from '../ui/short-id.pipe';
 import { parseSkillTab } from './skill-tabs';
 
 interface SkillDetailsView {
@@ -37,7 +36,6 @@ interface SkillDetailsView {
     KeyValuePipe,
     MarkdownContentComponent,
     RouterLink,
-    ShortIdPipe,
   ],
   templateUrl: './skill-details.page.html',
   styleUrl: './skill-details.page.css',

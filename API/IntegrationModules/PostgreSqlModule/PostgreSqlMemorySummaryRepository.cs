@@ -63,6 +63,7 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             query = query.Where(
                 summary =>
                     summary.Summary.ToLower().Contains(normalizedSearch)
+                    || summary.SessionTitle.ToLower().Contains(normalizedSearch)
                     || (matchesThreadId && summary.ThreadId == threadId)
                     || (matchesMemoryId
                         && summary.MemoryAggregateId == memoryId)
@@ -165,6 +166,7 @@ internal sealed class PostgreSqlMemorySummaryRepository(
         {
             MemoryAggregateId = summary.MemoryAggregateId.Value,
             ThreadId = summary.ThreadId.Value,
+            SessionTitle = summary.SessionTitle,
             Summary = summary.Summary,
             PromptCount = summary.PromptCount,
             FirstPromptTimestamp = summary.FirstPromptTimestamp,
@@ -177,6 +179,7 @@ internal sealed class PostgreSqlMemorySummaryRepository(
         new(
             AggregateId.FromDatabaseGuid(summary.MemoryAggregateId),
             new ThreadId(summary.ThreadId),
+            summary.SessionTitle,
             summary.Summary,
             summary.PromptCount,
             summary.FirstPromptTimestamp,

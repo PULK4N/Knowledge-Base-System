@@ -52,6 +52,7 @@ public sealed class MemorySummaryProjector(
         return new MemorySummary(
             memory.Id,
             memory.ThreadId,
+            memory.SessionTitle,
             memory.ChatSummary.Summary,
             prompts.Count,
             firstPromptTimestamp,

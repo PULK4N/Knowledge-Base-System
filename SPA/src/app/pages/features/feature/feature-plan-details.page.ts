@@ -23,7 +23,6 @@ import {
   tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
-import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import { Feature, FeaturePlan } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { FeaturePlanContentComponent } from '../ui/feature-plan-content.component';
@@ -58,7 +57,6 @@ type MutationState =
     FeaturePlanContentComponent,
     FormsModule,
     RouterLink,
-    ShortIdPipe,
   ],
   templateUrl: './feature-plan-details.page.html',
   styleUrls: ['./feature-plan-details.page.css', '../ui/feature-pages.css'],

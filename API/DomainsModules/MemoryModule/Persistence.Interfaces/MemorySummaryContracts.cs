@@ -7,6 +7,7 @@ namespace MemoryModule.Persistence.Interfaces;
 public sealed record MemorySummary(
     AggregateId MemoryAggregateId,
     ThreadId ThreadId,
+    string SessionTitle,
     string Summary,
     int PromptCount,
     DateTime? FirstPromptTimestamp,

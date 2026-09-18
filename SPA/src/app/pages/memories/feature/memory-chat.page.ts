@@ -56,9 +56,7 @@ export class MemoryChatPage {
             status: 'success',
             data: {
               conversation,
-              title: conversation.summary
-                ? memoryTitle(conversation.summary)
-                : 'Conversation memory',
+              title: memoryTitle(conversation),
             },
           }) as const),
           startWith({ status: 'loading' } as const),

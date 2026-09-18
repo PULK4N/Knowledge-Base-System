@@ -30,7 +30,6 @@ import {
   SkillSearchSortField,
 } from '../data-access/skill.models';
 import { SkillService } from '../data-access/skill.service';
-import { ShortIdPipe } from '../ui/short-id.pipe';
 import {
   SKILL_PAGE_SIZES,
   equalSkillSearchRequest,
@@ -57,7 +56,6 @@ const PRESENCE_FILTER_OPTIONS: readonly ListControlOption[] = [
     ListFiltersComponent,
     PaginationComponent,
     RouterLink,
-    ShortIdPipe,
   ],
   templateUrl: './skills-list.page.html',
   styleUrl: './skills-list.page.css',

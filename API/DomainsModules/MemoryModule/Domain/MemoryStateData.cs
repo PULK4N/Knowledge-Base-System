@@ -9,6 +9,7 @@ public sealed class MemoryStateData(AggregateId id) : ISharedStateData
     public AggregateId Id { get; init; } = id;
     public bool IsDeleted { get; set; }
     public ThreadId ThreadId { get; set; }
+    public string SessionTitle { get; set; } = string.Empty;
     public Dictionary<PromptId, ChatPrompt> ChatPrompts { get; set; } = [];
     public ChatSummary ChatSummary { get; set; } = new();
 

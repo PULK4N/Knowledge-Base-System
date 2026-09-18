@@ -98,7 +98,7 @@ export class MemoriesListPage {
             ...result,
             items: result.items.map(memory => ({
               ...memory,
-              title: memoryTitle(memory.summary),
+              title: memoryTitle(memory),
             })),
           },
         }) as const),

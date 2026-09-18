@@ -38,6 +38,7 @@ public sealed record MemoryPromptDto(
 public sealed record MemoryConversationDto(
     Guid MemoryId,
     Guid ThreadId,
+    string SessionTitle,
     string Summary,
     DateTime? SummaryTimestamp,
     DateTime? FirstPromptTimestamp,

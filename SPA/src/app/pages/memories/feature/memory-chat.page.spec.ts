@@ -10,6 +10,7 @@ import { MemoryChatPage } from './memory-chat.page';
 const conversation: MemoryConversation = {
   memoryId: 'memory-1',
   threadId: '33333333-3333-3333-3333-333333333333',
+  sessionTitle: 'Outbox refactor',
   summary: 'The chat refactored the outbox.',
   summaryTimestamp: '2026-08-22T12:00:00Z',
   firstPromptTimestamp: '2026-08-22T10:00:00Z',
@@ -81,7 +82,10 @@ describe('MemoryChatPage', () => {
       messages[0].querySelector('.markdown-document strong')?.textContent,
     ).toBe('outbox');
     expect(messages[1].textContent).toContain('Refactored it.');
-    expect(element.textContent).toContain('Thread 33333333');
+    expect(element.querySelector('.page-heading')?.textContent).toBe(
+      'Outbox refactor',
+    );
+    expect(element.textContent).not.toContain('33333333');
   });
 
   it('keeps the raw payload collapsed until it is expanded', () => {
