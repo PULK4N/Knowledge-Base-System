@@ -1,5 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+} from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -13,11 +18,9 @@ import {
   Observable,
   Subject,
   catchError,
-  combineLatest,
   exhaustMap,
   map,
   of,
-  shareReplay,
   startWith,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
@@ -76,11 +79,12 @@ type RunState =
       readonly message: string;
     };
 
-interface ProjectionRunnerVm {
-  readonly projections: LoadState<readonly ProjectionGroup[]>;
-  readonly run: RunState;
-}
-
+/**
+ * Direct single-projector execution form rendered inside the Projections
+ * tab. The host page owns the projection list and passes it in so the
+ * runner can offer projector and state-machine suggestions without a
+ * second request.
+ */
 @Component({
   selector: 'app-projection-runner-page',
   imports: [AsyncPipe, ReactiveFormsModule],
@@ -91,6 +95,9 @@ interface ProjectionRunnerVm {
 export class ProjectionRunnerPage {
   private readonly administration = inject(ProjectionAdministrationService);
   private readonly runRequests = new Subject<RunProjectionRequest>();
+
+  readonly projections =
+    input.required<LoadState<readonly ProjectionGroup[]>>();
 
   protected readonly form = new FormGroup(
     {
@@ -107,20 +114,7 @@ export class ProjectionRunnerPage {
     { validators: projectionTargetValidator },
   );
 
-  private readonly projections$: Observable<
-    LoadState<readonly ProjectionGroup[]>
-  > = this.administration.list().pipe(
-    map(data => ({ status: 'success', data }) as const),
-    startWith({ status: 'loading' } as const),
-    catchError(error =>
-      of({
-        status: 'error',
-        message: toUserMessage(error),
-      } as const),
-    ),
-  );
-
-  private readonly run$: Observable<RunState> = this.runRequests.pipe(
+  protected readonly run$: Observable<RunState> = this.runRequests.pipe(
     exhaustMap(request =>
       this.administration.run(request).pipe(
         map(
@@ -143,11 +137,6 @@ export class ProjectionRunnerPage {
     ),
     startWith({ status: 'idle' } as const),
   );
-
-  protected readonly vm$: Observable<ProjectionRunnerVm> = combineLatest({
-    projections: this.projections$,
-    run: this.run$,
-  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected run(): void {
     if (this.form.invalid) {

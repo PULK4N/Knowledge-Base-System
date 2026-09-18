@@ -10,6 +10,7 @@ describe('ProjectionAdministrationPage', () => {
   let administration: {
     list: ReturnType<typeof vi.fn>;
     execute: ReturnType<typeof vi.fn>;
+    run: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -27,6 +28,7 @@ describe('ProjectionAdministrationPage', () => {
         ]),
       ),
       execute: vi.fn(() => replayResult),
+      run: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -68,5 +70,18 @@ describe('ProjectionAdministrationPage', () => {
 
     expect(element.textContent).toContain('Queued 2 aggregates.');
     expect(button.disabled).toBe(false);
+  });
+
+  it('offers the loaded projector names to the single-projection runner', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const suggestions = Array.from(
+      element.querySelectorAll('#projection-names option'),
+    ).map(option => (option as HTMLOptionElement).value);
+
+    expect(element.textContent).toContain('Run one projection');
+    expect(suggestions).toEqual([
+      'SkillSearchProjector',
+      'SkillSummaryProjector',
+    ]);
   });
 });

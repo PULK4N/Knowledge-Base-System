@@ -1,4 +1,5 @@
-@if (vm$ | async; as vm) {
+@if (run$ | async; as runState) {
+  @let projectionList = projections();
   <section class="runner-panel surface-card">
     <div class="panel-heading">
       <div>
@@ -26,8 +27,8 @@
       </label>
 
       <datalist id="projection-names">
-        @if (vm.projections.status === 'success') {
-          @for (group of vm.projections.data; track group.stateMachineId) {
+        @if (projectionList.status === 'success') {
+          @for (group of projectionList.data; track group.stateMachineId) {
             @for (projection of group.projectionNames; track projection) {
               <option [value]="projection"></option>
             }
@@ -35,7 +36,7 @@
         }
       </datalist>
 
-      @if (vm.projections.status === 'error') {
+      @if (projectionList.status === 'error') {
         <p class="option-warning" role="status">
           Projector suggestions could not be loaded. You can still enter a
           projector name manually.
@@ -96,8 +97,8 @@
         </label>
 
         <datalist id="state-machine-ids">
-          @if (vm.projections.status === 'success') {
-            @for (group of vm.projections.data; track group.stateMachineId) {
+          @if (projectionList.status === 'success') {
+            @for (group of projectionList.data; track group.stateMachineId) {
               <option [value]="group.stateMachineId"></option>
             }
           }
@@ -111,9 +112,9 @@
       <div class="form-actions">
         <button
           type="submit"
-          [disabled]="form.invalid || vm.run.status === 'running'"
+          [disabled]="form.invalid || runState.status === 'running'"
         >
-          @if (vm.run.status === 'running') {
+          @if (runState.status === 'running') {
             Running…
           } @else {
             Run projection
@@ -123,20 +124,20 @@
       </div>
     </form>
 
-    @if (vm.run.status === 'success') {
+    @if (runState.status === 'success') {
       <section class="run-result success" role="status">
-        <strong>{{ vm.run.request.projectionName }} completed</strong>
+        <strong>{{ runState.request.projectionName }} completed</strong>
         <span>
-          Processed {{ vm.run.processedAggregateCount }}
-          {{ vm.run.processedAggregateCount === 1 ? 'aggregate' : 'aggregates' }}.
+          Processed {{ runState.processedAggregateCount }}
+          {{ runState.processedAggregateCount === 1 ? 'aggregate' : 'aggregates' }}.
         </span>
       </section>
     }
 
-    @if (vm.run.status === 'error') {
+    @if (runState.status === 'error') {
       <section class="run-result error" role="alert">
         <strong>Projection could not be run</strong>
-        <span>{{ vm.run.message }}</span>
+        <span>{{ runState.message }}</span>
       </section>
     }
   </section>

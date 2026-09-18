@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ProjectionRunResult } from '../data-access/projection-administration.models';
 import { ProjectionAdministrationService } from '../data-access/projection-administration.service';
 import { ProjectionRunnerPage } from './projection-runner.page';
@@ -8,24 +8,12 @@ describe('ProjectionRunnerPage', () => {
   let fixture: ComponentFixture<ProjectionRunnerPage>;
   let runResult: Subject<ProjectionRunResult>;
   let administration: {
-    list: ReturnType<typeof vi.fn>;
     run: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     runResult = new Subject<ProjectionRunResult>();
     administration = {
-      list: vi.fn(() =>
-        of([
-          {
-            stateMachineId: 'skills-state-machine',
-            projectionNames: [
-              'SkillSearchProjector',
-              'SkillSummaryProjector',
-            ],
-          },
-        ]),
-      ),
       run: vi.fn(() => runResult),
     };
 
@@ -40,6 +28,15 @@ describe('ProjectionRunnerPage', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProjectionRunnerPage);
+    fixture.componentRef.setInput('projections', {
+      status: 'success',
+      data: [
+        {
+          stateMachineId: 'skills-state-machine',
+          projectionNames: ['SkillSearchProjector', 'SkillSummaryProjector'],
+        },
+      ],
+    });
     fixture.detectChanges();
   });
 

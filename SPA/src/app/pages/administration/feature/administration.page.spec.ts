@@ -8,7 +8,6 @@ import { AdministrationPage } from './administration.page';
 import { DatabaseAdministrationPage } from './database-administration.page';
 import { OutboxAdministrationPage } from './outbox-administration.page';
 import { ProjectionAdministrationPage } from './projection-administration.page';
-import { ProjectionRunnerPage } from './projection-runner.page';
 import { QueueAdministrationPage } from './queue-administration.page';
 
 describe('AdministrationPage', () => {
@@ -32,10 +31,6 @@ describe('AdministrationPage', () => {
               {
                 path: 'outbox',
                 component: OutboxAdministrationPage,
-              },
-              {
-                path: 'projection-runner',
-                component: ProjectionRunnerPage,
               },
               {
                 path: 'database',
@@ -100,16 +95,8 @@ describe('AdministrationPage', () => {
     expect(router.url).toBe('/administration/projections');
     expect(projectionsTab.getAttribute('aria-selected')).toBe('true');
     expect(element.textContent).toContain('Projection groups');
-
-    await harness.navigateByUrl('/administration/projection-runner');
-    harness.detectChanges();
-
-    const projectionRunnerTab = element.querySelector(
-      '#projection-runner-tab',
-    ) as HTMLAnchorElement;
-    expect(router.url).toBe('/administration/projection-runner');
-    expect(projectionRunnerTab.getAttribute('aria-selected')).toBe('true');
     expect(element.textContent).toContain('Run one projection');
+    expect(element.querySelector('#projection-runner-tab')).toBeNull();
   });
 
   it('frames the database and queue consoles from their own tabs', async () => {
