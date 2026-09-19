@@ -326,6 +326,11 @@ a {
   background: var(--surface-soft) !important;
 }
 
+:root[data-theme="dark"] .workspace .skill-summary .tags span {
+  color: var(--text-strong) !important;
+  background: #293650;
+}
+
 :root[data-theme="dark"] .workspace .heading-labels > span {
   color: var(--text-strong) !important;
   background: var(--surface-soft) !important;
