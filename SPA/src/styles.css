@@ -143,9 +143,14 @@ a {
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] textarea,
 :root[data-theme="dark"] select {
-  color: var(--navy);
-  border-color: var(--line);
-  background: #202c40;
+  color: var(--text-strong) !important;
+  border-color: var(--line) !important;
+  background: var(--control) !important;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: var(--muted) !important;
 }
 
 :root[data-theme="dark"] .workspace :is(
@@ -202,7 +207,7 @@ a {
 
 :root[data-theme="dark"] .workspace .memory-row:hover,
 :root[data-theme="dark"] .workspace .memory-item[open] .memory-row {
-  background: var(--surface-soft);
+  background: var(--canvas) !important;
 }
 
 :root[data-theme="dark"] .workspace .administration-tabs a.active {
@@ -249,16 +254,71 @@ a {
 
 :root[data-theme="dark"] .workspace .chat-message.role-assistant,
 :root[data-theme="dark"] .workspace .chat-message.role-hook {
-  background: var(--surface-soft);
+  background: var(--surface);
 }
 
 :root[data-theme="dark"] .workspace .message-payload {
   border-top-color: var(--line);
 }
 
+:root[data-theme="dark"] .workspace .chat-message .markdown-document {
+  background: transparent !important;
+}
+
 :root[data-theme="dark"] .workspace .message-payload pre {
   background: #111827;
   color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .workspace .record-item > header {
+  color: var(--muted);
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .record-item .message,
+:root[data-theme="dark"] .workspace .record-item .ai-message {
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace .record-item .message + .message {
+  border-top-color: var(--line);
+}
+
+:root[data-theme="dark"] .workspace .record-item .message > span {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .workspace .record-item .markdown-document {
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .research-discovery-body .markdown-document,
+    .review-note-body .markdown-document
+  ) {
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .workspace .source-type {
+  color: var(--text-strong) !important;
+  border-color: var(--line);
+  background: #293650;
+}
+
+:root[data-theme="dark"] .workspace .source-type[data-source='Code'] {
+  color: var(--teal) !important;
+  background: #1b3a40;
+}
+
+:root[data-theme="dark"] .workspace .source-type[data-source='Web'] {
+  color: var(--indigo) !important;
+  background: #29325d;
+}
+
+:root[data-theme="dark"] .workspace .source-type[data-source='Mcp'] {
+  color: var(--amber) !important;
+  background: #4a3824;
 }
 
 :root[data-theme="dark"] .workspace :is(.tabs a span, .feature-tabs a span) {

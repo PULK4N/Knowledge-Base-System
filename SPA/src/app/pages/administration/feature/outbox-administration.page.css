@@ -114,7 +114,7 @@ td {
 .payload-row:focus-visible,
 .payload-row.expanded {
   outline: none;
-  background: #f6f7ff;
+  background: var(--surface-soft);
 }
 
 .payload-row:focus-visible {
@@ -203,7 +203,7 @@ td code {
 
 .payload-details td {
   padding: 0 14px 22px;
-  background: #f6f7ff;
+  background: var(--surface-soft);
 }
 
 .json-grid {
