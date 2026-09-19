@@ -193,8 +193,8 @@ public sealed class DeleteProjectCommand(
 
         await ExecuteEvents(
             projectDeleted,
-            projectStateInfo =>
-                ((ProjectPoliciesStateData)projectStateInfo.StateData)
+            projectStateInfos =>
+                ((ProjectPoliciesStateData)projectStateInfos[0].StateData)
                     .RepositoryPaths
                     .Select(
                         repositoryPath => CreatePayload(

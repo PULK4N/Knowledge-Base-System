@@ -94,7 +94,7 @@ public abstract class PolicyCommand(
 
     protected Task<Dictionary<AggregateId, StateInfo>> ExecuteEvents(
         EventPayload conditionalEvent,
-        Func<StateInfo, List<EventPayload>> conditionalEventsMethod
+        Func<StateInfo[], List<EventPayload>> conditionalEventsMethod
     ) =>
         stateMachineHandler.ExecuteEvents(
             conditionalEvent,

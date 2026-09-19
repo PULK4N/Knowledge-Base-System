@@ -44,9 +44,9 @@ public sealed class MigrateCodexMemoryCommand(
 
         await stateMachineHandler.ExecuteEvents(
             mapEvent,
-            stateInfo =>
+            stateInfos =>
             {
-                var state = (SessionAggregateMapStateData)stateInfo.StateData;
+                var state = (SessionAggregateMapStateData)stateInfos[0].StateData;
                 var memoryAggregateId = state.AggregateIdsBySession[ThreadId];
 
                 return
