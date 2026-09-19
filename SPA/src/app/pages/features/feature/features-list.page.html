@@ -29,12 +29,6 @@
       />
 
       <div class="result-summary">
-        @if (vm.state.status === 'success') {
-        <span class="total-count">
-            {{ vm.state.data.totalCount }}
-            {{ vm.state.data.totalCount === 1 ? 'feature' : 'features' }}
-        </span>
-        }
         @if (vm.projects.status === 'error') {
           <span class="filter-warning">Project filter unavailable</span>
         }

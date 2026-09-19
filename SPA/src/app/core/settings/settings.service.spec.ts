@@ -56,4 +56,21 @@ describe('SettingsService', () => {
     expect(document.documentElement.dataset['theme']).toBe('light');
     expect(document.documentElement.style.colorScheme).toBe('light');
   });
+
+  it('updates the theme through the settings endpoint', async () => {
+    const settingsPromise = firstValueFrom(service.update('Dark'));
+    const request = http.expectOne('/api/settings');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ theme: 'Dark' });
+    request.flush({ id: 1, theme: 'Dark' });
+
+    await expect(settingsPromise).resolves.toEqual({
+      id: 1,
+      theme: 'Dark',
+    });
+    expect(service.theme()).toBe('Dark');
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    expect(document.documentElement.style.colorScheme).toBe('dark');
+  });
 });

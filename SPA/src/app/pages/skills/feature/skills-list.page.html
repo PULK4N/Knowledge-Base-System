@@ -28,13 +28,6 @@
         (textFilterChanged)="filter(vm.request, $event)"
         (selectFilterChanged)="filter(vm.request, $event)"
       />
-
-      @if (vm.state.status === 'success') {
-        <span class="total-count">
-          {{ vm.state.data.totalCount }}
-          {{ vm.state.data.totalCount === 1 ? 'skill' : 'skills' }}
-        </span>
-      }
     </div>
 
     @switch (vm.state.status) {

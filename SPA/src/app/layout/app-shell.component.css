@@ -77,9 +77,83 @@ a.nav-item:hover,
 }
 
 .workspace {
+  position: relative;
   min-height: 100vh;
   margin-left: 250px;
   padding: 42px clamp(28px, 3.2vw, 52px) 64px;
+}
+
+.theme-switcher {
+  position: fixed;
+  top: 20px;
+  right: clamp(28px, 3.2vw, 52px);
+  z-index: 20;
+}
+
+.theme-toggle {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--navy);
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgb(31 45 82 / 14%);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.theme-toggle:hover:not(:disabled) {
+  border-color: var(--indigo);
+  color: var(--indigo);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.theme-toggle svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.theme-error {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 10px;
+  border: 1px solid #edc5ca;
+  border-radius: 8px;
+  color: #9e2f3c;
+  background: #fffafb;
+  font-size: 12px;
 }
 
 @media (max-width: 780px) {
@@ -123,5 +197,10 @@ a.nav-item:hover,
   .workspace {
     margin-left: 0;
     padding: 28px 18px 48px;
+  }
+
+  .theme-switcher {
+    top: 14px;
+    right: 18px;
   }
 }

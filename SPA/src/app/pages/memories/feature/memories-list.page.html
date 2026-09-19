@@ -39,12 +39,6 @@
             Standard search matches summaries and exact memory or thread IDs.
           }
         </span>
-        @if (vm.state.status === 'success') {
-          <span class="total-count">
-            {{ vm.state.data.totalCount }}
-            {{ vm.state.data.totalCount === 1 ? 'memory' : 'memories' }}
-          </span>
-        }
       </div>
     </div>
 

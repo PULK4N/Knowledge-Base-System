@@ -16,6 +16,14 @@
   --teal: #0199ba;
   --amber: #d98b00;
   --violet: #6b4fd8;
+  --surface: #fff;
+  --surface-soft: #f6f8fb;
+  --control: #fff;
+  --text-strong: #263550;
+  --success: #197044;
+  --success-surface: #f5fcf8;
+  --danger: #9e2f3c;
+  --danger-surface: #fffafb;
 }
 
 :root[data-theme="dark"] {
@@ -31,6 +39,14 @@
   --teal: #4fd2e5;
   --amber: #f5bd5c;
   --violet: #aa91ff;
+  --surface: #1b2638;
+  --surface-soft: #202c40;
+  --control: #202c40;
+  --text-strong: #cbd5e7;
+  --success: #77e0a7;
+  --success-surface: #17382c;
+  --danger: #ffabb6;
+  --danger-surface: #2c1d29;
 }
 
 * {
@@ -130,4 +146,460 @@ a {
   color: var(--navy);
   border-color: var(--line);
   background: #202c40;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .surface-card,
+    .list-panel,
+    .features-panel,
+    .skills-panel,
+    .memory-panel,
+    .policy-panel,
+    .feature-overview,
+    .feature-card,
+    .memory-card,
+    .policy-card,
+    .overview-card,
+    .tab-panel,
+    .editor-card,
+    .chat-panel,
+    .chat-transcript,
+    .embedded-tool,
+    .outbox-panel,
+    .projection-panel,
+    .runner-panel,
+    .plan-editor,
+    .plan-document,
+    .reference-content,
+    .connection-management,
+    .connection-form,
+    .section-card,
+    .skill-summary
+  ) {
+  color: var(--navy);
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .skill-card,
+    .feature-card,
+    .memory-card,
+    .policy-row,
+    .directory-row,
+    .record-item,
+    .reference-item,
+    .attachment-item,
+    .tab-plan-row,
+    .project,
+    .topic-connection,
+    .research-discovery-item,
+    .review-note-item
+  ) {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace .memory-row:hover,
+:root[data-theme="dark"] .workspace .memory-item[open] .memory-row {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .administration-tabs a.active {
+  color: var(--indigo);
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace .projection-panel .panel-heading p {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .workspace .projection-panel .state-machine-label {
+  color: var(--teal) !important;
+}
+
+:root[data-theme="dark"] .workspace .projection-panel .projection-names li {
+  color: var(--text-strong) !important;
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .feature-status {
+  color: var(--text-strong);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .feature-status span {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .workspace .chat-summary {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .chat-summary > summary,
+:root[data-theme="dark"] .workspace .message-payload > summary {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .workspace .chat-message {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace .chat-message.role-assistant,
+:root[data-theme="dark"] .workspace .chat-message.role-hook {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .message-payload {
+  border-top-color: var(--line);
+}
+
+:root[data-theme="dark"] .workspace .message-payload pre {
+  background: #111827;
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .workspace :is(.tabs a span, .feature-tabs a span) {
+  color: var(--text-strong) !important;
+  background: var(--surface-soft) !important;
+}
+
+:root[data-theme="dark"] .workspace .heading-labels > span {
+  color: var(--text-strong) !important;
+  background: var(--surface-soft) !important;
+}
+
+:root[data-theme="dark"] .workspace .heading-labels .current-badge {
+  color: var(--indigo) !important;
+  background: #293650 !important;
+}
+
+:root[data-theme="dark"] .workspace .heading-labels .previous-badge {
+  color: var(--muted) !important;
+  background: #293650 !important;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    label,
+    legend,
+    th,
+    td,
+    li,
+    .card-copy,
+    .description,
+    .feature-id,
+    .memory-name,
+    .path-copy,
+    .payload-count,
+    .group-count,
+    .project-link,
+    .detail-label,
+    .overview-field-text,
+    .overview-field-label,
+    .entry-copy,
+    .policy-copy,
+    .skill-description,
+    .resource-id,
+    .result-summary,
+    span,
+    strong
+  ) {
+  color: var(--text-strong) !important;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .page-subtitle,
+    .muted-action,
+    .editor-note,
+    .metadata,
+    .search-hint,
+    .search-control small,
+    .filter-warning,
+    .empty-state,
+    .empty-tab,
+    .empty-content,
+    .reference-path,
+    .memory-copy,
+    .chat-metadata,
+    .section-description,
+    .pagination-summary,
+    .visible-count,
+    .row-status
+  ) {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    article,
+    details,
+    fieldset,
+    .markdown-document,
+    .knowledge-list,
+    .policy-form,
+    .record-editor,
+    .research-discovery-editor,
+    .review-note-editor,
+    .inline-editor,
+    .skill-picker,
+    .pagination
+  ) {
+  color: var(--navy);
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    button,
+    input,
+    textarea,
+    select
+  ) {
+  color: var(--text-strong);
+  border-color: var(--line);
+  background: var(--control);
+}
+
+  :root[data-theme="dark"] .workspace :is(
+    .search-box,
+    .search-control,
+    .semantic-search-control,
+    .scope-options label,
+    .plan-row-actions button,
+    .plan-row-actions .plan-row-link,
+    .row-action button,
+    .requeue-all,
+    .secondary-button,
+    .icon-button,
+    .muted-action,
+    .add-toggle[aria-expanded="true"]
+  ) {
+  color: var(--text-strong);
+  border-color: var(--line);
+  background: var(--control);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .table-scroll,
+    .feature-tabs,
+    .tab-list-controls,
+    .overview-editor,
+    .projection-group,
+    .record-list,
+    .reference-list,
+    .attachment-list
+  ) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    th,
+    .administration-tabs,
+    .payload-details td,
+    .json-grid,
+    .scope-options label:has(input:checked),
+    .tabs .current,
+    .topic-chip,
+    .tag-list
+  ) {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    a,
+    .open-chat,
+    .open-feature,
+    .open-plan,
+    .open-reference,
+    .open-skill,
+    .back-link,
+    .edit-link,
+    .primary-link,
+    .add-link,
+    .section-actions .add-toggle,
+    .group-action button,
+    .form-actions button,
+    .primary-action,
+    .no-projects a
+  ) {
+  color: var(--indigo);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .section-actions .add-toggle,
+    .group-action button,
+    .form-actions button,
+    .primary-action,
+    .primary-link,
+    .add-link,
+    .no-projects a
+  ) {
+  color: #fff;
+  background: var(--indigo);
+}
+
+:root[data-theme="dark"] .workspace :is(.danger-button, .danger-action) {
+  color: #fff;
+  border-color: #b52f42;
+  background: #b52f42;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .success,
+    .row-status.success,
+    .execution-status.success,
+    .run-result.success,
+    .state-new
+  ) {
+  color: var(--success) !important;
+  border-color: #2d674c;
+  background: var(--success-surface);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .error,
+    .error-copy,
+    .field-error,
+    .form-error,
+    .policy-error,
+    .execution-status.error,
+    .row-status.error,
+    .run-result.error,
+    .danger-text
+  ) {
+  color: var(--danger) !important;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .request-message.error,
+    .run-result.error,
+    .danger-zone,
+    .topic-removal-confirmation
+  ) {
+  border-color: #733d4b;
+  background: var(--danger-surface);
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .state-badge,
+    .current-badge,
+    .previous-badge,
+    .deleted-badge,
+    .count-badge,
+    .topic-chip,
+  .tag-list span
+  ) {
+  color: #d9e1ff !important;
+  border-color: #46567a;
+  background: #293650;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .feature-icon,
+    .skill-icon,
+    .memory-icon,
+    .policy-icon,
+    .entry-icon,
+    .card-icon,
+    .plan-document-icon,
+    .reference-icon,
+    .file-icon,
+  .topic-chip
+  ) {
+  color: var(--indigo) !important;
+  background: #293650;
+}
+
+:root[data-theme="dark"] .workspace :is(
+    .code-block,
+    .json-grid pre,
+    pre,
+    code
+  ) {
+  border-color: var(--line);
+  background: #111827;
+}
+
+:root[data-theme="dark"] .workspace .markdown-content {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    li,
+    td,
+    th
+  ) {
+  color: var(--text-strong) !important;
+}
+
+:root[data-theme="dark"] .workspace .markdown-content :is(h1, h2) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content a {
+  color: var(--indigo);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content hr {
+  background: var(--line);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content blockquote {
+  color: var(--muted);
+  border-left-color: var(--line);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content :not(pre) > code {
+  color: #f19ac0;
+  background: #111827;
+}
+
+:root[data-theme="dark"] .workspace .markdown-content table {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content :is(th, td) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content th {
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content td,
+:root[data-theme="dark"] .workspace .markdown-content tr:nth-child(even) td {
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content details {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content kbd {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+:root[data-theme="dark"] .workspace .markdown-content .mermaid {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--text-strong);
 }
