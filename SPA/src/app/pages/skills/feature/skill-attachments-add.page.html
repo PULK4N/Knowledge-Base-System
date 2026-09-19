@@ -27,13 +27,19 @@
       </header>
 
       <form
-        #attachmentForm="ngForm"
         class="editor-card surface-card"
-        (ngSubmit)="upload(vm.state.data.id, files.files)"
+        (ngSubmit)="upload(vm.state.data.id)"
       >
         <label>
           <span>Files</span>
-          <input #files name="files" type="file" multiple required />
+          <input
+            #fileInput
+            name="files"
+            type="file"
+            multiple
+            aria-required="true"
+            (change)="selectFiles(fileInput.files)"
+          />
           <small>Select one or more files to attach.</small>
         </label>
 
@@ -46,8 +52,7 @@
             class="primary-action"
             type="submit"
             [disabled]="
-              attachmentForm.invalid ||
-              !files.files?.length ||
+              !selectedFiles.length ||
               vm.mutation.status === 'saving'
             "
           >

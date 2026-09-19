@@ -44,6 +44,8 @@ export class SkillAttachmentsAddPage {
   private readonly skills = inject(SkillService);
   private readonly uploadRequests = new Subject<AttachmentAction>();
 
+  protected selectedFiles: readonly File[] = [];
+
   private readonly skillState$: Observable<LoadState<Skill>> =
     this.route.paramMap.pipe(
       map(params => params.get('skillId')),
@@ -84,10 +86,13 @@ export class SkillAttachmentsAddPage {
     mutation: this.mutation$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
-  protected upload(skillId: string, files: FileList | null): void {
-    const selectedFiles = files ? Array.from(files) : [];
-    if (selectedFiles.length === 0) return;
+  protected selectFiles(files: FileList | null): void {
+    this.selectedFiles = files ? Array.from(files) : [];
+  }
 
-    this.uploadRequests.next({ skillId, files: selectedFiles });
+  protected upload(skillId: string): void {
+    if (this.selectedFiles.length === 0) return;
+
+    this.uploadRequests.next({ skillId, files: this.selectedFiles });
   }
 }
