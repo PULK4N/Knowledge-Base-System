@@ -15,6 +15,7 @@ public sealed class MemoryStateMachineDefinitionTests
             typeof(SessionAggregateMapStateData)
         );
         EventTypeContainer.AddEventType(typeof(CodexPromptHookRecordedV1));
+        EventTypeContainer.AddEventType(typeof(CodexToolCallRecordedV1));
         EventTypeContainer.AddEventType(typeof(ClaudePromptHookRecordedV1));
         EventTypeContainer.AddEventType(typeof(CodexMemoryMigratedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
@@ -35,6 +36,7 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.Equal(
             [
                 nameof(CodexPromptHookRecordedV1),
+                nameof(CodexToolCallRecordedV1),
                 nameof(ClaudePromptHookRecordedV1),
                 nameof(CodexMemoryMigratedV1)
             ],

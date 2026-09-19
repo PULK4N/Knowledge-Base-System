@@ -48,6 +48,16 @@
     ],
     "PostToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_tool_use.py\"",
+            "timeout": 5,
+            "statusMessage": "Queuing tool exchange"
+          }
+        ]
+      },
+      {
         "matcher": ".*policy_project_(create|repository_add)$",
         "hooks": [
           {

@@ -2,6 +2,7 @@ id: memory-state-machine
 stateData: MemoryStateData
 initializationEvents:
   - CodexPromptHookRecordedV1
+  - CodexToolCallRecordedV1
   - ClaudePromptHookRecordedV1
   - CodexMemoryMigratedV1
 projections:
@@ -11,6 +12,7 @@ projections:
   - MemoryEntityRelationProjector
 events:
   CodexPromptHookRecordedV1: {}
+  CodexToolCallRecordedV1: {}
   ClaudePromptHookRecordedV1: {}
   CodexMemoryMigratedV1: {}
   ChatSummaryAddedV1: {}

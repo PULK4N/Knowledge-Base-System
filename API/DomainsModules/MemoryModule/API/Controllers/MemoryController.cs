@@ -26,6 +26,17 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
+    [HttpPost("codex/tool-calls")]
+    public async Task<ActionResult<MemoryCommandResult>> RecordToolCall(
+        [FromBody] JsonElement payload,
+        [FromServices] RecordCodexToolCallCommand command
+    )
+    {
+        payload.MapTo(command);
+
+        return Ok(await Execute(command));
+    }
+
     [HttpPost("claude/prompt-hooks")]
     public async Task<ActionResult<MemoryCommandResult>> RecordClaudePromptHook(
         [FromBody] JsonElement payload,

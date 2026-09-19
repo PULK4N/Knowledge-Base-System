@@ -83,6 +83,20 @@ class MemoryApiClient:
             raise MemoryHookError(f"Memory API is unavailable: {error}") from error
 
 
+class RoutedMemoryApiClient(MemoryApiClient):
+    """Select the destination for each record in the shared hook queue."""
+
+    def __init__(self) -> None:
+        super().__init__(_memory_hook_url())
+        self._tool_client = MemoryApiClient(_tool_use_hook_url())
+
+    def record(self, payload: dict[str, Any]) -> None:
+        if payload.get("hook_event_name") == "PostToolUse":
+            self._tool_client.record(payload)
+        else:
+            super().record(payload)
+
+
 class MemoryHookQueue:
     def __init__(self, root: Path) -> None:
         self._root = root
@@ -212,7 +226,7 @@ def drain_queue(
     client: MemoryApiClient | None = None,
 ) -> None:
     memory_queue = queue or MemoryHookQueue(_queue_directory())
-    api_client = client or MemoryApiClient(_memory_hook_url())
+    api_client = client or RoutedMemoryApiClient()
     try:
         memory_queue.drain(api_client)
     except Exception as error:
@@ -285,6 +299,19 @@ def _memory_hook_url() -> str:
             "",
             "",
         )
+    )
+
+
+def _tool_use_hook_url() -> str:
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_TOOL_USE_HOOK_URL")
+    if override:
+        return override
+
+    parsed = urllib.parse.urlsplit(
+        os.environ.get("MCP_KNOWLEDGE_BASE_URL") or "http://localhost:5231/mcp"
+    )
+    return urllib.parse.urlunsplit(
+        (parsed.scheme, parsed.netloc, "/api/memory/codex/tool-calls", "", "")
     )
 
 

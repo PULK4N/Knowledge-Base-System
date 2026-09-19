@@ -43,6 +43,9 @@ public sealed class RecordCodexPromptHookCommandTests
             typeof(CodexPromptHookRecordedV1)
         );
         EventTypeContainer.AddEventType(
+            typeof(CodexToolCallRecordedV1)
+        );
+        EventTypeContainer.AddEventType(
             typeof(CodexMemoryMigratedV1)
         );
         EventTypeContainer.AddEventType(
@@ -117,6 +120,61 @@ public sealed class RecordCodexPromptHookCommandTests
             ).EventData
         );
         Assert.Equal(SecondPromptId, recordedEvent.PromptId);
+    }
+
+    [Fact]
+    public async Task Execute_ExistingSession_WritesToolCallEventAndState()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        await CreateCommand(eventStore, FirstPromptId).Execute(Executor);
+        var command = new RecordCodexToolCallCommand(
+            CreateHandler(eventStore)
+        )
+        {
+            ThreadId = ThreadId,
+            PromptId = FirstPromptId,
+            Payload = JsonSerializer.SerializeToElement(
+                new
+                {
+                    session_id = ThreadId.Value,
+                    turn_id = FirstPromptId.Value,
+                    tool_name = "Bash",
+                    tool_use_id = "tool-use-1",
+                    tool_input = new { command = "dotnet test" },
+                    tool_response = new { output = "Passed", exit_code = 0 }
+                }
+            ),
+            ToolName = "Bash",
+            ToolUseId = "tool-use-1"
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.Equal("OK", result.Status);
+        var writtenAggregate = Assert.Single(eventStore.LastWritten);
+        var memoryState = Assert.IsType<MemoryStateData>(
+            writtenAggregate.Value.StateData
+        );
+        var prompt = memoryState.ChatPrompts[FirstPromptId];
+        var toolCall = Assert.Single(prompt.CodexToolCalls);
+        Assert.Equal("Bash", toolCall.ToolName);
+        Assert.Equal("tool-use-1", toolCall.ToolUseId);
+        Assert.Equal(
+            "Bash",
+            toolCall.Payload.GetProperty("tool_name").GetString()
+        );
+        Assert.Equal(
+            "tool-use-1",
+            toolCall.Payload.GetProperty("tool_use_id").GetString()
+        );
+        Assert.IsType<CodexToolCallRecordedV1>(
+            Assert.Single(
+                writtenAggregate.Value.LastExecutedPayloads
+            ).EventData
+        );
     }
 
     [Fact]
