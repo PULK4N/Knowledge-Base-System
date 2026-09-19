@@ -2,9 +2,11 @@ using ActionModule.API;
 using ActionModule.Shared;
 using AdministrationModule.API.Controllers;
 using AdministrationModule.Application.Commands;
+using Api.Settings;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
 using EventSourcing.Optimizations;
+using Microsoft.EntityFrameworkCore;
 using OutboxProcessingModule;
 using OutboxProcessingModule.Application;
 using FeatureModule.API.Controllers;
@@ -64,6 +66,24 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.RegisterPostgreSqlModule(builder.Configuration);
+builder.Services.AddDbContext<SettingsDbContext>(
+    options =>
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString(
+                PostgreSqlModuleDefaults.ConnectionStringName
+            ),
+            npgsql =>
+            {
+                npgsql.MigrationsAssembly(
+                    typeof(SettingsDbContext).Assembly.GetName().Name
+                );
+                npgsql.MigrationsHistoryTable(
+                    SettingsDbContext.MigrationsHistoryTable
+                );
+            }
+        )
+);
+builder.Services.AddScoped<SettingsRepository>();
 builder.Services.RegisterEventSourcingOptmizations(builder.Configuration);
 builder.Services.RegisterEventSourcingCore(
     typeof(SkillStateData).Assembly,
@@ -116,6 +136,7 @@ builder.Services
 var app = builder.Build();
 
 await app.Services.ApplyPostgreSqlMigrations();
+await app.Services.ApplySettingsMigration();
 
 if (app.Environment.IsDevelopment())
 {
