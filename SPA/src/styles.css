@@ -18,6 +18,21 @@
   --violet: #6b4fd8;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #edf2ff;
+  background: #111827;
+  --navy: #edf2ff;
+  --muted: #aebbd0;
+  --line: #344158;
+  --canvas: #111827;
+  --card: #1b2638;
+  --indigo: #8390ff;
+  --teal: #4fd2e5;
+  --amber: #f5bd5c;
+  --violet: #aa91ff;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -89,4 +104,30 @@ a {
   color: #9e2f3c;
   border-color: #edc5ca;
   background: #fffafb;
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 74% 0%, rgb(56 76 150 / 24%), transparent 30%),
+    var(--canvas);
+}
+
+:root[data-theme="dark"] .surface-card,
+:root[data-theme="dark"] .request-message {
+  background: var(--card);
+  box-shadow: 0 12px 35px rgb(0 0 0 / 18%);
+}
+
+:root[data-theme="dark"] .request-message.error {
+  color: #ffabb6;
+  border-color: #733d4b;
+  background: #2c1d29;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  color: var(--navy);
+  border-color: var(--line);
+  background: #202c40;
 }

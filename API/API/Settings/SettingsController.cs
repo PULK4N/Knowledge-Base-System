@@ -7,6 +7,21 @@ namespace Api.Settings;
 public sealed class SettingsController(SettingsRepository repository)
     : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<Settings>> Get(
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            return Ok(await repository.Get(cancellationToken));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPut]
     public async Task<ActionResult<Settings>> Update(
         [FromBody] SettingsRequest request,

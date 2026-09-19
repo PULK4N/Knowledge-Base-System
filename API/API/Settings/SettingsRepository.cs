@@ -4,6 +4,12 @@ namespace Api.Settings;
 
 public sealed class SettingsRepository(SettingsDbContext dbContext)
 {
+    public async Task<Settings> Get(
+        CancellationToken cancellationToken = default
+    ) =>
+        await dbContext.Settings.SingleOrDefaultAsync(cancellationToken)
+        ?? throw new KeyNotFoundException("Settings have not been added.");
+
     public async Task<Settings> Update(
         Theme theme,
         CancellationToken cancellationToken = default
