@@ -97,4 +97,40 @@
   }
 
   <app-projection-runner-page [projections]="vm.projections" />
+
+  <section class="projection-panel surface-card cache-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Embedding cache</h2>
+        <p>
+          Clear cached projection vectors to regenerate them during the next
+          projection run.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="danger-button"
+        [disabled]="vm.cacheClear.status === 'clearing'"
+        (click)="clearEmbeddingCache()"
+      >
+        @if (vm.cacheClear.status === 'clearing') {
+          Clearing…
+        } @else {
+          Clear embedding cache
+        }
+      </button>
+    </div>
+
+    @if (vm.cacheClear.status === 'success') {
+      <p class="execution-status success" role="status">
+        Cleared {{ vm.cacheClear.deletedCount }} cached
+        {{ vm.cacheClear.deletedCount === 1 ? 'embedding' : 'embeddings' }}.
+      </p>
+    }
+    @if (vm.cacheClear.status === 'error') {
+      <p class="execution-status error" role="alert">
+        {{ vm.cacheClear.message }}
+      </p>
+    }
+  </section>
 }

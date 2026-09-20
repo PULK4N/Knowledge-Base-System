@@ -11,6 +11,7 @@ describe('ProjectionAdministrationPage', () => {
     list: ReturnType<typeof vi.fn>;
     execute: ReturnType<typeof vi.fn>;
     run: ReturnType<typeof vi.fn>;
+    clearEmbeddingCache: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -29,6 +30,7 @@ describe('ProjectionAdministrationPage', () => {
       ),
       execute: vi.fn(() => replayResult),
       run: vi.fn(),
+      clearEmbeddingCache: vi.fn(() => of(3)),
     };
 
     await TestBed.configureTestingModule({
@@ -83,5 +85,18 @@ describe('ProjectionAdministrationPage', () => {
       'SkillSearchProjector',
       'SkillSummaryProjector',
     ]);
+  });
+
+  it('clears the embedding cache and reports the deleted count', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const button = Array.from(element.querySelectorAll('button')).find(
+      candidate => candidate.textContent?.includes('Clear embedding cache'),
+    ) as HTMLButtonElement;
+
+    button.click();
+    fixture.detectChanges();
+
+    expect(administration.clearEmbeddingCache).toHaveBeenCalledOnce();
+    expect(element.textContent).toContain('Cleared 3 cached embeddings.');
   });
 });

@@ -9,3 +9,11 @@ public interface ITextEmbeddingGenerator
         CancellationToken cancellationToken = default
     );
 }
+
+public interface IProjectionEmbeddingGenerator
+{
+    Task<IReadOnlyList<ImmutableArray<float>>> Generate(
+        IReadOnlyList<string> inputs,
+        CancellationToken cancellationToken = default
+    );
+}

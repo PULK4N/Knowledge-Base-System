@@ -178,7 +178,7 @@ public sealed class FeatureResearchSearchProjectorTests
         Assert.Empty(knowledgeRepository.Documents);
     }
 
-    private sealed class FakeEmbeddingGenerator : ITextEmbeddingGenerator
+    private sealed class FakeEmbeddingGenerator : IProjectionEmbeddingGenerator
     {
         public IReadOnlyList<string> LastInputs { get; private set; } = [];
         public int CallCount { get; private set; }

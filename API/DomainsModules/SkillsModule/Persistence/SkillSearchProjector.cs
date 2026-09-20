@@ -7,7 +7,7 @@ using SkillsModule.Persistence.Interfaces;
 namespace SkillsModule.Persistence;
 
 public sealed class SkillSearchProjector(
-    ITextEmbeddingGenerator embeddingGenerator,
+    IProjectionEmbeddingGenerator embeddingGenerator,
     ISkillSearchProjectionWriter projectionWriter
 ) : IProjector
 {

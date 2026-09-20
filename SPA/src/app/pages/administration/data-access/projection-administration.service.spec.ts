@@ -77,4 +77,16 @@ describe('ProjectionAdministrationService', () => {
       processedAggregateCount: 1,
     });
   });
+
+  it('clears the projection embedding cache', async () => {
+    const resultPromise = firstValueFrom(service.clearEmbeddingCache());
+    const request = http.expectOne(
+      '/api/administration/projections/embedding-cache',
+    );
+
+    expect(request.request.method).toBe('DELETE');
+    request.flush(4);
+
+    await expect(resultPromise).resolves.toBe(4);
+  });
 });

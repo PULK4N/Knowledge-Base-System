@@ -35,6 +35,20 @@ namespace PostgreSqlModule.Tests;
 public sealed class InjectionSetupTests
 {
     [Fact]
+    public void EmbeddingCacheMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddEmbeddingCache();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+    }
+
+    [Fact]
     public void EntityRelationsMigration_is_schema_only()
     {
         var migration = new PostgreSqlModule.Migrations.EventSourcing
@@ -162,6 +176,16 @@ public sealed class InjectionSetupTests
         Assert.IsType<ProjectionReplayRepository>(
             scope.ServiceProvider.GetRequiredService<
                 IProjectionReplayRepository
+            >()
+        );
+        Assert.IsType<CachedProjectionEmbeddingGenerator>(
+            scope.ServiceProvider.GetRequiredService<
+                IProjectionEmbeddingGenerator
+            >()
+        );
+        Assert.IsType<PostgreSqlProjectionEmbeddingCache>(
+            scope.ServiceProvider.GetRequiredService<
+                IProjectionEmbeddingCache
             >()
         );
         Assert.IsType<AttachmentContentStorage>(

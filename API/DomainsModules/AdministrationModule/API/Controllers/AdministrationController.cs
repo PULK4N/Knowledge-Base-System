@@ -48,4 +48,9 @@ public sealed class AdministrationController(
             ? NotFound()
             : Ok(result);
     }
+
+    [HttpDelete("embedding-cache")]
+    public async Task<ActionResult<int>> ClearEmbeddingCache(
+        [FromServices] ClearEmbeddingCacheCommand command
+    ) => Ok(await Execute(command));
 }

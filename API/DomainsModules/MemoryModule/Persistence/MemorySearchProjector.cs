@@ -8,7 +8,7 @@ using MemoryModule.Persistence.Interfaces;
 namespace MemoryModule.Persistence;
 
 public sealed class MemorySearchProjector(
-    ITextEmbeddingGenerator embeddingGenerator,
+    IProjectionEmbeddingGenerator embeddingGenerator,
     IMemorySearchProjectionWriter projectionWriter
 ) : IProjector
 {

@@ -28,6 +28,18 @@ public sealed class ProjectionAdministrationTests
         };
 
     [Fact]
+    public async Task Clear_embedding_cache_returns_deleted_entry_count()
+    {
+        var repository = new StubEmbeddingCacheAdministrationRepository(7);
+        var command = new ClearEmbeddingCacheCommand(repository);
+
+        var deletedCount = await command.Execute(Executor);
+
+        Assert.Equal(7, deletedCount);
+        Assert.True(repository.WasCleared);
+    }
+
+    [Fact]
     public async Task List_returns_only_state_machines_with_projections()
     {
         var query = new ListProjectionGroupsQuery(
@@ -470,6 +482,21 @@ public sealed class ProjectionAdministrationTests
         {
             Invalidated.Add(stateMachineId);
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class StubEmbeddingCacheAdministrationRepository(
+        int deletedCount
+    ) : IEmbeddingCacheAdministrationRepository
+    {
+        public bool WasCleared { get; private set; }
+
+        public Task<int> Clear(
+            CancellationToken cancellationToken = default
+        )
+        {
+            WasCleared = true;
+            return Task.FromResult(deletedCount);
         }
     }
 

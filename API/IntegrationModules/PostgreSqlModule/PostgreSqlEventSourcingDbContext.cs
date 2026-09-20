@@ -50,6 +50,19 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         modelBuilder.HasPostgresExtension("vector");
         modelBuilder.HasPostgresExtension("pg_trgm");
 
+        modelBuilder.Entity<EmbeddingCacheEntry>(
+            entry =>
+            {
+                entry.ToTable("EmbeddingCacheEntries");
+                entry.HasKey(cacheEntry => cacheEntry.TextHash);
+                entry.Property(cacheEntry => cacheEntry.TextHash)
+                    .HasMaxLength(64);
+                entry.Property(cacheEntry => cacheEntry.Embedding)
+                    .HasColumnType("vector(1024)")
+                    .IsRequired();
+            }
+        );
+
         modelBuilder.Entity<EntityRelation>(
             relation =>
             {

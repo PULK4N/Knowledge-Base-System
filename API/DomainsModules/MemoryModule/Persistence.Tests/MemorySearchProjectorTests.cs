@@ -218,7 +218,7 @@ public sealed class MemorySearchProjectorTests
     private static StateInfo CreateStateInfo(MemoryStateData state) =>
         StateInfo.Create(state, "memory-state-machine", state.Id);
 
-    private sealed class FakeEmbeddingGenerator : ITextEmbeddingGenerator
+    private sealed class FakeEmbeddingGenerator : IProjectionEmbeddingGenerator
     {
         public IReadOnlyList<string> LastInputs { get; private set; } = [];
 

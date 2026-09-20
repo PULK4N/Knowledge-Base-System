@@ -8,7 +8,7 @@ using FeatureModule.Persistence.Interfaces;
 namespace FeatureModule.Persistence;
 
 public sealed class FeatureResearchSearchProjector(
-    ITextEmbeddingGenerator embeddingGenerator,
+    IProjectionEmbeddingGenerator embeddingGenerator,
     IFeatureSearchProjectionWriter projectionWriter
 ) : IProjector
 {

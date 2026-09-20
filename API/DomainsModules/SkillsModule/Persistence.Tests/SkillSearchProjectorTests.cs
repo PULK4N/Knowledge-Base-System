@@ -175,7 +175,7 @@ public sealed class SkillSearchProjectorTests
     private static StateInfo CreateStateInfo(SkillStateData state) =>
         StateInfo.Create(state, "skills-state-machine", state.Id);
 
-    private sealed class FakeEmbeddingGenerator : ITextEmbeddingGenerator
+    private sealed class FakeEmbeddingGenerator : IProjectionEmbeddingGenerator
     {
         public IReadOnlyList<string> LastInputs { get; private set; } = [];
 

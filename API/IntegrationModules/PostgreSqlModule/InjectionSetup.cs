@@ -1,3 +1,4 @@
+using AdministrationModule.Application.Persistence;
 using AdministrationModule.Persistence;
 using EmbeddingModule;
 using EventSourcing.Persistence;
@@ -121,6 +122,18 @@ public static class InjectionSetup
             PostgreSqlMemoryConversationRepository
         >();
         services.RegisterTextEmbeddings(configuration);
+        services.AddScoped<
+            IProjectionEmbeddingCache,
+            PostgreSqlProjectionEmbeddingCache
+        >();
+        services.AddScoped<
+            IProjectionEmbeddingGenerator,
+            CachedProjectionEmbeddingGenerator
+        >();
+        services.AddScoped<
+            IEmbeddingCacheAdministrationRepository,
+            EmbeddingCacheAdministrationRepository
+        >();
         services.AddScoped<
             IKnowledgeSearchRepository,
             PostgreSqlKnowledgeSearchRepository

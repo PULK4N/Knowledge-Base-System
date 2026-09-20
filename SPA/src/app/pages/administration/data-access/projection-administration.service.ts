@@ -32,4 +32,10 @@ export class ProjectionAdministrationService {
       request,
     );
   }
+
+  clearEmbeddingCache(): Observable<number> {
+    return this.http.delete<number>(
+      `${this.controllerPath}/embedding-cache`,
+    );
+  }
 }

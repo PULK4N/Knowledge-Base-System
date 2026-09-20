@@ -30,9 +30,16 @@ type ExecutionState =
       readonly message: string;
     };
 
+type CacheClearState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'clearing' }
+  | { readonly status: 'success'; readonly deletedCount: number }
+  | { readonly status: 'error'; readonly message: string };
+
 interface ProjectionAdministrationVm {
   readonly projections: LoadState<readonly ProjectionGroup[]>;
   readonly execution: ExecutionState;
+  readonly cacheClear: CacheClearState;
 }
 
 @Component({
@@ -45,6 +52,7 @@ interface ProjectionAdministrationVm {
 export class ProjectionAdministrationPage {
   private readonly administration = inject(ProjectionAdministrationService);
   private readonly executionRequests = new Subject<string>();
+  private readonly cacheClearRequests = new Subject<void>();
 
   private readonly projections$: Observable<
     LoadState<readonly ProjectionGroup[]>
@@ -84,13 +92,38 @@ export class ProjectionAdministrationPage {
       startWith({ status: 'idle' } as const),
     );
 
+  private readonly cacheClear$: Observable<CacheClearState> =
+    this.cacheClearRequests.pipe(
+      exhaustMap(() =>
+        this.administration.clearEmbeddingCache().pipe(
+          map(
+            deletedCount =>
+              ({ status: 'success', deletedCount }) as const,
+          ),
+          startWith({ status: 'clearing' } as const),
+          catchError(error =>
+            of({
+              status: 'error',
+              message: toUserMessage(error),
+            } as const),
+          ),
+        ),
+      ),
+      startWith({ status: 'idle' } as const),
+    );
+
   protected readonly vm$: Observable<ProjectionAdministrationVm> =
     combineLatest({
       projections: this.projections$,
       execution: this.execution$,
+      cacheClear: this.cacheClear$,
     }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected execute(stateMachineId: string): void {
     this.executionRequests.next(stateMachineId);
+  }
+
+  protected clearEmbeddingCache(): void {
+    this.cacheClearRequests.next();
   }
 }
