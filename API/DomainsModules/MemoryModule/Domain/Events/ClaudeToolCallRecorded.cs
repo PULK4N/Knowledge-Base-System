@@ -5,15 +5,15 @@ using MemoryModule.Domain.Models;
 
 namespace MemoryModule.Domain.Events;
 
-public interface ICodexToolCallRecorded : IEvent;
+public interface IClaudeToolCallRecorded : IEvent;
 
-public sealed record CodexToolCallRecordedV1(
+public sealed record ClaudeToolCallRecordedV1(
     ThreadId ThreadId,
     PromptId PromptId,
     string ToolName,
     string ToolUseId,
     JsonElement Payload
-) : ICodexToolCallRecorded
+) : IClaudeToolCallRecorded
 {
     public object Apply(
         object stateData,

@@ -17,6 +17,7 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(CodexPromptHookRecordedV1));
         EventTypeContainer.AddEventType(typeof(CodexToolCallRecordedV1));
         EventTypeContainer.AddEventType(typeof(ClaudePromptHookRecordedV1));
+        EventTypeContainer.AddEventType(typeof(ClaudeToolCallRecordedV1));
         EventTypeContainer.AddEventType(typeof(CodexMemoryMigratedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV2));
@@ -38,6 +39,7 @@ public sealed class MemoryStateMachineDefinitionTests
                 nameof(CodexPromptHookRecordedV1),
                 nameof(CodexToolCallRecordedV1),
                 nameof(ClaudePromptHookRecordedV1),
+                nameof(ClaudeToolCallRecordedV1),
                 nameof(CodexMemoryMigratedV1)
             ],
             definition.InitializationEvents

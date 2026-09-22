@@ -27,6 +27,10 @@ DEFAULT_MEMORY_HOOK_URL = (
     "http://localhost:5231/api/memory/claude/prompt-hooks"
 )
 MEMORY_HOOK_PATH = "/api/memory/claude/prompt-hooks"
+DEFAULT_TOOL_USE_HOOK_URL = (
+    "http://localhost:5231/api/memory/claude/tool-calls"
+)
+TOOL_USE_HOOK_PATH = "/api/memory/claude/tool-calls"
 RECORDED_EVENTS = frozenset({"UserPromptSubmit", "Stop"})
 
 
@@ -73,6 +77,26 @@ class MemoryApiClient:
             ) from error
         except (OSError, urllib.error.URLError) as error:
             raise MemoryHookError(f"Memory API is unavailable: {error}") from error
+
+
+class RoutedMemoryApiClient(MemoryApiClient):
+    """Sends each queued record to the endpoint that accepts its hook event.
+
+    Both hook scripts share one queue so records keep their order, but tool
+    exchanges belong to a different Memory API endpoint than prompts and
+    replies.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(_memory_hook_url())
+        self._tool_client = MemoryApiClient(_tool_use_hook_url())
+
+    def record(self, payload: dict[str, Any]) -> None:
+        if payload.get("hook_event_name") == "PostToolUse":
+            self._tool_client.record(payload)
+            return
+
+        super().record(payload)
 
 
 class TurnRegistry:
@@ -317,7 +341,7 @@ def drain_queue(
     client: MemoryApiClient | None = None,
 ) -> None:
     memory_queue = queue or MemoryHookQueue(_queue_directory())
-    api_client = client or MemoryApiClient(_memory_hook_url())
+    api_client = client or RoutedMemoryApiClient()
     try:
         memory_queue.drain(api_client)
     except Exception as error:
@@ -391,6 +415,21 @@ def _memory_hook_url() -> str:
     parsed = urllib.parse.urlsplit(mcp_url)
     return urllib.parse.urlunsplit(
         (parsed.scheme, parsed.netloc, MEMORY_HOOK_PATH, "", "")
+    )
+
+
+def _tool_use_hook_url() -> str:
+    override = os.environ.get("MCP_KNOWLEDGE_BASE_TOOL_USE_HOOK_URL")
+    if override:
+        return override
+
+    mcp_url = os.environ.get("MCP_KNOWLEDGE_BASE_URL")
+    if not mcp_url:
+        return DEFAULT_TOOL_USE_HOOK_URL
+
+    parsed = urllib.parse.urlsplit(mcp_url)
+    return urllib.parse.urlunsplit(
+        (parsed.scheme, parsed.netloc, TOOL_USE_HOOK_PATH, "", "")
     )
 
 

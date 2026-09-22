@@ -4,6 +4,7 @@ initializationEvents:
   - CodexPromptHookRecordedV1
   - CodexToolCallRecordedV1
   - ClaudePromptHookRecordedV1
+  - ClaudeToolCallRecordedV1
   - CodexMemoryMigratedV1
 projections:
   - MemorySearchProjector
@@ -14,6 +15,7 @@ events:
   CodexPromptHookRecordedV1: {}
   CodexToolCallRecordedV1: {}
   ClaudePromptHookRecordedV1: {}
+  ClaudeToolCallRecordedV1: {}
   CodexMemoryMigratedV1: {}
   ChatSummaryAddedV1: {}
   ChatSummaryAddedV2: {}

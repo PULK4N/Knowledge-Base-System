@@ -48,6 +48,17 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
+    [HttpPost("claude/tool-calls")]
+    public async Task<ActionResult<MemoryCommandResult>> RecordClaudeToolCall(
+        [FromBody] JsonElement payload,
+        [FromServices] RecordClaudeToolCallCommand command
+    )
+    {
+        payload.MapTo(command);
+
+        return Ok(await Execute(command));
+    }
+
     [HttpPost("codex/migrations")]
     public async Task<ActionResult<MemoryCommandResult>> Migrate(
         [FromBody] CodexMemoryMigrationRequest body,

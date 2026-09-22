@@ -5,7 +5,7 @@ using MemoryModule.Domain.Models;
 
 namespace MemoryModule.Domain.Tests;
 
-public sealed class CodexToolCallRecordedTests
+public sealed class ClaudeToolCallRecordedTests
 {
     private static readonly Guid SessionId =
         Guid.Parse("019fb72e-e0c3-7452-b32b-5bbf65433c98");
@@ -26,7 +26,7 @@ public sealed class CodexToolCallRecordedTests
     {
         var state = new MemoryStateData(MemoryAggregateId);
         var payload = CreatePayload();
-        var @event = new CodexToolCallRecordedV1(
+        var @event = new ClaudeToolCallRecordedV1(
             new ThreadId(SessionId),
             new PromptId(TurnId),
             "Bash",
@@ -81,7 +81,7 @@ public sealed class CodexToolCallRecordedTests
             }
         };
 
-        new CodexToolCallRecordedV1(
+        new ClaudeToolCallRecordedV1(
             new ThreadId(SessionId),
             promptId,
             "Bash",
@@ -100,6 +100,7 @@ public sealed class CodexToolCallRecordedTests
             {
                 session_id = SessionId,
                 turn_id = TurnId,
+                hook_event_name = "PostToolUse",
                 tool_name = "Bash",
                 tool_use_id = "tool-use-1",
                 tool_input = new { command = "dotnet test" },

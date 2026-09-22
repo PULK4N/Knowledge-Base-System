@@ -40,6 +40,9 @@ public sealed class RecordClaudePromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(ClaudePromptHookRecordedV1)
         );
+        EventTypeContainer.AddEventType(
+            typeof(ClaudeToolCallRecordedV1)
+        );
     }
 
     [Fact]
@@ -130,6 +133,61 @@ public sealed class RecordClaudePromptHookCommandTests
         Assert.Equal(
             ["UserPromptSubmit", "Stop"],
             prompt.PromptHookRecords.Select(hook => hook.HookEventName)
+        );
+    }
+
+    [Fact]
+    public async Task Execute_ExistingSession_WritesToolCallEventAndState()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        await CreateCommand(eventStore, FirstPromptId).Execute(Executor);
+        var command = new RecordClaudeToolCallCommand(
+            CreateHandler(eventStore)
+        )
+        {
+            ThreadId = ThreadId,
+            PromptId = FirstPromptId,
+            ToolName = "Bash",
+            ToolUseId = "tool-use-1",
+            Payload = JsonSerializer.SerializeToElement(
+                new
+                {
+                    session_id = ThreadId.Value,
+                    turn_id = FirstPromptId.Value,
+                    hook_event_name = "PostToolUse",
+                    tool_name = "Bash",
+                    tool_use_id = "tool-use-1",
+                    tool_input = new { command = "dotnet test" },
+                    tool_response = new { output = "Passed", exit_code = 0 }
+                }
+            )
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.Equal("OK", result.Status);
+        var writtenAggregate = Assert.Single(eventStore.LastWritten);
+        var memoryState = Assert.IsType<MemoryStateData>(
+            writtenAggregate.Value.StateData
+        );
+        var prompt = memoryState.ChatPrompts[FirstPromptId];
+        var toolCall = Assert.Single(prompt.ToolCalls);
+        Assert.Equal("Bash", toolCall.ToolName);
+        Assert.Equal("tool-use-1", toolCall.ToolUseId);
+        Assert.Equal(
+            "Passed",
+            toolCall.Payload
+                .GetProperty("tool_response")
+                .GetProperty("output")
+                .GetString()
+        );
+        Assert.IsType<ClaudeToolCallRecordedV1>(
+            Assert.Single(
+                writtenAggregate.Value.LastExecutedPayloads
+            ).EventData
         );
     }
 

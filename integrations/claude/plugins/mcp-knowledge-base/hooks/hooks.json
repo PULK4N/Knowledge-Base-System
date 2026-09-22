@@ -41,6 +41,15 @@
     ],
     "PostToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/write_tool_use.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "mcp__.*policy_project_(create|repository_add)$",
         "hooks": [
           {

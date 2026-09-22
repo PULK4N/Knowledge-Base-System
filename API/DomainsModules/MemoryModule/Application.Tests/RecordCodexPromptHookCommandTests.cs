@@ -159,7 +159,7 @@ public sealed class RecordCodexPromptHookCommandTests
             writtenAggregate.Value.StateData
         );
         var prompt = memoryState.ChatPrompts[FirstPromptId];
-        var toolCall = Assert.Single(prompt.CodexToolCalls);
+        var toolCall = Assert.Single(prompt.ToolCalls);
         Assert.Equal("Bash", toolCall.ToolName);
         Assert.Equal("tool-use-1", toolCall.ToolUseId);
         Assert.Equal(
