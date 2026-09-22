@@ -49,6 +49,7 @@ public sealed class MemoryStateMachineDefinitionTests
                 nameof(MemorySearchProjector),
                 nameof(MemorySummaryProjector),
                 nameof(MemoryConversationProjector),
+                nameof(MemoryToolCallProjector),
                 nameof(MemoryEntityRelationProjector)
             ],
             definition.Projections
@@ -70,5 +71,6 @@ public sealed class MemoryStateMachineDefinitionTests
     private sealed class MemorySearchProjector;
     private sealed class MemorySummaryProjector;
     private sealed class MemoryConversationProjector;
+    private sealed class MemoryToolCallProjector;
     private sealed class MemoryEntityRelationProjector;
 }

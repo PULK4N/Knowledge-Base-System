@@ -13,6 +13,7 @@ namespace MemoryModule.Application.Queries;
 /// </summary>
 public sealed class GetMemoryConversationQuery(
     IMemoryConversationRepository conversationRepository,
+    IMemoryToolCallRepository toolCallRepository,
     IMemorySummaryRepository summaryRepository
 ) : Query<MemoryConversationDto?>
 {
@@ -27,6 +28,7 @@ public sealed class GetMemoryConversationQuery(
     {
         var aggregateId = AggregateId.FromDatabaseGuid(MemoryId);
         var messages = await conversationRepository.Get(aggregateId);
+        var toolCalls = await toolCallRepository.Get(aggregateId);
         var summary = await summaryRepository.Get(aggregateId);
 
         if (messages.Count == 0 && summary is null)
@@ -42,7 +44,8 @@ public sealed class GetMemoryConversationQuery(
             summary?.SummaryTimestamp,
             summary?.FirstPromptTimestamp,
             summary?.LastPromptTimestamp,
-            messages.Select(ToDto).ToList()
+            messages.Select(ToDto).ToList(),
+            toolCalls.Select(ToDto).ToList()
         );
     }
 
@@ -57,5 +60,16 @@ public sealed class GetMemoryConversationQuery(
             message.Role,
             message.Message,
             message.PayloadJson
+        );
+
+    private static MemoryToolCallDto ToDto(MemoryToolCall toolCall) =>
+        new(
+            toolCall.PromptId.Value,
+            toolCall.ToolCallIndex,
+            toolCall.Timestamp,
+            toolCall.ToolName,
+            toolCall.ToolUseId,
+            toolCall.Description,
+            toolCall.PayloadJson
         );
 }

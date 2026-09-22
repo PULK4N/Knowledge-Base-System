@@ -289,6 +289,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(MemorySearchProjector), projectorTypes);
         Assert.Contains(typeof(MemorySummaryProjector), projectorTypes);
         Assert.Contains(typeof(MemoryConversationProjector), projectorTypes);
+        Assert.Contains(typeof(MemoryToolCallProjector), projectorTypes);
         Assert.Contains(typeof(MemoryEntityRelationProjector), projectorTypes);
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
         Assert.Contains(typeof(FeatureSearchProjector), projectorTypes);

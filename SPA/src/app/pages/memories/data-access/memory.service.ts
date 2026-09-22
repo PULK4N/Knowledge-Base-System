@@ -15,6 +15,8 @@ import {
   MemorySearchResult,
   MemorySummary,
   MemorySummaryDto,
+  MemoryToolCall,
+  MemoryToolCallDto,
 } from './memory.models';
 
 const MEMORY_MESSAGE_ROLES: readonly MemoryMessageRole[] = [
@@ -46,6 +48,14 @@ function toMessage(
   };
 }
 
+function toToolCall(toolCall: MemoryToolCallDto): MemoryToolCall {
+  return {
+    ...toolCall,
+    id: `${toolCall.promptId}:${toolCall.toolCallIndex}`,
+    payloadJson: formatJson(toolCall.payloadJson),
+  };
+}
+
 const MEMORY_ENTITY_TYPE = 'memory';
 
 @Injectable({ providedIn: 'root' })
@@ -63,6 +73,7 @@ export class MemoryService {
         map(conversation => ({
           ...conversation,
           messages: conversation.messages.map(toMessage),
+          toolCalls: (conversation.toolCalls ?? []).map(toToolCall),
         })),
       );
   }

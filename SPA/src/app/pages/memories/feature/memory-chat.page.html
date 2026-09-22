@@ -64,7 +64,7 @@
         }
 
         <ol class="chat-transcript" aria-label="Conversation">
-          @for (message of state.data.conversation.messages; track message.id) {
+          @for (message of state.data.messages; track message.id) {
             <li class="chat-message" [class]="'role-' + message.role">
               <div class="message-heading">
                 <span class="role-badge">{{ roleLabel(message.role) }}</span>
@@ -91,6 +91,31 @@
                 <summary>Raw payload</summary>
                 <pre><code>{{ message.payloadJson }}</code></pre>
               </details>
+
+              @if (message.toolCalls.length) {
+                <details class="message-tool-calls">
+                  <summary>
+                    Tool executions ({{ message.toolCalls.length }})
+                  </summary>
+                  <ol class="tool-call-list">
+                    @for (toolCall of message.toolCalls; track toolCall.id) {
+                      <li class="tool-call">
+                        <details>
+                          <summary>
+                            <span class="tool-name">{{ toolCall.toolName }}</span>
+                            @if (toolCall.description) {
+                              <span class="tool-description">
+                                {{ toolCall.description }}
+                              </span>
+                            }
+                          </summary>
+                          <pre><code>{{ toolCall.payloadJson }}</code></pre>
+                        </details>
+                      </li>
+                    }
+                  </ol>
+                </details>
+              }
             </li>
           } @empty {
             <li class="empty-state">

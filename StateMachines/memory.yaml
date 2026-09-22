@@ -10,6 +10,7 @@ projections:
   - MemorySearchProjector
   - MemorySummaryProjector
   - MemoryConversationProjector
+  - MemoryToolCallProjector
   - MemoryEntityRelationProjector
 events:
   CodexPromptHookRecordedV1: {}

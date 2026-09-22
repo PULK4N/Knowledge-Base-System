@@ -153,6 +153,17 @@ describe('MemoryService', () => {
           payloadJson: 'not json',
         },
       ],
+      toolCalls: [
+        {
+          promptId: 'prompt-1',
+          toolCallIndex: 0,
+          timestamp: '2026-08-22T10:00:00Z',
+          toolName: 'Read',
+          toolUseId: 'toolu_01',
+          description: 'Read the entry point',
+          payloadJson: '{"tool_input":{"file_path":"Program.cs"}}',
+        },
+      ],
     });
 
     const conversation = await resultPromise;
@@ -163,5 +174,11 @@ describe('MemoryService', () => {
     );
     expect(conversation.messages[1].role).toBe('hook');
     expect(conversation.messages[1].payloadJson).toBe('not json');
+    expect(conversation.toolCalls[0].id).toBe('prompt-1:0');
+    expect(conversation.toolCalls[0].toolName).toBe('Read');
+    expect(conversation.toolCalls[0].description).toBe('Read the entry point');
+    expect(conversation.toolCalls[0].payloadJson).toBe(
+      '{\n  "tool_input": {\n    "file_path": "Program.cs"\n  }\n}',
+    );
   });
 });

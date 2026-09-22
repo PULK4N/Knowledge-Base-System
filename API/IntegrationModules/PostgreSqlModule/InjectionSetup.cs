@@ -121,6 +121,10 @@ public static class InjectionSetup
             IMemoryConversationRepository,
             PostgreSqlMemoryConversationRepository
         >();
+        services.AddScoped<
+            IMemoryToolCallRepository,
+            PostgreSqlMemoryToolCallRepository
+        >();
         services.RegisterTextEmbeddings(configuration);
         services.AddScoped<
             IProjectionEmbeddingCache,

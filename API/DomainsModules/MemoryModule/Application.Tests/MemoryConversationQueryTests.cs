@@ -44,6 +44,33 @@ public sealed class MemoryConversationQueryTests
     }
 
     [Fact]
+    public async Task Execute_returns_the_tool_calls_of_the_conversation()
+    {
+        var query = CreateQuery(
+            [CreateMessage(PromptHookMessageRoles.User, "Refactor the outbox")],
+            CreateSummary(),
+            [CreateToolCall(0, "Read"), CreateToolCall(1, "Edit")]
+        );
+
+        var result = await query.Execute(Executor);
+
+        Assert.NotNull(result);
+        Assert.Equal(
+            ["Read", "Edit"],
+            result.ToolCalls.Select(toolCall => toolCall.ToolName).ToList()
+        );
+        var toolCall = result.ToolCalls[0];
+        Assert.Equal(
+            Guid.Parse("cccccccc-cccc-cccc-cccc-000000000001"),
+            toolCall.PromptId
+        );
+        Assert.Equal(0, toolCall.ToolCallIndex);
+        Assert.Equal("toolu_00", toolCall.ToolUseId);
+        Assert.Equal("Run Read", toolCall.Description);
+        Assert.Contains("Program.cs", toolCall.PayloadJson);
+    }
+
+    [Fact]
     public async Task Execute_returns_a_conversation_that_has_no_summary_yet()
     {
         var query = CreateQuery(
@@ -84,15 +111,33 @@ public sealed class MemoryConversationQueryTests
 
     private static GetMemoryConversationQuery CreateQuery(
         List<MemoryConversationMessage> messages,
-        MemorySummary? summary
+        MemorySummary? summary,
+        List<MemoryToolCall>? toolCalls = null
     ) =>
         new(
             new FakeMemoryConversationRepository(messages),
+            new FakeMemoryToolCallRepository(toolCalls ?? []),
             new FakeMemorySummaryRepository(summary)
         )
         {
             MemoryId = MemoryId
         };
+
+    private static MemoryToolCall CreateToolCall(
+        int toolCallIndex,
+        string toolName
+    ) =>
+        new(
+            AggregateId.FromDatabaseGuid(MemoryId),
+            ConversationThreadId,
+            new PromptId(Guid.Parse("cccccccc-cccc-cccc-cccc-000000000001")),
+            toolCallIndex,
+            DateTime.UnixEpoch,
+            toolName,
+            $"toolu_0{toolCallIndex}",
+            $"Run {toolName}",
+            """{"tool_input":{"file_path":"Program.cs"}}"""
+        );
 
     private static MemoryConversationMessage CreateMessage(
         string role,
@@ -135,6 +180,22 @@ public sealed class MemoryConversationQueryTests
         public Task Write(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
             IReadOnlyCollection<MemoryConversationMessage> messages,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+    }
+
+    private sealed class FakeMemoryToolCallRepository(
+        List<MemoryToolCall> toolCalls
+    ) : IMemoryToolCallRepository
+    {
+        public Task<List<MemoryToolCall>> Get(
+            AggregateId memoryAggregateId,
+            CancellationToken cancellationToken = default
+        ) => Task.FromResult(toolCalls);
+
+        public Task Write(
+            IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            IReadOnlyCollection<MemoryToolCall> toolCalls,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
     }

@@ -16,7 +16,9 @@ import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import {
   MemoryConversation,
+  MemoryConversationMessage,
   MemoryMessageRole,
+  MemoryToolCall,
 } from '../data-access/memory.models';
 import { MemoryService } from '../data-access/memory.service';
 import { memoryTitle } from './memory-title';
@@ -27,9 +29,50 @@ const ROLE_LABELS: Readonly<Record<MemoryMessageRole, string>> = {
   hook: 'Hook',
 };
 
+interface MemoryChatMessage extends MemoryConversationMessage {
+  readonly toolCalls: readonly MemoryToolCall[];
+}
+
 interface MemoryChatView {
   readonly conversation: MemoryConversation;
   readonly title: string;
+  readonly messages: readonly MemoryChatMessage[];
+}
+
+// Groups the tool calls of a prompt under the message that started it, so a
+// reader sees what the agent executed for that prompt.
+function toChatMessages(
+  conversation: MemoryConversation,
+): MemoryChatMessage[] {
+  const toolCallsByPrompt = new Map<string, MemoryToolCall[]>();
+
+  for (const toolCall of conversation.toolCalls) {
+    const promptToolCalls = toolCallsByPrompt.get(toolCall.promptId);
+
+    if (promptToolCalls) {
+      promptToolCalls.push(toolCall);
+    } else {
+      toolCallsByPrompt.set(toolCall.promptId, [toolCall]);
+    }
+  }
+
+  const owners = new Map<string, MemoryConversationMessage>();
+
+  for (const message of conversation.messages) {
+    const owner = owners.get(message.promptId);
+
+    if (!owner || (owner.role !== 'user' && message.role === 'user')) {
+      owners.set(message.promptId, message);
+    }
+  }
+
+  return conversation.messages.map(message => ({
+    ...message,
+    toolCalls:
+      owners.get(message.promptId)?.id === message.id
+        ? (toolCallsByPrompt.get(message.promptId) ?? [])
+        : [],
+  }));
 }
 
 @Component({
@@ -57,6 +100,7 @@ export class MemoryChatPage {
             data: {
               conversation,
               title: memoryTitle(conversation),
+              messages: toChatMessages(conversation),
             },
           }) as const),
           startWith({ status: 'loading' } as const),

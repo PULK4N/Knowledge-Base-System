@@ -85,7 +85,8 @@
 }
 
 .chat-summary > summary,
-.message-payload > summary {
+.message-payload > summary,
+.message-tool-calls > summary {
   color: #52617d;
   font-size: 12px;
   font-weight: 760;
@@ -172,6 +173,47 @@
   border-top: 1px solid #eceff5;
 }
 
+.message-tool-calls {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eceff5;
+}
+
+.tool-call-list {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-call {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #eceff5;
+  border-radius: 9px;
+}
+
+.tool-call > details > summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.tool-name {
+  color: var(--navy);
+  font-weight: 760;
+}
+
+.tool-description {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.tool-call pre,
 .message-payload pre {
   overflow-x: auto;
   margin: 12px 0 0;
@@ -180,6 +222,10 @@
   background: #f5f6fa;
   font-size: 13px;
   line-height: 1.55;
+}
+
+.tool-call pre {
+  margin-top: 8px;
 }
 
 .empty-state {

@@ -43,7 +43,8 @@ public sealed record MemoryConversationDto(
     DateTime? SummaryTimestamp,
     DateTime? FirstPromptTimestamp,
     DateTime? LastPromptTimestamp,
-    List<MemoryConversationMessageDto> Messages
+    List<MemoryConversationMessageDto> Messages,
+    List<MemoryToolCallDto> ToolCalls
 );
 
 public sealed record MemoryConversationMessageDto(
@@ -53,5 +54,15 @@ public sealed record MemoryConversationMessageDto(
     string HookEventName,
     string Role,
     string Message,
+    string PayloadJson
+);
+
+public sealed record MemoryToolCallDto(
+    Guid PromptId,
+    int ToolCallIndex,
+    DateTime Timestamp,
+    string ToolName,
+    string ToolUseId,
+    string Description,
     string PayloadJson
 );

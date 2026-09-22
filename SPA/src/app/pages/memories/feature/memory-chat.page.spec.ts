@@ -47,6 +47,28 @@ const conversation: MemoryConversation = {
       payloadJson: '{\n  "source": "compact"\n}',
     },
   ],
+  toolCalls: [
+    {
+      id: 'prompt-1:0',
+      promptId: 'prompt-1',
+      toolCallIndex: 0,
+      timestamp: '2026-08-22T10:00:00Z',
+      toolName: 'Read',
+      toolUseId: 'toolu_01',
+      description: 'Read the entry point',
+      payloadJson: '{\n  "tool_input": {\n    "file_path": "Program.cs"\n  }\n}',
+    },
+    {
+      id: 'prompt-1:1',
+      promptId: 'prompt-1',
+      toolCallIndex: 1,
+      timestamp: '2026-08-22T10:00:00Z',
+      toolName: 'Edit',
+      toolUseId: 'toolu_02',
+      description: '',
+      payloadJson: '{\n  "tool_input": {\n    "file_path": "Program.cs"\n  }\n}',
+    },
+  ],
 };
 
 describe('MemoryChatPage', () => {
@@ -101,6 +123,44 @@ describe('MemoryChatPage', () => {
     harness.detectChanges();
 
     expect(payload.querySelector('pre')?.textContent).toContain('session_id');
+  });
+
+  it('lists the tool executions of a prompt under its user message', () => {
+    const element = harness.routeNativeElement as HTMLElement;
+    const messages = Array.from(element.querySelectorAll('.chat-message'));
+    const toolCalls = messages[0].querySelector(
+      '.message-tool-calls',
+    ) as HTMLDetailsElement;
+
+    expect(toolCalls.open).toBe(false);
+    expect(toolCalls.textContent).toContain('Tool executions (2)');
+    expect(messages[1].querySelector('.message-tool-calls')).toBeNull();
+    expect(messages[2].querySelector('.message-tool-calls')).toBeNull();
+
+    toolCalls.open = true;
+    harness.detectChanges();
+
+    const names = Array.from(
+      toolCalls.querySelectorAll('.tool-call .tool-name'),
+    ).map(name => name.textContent?.trim());
+    expect(names).toEqual(['Read', 'Edit']);
+    const descriptions = Array.from(
+      toolCalls.querySelectorAll('.tool-call .tool-description'),
+    ).map(description => description.textContent?.trim());
+    expect(descriptions).toEqual(['Read the entry point']);
+    expect(toolCalls.textContent).not.toContain('toolu_01');
+
+    const firstToolCall = toolCalls.querySelector(
+      '.tool-call details',
+    ) as HTMLDetailsElement;
+    expect(firstToolCall.open).toBe(false);
+
+    firstToolCall.open = true;
+    harness.detectChanges();
+
+    expect(firstToolCall.querySelector('pre')?.textContent).toContain(
+      'Program.cs',
+    );
   });
 
   it('explains a hook that carries no conversation text', () => {

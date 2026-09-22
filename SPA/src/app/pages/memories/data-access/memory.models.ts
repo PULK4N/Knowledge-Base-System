@@ -59,6 +59,17 @@ export interface MemoryConversationMessage {
   readonly payloadJson: string;
 }
 
+export interface MemoryToolCall {
+  readonly id: string;
+  readonly promptId: string;
+  readonly toolCallIndex: number;
+  readonly timestamp: string;
+  readonly toolName: string;
+  readonly toolUseId: string;
+  readonly description: string;
+  readonly payloadJson: string;
+}
+
 export interface MemoryConversation {
   readonly memoryId: string;
   readonly threadId: string;
@@ -68,6 +79,7 @@ export interface MemoryConversation {
   readonly firstPromptTimestamp: string | null;
   readonly lastPromptTimestamp: string | null;
   readonly messages: readonly MemoryConversationMessage[];
+  readonly toolCalls: readonly MemoryToolCall[];
 }
 
 export interface MemoryConversationMessageDto {
@@ -80,6 +92,16 @@ export interface MemoryConversationMessageDto {
   readonly payloadJson: string;
 }
 
+export interface MemoryToolCallDto {
+  readonly promptId: string;
+  readonly toolCallIndex: number;
+  readonly timestamp: string;
+  readonly toolName: string;
+  readonly toolUseId: string;
+  readonly description: string;
+  readonly payloadJson: string;
+}
+
 export interface MemoryConversationDto {
   readonly memoryId: string;
   readonly threadId: string;
@@ -89,4 +111,5 @@ export interface MemoryConversationDto {
   readonly firstPromptTimestamp: string | null;
   readonly lastPromptTimestamp: string | null;
   readonly messages: readonly MemoryConversationMessageDto[];
+  readonly toolCalls: readonly MemoryToolCallDto[];
 }
