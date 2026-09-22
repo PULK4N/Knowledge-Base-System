@@ -24,6 +24,14 @@
     <nav class="pagination" [attr.aria-label]="label() + ' pagination'">
       <button
         type="button"
+        aria-label="First page"
+        [disabled]="!hasPreviousPage()"
+        (click)="requestPage(1)"
+      >
+        <span aria-hidden="true">«</span>
+      </button>
+      <button
+        type="button"
         aria-label="Previous page"
         [disabled]="!hasPreviousPage()"
         (click)="requestPage(page() - 1)"
@@ -48,6 +56,14 @@
         (click)="requestPage(page() + 1)"
       >
         <span aria-hidden="true">›</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Last page"
+        [disabled]="!hasNextPage()"
+        (click)="requestPage(totalPages())"
+      >
+        <span aria-hidden="true">»</span>
       </button>
     </nav>
   </footer>
