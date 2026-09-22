@@ -47,6 +47,49 @@ public static class HybridSkillRanker
             .ToList();
     }
 
+    /// <summary>
+    /// Fuses candidates that already hold one row per skill, so the ranking
+    /// keeps at most one match per skill.
+    /// </summary>
+    public static IReadOnlyList<SkillSearchResult> FuseSources(
+        IReadOnlyList<SkillSearchCandidate> textCandidates,
+        IReadOnlyList<SkillSearchCandidate> vectorCandidates,
+        HybridSkillSearchOptions options
+    )
+    {
+        Validate(options);
+
+        var results = new Dictionary<AggregateId, MutableResult>();
+        AddSourceCandidates(
+            results,
+            textCandidates,
+            options.TextWeight,
+            isText: true
+        );
+        AddSourceCandidates(
+            results,
+            vectorCandidates,
+            options.VectorWeight,
+            isText: false
+        );
+
+        return results.Values
+            .OrderByDescending(result => result.Score)
+            .ThenBy(result => result.Skill.SkillName, StringComparer.Ordinal)
+            .ThenBy(result => result.Skill.SourcePath, StringComparer.Ordinal)
+            .ThenBy(result => result.Skill.ChunkIndex)
+            .Take(options.SourceResultCount)
+            .Select(
+                result => new SkillSearchResult(
+                    result.Skill,
+                    result.Score,
+                    result.TextRank,
+                    result.VectorRank
+                )
+            )
+            .ToList();
+    }
+
     public static void Validate(HybridSkillSearchOptions options)
     {
         if (options.ResultCount <= 0)
@@ -58,6 +101,19 @@ public static class HybridSkillRanker
                 nameof(options.CandidateCount),
                 "Candidate count must be greater than or equal to result count."
             );
+        if (options.SourceResultCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceResultCount)
+            );
+        }
+        if (options.SourceCandidateCount < options.SourceResultCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceCandidateCount),
+                "Source candidate count must be greater than or equal to source result count."
+            );
+        }
         if (options.TextWeight <= 0)
             throw new ArgumentOutOfRangeException(
                 nameof(options.TextWeight)
@@ -87,6 +143,44 @@ public static class HybridSkillRanker
                 results.Add(key, result);
             }
 
+            result.Score += weight / (RankConstant + rank);
+            if (isText)
+                result.TextRank = rank;
+            else
+                result.VectorRank = rank;
+        }
+    }
+
+    private static void AddSourceCandidates(
+        Dictionary<AggregateId, MutableResult> results,
+        IReadOnlyList<SkillSearchCandidate> candidates,
+        double weight,
+        bool isText
+    )
+    {
+        for (var index = 0; index < candidates.Count; index++)
+        {
+            var candidate = candidates[index];
+
+            if (!results.TryGetValue(
+                    candidate.SkillAggregateId,
+                    out var result
+                ))
+            {
+                result = new MutableResult(candidate);
+                results.Add(candidate.SkillAggregateId, result);
+            }
+
+            // The source queries return one row per skill, so a repeated skill
+            // within a single list must not score twice.
+            if (isText
+                ? result.TextRank is not null
+                : result.VectorRank is not null)
+            {
+                continue;
+            }
+
+            var rank = index + 1;
             result.Score += weight / (RankConstant + rank);
             if (isText)
                 result.TextRank = rank;

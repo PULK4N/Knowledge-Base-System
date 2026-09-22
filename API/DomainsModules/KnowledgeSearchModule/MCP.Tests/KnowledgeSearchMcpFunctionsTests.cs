@@ -12,7 +12,7 @@ public sealed class KnowledgeSearchMcpFunctionsTests
 
         Assert.Equal("knowledge_search", function.Name);
         Assert.Equal(
-            ["query"],
+            ["query", "keywords"],
             function.JsonSchema
                 .GetProperty("required")
                 .EnumerateArray()

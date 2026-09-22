@@ -13,6 +13,10 @@ internal sealed class PostgreSqlKnowledgeSearchRepository(
     EventSourcingDbContext dbContext
 ) : IKnowledgeSearchRepository
 {
+    private const string Table = "KnowledgeSearchEntries";
+    private const string SourceColumns = "\"OwnerType\", \"OwnerAggregateId\"";
+    private const string TieBreakers = "\"Timestamp\" DESC, \"Id\"";
+
     public async Task Write(
         string ownerType,
         List<AggregateId> ownerAggregateIds,
@@ -57,31 +61,37 @@ internal sealed class PostgreSqlKnowledgeSearchRepository(
     }
 
     public async Task<List<KnowledgeSearchCandidate>> SearchText(
-        string query,
+        List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     )
     {
-        var entries = await CreateTextQuery(query, candidateCount)
+        var entries = await CreateTextQuery(keywords, candidateCount)
             .ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
     }
 
     internal IQueryable<KnowledgeSearchEntry> CreateTextQuery(
-        string query,
+        List<string> keywords,
         int candidateCount
     ) =>
         dbContext.Set<KnowledgeSearchEntry>()
             .AsNoTracking()
             .Where(
                 entry => entry.SearchVector.Matches(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .OrderByDescending(
                 entry => entry.SearchVector.RankCoverDensity(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .ThenByDescending(entry => entry.Timestamp)
@@ -114,6 +124,70 @@ internal sealed class PostgreSqlKnowledgeSearchRepository(
             .ThenBy(entry => entry.Id)
             .Take(candidateCount);
     }
+
+    public async Task<List<KnowledgeSearchCandidate>> SearchTextBySource(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateTextSourceQuery(
+            keywords,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<KnowledgeSearchEntry> CreateTextSourceQuery(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<KnowledgeSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Text(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.TextParameters(
+                    keywords,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
+
+    public async Task<List<KnowledgeSearchCandidate>> SearchVectorBySource(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateVectorSourceQuery(
+            embedding,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<KnowledgeSearchEntry> CreateVectorSourceQuery(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<KnowledgeSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Vector(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.VectorParameters(
+                    embedding,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
 
     private static KnowledgeSearchEntry ToEntry(
         KnowledgeSearchDocument document

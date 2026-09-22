@@ -35,10 +35,11 @@ public sealed class FeaturesController(
 
     [HttpGet("research-discoveries/search")]
     public async Task<
-        ActionResult<List<FeatureResearchSearchMatchDto>>
+        ActionResult<FeatureResearchSearchResultsDto>
     > SearchResearchDiscoveries(
         [FromServices] SearchFeatureResearchQuery searchQuery,
         [FromQuery, Required] string query,
+        [FromQuery, Required] List<string> keywords,
         [FromQuery, Range(
             SearchFeatureResearchQuery.MinimumResultCount,
             SearchFeatureResearchQuery.MaximumResultCount
@@ -47,6 +48,7 @@ public sealed class FeaturesController(
     )
     {
         searchQuery.SearchText = query;
+        searchQuery.Keywords = keywords;
         searchQuery.ResultCount = resultCount;
 
         return Ok(await Execute(searchQuery));

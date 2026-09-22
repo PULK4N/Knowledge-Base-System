@@ -135,6 +135,64 @@ public sealed class MemoryQueryTests
     }
 
     [Fact]
+    public async Task Hybrid_search_adds_sessions_found_only_by_the_source_pass()
+    {
+        var crowding = CreateMemory(
+            "11111111-1111-1111-1111-111111111111",
+            "aaaaaaaa-1111-1111-1111-111111111111",
+            "Crowding summary",
+            2
+        );
+        var crowdedOut = CreateMemory(
+            "22222222-2222-2222-2222-222222222222",
+            "aaaaaaaa-2222-2222-2222-222222222222",
+            "Crowded out summary",
+            3
+        );
+        // The ranked window holds only chunks of one session; the
+        // session-grouped pass supplies the session it crowded out.
+        var search = new FakeMemorySearch(
+            [
+                CreateSearchResult(crowding, matchedSummary: false, "match")
+                    with { Score = 0.9 },
+                CreateSearchResult(crowding, matchedSummary: true, "summary")
+                    with { Score = 0.8 }
+            ],
+            [
+                CreateSearchResult(crowding, matchedSummary: false, "match")
+                    with { Score = 0.9 },
+                CreateSearchResult(
+                    crowdedOut,
+                    matchedSummary: true,
+                    "summary"
+                ) with { Score = 0.4 }
+            ]
+        );
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult(
+                [
+                    CreateSummary(crowding, "Crowding summary", 2),
+                    CreateSummary(crowdedOut, "Crowded out summary", 3)
+                ],
+                2
+            )
+        );
+        var query = new HybridSearchMemoriesQuery(search, repository)
+        {
+            Search = "model search",
+            Page = 1,
+            PageSize = 5
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(crowding.AggregateId.Value, result.Items[0].MemoryId);
+        Assert.Equal(crowdedOut.AggregateId.Value, result.Items[1].MemoryId);
+        Assert.Equal(50, search.LastOptions!.SourceResultCount);
+    }
+
+    [Fact]
     public async Task Hybrid_search_applies_summary_prompt_and_sort_filters()
     {
         var first = CreateMemory(
@@ -222,7 +280,8 @@ public sealed class MemoryQueryTests
             search
         )
         {
-            SearchText = "event sourcing decision"
+            SearchText = "event sourcing decision",
+            Keywords = ["event", "sourcing"]
         };
 
         var result = await query.Execute(Executor);
@@ -265,6 +324,7 @@ public sealed class MemoryQueryTests
         )
         {
             SearchText = "long memory",
+            Keywords = ["memory"],
             MaxTokens = SearchMemoryQuery.MinimumMaximumTokens
         };
 
@@ -435,7 +495,8 @@ public sealed class MemoryQueryTests
     );
 
     private sealed class FakeMemorySearch(
-        IReadOnlyList<MemorySearchResult> results
+        IReadOnlyList<MemorySearchResult> results,
+        IReadOnlyList<MemorySearchResult>? sourceResults = null
     ) : IMemorySearch
     {
         public int CallCount { get; private set; }
@@ -443,6 +504,7 @@ public sealed class MemoryQueryTests
 
         public Task<IReadOnlyList<MemorySearchResult>> Search(
             string query,
+            List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
@@ -450,6 +512,20 @@ public sealed class MemoryQueryTests
             CallCount++;
             LastOptions = options;
             return Task.FromResult(results);
+        }
+
+        public Task<MemorySearchResults> SearchWithSources(
+            string query,
+            List<string> keywords,
+            HybridMemorySearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            CallCount++;
+            LastOptions = options;
+            return Task.FromResult(
+                new MemorySearchResults(results, sourceResults ?? [])
+            );
         }
     }
 

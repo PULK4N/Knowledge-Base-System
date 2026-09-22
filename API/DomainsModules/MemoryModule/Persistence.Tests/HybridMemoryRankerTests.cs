@@ -67,6 +67,46 @@ public sealed class HybridMemoryRankerTests
         Assert.Equal(2, results[0].VectorRank);
     }
 
+    [Fact]
+    public void FuseSources_keeps_one_result_per_memory_session()
+    {
+        var otherSessionId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
+        );
+        var first = CreateCandidate(
+            "11111111-1111-1111-1111-111111111111",
+            "first"
+        );
+        var repeatedSession = CreateCandidate(
+            "22222222-2222-2222-2222-222222222222",
+            "repeated"
+        );
+        var otherSession = CreateCandidate(
+            "33333333-3333-3333-3333-333333333333",
+            "other"
+        ) with
+        {
+            MemoryAggregateId = otherSessionId
+        };
+
+        var results = HybridMemoryRanker.FuseSources(
+            [first, repeatedSession, otherSession],
+            [],
+            new HybridMemorySearchOptions
+            {
+                ResultCount = 5,
+                CandidateCount = 5,
+                SourceResultCount = 5,
+                SourceCandidateCount = 5
+            }
+        );
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("first", results[0].Memory.Text);
+        Assert.Equal(1, results[0].TextRank);
+        Assert.Equal(otherSessionId, results[1].Memory.MemoryAggregateId);
+    }
+
     private static MemorySearchCandidate CreateCandidate(
         string promptId,
         string text

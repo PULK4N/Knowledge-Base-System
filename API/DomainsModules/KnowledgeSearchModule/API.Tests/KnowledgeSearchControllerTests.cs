@@ -23,22 +23,35 @@ public sealed class KnowledgeSearchControllerTests
             new FixedExecutorProvider()
         );
 
-        var response = await controller.Search(query, "postgres", 7);
+        var response = await controller.Search(query, "postgres", ["postgres"], 7);
 
         Assert.IsType<OkObjectResult>(response.Result);
         Assert.Equal("postgres", search.Query);
+        Assert.Equal(["postgres"], search.Keywords);
         Assert.Equal(7, search.Options!.ResultCount);
     }
 
     private sealed class FakeSearch : IKnowledgeSearch
     {
         public string? Query { get; private set; }
+        public List<string>? Keywords { get; private set; }
         public HybridKnowledgeSearchOptions? Options { get; private set; }
-        public Task<List<KnowledgeSearchResult>> Search(string query, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
+        public Task<List<KnowledgeSearchResult>> Search(string query, List<string> keywords, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
         {
             Query = query;
+            Keywords = keywords;
             Options = options;
             return Task.FromResult(new List<KnowledgeSearchResult>());
+        }
+
+        public Task<KnowledgeSearchResults> SearchWithSources(string query, List<string> keywords, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            Query = query;
+            Keywords = keywords;
+            Options = options;
+            return Task.FromResult(
+                new KnowledgeSearchResults([], [])
+            );
         }
     }
 

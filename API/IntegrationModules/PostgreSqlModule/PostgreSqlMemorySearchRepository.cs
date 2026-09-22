@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using MemoryModule.Persistence.Interfaces;
@@ -12,6 +13,10 @@ internal sealed class PostgreSqlMemorySearchRepository(
     EventSourcingDbContext dbContext
 ) : IMemorySearchRepository
 {
+    private const string Table = "MemorySearchEntries";
+    private const string SourceColumns = "\"MemoryAggregateId\"";
+    private const string TieBreakers = "\"PromptStartTimestamp\" DESC, \"PromptId\", \"HookIndex\", \"ChunkIndex\"";
+
     public async Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,
         IReadOnlyCollection<MemorySearchDocument> documents,
@@ -45,19 +50,19 @@ internal sealed class PostgreSqlMemorySearchRepository(
     }
 
     public async Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
-        string query,
+        List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     )
     {
-        var entries = await CreateTextQuery(query, candidateCount)
+        var entries = await CreateTextQuery(keywords, candidateCount)
             .ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
     }
 
     internal IQueryable<MemorySearchEntry> CreateTextQuery(
-        string query,
+        List<string> keywords,
         int candidateCount
     )
     {
@@ -65,12 +70,18 @@ internal sealed class PostgreSqlMemorySearchRepository(
             .AsNoTracking()
             .Where(
                 entry => entry.SearchVector.Matches(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .OrderByDescending(
                 entry => entry.SearchVector.RankCoverDensity(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .ThenByDescending(entry => entry.PromptStartTimestamp)
@@ -102,6 +113,70 @@ internal sealed class PostgreSqlMemorySearchRepository(
             .ThenByDescending(entry => entry.PromptStartTimestamp)
             .Take(candidateCount);
     }
+
+    public async Task<IReadOnlyList<MemorySearchCandidate>> SearchTextBySource(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateTextSourceQuery(
+            keywords,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<MemorySearchEntry> CreateTextSourceQuery(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<MemorySearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Text(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.TextParameters(
+                    keywords,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
+
+    public async Task<IReadOnlyList<MemorySearchCandidate>> SearchVectorBySource(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateVectorSourceQuery(
+            embedding,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<MemorySearchEntry> CreateVectorSourceQuery(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<MemorySearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Vector(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.VectorParameters(
+                    embedding,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
 
     private static MemorySearchEntry ToEntry(
         MemorySearchDocument document

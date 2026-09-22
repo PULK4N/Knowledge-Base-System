@@ -1,5 +1,6 @@
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
+using EmbeddingModule;
 using MemoryModule.Application.DTOs;
 using MemoryModule.Persistence.Interfaces;
 
@@ -58,6 +59,7 @@ public sealed class HybridSearchMemoriesQuery(
     // distinct memory sessions found in this ranked hybrid-search window.
     private const int RankedChunkCount = 100;
     private const int CandidateChunkCount = 100;
+    private const int DistinctSessionCount = 50;
 
     public bool? HasSummary { get; set; }
     public int? MinimumPromptCount { get; set; }
@@ -77,15 +79,20 @@ public sealed class HybridSearchMemoriesQuery(
         Executor executor
     )
     {
-        var rankedDocuments = await memorySearch.Search(
+        var rankedDocuments = await memorySearch.SearchWithSources(
             Search!,
+            SearchKeywords(),
             new HybridMemorySearchOptions
             {
                 ResultCount = RankedChunkCount,
-                CandidateCount = CandidateChunkCount
+                CandidateCount = CandidateChunkCount,
+                SourceResultCount = DistinctSessionCount
             }
         );
-        var rankedSessions = rankedDocuments
+        // The ranked window can be filled by one session, so the
+        // session-grouped results contribute the sessions it crowded out.
+        var rankedSessions = rankedDocuments.TopMatches
+            .Concat(rankedDocuments.DistinctSources)
             .GroupBy(result => result.Memory.MemoryAggregateId)
             .Select(group => group.First())
             .ToList();
@@ -122,6 +129,25 @@ public sealed class HybridSearchMemoriesQuery(
             sortedMatches.Count
         );
     }
+
+    // The memory list has one search box, so the words the user typed are the
+    // full-text keywords and the typed line is the semantic query. Callers that
+    // can separate the two, such as the MCP tools, pass their own keywords.
+    private List<string> SearchKeywords() =>
+        Search!
+            .Split(
+                (char[]?)null,
+                SearchKeywordLimits.MaximumCount,
+                StringSplitOptions.RemoveEmptyEntries
+                    | StringSplitOptions.TrimEntries
+            )
+            .Select(
+                keyword => keyword.Length
+                    > SearchKeywordLimits.MaximumKeywordLength
+                    ? keyword[..SearchKeywordLimits.MaximumKeywordLength]
+                    : keyword
+            )
+            .ToList();
 
     private bool MatchesFilters(RankedMemorySummary match) =>
         (HasSummary is null

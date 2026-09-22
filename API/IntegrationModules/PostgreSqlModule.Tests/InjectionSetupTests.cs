@@ -759,19 +759,58 @@ public sealed class InjectionSetupTests
         );
         var repository = new PostgreSqlKnowledgeSearchRepository(context);
 
-        var textSql = repository.CreateTextQuery("event sourcing", 50)
+        var textSql = repository.CreateTextQuery(["event", "sourcing"], 50)
             .ToQueryString();
         var vectorSql = repository.CreateVectorQuery(
             Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
             50
         ).ToQueryString();
 
-        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("plainto_tsquery", textSql);
         Assert.Contains("@@", textSql);
         Assert.Contains("ts_rank_cd", textSql);
         Assert.Contains("LIMIT", textSql);
         Assert.Contains("<=>", vectorSql);
         Assert.Contains("LIMIT", vectorSql);
+    }
+
+    [Fact]
+    public void KnowledgeSourceQueries_group_the_ranked_window_by_owner()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlKnowledgeSearchRepository(context);
+
+        var textSql = repository.CreateTextSourceQuery(
+            ["event", "sourcing"],
+            5,
+            200
+        ).ToQueryString();
+        var vectorSql = repository.CreateVectorSourceQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            5,
+            200
+        ).ToQueryString();
+
+        Assert.Contains(
+            "DISTINCT ON (\"OwnerType\", \"OwnerAggregateId\")",
+            textSql
+        );
+        Assert.Contains("plainto_tsquery", textSql);
+        Assert.Contains("ts_rank_cd", textSql);
+        Assert.Contains(
+            "DISTINCT ON (\"OwnerType\", \"OwnerAggregateId\")",
+            vectorSql
+        );
+        Assert.Contains("<=>", vectorSql);
+        Assert.Contains("::vector", vectorSql);
     }
 
     [Fact]
@@ -788,14 +827,34 @@ public sealed class InjectionSetupTests
         );
         var repository = new PostgreSqlMemorySearchRepository(context);
 
-        var textSql = repository.CreateTextQuery("event sourcing", 50)
+        var textSourceSql = repository.CreateTextSourceQuery(
+            ["event", "sourcing"],
+            5,
+            200
+        ).ToQueryString();
+        var vectorSourceSql = repository.CreateVectorSourceQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            5,
+            200
+        ).ToQueryString();
+
+        Assert.Contains(
+            "DISTINCT ON (\"MemoryAggregateId\")",
+            textSourceSql
+        );
+        Assert.Contains(
+            "DISTINCT ON (\"MemoryAggregateId\")",
+            vectorSourceSql
+        );
+
+        var textSql = repository.CreateTextQuery(["event", "sourcing"], 50)
             .ToQueryString();
         var vectorSql = repository.CreateVectorQuery(
             Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
             50
         ).ToQueryString();
 
-        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("plainto_tsquery", textSql);
         Assert.Contains("@@", textSql);
         Assert.Contains("ts_rank_cd", textSql);
         Assert.Contains("<=>", vectorSql);
@@ -815,14 +874,34 @@ public sealed class InjectionSetupTests
         );
         var repository = new PostgreSqlSkillSearchRepository(context);
 
-        var textSql = repository.CreateTextQuery("event sourcing", 50)
+        var textSourceSql = repository.CreateTextSourceQuery(
+            ["event", "sourcing"],
+            5,
+            200
+        ).ToQueryString();
+        var vectorSourceSql = repository.CreateVectorSourceQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            5,
+            200
+        ).ToQueryString();
+
+        Assert.Contains(
+            "DISTINCT ON (\"SkillAggregateId\")",
+            textSourceSql
+        );
+        Assert.Contains(
+            "DISTINCT ON (\"SkillAggregateId\")",
+            vectorSourceSql
+        );
+
+        var textSql = repository.CreateTextQuery(["event", "sourcing"], 50)
             .ToQueryString();
         var vectorSql = repository.CreateVectorQuery(
             Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
             50
         ).ToQueryString();
 
-        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("plainto_tsquery", textSql);
         Assert.Contains("@@", textSql);
         Assert.Contains("ts_rank_cd", textSql);
         Assert.Contains("<=>", vectorSql);
@@ -844,14 +923,34 @@ public sealed class InjectionSetupTests
             context
         );
 
-        var textSql = repository.CreateTextQuery("event sourcing", 50)
+        var textSourceSql = repository.CreateTextSourceQuery(
+            ["event", "sourcing"],
+            5,
+            200
+        ).ToQueryString();
+        var vectorSourceSql = repository.CreateVectorSourceQuery(
+            Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
+            5,
+            200
+        ).ToQueryString();
+
+        Assert.Contains(
+            "DISTINCT ON (\"FeatureAggregateId\")",
+            textSourceSql
+        );
+        Assert.Contains(
+            "DISTINCT ON (\"FeatureAggregateId\")",
+            vectorSourceSql
+        );
+
+        var textSql = repository.CreateTextQuery(["event", "sourcing"], 50)
             .ToQueryString();
         var vectorSql = repository.CreateVectorQuery(
             Enumerable.Repeat(0.1f, 1024).ToImmutableArray(),
             50
         ).ToQueryString();
 
-        Assert.Contains("websearch_to_tsquery", textSql);
+        Assert.Contains("plainto_tsquery", textSql);
         Assert.Contains("@@", textSql);
         Assert.Contains("ts_rank_cd", textSql);
         Assert.Contains("<=>", vectorSql);

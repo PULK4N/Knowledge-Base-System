@@ -6,7 +6,7 @@ namespace KnowledgeSearchModule.Application;
 
 public sealed class SearchKnowledgeQuery(
     IKnowledgeSearch knowledgeSearch
-) : Query<List<KnowledgeSearchMatchDto>>
+) : Query<KnowledgeSearchResultsDto>
 {
     public const int DefaultResultCount =
         HybridKnowledgeSearchOptions.DefaultResultCount;
@@ -16,35 +16,44 @@ public sealed class SearchKnowledgeQuery(
         KnowledgeSearchQueryLimits.MaximumLength;
 
     public required string SearchText { get; set; }
+
+    /// <summary>
+    /// Words the full-text leg requires. The semantic leg reads SearchText.
+    /// </summary>
+    public List<string> Keywords { get; set; } = [];
+
     public int ResultCount { get; set; } = DefaultResultCount;
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             !string.IsNullOrWhiteSpace(SearchText)
             && SearchText.Length <= MaximumSearchTextLength
+            && SearchKeywordLimits.AreValid(Keywords)
             && ResultCount is >= MinimumResultCount
                 and <= MaximumResultCount
         );
 
     protected override async Task<
-        List<KnowledgeSearchMatchDto>
+        KnowledgeSearchResultsDto
     > ExecuteInternal(Executor executor) =>
-        (await knowledgeSearch.Search(
-            SearchText,
-            new HybridKnowledgeSearchOptions
-            {
-                ResultCount = ResultCount,
-                CandidateCount = Math.Max(
-                    HybridKnowledgeSearchOptions.DefaultCandidateCount,
-                    Math.Min(
-                        HybridKnowledgeSearchOptions.MaximumCandidateCount,
-                        ResultCount
-                            * HybridKnowledgeSearchOptions
-                                .DeduplicationOverfetchMultiplier
-                    )
-                )
-            }
-        ))
-            .Select(KnowledgeSearchMatchDto.FromResult)
-            .ToList();
+        KnowledgeSearchResultsDto.FromResults(
+            await knowledgeSearch.SearchWithSources(
+                SearchText,
+                Keywords,
+                new HybridKnowledgeSearchOptions
+                {
+                    ResultCount = ResultCount,
+                    CandidateCount = Math.Max(
+                        HybridKnowledgeSearchOptions.DefaultCandidateCount,
+                        Math.Min(
+                            HybridKnowledgeSearchOptions.MaximumCandidateCount,
+                            ResultCount
+                                * HybridKnowledgeSearchOptions
+                                    .DeduplicationOverfetchMultiplier
+                        )
+                    ),
+                    SourceResultCount = ResultCount
+                }
+            )
+        );
 }

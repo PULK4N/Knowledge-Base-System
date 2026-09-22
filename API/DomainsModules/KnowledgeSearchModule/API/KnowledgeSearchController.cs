@@ -13,13 +13,15 @@ public sealed class KnowledgeSearchController(
 ) : ActionController(executorProvider)
 {
     [HttpGet]
-    public async Task<ActionResult<List<KnowledgeSearchMatchDto>>> Search(
+    public async Task<ActionResult<KnowledgeSearchResultsDto>> Search(
         [FromServices] SearchKnowledgeQuery searchQuery,
         [FromQuery, Required, StringLength(
             SearchKnowledgeQuery.MaximumSearchTextLength,
             MinimumLength = 1
         )]
             string query,
+        [FromQuery, Required]
+            List<string> keywords,
         [FromQuery, Range(
             SearchKnowledgeQuery.MinimumResultCount,
             SearchKnowledgeQuery.MaximumResultCount
@@ -28,6 +30,7 @@ public sealed class KnowledgeSearchController(
     )
     {
         searchQuery.SearchText = query;
+        searchQuery.Keywords = keywords;
         searchQuery.ResultCount = resultCount;
 
         return Ok(await Execute(searchQuery));

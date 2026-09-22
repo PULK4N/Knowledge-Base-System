@@ -14,6 +14,7 @@ public sealed class SearchKnowledgeQueryTests
         var query = new SearchKnowledgeQuery(search)
         {
             SearchText = "database design",
+            Keywords = ["database", "design"],
             ResultCount = 12
         };
 
@@ -24,22 +25,37 @@ public sealed class SearchKnowledgeQueryTests
             }
         );
 
-        Assert.Empty(result);
+        Assert.Empty(result.TopMatches);
+        Assert.Empty(result.DistinctSources);
         Assert.Equal("database design", search.Query);
+        Assert.Equal(["database", "design"], search.Keywords);
         Assert.Equal(12, search.Options!.ResultCount);
         Assert.Equal(50, search.Options.CandidateCount);
+        Assert.Equal(12, search.Options.SourceResultCount);
     }
 
     private sealed class FakeSearch : IKnowledgeSearch
     {
         public string? Query { get; private set; }
+        public List<string>? Keywords { get; private set; }
         public HybridKnowledgeSearchOptions? Options { get; private set; }
 
-        public Task<List<KnowledgeSearchResult>> Search(string query, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
+        public Task<List<KnowledgeSearchResult>> Search(string query, List<string> keywords, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
         {
             Query = query;
+            Keywords = keywords;
             Options = options;
             return Task.FromResult(new List<KnowledgeSearchResult>());
+        }
+
+        public Task<KnowledgeSearchResults> SearchWithSources(string query, List<string> keywords, HybridKnowledgeSearchOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            Query = query;
+            Keywords = keywords;
+            Options = options;
+            return Task.FromResult(
+                new KnowledgeSearchResults([], [])
+            );
         }
     }
 }

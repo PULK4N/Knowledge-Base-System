@@ -37,6 +37,44 @@ public static class HybridFeatureResearchRanker
             .ToList();
     }
 
+    /// <summary>
+    /// Fuses candidates that already hold one row per feature, so the ranking
+    /// keeps at most one discovery per feature.
+    /// </summary>
+    public static List<FeatureResearchSearchResult> FuseSources(
+        List<FeatureResearchSearchCandidate> textCandidates,
+        List<FeatureResearchSearchCandidate> vectorCandidates,
+        HybridFeatureResearchSearchOptions options
+    )
+    {
+        Validate(options);
+
+        var results = new Dictionary<AggregateId, MutableResult>();
+        AddSourceCandidates(results, textCandidates, options.TextWeight, true);
+        AddSourceCandidates(
+            results,
+            vectorCandidates,
+            options.VectorWeight,
+            false
+        );
+
+        return results.Values
+            .OrderByDescending(result => result.Score)
+            .ThenBy(result => result.Discovery.FeatureName, StringComparer.Ordinal)
+            .ThenBy(result => result.Discovery.Title, StringComparer.Ordinal)
+            .ThenBy(result => result.Discovery.ChunkIndex)
+            .Take(options.SourceResultCount)
+            .Select(
+                result => new FeatureResearchSearchResult(
+                    result.Discovery,
+                    result.Score,
+                    result.TextRank,
+                    result.VectorRank
+                )
+            )
+            .ToList();
+    }
+
     public static void Validate(HybridFeatureResearchSearchOptions options)
     {
         if (options.ResultCount <= 0)
@@ -46,6 +84,19 @@ public static class HybridFeatureResearchRanker
             throw new ArgumentOutOfRangeException(
                 nameof(options.CandidateCount),
                 "Candidate count must be greater than or equal to result count."
+            );
+        }
+        if (options.SourceResultCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceResultCount)
+            );
+        }
+        if (options.SourceCandidateCount < options.SourceResultCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceCandidateCount),
+                "Source candidate count must be greater than or equal to source result count."
             );
         }
         if (options.TextWeight <= 0)
@@ -73,6 +124,44 @@ public static class HybridFeatureResearchRanker
                 results.Add(key, result);
             }
 
+            result.Score += weight / (RankConstant + rank);
+            if (isText)
+                result.TextRank = rank;
+            else
+                result.VectorRank = rank;
+        }
+    }
+
+    private static void AddSourceCandidates(
+        Dictionary<AggregateId, MutableResult> results,
+        List<FeatureResearchSearchCandidate> candidates,
+        double weight,
+        bool isText
+    )
+    {
+        for (var index = 0; index < candidates.Count; index++)
+        {
+            var candidate = candidates[index];
+
+            if (!results.TryGetValue(
+                    candidate.FeatureAggregateId,
+                    out var result
+                ))
+            {
+                result = new MutableResult(candidate);
+                results.Add(candidate.FeatureAggregateId, result);
+            }
+
+            // The source queries return one row per feature, so a repeated
+            // feature within a single list must not score twice.
+            if (isText
+                ? result.TextRank is not null
+                : result.VectorRank is not null)
+            {
+                continue;
+            }
+
+            var rank = index + 1;
             result.Score += weight / (RankConstant + rank);
             if (isText)
                 result.TextRank = rank;

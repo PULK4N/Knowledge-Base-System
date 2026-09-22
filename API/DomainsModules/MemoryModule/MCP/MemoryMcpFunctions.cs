@@ -16,11 +16,12 @@ public static class MemoryMcpFunctions
                 (Func<
                     IServiceProvider,
                     string,
+                    List<string>,
                     int,
                     Task<MemorySearchQueryResult>
                 >)Search,
                 "memory_search",
-                "Searches chat memories using hybrid semantic vector and full-text ranking. Returns distinct relevant sessions within a bounded token budget."
+                "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Returns distinct relevant sessions within a bounded token budget."
             ),
             CreateFunction(
                 (Func<
@@ -51,7 +52,10 @@ public static class MemoryMcpFunctions
 
     private static Task<MemorySearchQueryResult> Search(
         IServiceProvider services,
+        [Description("A meaningful sentence describing what you need. Only the semantic vector match reads it.")]
         string query,
+        [Description("Words that must all appear in a matching record. Every word is required, so pass only the distinctive terms, and include common words only when the exact wording matters.")]
+        List<string> keywords,
         int maxTokens = SearchMemoryQuery.DefaultMaximumTokens
     ) =>
         MemoryMcpActionExecutor.ExecuteQuery<
@@ -62,6 +66,7 @@ public static class MemoryMcpFunctions
             search =>
             {
                 search.SearchText = query;
+                search.Keywords = keywords;
                 search.MaxTokens = maxTokens;
             }
         );

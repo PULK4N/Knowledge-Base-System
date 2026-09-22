@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
 using FeatureModule.Application.Models;
@@ -37,9 +38,9 @@ public static class FeatureMcpFunctions
             "Gets multiple research discoveries in one call by feature ID and discovery IDs."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, int, Task<List<FeatureResearchSearchMatchDto>>>)SearchResearchDiscoveries,
+            (Func<IServiceProvider, string, List<string>, int, Task<FeatureResearchSearchResultsDto>>)SearchResearchDiscoveries,
             "feature_research_discovery_search",
-            "Searches research discoveries across active features using hybrid semantic vector and full-text ranking. Returns the highest-ranked chunk per discovery; use feature_research_discovery_get with the returned feature and discovery IDs to load complete discoveries."
+            "Searches research discoveries across active features. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a discovery must all contain for full-text matching. Returns topMatches with the highest-ranked chunk per discovery, which may repeat one feature, and distinctSources with the best discovery of each different feature; use feature_research_discovery_get with the returned feature and discovery IDs to load complete discoveries."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<List<FeatureRecordDto>>>)ListRecords,
@@ -227,19 +228,23 @@ public static class FeatureMcpFunctions
             .ToList();
     }
 
-    private static Task<List<FeatureResearchSearchMatchDto>> SearchResearchDiscoveries(
+    private static Task<FeatureResearchSearchResultsDto> SearchResearchDiscoveries(
         IServiceProvider services,
+        [Description("A meaningful sentence describing what you need. Only the semantic vector match reads it.")]
         string query,
+        [Description("Words that must all appear in a matching record. Every word is required, so pass only the distinctive terms, and include common words only when the exact wording matters.")]
+        List<string> keywords,
         int resultCount = SearchFeatureResearchQuery.DefaultResultCount
     ) =>
         FeatureMcpActionExecutor.ExecuteQuery<
             SearchFeatureResearchQuery,
-            List<FeatureResearchSearchMatchDto>
+            FeatureResearchSearchResultsDto
         >(
             services,
             search =>
             {
                 search.SearchText = query;
+                search.Keywords = keywords;
                 search.ResultCount = resultCount;
             }
         );

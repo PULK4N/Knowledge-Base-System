@@ -40,6 +40,7 @@ public sealed class MemoriesController(
     [HttpGet("search")]
     public async Task<ActionResult<MemorySearchQueryResult>> Search(
         [FromQuery, Required] string searchText,
+        [FromQuery, Required] List<string> keywords,
         [FromServices] SearchMemoryQuery query,
         [FromQuery, Range(
             SearchMemoryQuery.MinimumMaximumTokens,
@@ -49,6 +50,7 @@ public sealed class MemoriesController(
     )
     {
         query.SearchText = searchText;
+        query.Keywords = keywords;
         query.MaxTokens = maxTokens;
 
         return Ok(await Execute(query));

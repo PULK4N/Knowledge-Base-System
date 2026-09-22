@@ -132,12 +132,19 @@ public sealed class FeaturesControllerTests
 
         var response = await controller.SearchResearchDiscoveries(
             searchQuery,
-            "PostgreSQL vector search"
+            "PostgreSQL vector search",
+            ["PostgreSQL", "vector"]
         );
 
         var ok = Assert.IsType<OkObjectResult>(response.Result);
-        Assert.IsType<List<FeatureResearchSearchMatchDto>>(ok.Value);
+        var results = Assert.IsType<FeatureResearchSearchResultsDto>(ok.Value);
+        Assert.Empty(results.TopMatches);
+        Assert.Empty(results.DistinctSources);
         Assert.Equal("PostgreSQL vector search", researchSearch.LastQuery);
+        Assert.Equal(
+            ["PostgreSQL", "vector"],
+            researchSearch.LastKeywords
+        );
         Assert.Equal(5, researchSearch.LastOptions!.ResultCount);
         Assert.Equal(50, researchSearch.LastOptions.CandidateCount);
     }
@@ -165,21 +172,43 @@ public sealed class FeaturesControllerTests
     }
 
     private sealed class FakeFeatureResearchSearch(
-        List<FeatureResearchSearchResult> results
+        List<FeatureResearchSearchResult> results,
+        List<FeatureResearchSearchResult>? sourceResults = null
     ) : IFeatureResearchSearch
     {
         public string? LastQuery { get; private set; }
+        public List<string>? LastKeywords { get; private set; }
         public HybridFeatureResearchSearchOptions? LastOptions { get; private set; }
 
         public Task<List<FeatureResearchSearchResult>> Search(
             string query,
+            List<string> keywords,
             HybridFeatureResearchSearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
         {
             LastQuery = query;
+            LastKeywords = keywords;
             LastOptions = options;
             return Task.FromResult(results);
+        }
+
+        public Task<FeatureResearchSearchResults> SearchWithSources(
+            string query,
+            List<string> keywords,
+            HybridFeatureResearchSearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastQuery = query;
+            LastKeywords = keywords;
+            LastOptions = options;
+            return Task.FromResult(
+                new FeatureResearchSearchResults(
+                    results,
+                    sourceResults ?? []
+                )
+            );
         }
     }
 

@@ -1,4 +1,5 @@
 using ActionModule.Shared.Models;
+using EmbeddingModule;
 using EventSourcing.Core;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
@@ -21,14 +22,22 @@ public sealed class SearchMemoryQuery(
 
     private const int RankedChunkCount = 20;
     private const int CandidateChunkCount = 50;
+    private const int DistinctSessionCount = 10;
     private const double DuplicateSummarySimilarity = 0.9;
 
     public required string SearchText { get; set; }
+
+    /// <summary>
+    /// Words the full-text leg requires. The semantic leg reads SearchText.
+    /// </summary>
+    public List<string> Keywords { get; set; } = [];
+
     public int MaxTokens { get; set; } = DefaultMaximumTokens;
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             !string.IsNullOrWhiteSpace(SearchText)
+            && SearchKeywordLimits.AreValid(Keywords)
             && MaxTokens is >= MinimumMaximumTokens
                 and <= MaximumMaximumTokens
         );
@@ -37,15 +46,20 @@ public sealed class SearchMemoryQuery(
         Executor executor
     )
     {
-        var rankedChunks = await memorySearch.Search(
+        var rankedChunks = await memorySearch.SearchWithSources(
             SearchText,
+            Keywords,
             new HybridMemorySearchOptions
             {
                 ResultCount = RankedChunkCount,
-                CandidateCount = CandidateChunkCount
+                CandidateCount = CandidateChunkCount,
+                SourceResultCount = DistinctSessionCount
             }
         );
-        var sessionCandidates = rankedChunks
+        // The ranked window can be filled by one session, so the
+        // session-grouped results contribute the sessions it crowded out.
+        var sessionCandidates = rankedChunks.TopMatches
+            .Concat(rankedChunks.DistinctSources)
             .GroupBy(result => result.Memory.MemoryAggregateId)
             .Select(group => group.First())
             .ToList();

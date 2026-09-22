@@ -40,6 +40,16 @@ public sealed record MemorySearchResult(
     int? VectorRank
 );
 
+/// <summary>
+/// Hybrid search results split into the plain top matches and one best match
+/// per memory session, so a single session cannot fill the whole result set
+/// with its own chunks.
+/// </summary>
+public sealed record MemorySearchResults(
+    IReadOnlyList<MemorySearchResult> TopMatches,
+    IReadOnlyList<MemorySearchResult> DistinctSources
+);
+
 public sealed record MemorySearchProjectionBatch(
     List<AggregateId> MemoryAggregateIds,
     List<MemorySearchDocument> MemoryDocuments,
@@ -56,8 +66,13 @@ public interface IMemorySearchProjectionWriter
 
 public sealed record HybridMemorySearchOptions
 {
+    public const int DefaultSourceResultCount = 10;
+    public const int DefaultSourceCandidateCount = 200;
+
     public int ResultCount { get; init; } = 10;
     public int CandidateCount { get; init; } = 50;
+    public int SourceResultCount { get; init; } = DefaultSourceResultCount;
+    public int SourceCandidateCount { get; init; } = DefaultSourceCandidateCount;
     public double TextWeight { get; init; } = 1;
     public double VectorWeight { get; init; } = 1;
 }
@@ -71,7 +86,7 @@ public interface IMemorySearchRepository
     );
 
     Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
-        string query,
+        List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     );
@@ -81,12 +96,56 @@ public interface IMemorySearchRepository
         int candidateCount,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Returns the best full-text match per memory session, scanning
+    /// <paramref name="candidateCount"/> ranked rows and keeping at most
+    /// <paramref name="sourceCount"/> distinct sessions.
+    /// </summary>
+    Task<IReadOnlyList<MemorySearchCandidate>> SearchTextBySource(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Returns the best vector match per memory session, scanning
+    /// <paramref name="candidateCount"/> nearest rows and keeping at most
+    /// <paramref name="sourceCount"/> distinct sessions.
+    /// </summary>
+    Task<IReadOnlyList<MemorySearchCandidate>> SearchVectorBySource(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public interface IMemorySearch
 {
+    /// <param name="query">
+    /// A meaningful sentence. Only the semantic vector leg reads it.
+    /// </param>
+    /// <param name="keywords">
+    /// The words the full-text leg requires; a row matches when it contains
+    /// all of them.
+    /// </param>
     Task<IReadOnlyList<MemorySearchResult>> Search(
         string query,
+        List<string> keywords,
+        HybridMemorySearchOptions? options = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Runs the ranked search and a second session-grouped search over the same
+    /// index, so callers also receive matches from distinct memory sessions
+    /// instead of repeated chunks of one session.
+    /// </summary>
+    Task<MemorySearchResults> SearchWithSources(
+        string query,
+        List<string> keywords,
         HybridMemorySearchOptions? options = null,
         CancellationToken cancellationToken = default
     );

@@ -37,9 +37,10 @@ public sealed class SkillsController(
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<List<SkillSearchMatchDto>>> Search(
+    public async Task<ActionResult<SkillSearchResultsDto>> Search(
         [FromServices] SearchSkillContentQuery searchQuery,
         [FromQuery, Required] string query,
+        [FromQuery, Required] List<string> keywords,
         [FromQuery, Range(
             SearchSkillContentQuery.MinimumResultCount,
             SearchSkillContentQuery.MaximumResultCount
@@ -48,6 +49,7 @@ public sealed class SkillsController(
     )
     {
         searchQuery.SearchText = query;
+        searchQuery.Keywords = keywords;
         searchQuery.ResultCount = resultCount;
 
         return Ok(await Execute(searchQuery));

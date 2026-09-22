@@ -208,13 +208,27 @@ public sealed class SkillSearchProjectorTests
         }
 
         public Task<IReadOnlyList<SkillSearchCandidate>> SearchText(
-            string query,
+            List<string> keywords,
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<SkillSearchCandidate>> SearchVector(
             ImmutableArray<float> embedding,
+            int candidateCount,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<SkillSearchCandidate>> SearchTextBySource(
+            List<string> keywords,
+            int sourceCount,
+            int candidateCount,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<SkillSearchCandidate>> SearchVectorBySource(
+            ImmutableArray<float> embedding,
+            int sourceCount,
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
@@ -232,8 +246,10 @@ public sealed class SkillSearchProjectorTests
             return Task.CompletedTask;
         }
 
-        public Task<List<KnowledgeSearchCandidate>> SearchText(string query, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<List<KnowledgeSearchCandidate>> SearchText(List<string> keywords, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<List<KnowledgeSearchCandidate>> SearchVector(ImmutableArray<float> embedding, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<List<KnowledgeSearchCandidate>> SearchTextBySource(List<string> keywords, int sourceCount, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<List<KnowledgeSearchCandidate>> SearchVectorBySource(ImmutableArray<float> embedding, int sourceCount, int candidateCount, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
     private sealed class FakeProjectionWriter(

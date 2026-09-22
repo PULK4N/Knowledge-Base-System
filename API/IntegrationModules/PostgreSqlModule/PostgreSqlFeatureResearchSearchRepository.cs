@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using FeatureModule.Persistence.Interfaces;
@@ -12,6 +13,10 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
     EventSourcingDbContext dbContext
 ) : IFeatureResearchSearchRepository
 {
+    private const string Table = "FeatureResearchSearchEntries";
+    private const string SourceColumns = "\"FeatureAggregateId\"";
+    private const string TieBreakers = "\"UpdatedAt\" DESC, \"ResearchDiscoveryId\", \"ChunkIndex\"";
+
     public async Task Write(
         List<AggregateId> featureAggregateIds,
         List<FeatureResearchSearchDocument> documents,
@@ -45,31 +50,37 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
     }
 
     public async Task<List<FeatureResearchSearchCandidate>> SearchText(
-        string query,
+        List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     )
     {
-        var entries = await CreateTextQuery(query, candidateCount)
+        var entries = await CreateTextQuery(keywords, candidateCount)
             .ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
     }
 
     internal IQueryable<FeatureResearchSearchEntry> CreateTextQuery(
-        string query,
+        List<string> keywords,
         int candidateCount
     ) =>
         dbContext.Set<FeatureResearchSearchEntry>()
             .AsNoTracking()
             .Where(
                 entry => entry.SearchVector.Matches(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .OrderByDescending(
                 entry => entry.SearchVector.RankCoverDensity(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .ThenByDescending(entry => entry.UpdatedAt)
@@ -106,6 +117,70 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             .ThenBy(entry => entry.ChunkIndex)
             .Take(candidateCount);
     }
+
+    public async Task<List<FeatureResearchSearchCandidate>> SearchTextBySource(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateTextSourceQuery(
+            keywords,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<FeatureResearchSearchEntry> CreateTextSourceQuery(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<FeatureResearchSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Text(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.TextParameters(
+                    keywords,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
+
+    public async Task<List<FeatureResearchSearchCandidate>> SearchVectorBySource(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateVectorSourceQuery(
+            embedding,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<FeatureResearchSearchEntry> CreateVectorSourceQuery(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<FeatureResearchSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Vector(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.VectorParameters(
+                    embedding,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
 
     private static FeatureResearchSearchEntry ToEntry(
         FeatureResearchSearchDocument document

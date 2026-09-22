@@ -160,14 +160,20 @@ public sealed class SkillsControllerTests
 
         var result = await controller.Search(
             searchQuery,
-            "event sourced modules"
+            "event sourced modules",
+            ["event", "sourced", "modules"]
         );
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var matches = Assert.IsType<List<SkillSearchMatchDto>>(ok.Value);
-        var match = Assert.Single(matches);
+        var results = Assert.IsType<SkillSearchResultsDto>(ok.Value);
+        var match = Assert.Single(results.TopMatches);
         Assert.Equal(skillId.Value, match.SkillId);
+        Assert.Empty(results.DistinctSources);
         Assert.Equal("event sourced modules", skillSearch.LastQuery);
+        Assert.Equal(
+            ["event", "sourced", "modules"],
+            skillSearch.LastKeywords
+        );
         Assert.Equal(5, skillSearch.LastOptions!.ResultCount);
         Assert.Equal(50, skillSearch.LastOptions.CandidateCount);
     }
@@ -200,22 +206,42 @@ public sealed class SkillsControllerTests
     }
 
     private sealed class FakeSkillSearch(
-        IReadOnlyList<SkillSearchResult> results
+        IReadOnlyList<SkillSearchResult> results,
+        IReadOnlyList<SkillSearchResult>? sourceResults = null
     ) : ISkillSearch
     {
         public string? LastQuery { get; private set; }
+        public List<string>? LastKeywords { get; private set; }
         public HybridSkillSearchOptions? LastOptions { get; private set; }
 
         public Task<IReadOnlyList<SkillSearchResult>> Search(
             string query,
+            List<string> keywords,
             HybridSkillSearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
         {
             LastQuery = query;
+            LastKeywords = keywords;
             LastOptions = options;
 
             return Task.FromResult(results);
+        }
+
+        public Task<SkillSearchResults> SearchWithSources(
+            string query,
+            List<string> keywords,
+            HybridSkillSearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastQuery = query;
+            LastKeywords = keywords;
+            LastOptions = options;
+
+            return Task.FromResult(
+                new SkillSearchResults(results, sourceResults ?? [])
+            );
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,10 @@ internal sealed class PostgreSqlSkillSearchRepository(
     EventSourcingDbContext dbContext
 ) : ISkillSearchRepository
 {
+    private const string Table = "SkillSearchEntries";
+    private const string SourceColumns = "\"SkillAggregateId\"";
+    private const string TieBreakers = "\"SkillName\", \"SourcePath\", \"ChunkIndex\"";
+
     public async Task Write(
         IReadOnlyCollection<AggregateId> skillAggregateIds,
         IReadOnlyCollection<SkillSearchDocument> documents,
@@ -45,31 +50,37 @@ internal sealed class PostgreSqlSkillSearchRepository(
     }
 
     public async Task<IReadOnlyList<SkillSearchCandidate>> SearchText(
-        string query,
+        List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     )
     {
-        var entries = await CreateTextQuery(query, candidateCount)
+        var entries = await CreateTextQuery(keywords, candidateCount)
             .ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
     }
 
     internal IQueryable<SkillSearchEntry> CreateTextQuery(
-        string query,
+        List<string> keywords,
         int candidateCount
     ) =>
         dbContext.Set<SkillSearchEntry>()
             .AsNoTracking()
             .Where(
                 entry => entry.SearchVector.Matches(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .OrderByDescending(
                 entry => entry.SearchVector.RankCoverDensity(
-                    EF.Functions.WebSearchToTsQuery("simple", query)
+                    EF.Functions.PlainToTsQuery(
+                        "simple",
+                        SearchKeywordLimits.ToTextQuery(keywords)
+                    )
                 )
             )
             .ThenBy(entry => entry.SkillName)
@@ -104,6 +115,70 @@ internal sealed class PostgreSqlSkillSearchRepository(
             .ThenBy(entry => entry.ChunkIndex)
             .Take(candidateCount);
     }
+
+    public async Task<IReadOnlyList<SkillSearchCandidate>> SearchTextBySource(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateTextSourceQuery(
+            keywords,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<SkillSearchEntry> CreateTextSourceQuery(
+        List<string> keywords,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<SkillSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Text(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.TextParameters(
+                    keywords,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
+
+    public async Task<IReadOnlyList<SkillSearchCandidate>> SearchVectorBySource(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entries = await CreateVectorSourceQuery(
+            embedding,
+            sourceCount,
+            candidateCount
+        ).ToListAsync(cancellationToken);
+
+        return entries.Select(ToCandidate).ToList();
+    }
+
+    internal IQueryable<SkillSearchEntry> CreateVectorSourceQuery(
+        ImmutableArray<float> embedding,
+        int sourceCount,
+        int candidateCount
+    ) =>
+        dbContext.Set<SkillSearchEntry>()
+            .FromSqlRaw(
+                SourceSearchSql.Vector(Table, SourceColumns, TieBreakers),
+                SourceSearchSql.VectorParameters(
+                    embedding,
+                    sourceCount,
+                    candidateCount
+                )
+            )
+            .AsNoTracking();
 
     private static SkillSearchEntry ToEntry(
         SkillSearchDocument document

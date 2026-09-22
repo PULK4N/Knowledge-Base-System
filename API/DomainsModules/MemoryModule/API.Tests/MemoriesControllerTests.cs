@@ -122,12 +122,24 @@ public sealed class MemoriesControllerTests
 
         public Task<IReadOnlyList<MemorySearchResult>> Search(
             string query,
+            List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
         {
             LastQuery = query;
             return Task.FromResult<IReadOnlyList<MemorySearchResult>>([]);
+        }
+
+        public Task<MemorySearchResults> SearchWithSources(
+            string query,
+            List<string> keywords,
+            HybridMemorySearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastQuery = query;
+            return Task.FromResult(new MemorySearchResults([], []));
         }
     }
 

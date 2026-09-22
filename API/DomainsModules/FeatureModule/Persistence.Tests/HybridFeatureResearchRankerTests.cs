@@ -53,6 +53,45 @@ public sealed class HybridFeatureResearchRankerTests
         );
     }
 
+    [Fact]
+    public void FuseSources_keeps_one_discovery_per_feature()
+    {
+        var otherFeatureId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        );
+        var first = CreateCandidate("first", Guid.NewGuid(), 0);
+        var repeatedFeature = CreateCandidate(
+            "repeated",
+            Guid.NewGuid(),
+            0
+        );
+        var otherFeature = CreateCandidate("other", Guid.NewGuid(), 0) with
+        {
+            FeatureAggregateId = otherFeatureId,
+            FeatureName = "Other feature"
+        };
+
+        var results = HybridFeatureResearchRanker.FuseSources(
+            [first, repeatedFeature, otherFeature],
+            [],
+            new HybridFeatureResearchSearchOptions
+            {
+                ResultCount = 5,
+                CandidateCount = 5,
+                SourceResultCount = 5,
+                SourceCandidateCount = 5
+            }
+        );
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("first", results[0].ResearchDiscovery.Text);
+        Assert.Equal(1, results[0].TextRank);
+        Assert.Equal(
+            otherFeatureId,
+            results[1].ResearchDiscovery.FeatureAggregateId
+        );
+    }
+
     private static FeatureResearchSearchCandidate CreateCandidate(
         string text,
         Guid discoveryId,

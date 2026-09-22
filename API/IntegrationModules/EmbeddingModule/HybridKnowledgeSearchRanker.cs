@@ -41,6 +41,43 @@ internal static class HybridKnowledgeSearchRanker
             .ToList();
     }
 
+    /// <summary>
+    /// Fuses candidates that already hold one row per owning source, so the
+    /// ranking keeps at most one match per skill, feature, or memory.
+    /// </summary>
+    internal static List<KnowledgeSearchResult> RankBySource(
+        List<KnowledgeSearchCandidate> textCandidates,
+        List<KnowledgeSearchCandidate> vectorCandidates,
+        HybridKnowledgeSearchOptions options
+    )
+    {
+        Validate(options);
+
+        var ranked = new Dictionary<OwnerKey, RankedDocument>();
+        AddSourceCandidates(ranked, textCandidates, options.TextWeight, true);
+        AddSourceCandidates(
+            ranked,
+            vectorCandidates,
+            options.VectorWeight,
+            false
+        );
+
+        return ranked.Values
+            .OrderByDescending(result => result.Score)
+            .ThenByDescending(result => result.Candidate.Timestamp)
+            .ThenBy(result => result.Candidate.Id)
+            .Take(options.SourceResultCount)
+            .Select(
+                result => new KnowledgeSearchResult(
+                    result.Candidate,
+                    result.Score,
+                    result.TextRank,
+                    result.VectorRank
+                )
+            )
+            .ToList();
+    }
+
     internal static void Validate(HybridKnowledgeSearchOptions options)
     {
         if (options.ResultCount <= 0)
@@ -52,6 +89,25 @@ internal static class HybridKnowledgeSearchRanker
         {
             throw new ArgumentOutOfRangeException(
                 nameof(options.CandidateCount)
+            );
+        }
+        if (options.SourceResultCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceResultCount)
+            );
+        }
+        if (options.SourceCandidateCount < options.SourceResultCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceCandidateCount)
+            );
+        }
+        if (options.SourceCandidateCount
+            > HybridKnowledgeSearchOptions.MaximumCandidateCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceCandidateCount)
             );
         }
         if (options.TextWeight <= 0)
@@ -92,6 +148,46 @@ internal static class HybridKnowledgeSearchRanker
                 result.VectorRank = rank;
         }
     }
+
+    private static void AddSourceCandidates(
+        Dictionary<OwnerKey, RankedDocument> ranked,
+        List<KnowledgeSearchCandidate> candidates,
+        double weight,
+        bool isText
+    )
+    {
+        for (var index = 0; index < candidates.Count; index++)
+        {
+            var candidate = candidates[index];
+            var key = new OwnerKey(
+                candidate.OwnerType,
+                candidate.OwnerAggregateId.Value
+            );
+
+            if (!ranked.TryGetValue(key, out var result))
+            {
+                result = new RankedDocument(candidate);
+                ranked.Add(key, result);
+            }
+
+            // The source queries return one row per owner, so a repeated owner
+            // within a single list must not score twice.
+            if (isText ? result.TextRank is not null : result.VectorRank is not null)
+                continue;
+
+            var rank = index + 1;
+            result.Score += weight / (ReciprocalRankConstant + rank);
+            if (isText)
+                result.TextRank = rank;
+            else
+                result.VectorRank = rank;
+        }
+    }
+
+    private readonly record struct OwnerKey(
+        string OwnerType,
+        Guid OwnerId
+    );
 
     private readonly record struct DocumentKey(
         string OwnerType,

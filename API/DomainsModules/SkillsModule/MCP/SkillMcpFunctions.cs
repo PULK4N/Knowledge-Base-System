@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.Extensions.AI;
 using SkillsModule.Application.Commands;
 using SkillsModule.Application.DTOs;
@@ -22,9 +23,9 @@ public static class SkillMcpFunctions
             "Gets an active skill summary by its exact case-insensitive name."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, int, Task<List<SkillSearchMatchDto>>>)Search,
+            (Func<IServiceProvider, string, List<string>, int, Task<SkillSearchResultsDto>>)Search,
             "skill_search",
-            "Searches active skill content and references using hybrid semantic vector and full-text ranking. Returns the highest-ranked chunk from each unique skill source; use skill_get or skill_reference_get to load the selected source."
+            "Searches active skill content and references. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a chunk must all contain for full-text matching. Returns topMatches with the highest-ranked chunk per skill source, which may repeat one skill, and distinctSources with the best chunk of each different skill; use skill_get or skill_reference_get to load the selected source."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
@@ -117,19 +118,23 @@ public static class SkillMcpFunctions
             query => query.Name = name
         );
 
-    private static Task<List<SkillSearchMatchDto>> Search(
+    private static Task<SkillSearchResultsDto> Search(
         IServiceProvider services,
+        [Description("A meaningful sentence describing what you need. Only the semantic vector match reads it.")]
         string query,
+        [Description("Words that must all appear in a matching record. Every word is required, so pass only the distinctive terms, and include common words only when the exact wording matters.")]
+        List<string> keywords,
         int resultCount = SearchSkillContentQuery.DefaultResultCount
     ) =>
         SkillMcpActionExecutor.ExecuteQuery<
             SearchSkillContentQuery,
-            List<SkillSearchMatchDto>
+            SkillSearchResultsDto
         >(
             services,
             search =>
             {
                 search.SearchText = query;
+                search.Keywords = keywords;
                 search.ResultCount = resultCount;
             }
         );

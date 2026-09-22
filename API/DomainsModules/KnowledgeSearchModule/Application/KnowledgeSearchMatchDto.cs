@@ -3,6 +3,27 @@ using EmbeddingModule;
 
 namespace KnowledgeSearchModule.Application;
 
+/// <summary>
+/// Search response carrying the ranked top matches and, separately, the best
+/// match per distinct source, so repeated chunks of one skill, feature, or
+/// memory cannot hide the other sources that matched.
+/// </summary>
+public sealed record KnowledgeSearchResultsDto(
+    List<KnowledgeSearchMatchDto> TopMatches,
+    List<KnowledgeSearchMatchDto> DistinctSources
+)
+{
+    public static KnowledgeSearchResultsDto FromResults(
+        KnowledgeSearchResults results
+    ) =>
+        new(
+            results.TopMatches.Select(KnowledgeSearchMatchDto.FromResult).ToList(),
+            results.DistinctSources
+                .Select(KnowledgeSearchMatchDto.FromResult)
+                .ToList()
+        );
+}
+
 public sealed record KnowledgeSearchMatchDto(
     string OwnerType,
     Guid OwnerId,

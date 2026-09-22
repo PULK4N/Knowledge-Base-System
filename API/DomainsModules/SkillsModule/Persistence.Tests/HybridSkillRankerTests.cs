@@ -119,6 +119,64 @@ public sealed class HybridSkillRankerTests
         );
     }
 
+    [Fact]
+    public void FuseSources_keeps_one_result_per_skill()
+    {
+        var otherSkillId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        );
+        var first = CreateCandidate("first", 0);
+        var repeatedSkill = CreateCandidate("repeated", 1);
+        var otherSkill = CreateCandidate("other", 0) with
+        {
+            SkillAggregateId = otherSkillId,
+            SkillName = "angular"
+        };
+
+        var results = HybridSkillRanker.FuseSources(
+            [first, repeatedSkill, otherSkill],
+            [],
+            new HybridSkillSearchOptions
+            {
+                ResultCount = 5,
+                CandidateCount = 5,
+                SourceResultCount = 5,
+                SourceCandidateCount = 5
+            }
+        );
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("first", results[0].Skill.Text);
+        Assert.Equal(1, results[0].TextRank);
+        Assert.Equal(otherSkillId, results[1].Skill.SkillAggregateId);
+    }
+
+    [Fact]
+    public void FuseSources_limits_results_to_the_source_result_count()
+    {
+        var first = CreateCandidate("first", 0);
+        var second = CreateCandidate("second", 0) with
+        {
+            SkillAggregateId = AggregateId.FromDatabaseGuid(
+                Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+            )
+        };
+
+        var results = HybridSkillRanker.FuseSources(
+            [first, second],
+            [],
+            new HybridSkillSearchOptions
+            {
+                ResultCount = 5,
+                CandidateCount = 5,
+                SourceResultCount = 1,
+                SourceCandidateCount = 5
+            }
+        );
+
+        Assert.Equal("first", Assert.Single(results).Skill.Text);
+    }
+
     private static SkillSearchCandidate CreateCandidate(
         string text,
         int chunkIndex,

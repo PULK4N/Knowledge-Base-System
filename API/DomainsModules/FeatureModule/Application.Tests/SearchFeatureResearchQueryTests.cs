@@ -34,36 +34,54 @@ public sealed class SearchFeatureResearchQueryTests
             0,
             DateTimeKind.Utc
         );
+        var otherFeatureId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("33333333-3333-3333-3333-333333333333")
+        );
+        var topMatch = new FeatureResearchSearchResult(
+            new FeatureResearchSearchCandidate(
+                featureId,
+                "Vector search",
+                discoveryId,
+                "PostgreSQL ranking",
+                "Code",
+                "API/PostgreSqlModule",
+                updatedAt,
+                2,
+                "Use HNSW with cosine distance."
+            ),
+            0.031,
+            1,
+            3
+        );
+        var otherFeatureMatch = new FeatureResearchSearchResult(
+            topMatch.ResearchDiscovery with
+            {
+                FeatureAggregateId = otherFeatureId,
+                FeatureName = "Skill retrieval",
+                ChunkIndex = 0,
+                Text = "Chunk skills by heading."
+            },
+            0.015,
+            2,
+            null
+        );
         var search = new FakeFeatureResearchSearch(
-            [
-                new FeatureResearchSearchResult(
-                    new FeatureResearchSearchCandidate(
-                        featureId,
-                        "Vector search",
-                        discoveryId,
-                        "PostgreSQL ranking",
-                        "Code",
-                        "API/PostgreSqlModule",
-                        updatedAt,
-                        2,
-                        "Use HNSW with cosine distance."
-                    ),
-                    0.031,
-                    1,
-                    3
-                )
-            ]
+            [topMatch],
+            [topMatch, otherFeatureMatch]
         );
         var query = new SearchFeatureResearchQuery(search)
         {
-            SearchText = "semantic PostgreSQL search"
+            SearchText = "semantic PostgreSQL search",
+            Keywords = ["PostgreSQL", "semantic"]
         };
 
         var results = await query.Execute(Executor);
 
         Assert.Equal("semantic PostgreSQL search", search.LastQuery);
+        Assert.Equal(["PostgreSQL", "semantic"], search.LastKeywords);
         Assert.Equal(5, search.LastOptions!.ResultCount);
         Assert.Equal(50, search.LastOptions.CandidateCount);
+        Assert.Equal(5, search.LastOptions.SourceResultCount);
         Assert.Equal(
             new FeatureResearchSearchMatchDto(
                 featureId.Value,
@@ -79,7 +97,11 @@ public sealed class SearchFeatureResearchQueryTests
                 1,
                 3
             ),
-            Assert.Single(results)
+            Assert.Single(results.TopMatches)
+        );
+        Assert.Equal(
+            [featureId.Value, otherFeatureId.Value],
+            results.DistinctSources.Select(match => match.FeatureId).ToList()
         );
     }
 
@@ -97,28 +119,65 @@ public sealed class SearchFeatureResearchQueryTests
         )
         {
             SearchText = searchText,
+            Keywords = ["feature"],
             ResultCount = resultCount
         };
 
         Assert.False(await query.CanExecute(Executor));
     }
 
+    [Fact]
+    public async Task CanExecute_rejects_a_search_without_keywords()
+    {
+        var query = new SearchFeatureResearchQuery(
+            new FakeFeatureResearchSearch([])
+        )
+        {
+            SearchText = "semantic PostgreSQL search",
+            Keywords = []
+        };
+
+        Assert.False(await query.CanExecute(Executor));
+    }
+
     private sealed class FakeFeatureResearchSearch(
-        List<FeatureResearchSearchResult> results
+        List<FeatureResearchSearchResult> results,
+        List<FeatureResearchSearchResult>? sourceResults = null
     ) : IFeatureResearchSearch
     {
         public string? LastQuery { get; private set; }
+        public List<string>? LastKeywords { get; private set; }
         public HybridFeatureResearchSearchOptions? LastOptions { get; private set; }
 
         public Task<List<FeatureResearchSearchResult>> Search(
             string query,
+            List<string> keywords,
             HybridFeatureResearchSearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
         {
             LastQuery = query;
+            LastKeywords = keywords;
             LastOptions = options;
             return Task.FromResult(results);
+        }
+
+        public Task<FeatureResearchSearchResults> SearchWithSources(
+            string query,
+            List<string> keywords,
+            HybridFeatureResearchSearchOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            LastQuery = query;
+            LastKeywords = keywords;
+            LastOptions = options;
+            return Task.FromResult(
+                new FeatureResearchSearchResults(
+                    results,
+                    sourceResults ?? []
+                )
+            );
         }
     }
 }

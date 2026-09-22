@@ -49,6 +49,51 @@ public static class HybridMemoryRanker
             .ToList();
     }
 
+    /// <summary>
+    /// Fuses candidates that already hold one row per memory session, so the
+    /// ranking keeps at most one match per session.
+    /// </summary>
+    public static IReadOnlyList<MemorySearchResult> FuseSources(
+        IReadOnlyList<MemorySearchCandidate> textCandidates,
+        IReadOnlyList<MemorySearchCandidate> vectorCandidates,
+        HybridMemorySearchOptions options
+    )
+    {
+        Validate(options);
+
+        var results = new Dictionary<AggregateId, MutableResult>();
+        AddSourceCandidates(
+            results,
+            textCandidates,
+            options.TextWeight,
+            isText: true
+        );
+        AddSourceCandidates(
+            results,
+            vectorCandidates,
+            options.VectorWeight,
+            isText: false
+        );
+
+        return results.Values
+            .OrderByDescending(result => result.Score)
+            .ThenByDescending(result => result.Memory.PromptStartTimestamp)
+            .ThenBy(result => result.Memory.MemoryAggregateId.Value)
+            .ThenBy(result => result.Memory.PromptId.Value)
+            .ThenBy(result => result.Memory.HookIndex)
+            .ThenBy(result => result.Memory.ChunkIndex)
+            .Take(options.SourceResultCount)
+            .Select(
+                result => new MemorySearchResult(
+                    result.Memory,
+                    result.Score,
+                    result.TextRank,
+                    result.VectorRank
+                )
+            )
+            .ToList();
+    }
+
     public static void Validate(HybridMemorySearchOptions options)
     {
         if (options.ResultCount <= 0)
@@ -60,6 +105,19 @@ public static class HybridMemoryRanker
                 nameof(options.CandidateCount),
                 "Candidate count must be greater than or equal to result count."
             );
+        if (options.SourceResultCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceResultCount)
+            );
+        }
+        if (options.SourceCandidateCount < options.SourceResultCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options.SourceCandidateCount),
+                "Source candidate count must be greater than or equal to source result count."
+            );
+        }
         if (options.TextWeight <= 0)
             throw new ArgumentOutOfRangeException(
                 nameof(options.TextWeight)
@@ -89,6 +147,44 @@ public static class HybridMemoryRanker
                 results.Add(key, result);
             }
 
+            result.Score += weight / (RankConstant + rank);
+            if (isText)
+                result.TextRank = rank;
+            else
+                result.VectorRank = rank;
+        }
+    }
+
+    private static void AddSourceCandidates(
+        Dictionary<AggregateId, MutableResult> results,
+        IReadOnlyList<MemorySearchCandidate> candidates,
+        double weight,
+        bool isText
+    )
+    {
+        for (var index = 0; index < candidates.Count; index++)
+        {
+            var candidate = candidates[index];
+
+            if (!results.TryGetValue(
+                    candidate.MemoryAggregateId,
+                    out var result
+                ))
+            {
+                result = new MutableResult(candidate);
+                results.Add(candidate.MemoryAggregateId, result);
+            }
+
+            // The source queries return one row per session, so a repeated
+            // session within a single list must not score twice.
+            if (isText
+                ? result.TextRank is not null
+                : result.VectorRank is not null)
+            {
+                continue;
+            }
+
+            var rank = index + 1;
             result.Score += weight / (RankConstant + rank);
             if (isText)
                 result.TextRank = rank;
