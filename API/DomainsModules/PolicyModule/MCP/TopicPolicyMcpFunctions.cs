@@ -18,7 +18,7 @@ internal static class TopicPolicyMcpFunctions
             PolicyMcpFunctions.Create(
             ListPolicies,
             "policy_topic_policy_list",
-            "Lists the policies grouped under a topic."
+            "Returns the policies grouped under a topic as joined Markdown text."
         ),
             PolicyMcpFunctions.Create(
             CreateTopic,
@@ -60,14 +60,14 @@ internal static class TopicPolicyMcpFunctions
             List<PolicyTopicSummaryDto>
         >(services, _ => { });
 
-    private static Task<List<PolicyDto>?> ListPolicies(
+    private static async Task<string> ListPolicies(
         IServiceProvider services,
         string topicName
     ) =>
-        PolicyMcpActionExecutor.ExecuteQuery<ListTopicPoliciesQuery, List<PolicyDto>?>(
+        PolicyTextFormatter.Format(await PolicyMcpActionExecutor.ExecuteQuery<ListTopicPoliciesQuery, List<PolicyDto>?>(
             services,
             query => query.TopicName = topicName
-        );
+        ));
 
     private static Task<PolicyCommandResult> CreateTopic(
         IServiceProvider services,

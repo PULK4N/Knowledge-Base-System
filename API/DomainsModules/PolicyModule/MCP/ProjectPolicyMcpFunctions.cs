@@ -23,7 +23,7 @@ internal static class ProjectPolicyMcpFunctions
             PolicyMcpFunctions.Create(
             ListPolicies,
             "policy_project_policy_list",
-            "Lists the policies owned directly by a project."
+            "Returns the policies owned directly by a project as joined Markdown text."
         ),
             PolicyMcpFunctions.Create(
             CreateProject,
@@ -92,11 +92,11 @@ internal static class ProjectPolicyMcpFunctions
             query => query.Name = name
         );
 
-    private static Task<List<PolicyDto>?> ListPolicies(IServiceProvider services, Guid projectId) =>
-        PolicyMcpActionExecutor.ExecuteQuery<ListProjectPoliciesQuery, List<PolicyDto>?>(
+    private static async Task<string> ListPolicies(IServiceProvider services, Guid projectId) =>
+        PolicyTextFormatter.Format(await PolicyMcpActionExecutor.ExecuteQuery<ListProjectPoliciesQuery, List<PolicyDto>?>(
             services,
             query => query.ProjectId = projectId
-        );
+        ));
 
     private static Task<ProjectCreatedCommandResult> CreateProject(
         IServiceProvider services,

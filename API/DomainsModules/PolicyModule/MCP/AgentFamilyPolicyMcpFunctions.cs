@@ -18,7 +18,7 @@ internal static class AgentFamilyPolicyMcpFunctions
             PolicyMcpFunctions.Create(
                 ListPolicies,
                 "policy_agent_family_policy_list",
-                "Lists the policies that apply only to one agent family."
+                "Returns the policies that apply only to one agent family as joined Markdown text."
             ),
             PolicyMcpFunctions.Create(
                 CreateAgentFamily,
@@ -60,17 +60,17 @@ internal static class AgentFamilyPolicyMcpFunctions
             List<PolicyAgentFamilySummaryDto>
         >(services, _ => { });
 
-    private static Task<List<PolicyDto>?> ListPolicies(
+    private static async Task<string> ListPolicies(
         IServiceProvider services,
         string agentFamilyName
     ) =>
-        PolicyMcpActionExecutor.ExecuteQuery<
+        PolicyTextFormatter.Format(await PolicyMcpActionExecutor.ExecuteQuery<
             ListAgentFamilyPoliciesQuery,
             List<PolicyDto>?
         >(
             services,
             query => query.AgentFamilyName = agentFamilyName
-        );
+        ));
 
     private static Task<PolicyCommandResult> CreateAgentFamily(
         IServiceProvider services,

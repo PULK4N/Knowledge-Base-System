@@ -11,9 +11,9 @@ internal static class GeneralPolicyMcpFunctions
     public static List<AIFunction> Create() =>
     [
         PolicyMcpFunctions.Create(
-            (Func<IServiceProvider, Task<List<PolicyDto>>>)List,
+            (Func<IServiceProvider, Task<string>>)List,
             "policy_general_list",
-            "Lists every general policy that applies to every project and chat."
+            "Returns every general policy that applies to every project and chat as joined Markdown text."
         ),
         PolicyMcpFunctions.Create(
             (Func<IServiceProvider, string, string, Task<PolicyAddedCommandResult>>)Add,
@@ -32,13 +32,13 @@ internal static class GeneralPolicyMcpFunctions
         )
     ];
 
-    private static Task<List<PolicyDto>> List(
+    private static async Task<string> List(
         IServiceProvider services
     ) =>
-        PolicyMcpActionExecutor.ExecuteQuery<
+        PolicyTextFormatter.Format(await PolicyMcpActionExecutor.ExecuteQuery<
             ListGeneralPoliciesQuery,
             List<PolicyDto>
-        >(services, _ => { });
+        >(services, _ => { }));
 
     private static Task<PolicyAddedCommandResult> Add(
         IServiceProvider services,
