@@ -18,9 +18,9 @@ public static class SkillMcpFunctions
             "Lists active skills by name and ID so a skill can be selected before calling other skill tools."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, Task<SkillSummaryDto?>>)GetByName,
+            (Func<IServiceProvider, string, Task<string?>>)GetByName,
             "skill_get_by_name",
-            "Gets an active skill summary by its exact case-insensitive name."
+            "Gets an active skill by its exact case-insensitive name as joined Markdown text."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, List<string>, int, Task<SkillSearchResultsDto>>)Search,
@@ -28,9 +28,9 @@ public static class SkillMcpFunctions
             "Searches active skill content and references. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a chunk must all contain for full-text matching. Returns topMatches with the highest-ranked chunk per skill source, which may repeat one skill, and distinctSources with the best chunk of each different skill; use skill_get or skill_reference_get to load the selected source."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, uint, Task<SkillDto?>>)Get,
+            (Func<IServiceProvider, Guid, uint, Task<string?>>)Get,
             "skill_get",
-            "Gets a skill by ID. References marked for automatic loading include their content; otherReferences lists the remaining paths without their content. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a skill by ID as joined Markdown text. References marked for automatic loading include their content; other references are listed by path. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Task<SkillCreatedCommandResult>>)Add,
@@ -48,9 +48,9 @@ public static class SkillMcpFunctions
             "Deletes an existing skill."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, uint, Task<SkillReferenceDto?>>)GetReference,
+            (Func<IServiceProvider, Guid, string, uint, Task<string?>>)GetReference,
             "skill_reference_get",
-            "Gets one skill reference by skill ID and exact relative path. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets one skill reference as Markdown text by skill ID and exact relative path. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)AddReference,
@@ -106,17 +106,24 @@ public static class SkillMcpFunctions
             List<SkillSummaryDto>
         >(services, _ => { });
 
-    private static Task<SkillSummaryDto?> GetByName(
+    private static async Task<string?> GetByName(
         IServiceProvider services,
         string name
-    ) =>
-        SkillMcpActionExecutor.ExecuteQuery<
+    )
+    {
+        var summary = await SkillMcpActionExecutor.ExecuteQuery<
             GetSkillByNameQuery,
             SkillSummaryDto?
         >(
             services,
             query => query.Name = name
         );
+
+        if (summary is null)
+            return null;
+
+        return await Get(services, summary.SkillId);
+    }
 
     private static Task<SkillSearchResultsDto> Search(
         IServiceProvider services,
@@ -139,12 +146,13 @@ public static class SkillMcpFunctions
             }
         );
 
-    private static Task<SkillDto?> Get(
+    private static async Task<string?> Get(
         IServiceProvider services,
         Guid skillId,
         uint orderNumber = 0
-    ) =>
-        SkillMcpActionExecutor.ExecuteQuery<
+    )
+    {
+        var skill = await SkillMcpActionExecutor.ExecuteQuery<
             GetSkillQuery,
             SkillDto?
         >(
@@ -156,6 +164,9 @@ public static class SkillMcpFunctions
                 query.IncludeAllReferences = false;
             }
         );
+
+        return skill is null ? null : SkillTextFormatter.Format(skill);
+    }
 
     private static Task<SkillCreatedCommandResult> Add(
         IServiceProvider services,
@@ -224,7 +235,7 @@ public static class SkillMcpFunctions
             command => command.SkillId = skillId
         );
 
-    private static async Task<SkillReferenceDto?> GetReference(
+    private static async Task<string?> GetReference(
         IServiceProvider services,
         Guid skillId,
         string relativePath,
@@ -249,7 +260,7 @@ public static class SkillMcpFunctions
                 relativePath,
                 out var reference
             )
-                ? reference
+                ? SkillTextFormatter.FormatReference(relativePath, reference)
                 : null;
     }
 
