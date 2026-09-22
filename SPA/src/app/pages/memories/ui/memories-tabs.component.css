@@ -1,0 +1,42 @@
+.memory-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+
+.memory-tabs a {
+  display: block;
+  min-width: 150px;
+  padding: 11px 18px;
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.memory-tabs a:hover {
+  color: var(--navy);
+  background: var(--surface);
+}
+
+.memory-tabs a.active {
+  color: var(--indigo);
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 43 78 / 10%);
+}
+
+@media (max-width: 560px) {
+  .memory-tabs a {
+    min-width: 0;
+    flex: 1;
+  }
+}

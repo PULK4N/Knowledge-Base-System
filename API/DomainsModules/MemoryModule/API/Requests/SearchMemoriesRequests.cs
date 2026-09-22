@@ -36,3 +36,18 @@ public sealed record HybridSearchMemoriesRequest : MemorySummarySearchRequest
         SortDirection = SortDirection.Descending;
     }
 }
+
+public sealed record SearchMemoryToolCallsRequest : PagedSearchRequest
+{
+    [StringLength(EntityQueryLimits.MaximumSearchLength)]
+    public string? ToolName { get; init; }
+
+    [EnumDataType(typeof(MemoryToolCallSortField))]
+    public MemoryToolCallSortField SortBy { get; init; }
+
+    public SearchMemoryToolCallsRequest()
+    {
+        SortBy = MemoryToolCallSortField.Timestamp;
+        SortDirection = SortDirection.Descending;
+    }
+}

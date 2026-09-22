@@ -113,3 +113,41 @@ export interface MemoryConversationDto {
   readonly messages: readonly MemoryConversationMessageDto[];
   readonly toolCalls: readonly MemoryToolCallDto[];
 }
+
+export type MemoryToolCallSearchSortField = 'Timestamp' | 'ToolName';
+
+export interface MemoryToolCallSearchRequest {
+  readonly page: number;
+  readonly pageSize: number;
+  readonly search: string;
+  readonly toolName: string;
+  readonly sortBy: MemoryToolCallSearchSortField;
+  readonly sortDirection: ListSortDirection;
+}
+
+export interface MemoryToolCallSearchItem {
+  readonly id: string;
+  readonly memoryId: string;
+  readonly threadId: string;
+  readonly promptId: string;
+  readonly toolCallIndex: number;
+  readonly timestamp: string;
+  readonly toolName: string;
+  readonly toolUseId: string;
+  readonly description: string;
+  readonly payloadJson: string;
+}
+
+export type MemoryToolCallSearchResult = PagedResult<MemoryToolCallSearchItem>;
+
+export interface MemoryToolCallSearchItemDto {
+  readonly memoryId: string;
+  readonly threadId: string;
+  readonly promptId: string;
+  readonly toolCallIndex: number;
+  readonly timestamp: string;
+  readonly toolName: string;
+  readonly toolUseId: string;
+  readonly description: string;
+  readonly payloadJson: string;
+}

@@ -441,6 +441,20 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                 memory.HasIndex(toolCall => toolCall.ThreadId);
                 memory.HasIndex(toolCall => toolCall.ToolName);
                 memory.HasIndex(
+                    toolCall => toolCall.ToolName,
+                    "IX_MemoryToolCallEntries_ToolName_Trigram"
+                )
+                    .HasMethod("GIN")
+                    .HasOperators("gin_trgm_ops");
+                memory
+                    .HasIndex(toolCall => toolCall.Description)
+                    .HasMethod("GIN")
+                    .HasOperators("gin_trgm_ops");
+                memory
+                    .HasIndex(toolCall => toolCall.PayloadJson)
+                    .HasMethod("GIN")
+                    .HasOperators("gin_trgm_ops");
+                memory.HasIndex(
                     toolCall =>
                         new { toolCall.MemoryAggregateId, toolCall.Timestamp }
                 );

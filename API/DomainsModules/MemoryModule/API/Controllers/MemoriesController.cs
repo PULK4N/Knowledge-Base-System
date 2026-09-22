@@ -37,6 +37,19 @@ public sealed class MemoriesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("tool-calls")]
+    public async Task<
+        ActionResult<PagedResult<MemoryToolCallSearchItemDto>>
+    > SearchToolCalls(
+        [FromServices] SearchMemoryToolCallsQuery query,
+        [FromQuery] SearchMemoryToolCallsRequest request
+    )
+    {
+        Map(request, query);
+
+        return Ok(await Execute(query));
+    }
+
     [HttpGet("search")]
     public async Task<ActionResult<MemorySearchQueryResult>> Search(
         [FromQuery, Required] string searchText,
@@ -105,6 +118,19 @@ public sealed class MemoriesController(
         query.Search = request.Search;
         query.HasSummary = request.HasSummary;
         query.MinimumPromptCount = request.MinimumPromptCount;
+        query.SortBy = request.SortBy;
+        query.SortDirection = request.SortDirection;
+    }
+
+    private static void Map(
+        SearchMemoryToolCallsRequest request,
+        SearchMemoryToolCallsQuery query
+    )
+    {
+        query.Page = request.Page;
+        query.PageSize = request.PageSize;
+        query.Search = request.Search;
+        query.ToolName = request.ToolName;
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }

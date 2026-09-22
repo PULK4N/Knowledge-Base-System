@@ -1,3 +1,5 @@
+using MemoryModule.Persistence.Interfaces;
+
 namespace MemoryModule.Application.DTOs;
 
 public sealed record MemorySearchQueryResult(
@@ -66,3 +68,35 @@ public sealed record MemoryToolCallDto(
     string Description,
     string PayloadJson
 );
+
+/// <summary>
+/// One tool call found by the cross-memory tool search. It carries the owning
+/// memory so a result can be opened in its conversation.
+/// </summary>
+public sealed record MemoryToolCallSearchItemDto(
+    Guid MemoryId,
+    Guid ThreadId,
+    Guid PromptId,
+    int ToolCallIndex,
+    DateTime Timestamp,
+    string ToolName,
+    string ToolUseId,
+    string Description,
+    string PayloadJson
+)
+{
+    public static MemoryToolCallSearchItemDto FromReadModel(
+        MemoryToolCall toolCall
+    ) =>
+        new(
+            toolCall.MemoryAggregateId.Value,
+            toolCall.ThreadId.Value,
+            toolCall.PromptId.Value,
+            toolCall.ToolCallIndex,
+            toolCall.Timestamp,
+            toolCall.ToolName,
+            toolCall.ToolUseId,
+            toolCall.Description,
+            toolCall.PayloadJson
+        );
+}

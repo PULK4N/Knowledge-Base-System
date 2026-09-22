@@ -1,0 +1,139 @@
+<header>
+  <h1 class="page-heading">Memories</h1>
+  <p class="page-subtitle">
+    Every tool the agents executed, searchable by call content
+  </p>
+</header>
+
+<app-memories-tabs />
+
+<section class="list-panel surface-card">
+  @if (vm$ | async; as vm) {
+    <div class="toolbar">
+      <app-list-controls
+        [search]="vm.request.search"
+        searchLabel="Search recorded tool-call content"
+        searchPlaceholder="Search descriptions and payloads"
+        [filterText]="vm.request.toolName"
+        filterTextLabel="Filter by tool name"
+        filterTextPlaceholder="Tool name contains…"
+        (filterTextChanged)="filterByToolName(vm.request, $event)"
+        [sortBy]="vm.request.sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="vm.request.sortDirection"
+        (searchChanged)="search(vm.request, $event)"
+        (sortByChanged)="sort(vm.request, $event)"
+        (sortDirectionChanged)="changeDirection(vm.request, $event)"
+      />
+
+      <div class="toolbar-summary">
+        <span class="search-hint">
+          Search descriptions and payload content across all recorded sessions;
+          use the tool-name filter to narrow the results.
+        </span>
+      </div>
+    </div>
+
+    @switch (vm.state.status) {
+      @case ('loading') {
+        <div class="request-message">Loading tool calls…</div>
+      }
+      @case ('error') {
+        <div class="request-message error">
+          <div>
+            <strong>Tool calls could not be loaded</strong>
+            <p>{{ vm.state.message }}</p>
+          </div>
+        </div>
+      }
+      @case ('success') {
+        <div class="list-heading" aria-hidden="true">
+          <span>Tool</span>
+          <span>Executed at</span>
+          <span></span>
+        </div>
+
+        <div class="tool-call-list" aria-label="Tool calls">
+          @for (toolCall of vm.state.data.items; track toolCall.id) {
+            <details class="tool-call-item">
+              <summary class="tool-call-row">
+                <span class="tool-call-name">
+                  <span class="tool-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M14.5 4.5a4 4 0 0 0 5 5L9.5 19.5a2.5 2.5 0 0 1-5-5Z" />
+                    </svg>
+                  </span>
+                  <span class="tool-call-copy">
+                    <strong>{{ toolCall.toolName }}</strong>
+                    @if (toolCall.description) {
+                      <small>{{ toolCall.description }}</small>
+                    }
+                  </span>
+                </span>
+                <time [attr.datetime]="toolCall.timestamp">
+                  {{ toolCall.timestamp | date: 'medium' }}
+                </time>
+                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7 9 5 5 5-5" />
+                </svg>
+              </summary>
+
+              <div class="tool-call-details">
+                <section class="payload-content" aria-label="Tool payload">
+                  <span class="detail-label">Raw payload</span>
+                  <pre><code>{{ toolCall.payloadJson }}</code></pre>
+                </section>
+
+                <a
+                  class="open-chat"
+                  [routerLink]="['/memories', toolCall.memoryId]"
+                >
+                  Open conversation →
+                </a>
+
+                <dl class="tool-call-metadata">
+                  <div>
+                    <dt>Memory ID</dt>
+                    <dd>{{ toolCall.memoryId }}</dd>
+                  </div>
+                  <div>
+                    <dt>Thread ID</dt>
+                    <dd>{{ toolCall.threadId }}</dd>
+                  </div>
+                  <div>
+                    <dt>Prompt ID</dt>
+                    <dd>{{ toolCall.promptId }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tool use ID</dt>
+                    <dd>{{ toolCall.toolUseId || '—' }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </details>
+          } @empty {
+            <div class="empty-state">
+              <strong>No tool calls found</strong>
+              <span>Try different content or adjust the tool-name filter.</span>
+            </div>
+          }
+        </div>
+
+        @if (vm.state.data.totalCount > 0) {
+          <app-pagination
+            [page]="vm.state.data.page"
+            [pageSize]="vm.state.data.pageSize"
+            [pageSizes]="pageSizes"
+            [totalCount]="vm.state.data.totalCount"
+            [totalPages]="vm.state.data.totalPages"
+            [hasPreviousPage]="vm.state.data.hasPreviousPage"
+            [hasNextPage]="vm.state.data.hasNextPage"
+            label="Tool calls"
+            (pageRequested)="goToPage(vm.request, $event)"
+            (pageSizeRequested)="changePageSize(vm.request, $event)"
+          />
+        }
+      }
+    }
+  }
+</section>

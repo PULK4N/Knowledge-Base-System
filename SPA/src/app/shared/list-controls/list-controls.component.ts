@@ -31,6 +31,9 @@ export class ListControlsComponent {
   readonly filter = input('');
   readonly filterLabel = input('Filter');
   readonly filterOptions = input<readonly ListControlOption[]>([]);
+  readonly filterText = input<string | null>(null);
+  readonly filterTextLabel = input('Filter text');
+  readonly filterTextPlaceholder = input('Filter');
   readonly filterDisabled = input(false);
   readonly sortBy = input.required<string>();
   readonly sortOptions = input.required<readonly ListControlOption[]>();
@@ -38,12 +41,16 @@ export class ListControlsComponent {
 
   private readonly searchRequests = new Subject<string>();
   private readonly secondarySearchRequests = new Subject<string>();
+  private readonly filterTextRequests = new Subject<string>();
 
   readonly searchChanged = outputFromObservable(
     this.searchRequests.pipe(debounceTime(250)),
   );
   readonly secondarySearchChanged = outputFromObservable(
     this.secondarySearchRequests.pipe(debounceTime(250)),
+  );
+  readonly filterTextChanged = outputFromObservable(
+    this.filterTextRequests.pipe(debounceTime(250)),
   );
   readonly filterChanged = output<string>();
   readonly sortByChanged = output<string>();
@@ -55,6 +62,10 @@ export class ListControlsComponent {
 
   protected requestSecondarySearch(value: string): void {
     this.secondarySearchRequests.next(value);
+  }
+
+  protected requestFilterText(value: string): void {
+    this.filterTextRequests.next(value);
   }
 
   protected requestFilter(value: string): void {

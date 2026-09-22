@@ -1,0 +1,23 @@
+<nav class="memory-tabs" role="tablist" aria-label="Memories">
+  <a
+    role="tab"
+    id="memory-conversations-tab"
+    routerLink="/memories"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="exactMatch"
+    #conversationsLink="routerLinkActive"
+    [attr.aria-selected]="conversationsLink.isActive"
+  >
+    Conversations
+  </a>
+  <a
+    role="tab"
+    id="memory-tool-calls-tab"
+    routerLink="/memories/tool-calls"
+    routerLinkActive="active"
+    #toolCallsLink="routerLinkActive"
+    [attr.aria-selected]="toolCallsLink.isActive"
+  >
+    Tool calls
+  </a>
+</nav>

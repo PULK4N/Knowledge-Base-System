@@ -181,4 +181,85 @@ describe('MemoryService', () => {
       '{\n  "tool_input": {\n    "file_path": "Program.cs"\n  }\n}',
     );
   });
+
+  it('searches tool-call content and filters by tool name', async () => {
+    const resultPromise = firstValueFrom(
+      service.searchToolCalls({
+        page: 1,
+        pageSize: 25,
+        search: '  command ls  ',
+        toolName: 'Bash',
+        sortBy: 'ToolName',
+        sortDirection: 'Ascending',
+      }),
+    );
+    const request = http.expectOne(
+      candidate =>
+        candidate.url === '/api/memories/tool-calls' &&
+        candidate.params.get('page') === '1' &&
+        candidate.params.get('pageSize') === '25' &&
+        candidate.params.get('search') === 'command ls' &&
+        candidate.params.get('toolName') === 'Bash' &&
+        candidate.params.get('sortBy') === 'ToolName' &&
+        candidate.params.get('sortDirection') === 'Ascending',
+    );
+
+    request.flush({
+      items: [
+        {
+          memoryId: 'memory-1',
+          threadId: 'thread-1',
+          promptId: 'prompt-1',
+          toolCallIndex: 2,
+          timestamp: '2026-08-01T09:00:00Z',
+          toolName: 'Bash',
+          toolUseId: 'tool-use-1',
+          description: 'List files',
+          payloadJson: '{"command":"ls"}',
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalCount: 1,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    });
+
+    const result = await resultPromise;
+    const toolCall = result.items[0];
+    expect(toolCall.id).toBe('memory-1:prompt-1:2');
+    expect(toolCall.toolName).toBe('Bash');
+    expect(toolCall.payloadJson).toBe('{\n  "command": "ls"\n}');
+  });
+
+  it('omits an empty tool search from the request', async () => {
+    const resultPromise = firstValueFrom(
+      service.searchToolCalls({
+        page: 1,
+        pageSize: 25,
+        search: '   ',
+        toolName: '   ',
+        sortBy: 'Timestamp',
+        sortDirection: 'Descending',
+      }),
+    );
+    const request = http.expectOne(
+      candidate =>
+        candidate.url === '/api/memories/tool-calls' &&
+        !candidate.params.has('search'),
+    );
+
+    request.flush({
+      items: [],
+      page: 1,
+      pageSize: 25,
+      totalCount: 0,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    });
+
+    expect((await resultPromise).items).toEqual([]);
+  });
 });

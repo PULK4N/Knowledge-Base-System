@@ -17,6 +17,10 @@ import {
   MemorySummaryDto,
   MemoryToolCall,
   MemoryToolCallDto,
+  MemoryToolCallSearchItem,
+  MemoryToolCallSearchItemDto,
+  MemoryToolCallSearchRequest,
+  MemoryToolCallSearchResult,
 } from './memory.models';
 
 const MEMORY_MESSAGE_ROLES: readonly MemoryMessageRole[] = [
@@ -48,6 +52,16 @@ function toMessage(
   };
 }
 
+function toToolCallSearchItem(
+  toolCall: MemoryToolCallSearchItemDto,
+): MemoryToolCallSearchItem {
+  return {
+    ...toolCall,
+    id: `${toolCall.memoryId}:${toolCall.promptId}:${toolCall.toolCallIndex}`,
+    payloadJson: formatJson(toolCall.payloadJson),
+  };
+}
+
 function toToolCall(toolCall: MemoryToolCallDto): MemoryToolCall {
   return {
     ...toolCall,
@@ -57,6 +71,7 @@ function toToolCall(toolCall: MemoryToolCallDto): MemoryToolCall {
 }
 
 const MEMORY_ENTITY_TYPE = 'memory';
+const MEMORY_TOOL_CALL_ENTITY_TYPE = 'memoryToolCall';
 
 @Injectable({ providedIn: 'root' })
 export class MemoryService {
@@ -147,6 +162,66 @@ export class MemoryService {
         (result): result is MemorySearchResult => result !== undefined,
       ),
     );
+
+    return merge(cached$, refresh$);
+  }
+
+  searchToolCalls(
+    request: MemoryToolCallSearchRequest,
+  ): Observable<MemoryToolCallSearchResult> {
+    const normalizedSearch = request.search.trim();
+    const queryKey = JSON.stringify({
+      entityType: MEMORY_TOOL_CALL_ENTITY_TYPE,
+      page: request.page,
+      pageSize: request.pageSize,
+      search: normalizedSearch.toLowerCase(),
+      toolName: request.toolName.trim().toLowerCase(),
+      sortBy: request.sortBy,
+      sortDirection: request.sortDirection,
+    });
+    let params = new HttpParams()
+      .set('page', request.page)
+      .set('pageSize', request.pageSize)
+      .set('sortBy', request.sortBy)
+      .set('sortDirection', request.sortDirection);
+
+    if (normalizedSearch) {
+      params = params.set('search', normalizedSearch);
+    }
+
+    const toolName = request.toolName.trim();
+    if (toolName) {
+      params = params.set('toolName', toolName);
+    }
+
+    const refresh$ = this.http
+      .get<PagedResult<MemoryToolCallSearchItemDto>>(
+        `${this.controllerPath}/tool-calls`,
+        { params },
+      )
+      .pipe(
+        map(result => ({
+          ...result,
+          items: result.items.map(toToolCallSearchItem),
+        })),
+        tap(result =>
+          this.store.replaceSearch(
+            queryKey,
+            MEMORY_TOOL_CALL_ENTITY_TYPE,
+            result,
+          ),
+        ),
+        ignoreElements(),
+      );
+
+    const cached$ = this.store
+      .search$<MemoryToolCallSearchItem>(queryKey)
+      .pipe(
+        filter(
+          (result): result is MemoryToolCallSearchResult =>
+            result !== undefined,
+        ),
+      );
 
     return merge(cached$, refresh$);
   }

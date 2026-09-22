@@ -31,6 +31,7 @@ import {
   MemorySummary,
 } from '../data-access/memory.models';
 import { MemoryService } from '../data-access/memory.service';
+import { MemoriesTabsComponent } from '../ui/memories-tabs.component';
 import {
   MEMORY_PAGE_SIZES,
   equalMemorySearchRequest,
@@ -67,6 +68,7 @@ interface MemoryListItem extends MemorySummary {
     DatePipe,
     ListControlsComponent,
     ListFiltersComponent,
+    MemoriesTabsComponent,
     PaginationComponent,
     RouterLink,
   ],

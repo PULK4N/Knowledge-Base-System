@@ -10,6 +10,14 @@ export const MEMORIES_ROUTES: Routes = [
       ),
   },
   {
+    path: 'tool-calls',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./feature/memory-tool-calls.page').then(
+        module => module.MemoryToolCallsPage,
+      ),
+  },
+  {
     path: ':memoryId',
     loadComponent: () =>
       import('./feature/memory-chat.page').then(

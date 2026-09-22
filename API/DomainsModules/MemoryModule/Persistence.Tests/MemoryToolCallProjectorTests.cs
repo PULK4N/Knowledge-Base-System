@@ -1,3 +1,4 @@
+using ActionModule.Shared.Models;
 using System.Text.Json;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain;
@@ -248,6 +249,11 @@ public sealed class MemoryToolCallProjectorTests
 
         public Task<List<MemoryToolCall>> Get(
             AggregateId memoryAggregateId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<PagedResult<MemoryToolCall>> Search(
+            EntityQuery<MemoryToolCallFilters, MemoryToolCallSortField> request,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 

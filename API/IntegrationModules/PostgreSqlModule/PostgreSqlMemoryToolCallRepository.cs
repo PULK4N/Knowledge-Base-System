@@ -1,3 +1,5 @@
+using ActionModule.Persistence;
+using ActionModule.Shared.Models;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain.Models;
@@ -10,6 +12,8 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
     EventSourcingDbContext dbContext
 ) : IMemoryToolCallRepository
 {
+    private static readonly MemoryToolCallQueryProfile QueryProfile = new();
+
     public async Task<List<MemoryToolCall>> Get(
         AggregateId memoryAggregateId,
         CancellationToken cancellationToken = default
@@ -28,6 +32,17 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
 
         return entries.Select(ToReadModel).ToList();
     }
+
+    public Task<PagedResult<MemoryToolCall>> Search(
+        EntityQuery<MemoryToolCallFilters, MemoryToolCallSortField> request,
+        CancellationToken cancellationToken = default
+    ) =>
+        EntityQueryExecutor.Execute(
+            dbContext.Set<MemoryToolCallEntry>(),
+            request,
+            QueryProfile,
+            cancellationToken
+        );
 
     public async Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,

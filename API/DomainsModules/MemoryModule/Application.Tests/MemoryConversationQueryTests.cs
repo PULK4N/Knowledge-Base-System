@@ -193,6 +193,11 @@ public sealed class MemoryConversationQueryTests
             CancellationToken cancellationToken = default
         ) => Task.FromResult(toolCalls);
 
+        public Task<PagedResult<MemoryToolCall>> Search(
+            EntityQuery<MemoryToolCallFilters, MemoryToolCallSortField> request,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
         public Task Write(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
             IReadOnlyCollection<MemoryToolCall> toolCalls,

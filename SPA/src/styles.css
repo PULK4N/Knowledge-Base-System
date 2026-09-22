@@ -210,6 +210,20 @@ a {
   background: var(--canvas) !important;
 }
 
+:root[data-theme="dark"] .workspace .tool-call-row:hover,
+:root[data-theme="dark"] .workspace .tool-call-item[open] .tool-call-row {
+  background: var(--canvas) !important;
+}
+
+:root[data-theme="dark"] .workspace .tool-call-list .tool-icon {
+  color: var(--teal) !important;
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .tool-call-list .chevron {
+  stroke: var(--muted);
+}
+
 :root[data-theme="dark"] .workspace .administration-tabs a.active {
   color: var(--indigo);
   background: var(--surface);

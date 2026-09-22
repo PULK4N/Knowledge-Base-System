@@ -51,6 +51,18 @@
         }
       </select>
     </label>
+  } @else if (filterText() !== null) {
+    <label class="select-control">
+      <span>{{ filterTextLabel() }}</span>
+      <input
+        #filterTextInput
+        type="search"
+        autocomplete="off"
+        [value]="filterText()"
+        [placeholder]="filterTextPlaceholder()"
+        (input)="requestFilterText(filterTextInput.value)"
+      />
+    </label>
   }
 
   <label class="select-control">
