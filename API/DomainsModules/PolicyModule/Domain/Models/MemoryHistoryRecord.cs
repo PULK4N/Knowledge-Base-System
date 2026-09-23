@@ -5,5 +5,6 @@ namespace PolicyModule.Domain.Models;
 public readonly record struct MemoryHistoryRecord(
     string EventName,
     DateTime Timestamp,
-    AggregateId AggregateId
+    AggregateId AggregateId,
+    PolicyId? PolicyId = null
 );

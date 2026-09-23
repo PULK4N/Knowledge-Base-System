@@ -17,6 +17,19 @@ public sealed class GeneralPoliciesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet("{policyId:guid}")]
+    public async Task<ActionResult<PolicyHistoryDto>> GetPolicy(
+        Guid policyId,
+        [FromServices] GetPolicyHistoryQuery query
+    )
+    {
+        query.Scope = PolicyScope.General;
+        query.PolicyId = policyId;
+
+        var policy = await Execute(query);
+        return policy is null ? NotFound() : Ok(policy);
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResult<PolicyDto>>> List(
         [FromServices] SearchGeneralPoliciesQuery query,

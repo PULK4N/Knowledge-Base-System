@@ -234,6 +234,31 @@
   font-weight: 640;
 }
 
+.policy-actions .history-link {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #cbd2df;
+  border-radius: 7px;
+  color: #344260;
+  background: white;
+}
+
+.policy-actions .history-link:hover {
+  color: var(--indigo);
+  border-color: #8790ff;
+}
+
+.policy-actions .history-link svg {
+  width: 19px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
 .policy-actions button:disabled,
 .policy-form-actions button:disabled {
   cursor: not-allowed;

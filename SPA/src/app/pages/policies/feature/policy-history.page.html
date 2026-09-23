@@ -1,0 +1,66 @@
+@if (vm$ | async; as vm) {
+  <a class="back-link" [routerLink]="vm.backLink">
+    <span aria-hidden="true">←</span> Back to policies
+  </a>
+
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message page-message">Loading policy…</div>
+    }
+    @case ('error') {
+      <div class="request-message error page-message">
+        <div>
+          <strong>Policy could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <article class="policy-card surface-card">
+        <span class="policy-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3 5 6v5.5c0 4.4 2.9 7.6 7 9 4.1-1.4 7-4.6 7-9V6l-7-3Z" />
+            <path d="m9 12 2 2 4-5" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="page-heading">{{ vm.state.data.policy.title }}</h1>
+          <p class="policy-description">{{ vm.state.data.policy.description }}</p>
+        </div>
+      </article>
+
+      <section class="history-panel surface-card" aria-labelledby="policy-history-title">
+        <div class="history-heading">
+          <p class="section-label">Changes by chat or web app</p>
+          <h2 id="policy-history-title">
+            History <span>{{ vm.state.data.history.length }}</span>
+          </h2>
+        </div>
+
+        <div class="history-list">
+          @for (item of vm.state.data.history; track item.key) {
+            <article class="history-item">
+              <span class="history-icon" aria-hidden="true">↻</span>
+              <div>
+                <h3>{{ item.action }}</h3>
+                <p>{{ item.timestamp | date: 'medium' }}</p>
+              </div>
+              @if (item.memoryId; as memoryId) {
+                <a class="history-source" [routerLink]="['/memories', memoryId]">
+                  Open chat <span aria-hidden="true">→</span>
+                </a>
+              } @else {
+                <span class="history-source muted">Web app</span>
+              }
+            </article>
+          } @empty {
+            <div class="empty-state">
+              <strong>No recorded changes</strong>
+              <span>Changes made before history was added are not listed.</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+}

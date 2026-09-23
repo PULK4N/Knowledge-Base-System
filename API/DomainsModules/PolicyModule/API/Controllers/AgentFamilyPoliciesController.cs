@@ -34,6 +34,21 @@ public sealed class AgentFamilyPoliciesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("{agentFamilyName}/policies/{policyId:guid}")]
+    public async Task<ActionResult<PolicyHistoryDto>> GetPolicy(
+        string agentFamilyName,
+        Guid policyId,
+        [FromServices] GetPolicyHistoryQuery query
+    )
+    {
+        query.Scope = PolicyScope.AgentFamily;
+        query.ScopeName = agentFamilyName;
+        query.PolicyId = policyId;
+
+        var policy = await Execute(query);
+        return policy is null ? NotFound() : Ok(policy);
+    }
+
     [HttpGet("{agentFamilyName}/policies")]
     public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         string agentFamilyName,

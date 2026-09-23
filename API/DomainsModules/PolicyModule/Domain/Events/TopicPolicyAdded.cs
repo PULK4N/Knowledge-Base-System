@@ -34,7 +34,8 @@ public readonly record struct TopicPolicyAddedV2(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
                 eventExecutionInfo.Timestamp,
-                MemoryAggregateId
+                MemoryAggregateId,
+                Policy.PolicyId
             )
         );
         return generalPoliciesStateData;

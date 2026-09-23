@@ -120,3 +120,45 @@ describe('PolicyListPage project topics', () => {
     expect(element.querySelector('.topic-connection')).toBeNull();
   });
 });
+
+describe('PolicyListPage history link', () => {
+  it('links each policy to its history page', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PolicyListPage],
+      providers: [
+        provideRouter([
+          {
+            path: 'policies/topics/:topicName',
+            component: PolicyListPage,
+            data: { policyScope: 'topic' },
+          },
+        ]),
+        {
+          provide: PolicyService,
+          useValue: {
+            searchPolicies: vi.fn(() =>
+              of({
+                items: [
+                  { id: 'policy-1', title: 'Title', description: 'Text' },
+                ],
+                page: 1,
+                pageSize: 10,
+                totalCount: 1,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false,
+              }),
+            ),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const harness = await RouterTestingHarness.create('/policies/topics/Angular');
+    const element = harness.routeNativeElement as HTMLElement;
+
+    expect(
+      element.querySelector('.history-link')?.getAttribute('href'),
+    ).toBe('/policies/topics/Angular/policies/policy-1/history');
+  });
+});

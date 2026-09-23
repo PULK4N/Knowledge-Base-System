@@ -40,7 +40,8 @@ public readonly record struct ProjectPolicyUpdatedV2(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
                 eventExecutionInfo.Timestamp,
-                MemoryAggregateId
+                MemoryAggregateId,
+                Policy.PolicyId
             )
         );
         return projectPolicies;

@@ -44,6 +44,7 @@ public sealed class PolicyMutationHistoryTests
             Assert.Equal(MemoryId, history.Last().AggregateId);
             Assert.Equal(type.Name, history.Last().EventName);
             Assert.Equal(payload.EventExecutionInfo.Timestamp, history.Last().Timestamp);
+            Assert.Equal(type.Name.Contains("Policy") ? PolicyId : null, history.Last().PolicyId);
             Assert.Empty(History(legacyState));
             Assert.Equal(Snapshot(legacyState), Snapshot(state));
         }

@@ -46,7 +46,8 @@ public readonly record struct AgentFamilyPolicyRemovedV2(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
                 eventExecutionInfo.Timestamp,
-                MemoryAggregateId
+                MemoryAggregateId,
+                PolicyId
             )
         );
         return generalPolicies;

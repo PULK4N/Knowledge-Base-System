@@ -41,7 +41,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__.*(?:skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))|feature_(add|remove|status_update|summary_update|skill_(add|remove)|record_(add|update|remove)|review_note_(add|update|remove)|research_discovery_(add|update|remove)|plan_(add|current_update|current_change|remove)))$",
+        "matcher": "mcp__.*(?:skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))|feature_(add|remove|status_update|summary_update|skill_(add|remove)|record_(add|update|remove)|review_note_(add|update|remove)|research_discovery_(add|update|remove)|plan_(add|current_update|current_change|remove))|policy_(general_(add|update|remove)|(topic|agent_family)_(create|update|remove|policy_(add|update|remove))|project_(create|update|delete|repository_add|topic_(add|remove)|policy_(add|update|remove))))$",
         "hooks": [
           {
             "type": "command",

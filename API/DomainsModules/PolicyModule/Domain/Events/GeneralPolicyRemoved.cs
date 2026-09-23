@@ -40,7 +40,8 @@ public readonly record struct GeneralPolicyRemovedV2(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
                 eventExecutionInfo.Timestamp,
-                MemoryAggregateId
+                MemoryAggregateId,
+                PolicyId
             )
         );
         return generalPolicies;

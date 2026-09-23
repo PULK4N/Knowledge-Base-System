@@ -6,6 +6,17 @@ export interface Policy {
   readonly description: string;
 }
 
+export interface PolicyMemoryHistoryEntry {
+  readonly eventName: string;
+  readonly timestamp: string;
+  readonly memoryId: string;
+  readonly isUserOriginated: boolean;
+}
+
+export interface PolicyWithHistory extends Policy {
+  readonly memoryHistory: readonly PolicyMemoryHistoryEntry[];
+}
+
 export interface PolicyTopicSummary {
   readonly id: string;
   readonly name: string;
@@ -53,6 +64,10 @@ export interface PolicyDto {
   readonly policyId: string;
   readonly title: string;
   readonly description: string;
+}
+
+export interface PolicyHistoryDto extends PolicyDto {
+  readonly memoryHistory: readonly PolicyMemoryHistoryEntry[];
 }
 
 export interface PolicyTopicSummaryDto {

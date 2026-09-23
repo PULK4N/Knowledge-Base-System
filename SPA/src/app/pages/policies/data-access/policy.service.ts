@@ -26,6 +26,7 @@ import {
   PolicyAddedCommandResult,
   PolicyCommandResult,
   PolicyDto,
+  PolicyHistoryDto,
   PolicyProjectDetails,
   PolicyProjectDetailsDto,
   PolicyProjectSearchResult,
@@ -38,6 +39,7 @@ import {
   PolicyTopicSummary,
   PolicyTopicSummaryDto,
   ProjectCreatedCommandResult,
+  PolicyWithHistory,
   UpdatePolicyRequest,
 } from './policy.models';
 
@@ -62,6 +64,10 @@ export function policyControllerPath(scope: PolicyScope): string {
     case 'project':
       return `/api/policies/projects/${encodeURIComponent(scope.projectId)}/policies`;
   }
+}
+
+function hasHistory(policy: Policy | undefined): policy is PolicyWithHistory {
+  return !!policy && 'memoryHistory' in policy;
 }
 
 function policyEntityType(scope: PolicyScope): string {
@@ -152,6 +158,34 @@ export class PolicyService {
     const cached$ = this.store
       .entity$<PolicyProjectSummary>(PROJECT_ENTITY_TYPE, projectId)
       .pipe(filter(isProjectDetails));
+
+    return merge(cached$, refresh$);
+  }
+
+  /** Loads one policy with its change history; list edits replace the cached copy without history. */
+  watchPolicy(
+    scope: PolicyScope,
+    policyId: string,
+  ): Observable<PolicyWithHistory> {
+    const refresh$ = this.http
+      .get<PolicyHistoryDto>(
+        `${policyControllerPath(scope)}/${encodeURIComponent(policyId)}`,
+      )
+      .pipe(
+        map(
+          (policy): PolicyWithHistory => ({
+            id: policy.policyId,
+            title: policy.title,
+            description: policy.description,
+            memoryHistory: policy.memoryHistory,
+          }),
+        ),
+        tap(policy => this.store.upsert(policyEntityType(scope), policy)),
+        ignoreElements(),
+      );
+    const cached$ = this.store
+      .entity$<Policy>(policyEntityType(scope), policyId)
+      .pipe(filter(hasHistory));
 
     return merge(cached$, refresh$);
   }

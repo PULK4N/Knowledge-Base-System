@@ -31,6 +31,7 @@ import {
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { policyHistoryLink } from './policy-history';
 import { policySearchRequests } from './policy-search-requests';
 
 interface PolicyListView {
@@ -253,6 +254,13 @@ export class PolicyListPage {
     mutation: this.mutation$,
     connectionMutation: this.connectionMutation$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
+  protected historyLink(
+    scope: PolicyScope,
+    policyId: string,
+  ): readonly string[] {
+    return policyHistoryLink(scope, policyId);
+  }
 
   protected search(search: string): void {
     this.searchText.set(search);

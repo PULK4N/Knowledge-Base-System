@@ -64,6 +64,36 @@ FEATURE_MUTATION_TOOLS = frozenset(
 )
 
 
+POLICY_MUTATION_TOOLS = frozenset(
+    {
+        "policy_agent_family_create",
+        "policy_agent_family_policy_add",
+        "policy_agent_family_policy_remove",
+        "policy_agent_family_policy_update",
+        "policy_agent_family_remove",
+        "policy_agent_family_update",
+        "policy_general_add",
+        "policy_general_remove",
+        "policy_general_update",
+        "policy_project_create",
+        "policy_project_delete",
+        "policy_project_policy_add",
+        "policy_project_policy_remove",
+        "policy_project_policy_update",
+        "policy_project_repository_add",
+        "policy_project_topic_add",
+        "policy_project_topic_remove",
+        "policy_project_update",
+        "policy_topic_create",
+        "policy_topic_policy_add",
+        "policy_topic_policy_remove",
+        "policy_topic_policy_update",
+        "policy_topic_remove",
+        "policy_topic_update",
+    }
+)
+
+
 def process_hook(
     event: dict[str, Any],
     *,
@@ -93,14 +123,16 @@ def _inject_skill_session(event: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _inject_mutation_session(event: dict[str, Any]) -> dict[str, Any] | None:
-    """Adds the Claude session to a skill or feature change so the API can link it to memory.
+    """Adds the Claude session to a knowledge base change so the API can link it to memory.
 
     ``permissionDecision`` is left out on purpose: Claude Code applies
     ``updatedInput`` on its own, so the user's normal permission rules still
     decide whether the change may run.
     """
     tool_name = str(event.get("tool_name", "")).rsplit("__", 1)[-1]
-    if tool_name not in SKILL_MUTATION_TOOLS | FEATURE_MUTATION_TOOLS:
+    if tool_name not in (
+        SKILL_MUTATION_TOOLS | FEATURE_MUTATION_TOOLS | POLICY_MUTATION_TOOLS
+    ):
         return None
 
     session_id = _required_guid(event, "session_id")

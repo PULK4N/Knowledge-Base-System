@@ -47,6 +47,21 @@ public sealed class ProjectPoliciesController(
         return project is null ? NotFound() : Ok(project);
     }
 
+    [HttpGet("{projectId:guid}/policies/{policyId:guid}")]
+    public async Task<ActionResult<PolicyHistoryDto>> GetPolicy(
+        Guid projectId,
+        Guid policyId,
+        [FromServices] GetPolicyHistoryQuery query
+    )
+    {
+        query.Scope = PolicyScope.Project;
+        query.ProjectId = projectId;
+        query.PolicyId = policyId;
+
+        var policy = await Execute(query);
+        return policy is null ? NotFound() : Ok(policy);
+    }
+
     [HttpGet("{projectId:guid}/policies")]
     public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         Guid projectId,

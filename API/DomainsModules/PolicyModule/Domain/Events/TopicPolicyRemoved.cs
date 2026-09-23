@@ -36,7 +36,8 @@ public readonly record struct TopicPolicyRemovedV2(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
                 eventExecutionInfo.Timestamp,
-                MemoryAggregateId
+                MemoryAggregateId,
+                PolicyId
             )
         );
         return generalPoliciesStateData;

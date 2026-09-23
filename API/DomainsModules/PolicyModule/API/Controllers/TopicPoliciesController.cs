@@ -34,6 +34,21 @@ public sealed class TopicPoliciesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("{topicName}/policies/{policyId:guid}")]
+    public async Task<ActionResult<PolicyHistoryDto>> GetPolicy(
+        string topicName,
+        Guid policyId,
+        [FromServices] GetPolicyHistoryQuery query
+    )
+    {
+        query.Scope = PolicyScope.Topic;
+        query.ScopeName = topicName;
+        query.PolicyId = policyId;
+
+        var policy = await Execute(query);
+        return policy is null ? NotFound() : Ok(policy);
+    }
+
     [HttpGet("{topicName}/policies")]
     public async Task<ActionResult<PagedResult<PolicyDto>>> ListPolicies(
         string topicName,

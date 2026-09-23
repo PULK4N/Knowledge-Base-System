@@ -21,6 +21,14 @@ export const POLICIES_ROUTES: Routes = [
           ),
       },
       {
+        path: 'general/policies/:policyId/history',
+        data: { policyScope: 'general' },
+        loadComponent: () =>
+          import('./feature/policy-history.page').then(
+            module => module.PolicyHistoryPage,
+          ),
+      },
+      {
         path: 'general/new',
         data: { policyScope: 'general' },
         loadComponent: () =>
@@ -43,6 +51,14 @@ export const POLICIES_ROUTES: Routes = [
         loadComponent: () =>
           import('./feature/policy-directory-create.page').then(
             module => module.PolicyDirectoryCreatePage,
+          ),
+      },
+      {
+        path: 'topics/:topicName/policies/:policyId/history',
+        data: { policyScope: 'topic' },
+        loadComponent: () =>
+          import('./feature/policy-history.page').then(
+            module => module.PolicyHistoryPage,
           ),
       },
       {
@@ -79,6 +95,14 @@ export const POLICIES_ROUTES: Routes = [
           ),
       },
       {
+        path: 'agent-families/:agentFamilyName/policies/:policyId/history',
+        data: { policyScope: 'agentFamily' },
+        loadComponent: () =>
+          import('./feature/policy-history.page').then(
+            module => module.PolicyHistoryPage,
+          ),
+      },
+      {
         path: 'agent-families/:agentFamilyName/policies/new',
         data: { policyScope: 'agentFamily' },
         loadComponent: () =>
@@ -109,6 +133,14 @@ export const POLICIES_ROUTES: Routes = [
         loadComponent: () =>
           import('./feature/policy-directory-create.page').then(
             module => module.PolicyDirectoryCreatePage,
+          ),
+      },
+      {
+        path: 'projects/:projectId/policies/:policyId/history',
+        data: { policyScope: 'project' },
+        loadComponent: () =>
+          import('./feature/policy-history.page').then(
+            module => module.PolicyHistoryPage,
           ),
       },
       {

@@ -417,4 +417,44 @@ describe('PolicyService', () => {
 
     await expect(resultPromise).resolves.toEqual({ status: 'OK' });
   });
+
+  it.each<{ scope: PolicyScope; path: string }>([
+    { scope: { kind: 'general' }, path: '/api/policies/general/policy-1' },
+    {
+      scope: { kind: 'topic', topicName: 'Angular' },
+      path: '/api/policies/topics/Angular/policies/policy-1',
+    },
+    {
+      scope: { kind: 'agentFamily', agentFamilyName: 'claude' },
+      path: '/api/policies/agent-families/claude/policies/policy-1',
+    },
+    {
+      scope: { kind: 'project', projectId: 'project-1' },
+      path: '/api/policies/projects/project-1/policies/policy-1',
+    },
+  ])('loads a $scope.kind policy with its history', async ({ scope, path }) => {
+    const resultPromise = firstValueFrom(service.watchPolicy(scope, 'policy-1'));
+    const history = [
+      {
+        eventName: 'GeneralPolicyAddedV2',
+        timestamp: '2026-09-23T08:00:00Z',
+        memoryId: 'memory-1',
+        isUserOriginated: false,
+      },
+    ];
+
+    http.expectOne(path).flush({
+      policyId: 'policy-1',
+      title: 'Use immutable state',
+      description: 'Replace state instead of mutating it.',
+      memoryHistory: history,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      id: 'policy-1',
+      title: 'Use immutable state',
+      description: 'Replace state instead of mutating it.',
+      memoryHistory: history,
+    });
+  });
 });
