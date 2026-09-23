@@ -19,6 +19,8 @@ public sealed class FeatureResearchDiscoveryMustNotExistValidator
                 eventData.DiscoveryId,
             FeatureResearchDiscoveryAddedV2 eventData =>
                 eventData.DiscoveryId,
+            FeatureResearchDiscoveryAddedV3 eventData =>
+                eventData.DiscoveryId,
             _ => (FeatureResearchDiscoveryId?)null
         };
 
@@ -60,7 +62,11 @@ public sealed class FeatureResearchDiscoveryMustExistValidator
                 eventData.DiscoveryId,
             FeatureResearchDiscoveryUpdatedV2 eventData =>
                 eventData.DiscoveryId,
+            FeatureResearchDiscoveryUpdatedV3 eventData =>
+                eventData.DiscoveryId,
             FeatureResearchDiscoveryRemovedV1 eventData =>
+                eventData.DiscoveryId,
+            FeatureResearchDiscoveryRemovedV2 eventData =>
                 eventData.DiscoveryId,
             _ => (FeatureResearchDiscoveryId?)null
         };

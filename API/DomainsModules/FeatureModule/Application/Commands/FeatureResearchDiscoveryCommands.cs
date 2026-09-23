@@ -30,17 +30,21 @@ public sealed class AddFeatureResearchDiscoveryCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         var discoveryId = FeatureResearchDiscoveryId.New();
 
         await ExecuteEvent(
             executor,
-            new FeatureResearchDiscoveryAddedV2(
+            new FeatureResearchDiscoveryAddedV3(
                 discoveryId,
                 Title.Trim(),
                 Content,
                 SourceType,
-                SourceReference
-            )
+                SourceReference,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return FeatureResearchDiscoveryCreatedCommandResult.Ok(
@@ -72,17 +76,24 @@ public sealed class UpdateFeatureResearchDiscoveryCommand(
             && Enum.IsDefined(SourceType)
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureResearchDiscoveryUpdatedV2(
+            new FeatureResearchDiscoveryUpdatedV3(
                 FeatureResearchDiscoveryId.FromDatabaseGuid(DiscoveryId),
                 Title.Trim(),
                 Content,
                 SourceType,
-                SourceReference
-            )
+                SourceReference,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveFeatureResearchDiscoveryCommand(
@@ -97,11 +108,18 @@ public sealed class RemoveFeatureResearchDiscoveryCommand(
             && DiscoveryId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureResearchDiscoveryRemovedV1(
-                FeatureResearchDiscoveryId.FromDatabaseGuid(DiscoveryId)
-            )
+            new FeatureResearchDiscoveryRemovedV2(
+                FeatureResearchDiscoveryId.FromDatabaseGuid(DiscoveryId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

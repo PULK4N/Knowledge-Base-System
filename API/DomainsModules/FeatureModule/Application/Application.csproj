@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
+    <ProjectReference Include="../../MemoryModule/Application/Application.csproj" />
+    <ProjectReference Include="../../MemoryModule/Domain/Domain.csproj" />
     <ProjectReference Include="../Contracts/Contracts.csproj" />
     <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />

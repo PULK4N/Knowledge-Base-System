@@ -41,6 +41,31 @@ SKILL_MUTATION_TOOLS = frozenset(
 )
 
 
+FEATURE_MUTATION_TOOLS = frozenset(
+    {
+        "feature_add",
+        "feature_remove",
+        "feature_status_update",
+        "feature_summary_update",
+        "feature_skill_add",
+        "feature_skill_remove",
+        "feature_record_add",
+        "feature_record_update",
+        "feature_record_remove",
+        "feature_review_note_add",
+        "feature_review_note_update",
+        "feature_review_note_remove",
+        "feature_research_discovery_add",
+        "feature_research_discovery_update",
+        "feature_research_discovery_remove",
+        "feature_plan_add",
+        "feature_plan_current_update",
+        "feature_plan_current_change",
+        "feature_plan_remove",
+    }
+)
+
+
 def process_hook(
     event: dict[str, Any],
     *,
@@ -49,7 +74,7 @@ def process_hook(
 ) -> dict[str, Any] | None:
     event_name = str(event.get("hook_event_name", ""))
     if event_name == "PreToolUse":
-        return _inject_skill_session(event)
+        return _inject_mutation_session(event)
     if event_name != "PostToolUse":
         return None
 
@@ -64,8 +89,12 @@ def process_hook(
 
 
 def _inject_skill_session(event: dict[str, Any]) -> dict[str, Any] | None:
+    return _inject_mutation_session(event)
+
+
+def _inject_mutation_session(event: dict[str, Any]) -> dict[str, Any] | None:
     tool_name = str(event.get("tool_name", "")).rsplit("__", 1)[-1]
-    if tool_name not in SKILL_MUTATION_TOOLS:
+    if tool_name not in SKILL_MUTATION_TOOLS | FEATURE_MUTATION_TOOLS:
         return None
 
     session_id = _required_guid(event, "session_id")

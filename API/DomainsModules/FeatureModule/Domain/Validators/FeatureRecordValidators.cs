@@ -12,20 +12,27 @@ public sealed class FeatureRecordMustNotExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not FeatureRecordAddedV1 eventData)
+        var recordId = payload.EventData switch
+        {
+            FeatureRecordAddedV1 eventData => eventData.RecordId,
+            FeatureRecordAddedV2 eventData => eventData.RecordId,
+            _ => (FeatureRecordId?)null
+        };
+
+        if (recordId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeatureRecordMustNotExistValidator),
                 false,
-                $"{nameof(FeatureRecordMustNotExistValidator)} can only validate {nameof(FeatureRecordAddedV1)} events."
+                $"{nameof(FeatureRecordMustNotExistValidator)} can only validate {nameof(FeatureRecordAddedV1)} or {nameof(FeatureRecordAddedV2)} events."
             );
         }
 
         return ValidateAbsence(
             (FeatureStateData)stateData,
             payload,
-            eventData.RecordId
+            recordId.Value
         );
     }
 
@@ -56,7 +63,9 @@ public sealed class FeatureRecordMustExistValidator : IPreEventValidator
         var recordId = payload.EventData switch
         {
             FeatureRecordUpdatedV1 eventData => eventData.RecordId,
+            FeatureRecordUpdatedV2 eventData => eventData.RecordId,
             FeatureRecordRemovedV1 eventData => eventData.RecordId,
+            FeatureRecordRemovedV2 eventData => eventData.RecordId,
             _ => (FeatureRecordId?)null
         };
 

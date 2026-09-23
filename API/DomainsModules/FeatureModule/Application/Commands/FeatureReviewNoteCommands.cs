@@ -25,15 +25,19 @@ public sealed class AddFeatureReviewNoteCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         var reviewNoteId = FeatureReviewNoteId.New();
 
         await ExecuteEvent(
             executor,
-            new FeatureReviewNoteAddedV1(
+            new FeatureReviewNoteAddedV2(
                 reviewNoteId,
                 Title,
-                Content
-            )
+                Content,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return FeatureReviewNoteCreatedCommandResult.Ok(reviewNoteId.Value);
@@ -58,15 +62,22 @@ public sealed class UpdateFeatureReviewNoteCommand(
             && !string.IsNullOrWhiteSpace(Content)
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureReviewNoteUpdatedV1(
+            new FeatureReviewNoteUpdatedV2(
                 FeatureReviewNoteId.FromDatabaseGuid(ReviewNoteId),
                 Title,
-                Content
-            )
+                Content,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveFeatureReviewNoteCommand(
@@ -81,11 +92,18 @@ public sealed class RemoveFeatureReviewNoteCommand(
             && ReviewNoteId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureReviewNoteRemovedV1(
-                FeatureReviewNoteId.FromDatabaseGuid(ReviewNoteId)
-            )
+            new FeatureReviewNoteRemovedV2(
+                FeatureReviewNoteId.FromDatabaseGuid(ReviewNoteId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

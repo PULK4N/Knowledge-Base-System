@@ -12,19 +12,26 @@ public sealed class FeatureReviewNoteMustNotExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not FeatureReviewNoteAddedV1 eventData)
+        var reviewNoteId = payload.EventData switch
+        {
+            FeatureReviewNoteAddedV1 eventData => eventData.ReviewNoteId,
+            FeatureReviewNoteAddedV2 eventData => eventData.ReviewNoteId,
+            _ => (FeatureReviewNoteId?)null
+        };
+
+        if (reviewNoteId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeatureReviewNoteMustNotExistValidator),
                 false,
-                $"{nameof(FeatureReviewNoteMustNotExistValidator)} can only validate {nameof(FeatureReviewNoteAddedV1)} events."
+                $"{nameof(FeatureReviewNoteMustNotExistValidator)} can only validate {nameof(FeatureReviewNoteAddedV1)} or {nameof(FeatureReviewNoteAddedV2)} events."
             );
         }
 
         var state = (FeatureStateData)stateData;
         var exists = state.ReviewNotes.Any(
-            reviewNote => reviewNote.Id == eventData.ReviewNoteId
+            reviewNote => reviewNote.Id == reviewNoteId.Value
         );
 
         return EventValidationResult.FromPayload(
@@ -46,7 +53,9 @@ public sealed class FeatureReviewNoteMustExistValidator : IPreEventValidator
         var reviewNoteId = payload.EventData switch
         {
             FeatureReviewNoteUpdatedV1 eventData => eventData.ReviewNoteId,
+            FeatureReviewNoteUpdatedV2 eventData => eventData.ReviewNoteId,
             FeatureReviewNoteRemovedV1 eventData => eventData.ReviewNoteId,
+            FeatureReviewNoteRemovedV2 eventData => eventData.ReviewNoteId,
             _ => (FeatureReviewNoteId?)null
         };
 

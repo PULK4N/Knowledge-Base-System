@@ -1,6 +1,8 @@
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 
+using FeatureModule.Domain.Models;
+
 namespace FeatureModule.Domain.Events;
 
 public interface IFeatureSkillAdded : IEvent;
@@ -33,6 +35,54 @@ public readonly record struct FeatureSkillRemovedV1(
     {
         var state = (FeatureStateData)stateData;
         state.RelatedSkillIds.Remove(SkillId);
+        return state;
+    }
+}
+
+public readonly record struct FeatureSkillAddedV2(
+    AggregateId SkillId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureSkillAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.RelatedSkillIds.Add(SkillId);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureSkillRemovedV2(
+    AggregateId SkillId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureSkillRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.RelatedSkillIds.Remove(SkillId);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
         return state;
     }
 }

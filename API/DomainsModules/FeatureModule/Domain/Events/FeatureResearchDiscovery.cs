@@ -138,3 +138,106 @@ public readonly record struct FeatureResearchDiscoveryRemovedV1(
         return state;
     }
 }
+
+public readonly record struct FeatureResearchDiscoveryAddedV3(
+    FeatureResearchDiscoveryId DiscoveryId,
+    string Title,
+    string Content,
+    FeatureResearchDiscoverySourceType SourceType,
+    string SourceReference,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureResearchDiscoveryAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.ResearchDiscoveries.Add(
+            new Models.FeatureResearchDiscovery
+            {
+                Id = DiscoveryId,
+                Title = Title,
+                Content = Content,
+                SourceType = SourceType,
+                SourceReference = SourceReference,
+                CreatedAt = eventExecutionInfo.Timestamp,
+                UpdatedAt = eventExecutionInfo.Timestamp
+            }
+        );
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureResearchDiscoveryUpdatedV3(
+    FeatureResearchDiscoveryId DiscoveryId,
+    string Title,
+    string Content,
+    FeatureResearchDiscoverySourceType SourceType,
+    string SourceReference,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureResearchDiscoveryUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var discoveryId = DiscoveryId;
+        var discovery = state.ResearchDiscoveries.Single(
+            item => item.Id == discoveryId
+        );
+        discovery.Title = Title;
+        discovery.Content = Content;
+        discovery.SourceType = SourceType;
+        discovery.SourceReference = SourceReference;
+        discovery.UpdatedAt = eventExecutionInfo.Timestamp;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureResearchDiscoveryRemovedV2(
+    FeatureResearchDiscoveryId DiscoveryId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureResearchDiscoveryRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var discoveryId = DiscoveryId;
+        var discovery = state.ResearchDiscoveries.Single(
+            item => item.Id == discoveryId
+        );
+        state.ResearchDiscoveries.Remove(discovery);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

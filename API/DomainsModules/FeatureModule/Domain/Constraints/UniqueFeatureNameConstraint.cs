@@ -18,11 +18,11 @@ public sealed class UniqueFeatureNameConstraint
         if (
             stateBeforeEvent.IsDeleted
             || currentName is null
-            || payload.EventData is FeatureAddedV1
+            || payload.EventData is (FeatureAddedV1 or FeatureAddedV2)
         )
             return [];
 
-        return (payload.EventData is FeatureRemovedV1)
+        return (payload.EventData is (FeatureRemovedV1 or FeatureRemovedV2))
             ? [CreateConstraint(currentName)]
             : [];
     }
@@ -37,7 +37,7 @@ public sealed class UniqueFeatureNameConstraint
         return (
             !stateAfterEvent.IsDeleted
                 && currentName is not null
-                && payload.EventData is FeatureAddedV1
+                && payload.EventData is (FeatureAddedV1 or FeatureAddedV2)
         )
                 ? [CreateConstraint(currentName)]
                 : [];

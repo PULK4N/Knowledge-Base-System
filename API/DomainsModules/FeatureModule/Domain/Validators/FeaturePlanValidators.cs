@@ -12,18 +12,25 @@ public sealed class FeaturePlanMustNotExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not FeaturePlanAddedV1 eventData)
+        var planId = payload.EventData switch
+        {
+            FeaturePlanAddedV1 eventData => eventData.PlanId,
+            FeaturePlanAddedV2 eventData => eventData.PlanId,
+            _ => (FeaturePlanId?)null
+        };
+
+        if (planId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeaturePlanMustNotExistValidator),
                 false,
-                $"{nameof(FeaturePlanMustNotExistValidator)} can only validate {nameof(FeaturePlanAddedV1)} events."
+                $"{nameof(FeaturePlanMustNotExistValidator)} can only validate {nameof(FeaturePlanAddedV1)} or {nameof(FeaturePlanAddedV2)} events."
             );
         }
 
         var state = (FeatureStateData)stateData;
-        var exists = state.Plans.Any(plan => plan.Id == eventData.PlanId);
+        var exists = state.Plans.Any(plan => plan.Id == planId.Value);
 
         return EventValidationResult.FromPayload(
             payload,
@@ -44,7 +51,9 @@ public sealed class FeaturePlanMustExistValidator : IPreEventValidator
         var planId = payload.EventData switch
         {
             CurrentFeaturePlanChangedV1 eventData => eventData.PlanId,
+            CurrentFeaturePlanChangedV2 eventData => eventData.PlanId,
             FeaturePlanRemovedV1 eventData => eventData.PlanId,
+            FeaturePlanRemovedV2 eventData => eventData.PlanId,
             _ => (FeaturePlanId?)null
         };
 
@@ -77,13 +86,13 @@ public sealed class CurrentFeaturePlanMustExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not CurrentFeaturePlanUpdatedV1)
+        if (payload.EventData is not (CurrentFeaturePlanUpdatedV1 or CurrentFeaturePlanUpdatedV2))
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(CurrentFeaturePlanMustExistValidator),
                 false,
-                $"{nameof(CurrentFeaturePlanMustExistValidator)} can only validate {nameof(CurrentFeaturePlanUpdatedV1)} events."
+                $"{nameof(CurrentFeaturePlanMustExistValidator)} can only validate {nameof(CurrentFeaturePlanUpdatedV1)} or {nameof(CurrentFeaturePlanUpdatedV2)} events."
             );
         }
 

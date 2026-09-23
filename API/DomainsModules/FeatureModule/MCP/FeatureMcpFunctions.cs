@@ -53,97 +53,97 @@ public static class FeatureMcpFunctions
             "Gets all review notes for a feature. Each note records a reviewed decision that intended behaviour is not a defect; read them before reporting review findings so a settled decision is not raised again."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, string, Task<FeatureCreatedCommandResult>>)Add,
+            (Func<IServiceProvider, Guid, string, string, string, Guid?, Guid?, Task<FeatureCreatedCommandResult>>)Add,
             "feature_add",
             "Creates a feature for an existing project with a name, an overview summary of what the feature is and does, and a free-form progress status."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Task<FeatureCommandResult>>)Remove,
+            (Func<IServiceProvider, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)Remove,
             "feature_remove",
             "Marks a feature as deleted while retaining its event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, Task<FeatureCommandResult>>)UpdateStatus,
+            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateStatus,
             "feature_status_update",
             "Replaces a feature's free-form progress description."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, Task<FeatureCommandResult>>)UpdateSummary,
+            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateSummary,
             "feature_summary_update",
             "Replaces a feature's overview summary of what the feature is and does."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)AddSkill,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)AddSkill,
             "feature_skill_add",
             "Adds a skill ID that provides useful context for the feature."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveSkill,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveSkill,
             "feature_skill_remove",
             "Removes a related skill ID from the feature."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, Task<FeatureRecordCreatedCommandResult>>)AddRecord,
+            (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureRecordCreatedCommandResult>>)AddRecord,
             "feature_record_add",
             "Adds a curated user message and AI answer that affected the feature or its implementation plan."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, Task<FeatureCommandResult>>)UpdateRecord,
+            (Func<IServiceProvider, Guid, Guid, string, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateRecord,
             "feature_record_update",
             "Updates the user message and AI answer of an existing feature record."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveRecord,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveRecord,
             "feature_record_remove",
             "Removes a feature record from the current feature state."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, Task<FeatureReviewNoteCreatedCommandResult>>)AddReviewNote,
+            (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureReviewNoteCreatedCommandResult>>)AddReviewNote,
             "feature_review_note_add",
             "Records a reviewed decision that intended behaviour is not a defect, as a Markdown note, so a later review does not report the same finding again."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, Task<FeatureCommandResult>>)UpdateReviewNote,
+            (Func<IServiceProvider, Guid, Guid, string, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateReviewNote,
             "feature_review_note_update",
             "Updates the title and Markdown content of an existing feature review note."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveReviewNote,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveReviewNote,
             "feature_review_note_remove",
             "Removes a review note from the current feature state while retaining event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, FeatureResearchDiscoverySourceType, string, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
+            (Func<IServiceProvider, Guid, string, string, FeatureResearchDiscoverySourceType, string, Guid?, Guid?, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
             "feature_research_discovery_add",
             "Stores a research discovery for a feature. The optional source reference can be a code path, URL, MCP tool name, or other provenance."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, FeatureResearchDiscoverySourceType, string, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
+            (Func<IServiceProvider, Guid, Guid, string, string, FeatureResearchDiscoverySourceType, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
             "feature_research_discovery_update",
             "Updates a stored feature research discovery and its provenance."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemoveResearchDiscovery,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveResearchDiscovery,
             "feature_research_discovery_remove",
             "Removes a research discovery from the current feature state while retaining event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, FeaturePlanContentType, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
+            (Func<IServiceProvider, Guid, string, string, FeaturePlanContentType, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
             "feature_plan_add",
             "Adds a Markdown or HTML plan and selects it as the current feature plan."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, FeaturePlanContentType, Task<FeatureCommandResult>>)UpdateCurrentPlan,
+            (Func<IServiceProvider, Guid, string, string, FeaturePlanContentType, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateCurrentPlan,
             "feature_plan_current_update",
             "Updates the title, content, and content type of the current feature plan."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)ChangeCurrentPlan,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)ChangeCurrentPlan,
             "feature_plan_current_change",
             "Selects an existing previous plan as the current feature plan."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<FeatureCommandResult>>)RemovePlan,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemovePlan,
             "feature_plan_remove",
             "Removes a plan; removing the current plan clears the current selection."
         )
@@ -159,7 +159,14 @@ public static class FeatureMcpFunctions
             new AIFunctionFactoryOptions
             {
                 Name = name,
-                Description = description
+                Description = description,
+                ConfigureParameterBinding = parameter =>
+                    parameter.Name is "sessionId" or "memoryAggregateId"
+                        ? new AIFunctionFactoryOptions.ParameterBindingOptions
+                        {
+                            ExcludeFromSchema = true
+                        }
+                        : default
             }
         );
 
@@ -288,7 +295,9 @@ public static class FeatureMcpFunctions
         Guid projectId,
         string name,
         string summary,
-        string status
+        string status,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeatureCommand,
@@ -301,25 +310,36 @@ public static class FeatureMcpFunctions
                 command.Name = name;
                 command.Summary = summary;
                 command.Status = status;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> Remove(
         IServiceProvider services,
-        Guid featureId
+        Guid featureId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeatureCommand,
             FeatureCommandResult
         >(
             services,
-            command => command.FeatureId = featureId
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 
     private static Task<FeatureCommandResult> UpdateStatus(
         IServiceProvider services,
         Guid featureId,
-        string status
+        string status,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateFeatureStatusCommand,
@@ -330,13 +350,17 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.Status = status;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> UpdateSummary(
         IServiceProvider services,
         Guid featureId,
-        string summary
+        string summary,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateFeatureSummaryCommand,
@@ -347,13 +371,17 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.Summary = summary;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> AddSkill(
         IServiceProvider services,
         Guid featureId,
-        Guid skillId
+        Guid skillId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeatureSkillCommand,
@@ -364,13 +392,17 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.SkillId = skillId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> RemoveSkill(
         IServiceProvider services,
         Guid featureId,
-        Guid skillId
+        Guid skillId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeatureSkillCommand,
@@ -381,6 +413,8 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.SkillId = skillId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -388,7 +422,9 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         string userMessage,
-        string aiAnswer
+        string aiAnswer,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeatureRecordCommand,
@@ -400,6 +436,8 @@ public static class FeatureMcpFunctions
                 command.FeatureId = featureId;
                 command.UserMessage = userMessage;
                 command.AiAnswer = aiAnswer;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -408,7 +446,9 @@ public static class FeatureMcpFunctions
         Guid featureId,
         Guid recordId,
         string userMessage,
-        string aiAnswer
+        string aiAnswer,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateFeatureRecordCommand,
@@ -421,13 +461,17 @@ public static class FeatureMcpFunctions
                 command.RecordId = recordId;
                 command.UserMessage = userMessage;
                 command.AiAnswer = aiAnswer;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> RemoveRecord(
         IServiceProvider services,
         Guid featureId,
-        Guid recordId
+        Guid recordId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeatureRecordCommand,
@@ -438,6 +482,8 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.RecordId = recordId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -445,7 +491,9 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         string title,
-        string content
+        string content,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeatureReviewNoteCommand,
@@ -457,6 +505,8 @@ public static class FeatureMcpFunctions
                 command.FeatureId = featureId;
                 command.Title = title;
                 command.Content = content;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -465,7 +515,9 @@ public static class FeatureMcpFunctions
         Guid featureId,
         Guid reviewNoteId,
         string title,
-        string content
+        string content,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateFeatureReviewNoteCommand,
@@ -478,13 +530,17 @@ public static class FeatureMcpFunctions
                 command.ReviewNoteId = reviewNoteId;
                 command.Title = title;
                 command.Content = content;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> RemoveReviewNote(
         IServiceProvider services,
         Guid featureId,
-        Guid reviewNoteId
+        Guid reviewNoteId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeatureReviewNoteCommand,
@@ -495,6 +551,8 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.ReviewNoteId = reviewNoteId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -507,7 +565,9 @@ public static class FeatureMcpFunctions
         string content,
         FeatureResearchDiscoverySourceType sourceType =
             FeatureResearchDiscoverySourceType.Other,
-        string sourceReference = ""
+        string sourceReference = "",
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeatureResearchDiscoveryCommand,
@@ -521,6 +581,8 @@ public static class FeatureMcpFunctions
                 command.Content = content;
                 command.SourceType = sourceType;
                 command.SourceReference = sourceReference;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -532,7 +594,9 @@ public static class FeatureMcpFunctions
         string content,
         FeatureResearchDiscoverySourceType sourceType =
             FeatureResearchDiscoverySourceType.Other,
-        string sourceReference = ""
+        string sourceReference = "",
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateFeatureResearchDiscoveryCommand,
@@ -547,13 +611,17 @@ public static class FeatureMcpFunctions
                 command.Content = content;
                 command.SourceType = sourceType;
                 command.SourceReference = sourceReference;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> RemoveResearchDiscovery(
         IServiceProvider services,
         Guid featureId,
-        Guid discoveryId
+        Guid discoveryId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeatureResearchDiscoveryCommand,
@@ -564,6 +632,8 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.DiscoveryId = discoveryId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -573,7 +643,9 @@ public static class FeatureMcpFunctions
         string title,
         string content,
         FeaturePlanContentType contentType =
-            FeaturePlanContentType.Markdown
+            FeaturePlanContentType.Markdown,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             AddFeaturePlanCommand,
@@ -586,6 +658,8 @@ public static class FeatureMcpFunctions
                 command.Title = title;
                 command.Content = content;
                 command.ContentType = contentType;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -595,7 +669,9 @@ public static class FeatureMcpFunctions
         string title,
         string content,
         FeaturePlanContentType contentType =
-            FeaturePlanContentType.Markdown
+            FeaturePlanContentType.Markdown,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             UpdateCurrentFeaturePlanCommand,
@@ -608,13 +684,17 @@ public static class FeatureMcpFunctions
                 command.Title = title;
                 command.Content = content;
                 command.ContentType = contentType;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> ChangeCurrentPlan(
         IServiceProvider services,
         Guid featureId,
-        Guid planId
+        Guid planId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             ChangeCurrentFeaturePlanCommand,
@@ -625,13 +705,17 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.PlanId = planId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<FeatureCommandResult> RemovePlan(
         IServiceProvider services,
         Guid featureId,
-        Guid planId
+        Guid planId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         FeatureMcpActionExecutor.ExecuteCommand<
             RemoveFeaturePlanCommand,
@@ -642,6 +726,8 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.PlanId = planId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 }

@@ -25,15 +25,19 @@ public sealed class AddFeatureRecordCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         var recordId = FeatureRecordId.New();
 
         await ExecuteEvent(
             executor,
-            new FeatureRecordAddedV1(
+            new FeatureRecordAddedV2(
                 recordId,
                 UserMessage,
-                AiAnswer
-            )
+                AiAnswer,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return FeatureRecordCreatedCommandResult.Ok(recordId.Value);
@@ -58,15 +62,22 @@ public sealed class UpdateFeatureRecordCommand(
             && !string.IsNullOrWhiteSpace(AiAnswer)
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureRecordUpdatedV1(
+            new FeatureRecordUpdatedV2(
                 FeatureRecordId.FromDatabaseGuid(RecordId),
                 UserMessage,
-                AiAnswer
-            )
+                AiAnswer,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveFeatureRecordCommand(
@@ -81,11 +92,18 @@ public sealed class RemoveFeatureRecordCommand(
             && RecordId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureRecordRemovedV1(
-                FeatureRecordId.FromDatabaseGuid(RecordId)
-            )
+            new FeatureRecordRemovedV2(
+                FeatureRecordId.FromDatabaseGuid(RecordId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

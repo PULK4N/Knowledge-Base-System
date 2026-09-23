@@ -36,17 +36,21 @@ public sealed class AddFeatureCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         var featureId = AggregateId.New();
 
         await ExecuteEvent(
             executor,
             featureId,
-            new FeatureAddedV1(
+            new FeatureAddedV2(
                 AggregateId.FromDatabaseGuid(ProjectId),
                 Name,
                 Summary,
-                Status
-            )
+                Status,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return FeatureCreatedCommandResult.Ok(featureId.Value);
@@ -57,8 +61,19 @@ public sealed class RemoveFeatureCommand(
     StateMachineHandler stateMachineHandler
 ) : ExistingFeatureCommand(stateMachineHandler)
 {
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(executor, new FeatureRemovedV1());
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
+            executor,
+            new FeatureRemovedV2(
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
+        );
+    }
 }
 
 public sealed class UpdateFeatureStatusCommand(
@@ -73,8 +88,20 @@ public sealed class UpdateFeatureStatusCommand(
             && !string.IsNullOrWhiteSpace(Status)
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(executor, new FeatureStatusUpdatedV1(Status));
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
+            executor,
+            new FeatureStatusUpdatedV2(
+                Status,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
+        );
+    }
 }
 
 public sealed class UpdateFeatureSummaryCommand(
@@ -83,6 +110,18 @@ public sealed class UpdateFeatureSummaryCommand(
 {
     public required string Summary { get; set; }
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(executor, new FeatureSummaryUpdatedV1(Summary));
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
+            executor,
+            new FeatureSummaryUpdatedV2(
+                Summary,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
+        );
+    }
 }

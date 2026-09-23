@@ -73,3 +73,94 @@ public readonly record struct FeatureRecordRemovedV1(
         return state;
     }
 }
+
+public readonly record struct FeatureRecordRemovedV2(
+    FeatureRecordId RecordId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureRecordRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var recordId = RecordId;
+        var record = state.Records.Single(item => item.Id == recordId);
+        state.Records.Remove(record);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureRecordUpdatedV2(
+    FeatureRecordId RecordId,
+    string UserMessage,
+    string AiAnswer,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureRecordUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var recordId = RecordId;
+        var record = state.Records.Single(item => item.Id == recordId);
+        record.UserMessage = UserMessage;
+        record.AiAnswer = AiAnswer;
+        record.UpdatedAt = eventExecutionInfo.Timestamp;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureRecordAddedV2(
+    FeatureRecordId RecordId,
+    string UserMessage,
+    string AiAnswer,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureRecordAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.Records.Add(
+            new Models.FeatureRecord
+            {
+                Id = RecordId,
+                UserMessage = UserMessage,
+                AiAnswer = AiAnswer,
+                CreatedAt = eventExecutionInfo.Timestamp,
+                UpdatedAt = eventExecutionInfo.Timestamp
+            }
+        );
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

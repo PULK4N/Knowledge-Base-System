@@ -23,7 +23,7 @@ public sealed class FeatureStateMachineDefinitionTests
 
         Assert.Equal(nameof(FeatureStateData), definition.StateData);
         Assert.Equal(
-            [nameof(FeatureAddedV1)],
+            [nameof(FeatureAddedV1), nameof(FeatureAddedV2)],
             definition.InitializationEvents
         );
         Assert.Equal(
@@ -37,27 +37,46 @@ public sealed class FeatureStateMachineDefinitionTests
         Assert.Equal(
             [
                 nameof(FeatureAddedV1),
+                nameof(FeatureAddedV2),
                 nameof(FeatureRemovedV1),
+                nameof(FeatureRemovedV2),
                 nameof(FeatureStatusUpdatedV1),
+                nameof(FeatureStatusUpdatedV2),
                 nameof(FeatureSummaryUpdatedV1),
+                nameof(FeatureSummaryUpdatedV2),
                 nameof(FeatureParentSetV1),
                 nameof(FeatureSkillAddedV1),
+                nameof(FeatureSkillAddedV2),
                 nameof(FeatureSkillRemovedV1),
+                nameof(FeatureSkillRemovedV2),
                 nameof(FeatureRecordAddedV1),
+                nameof(FeatureRecordAddedV2),
                 nameof(FeatureRecordUpdatedV1),
+                nameof(FeatureRecordUpdatedV2),
                 nameof(FeatureRecordRemovedV1),
+                nameof(FeatureRecordRemovedV2),
                 nameof(FeatureReviewNoteAddedV1),
+                nameof(FeatureReviewNoteAddedV2),
                 nameof(FeatureReviewNoteUpdatedV1),
+                nameof(FeatureReviewNoteUpdatedV2),
                 nameof(FeatureReviewNoteRemovedV1),
+                nameof(FeatureReviewNoteRemovedV2),
                 nameof(FeatureResearchDiscoveryAddedV1),
                 nameof(FeatureResearchDiscoveryAddedV2),
+                nameof(FeatureResearchDiscoveryAddedV3),
                 nameof(FeatureResearchDiscoveryUpdatedV1),
                 nameof(FeatureResearchDiscoveryUpdatedV2),
+                nameof(FeatureResearchDiscoveryUpdatedV3),
                 nameof(FeatureResearchDiscoveryRemovedV1),
+                nameof(FeatureResearchDiscoveryRemovedV2),
                 nameof(FeaturePlanAddedV1),
+                nameof(FeaturePlanAddedV2),
                 nameof(CurrentFeaturePlanUpdatedV1),
+                nameof(CurrentFeaturePlanUpdatedV2),
                 nameof(CurrentFeaturePlanChangedV1),
-                nameof(FeaturePlanRemovedV1)
+                nameof(CurrentFeaturePlanChangedV2),
+                nameof(FeaturePlanRemovedV1),
+                nameof(FeaturePlanRemovedV2)
             ],
             definition.Events.Keys
         );
@@ -91,6 +110,8 @@ public sealed class FeatureStateMachineDefinitionTests
                     definition =>
                         definition.Key is not nameof(FeatureAddedV1)
                             and not nameof(FeatureRemovedV1)
+                            and not nameof(FeatureAddedV2)
+                            and not nameof(FeatureRemovedV2)
                 )
                 .Select(definition => definition.Value),
             eventDefinition => Assert.Empty(eventDefinition.UniqueConstraints)
@@ -276,27 +297,46 @@ public sealed class FeatureStateMachineDefinitionTests
     private static List<Type> EventTypes { get; } =
     [
         typeof(FeatureAddedV1),
+        typeof(FeatureAddedV2),
         typeof(FeatureRemovedV1),
+        typeof(FeatureRemovedV2),
         typeof(FeatureStatusUpdatedV1),
+        typeof(FeatureStatusUpdatedV2),
         typeof(FeatureSummaryUpdatedV1),
+        typeof(FeatureSummaryUpdatedV2),
         typeof(FeatureParentSetV1),
         typeof(FeatureSkillAddedV1),
+        typeof(FeatureSkillAddedV2),
         typeof(FeatureSkillRemovedV1),
+        typeof(FeatureSkillRemovedV2),
         typeof(FeatureRecordAddedV1),
+        typeof(FeatureRecordAddedV2),
         typeof(FeatureRecordUpdatedV1),
+        typeof(FeatureRecordUpdatedV2),
         typeof(FeatureRecordRemovedV1),
+        typeof(FeatureRecordRemovedV2),
         typeof(FeatureReviewNoteAddedV1),
+        typeof(FeatureReviewNoteAddedV2),
         typeof(FeatureReviewNoteUpdatedV1),
+        typeof(FeatureReviewNoteUpdatedV2),
         typeof(FeatureReviewNoteRemovedV1),
+        typeof(FeatureReviewNoteRemovedV2),
         typeof(FeatureResearchDiscoveryAddedV1),
         typeof(FeatureResearchDiscoveryAddedV2),
+        typeof(FeatureResearchDiscoveryAddedV3),
         typeof(FeatureResearchDiscoveryUpdatedV1),
         typeof(FeatureResearchDiscoveryUpdatedV2),
+        typeof(FeatureResearchDiscoveryUpdatedV3),
         typeof(FeatureResearchDiscoveryRemovedV1),
+        typeof(FeatureResearchDiscoveryRemovedV2),
         typeof(FeaturePlanAddedV1),
+        typeof(FeaturePlanAddedV2),
         typeof(CurrentFeaturePlanUpdatedV1),
+        typeof(CurrentFeaturePlanUpdatedV2),
         typeof(CurrentFeaturePlanChangedV1),
-        typeof(FeaturePlanRemovedV1)
+        typeof(CurrentFeaturePlanChangedV2),
+        typeof(FeaturePlanRemovedV1),
+        typeof(FeaturePlanRemovedV2)
     ];
 
     private static List<Type> ValidatorTypes { get; } =

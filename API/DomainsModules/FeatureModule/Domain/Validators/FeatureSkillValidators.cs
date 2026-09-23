@@ -11,18 +11,25 @@ public sealed class FeatureSkillMustNotExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not FeatureSkillAddedV1 eventData)
+        var skillId = payload.EventData switch
+        {
+            FeatureSkillAddedV1 eventData => eventData.SkillId,
+            FeatureSkillAddedV2 eventData => eventData.SkillId,
+            _ => (AggregateId?)null
+        };
+
+        if (skillId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeatureSkillMustNotExistValidator),
                 false,
-                $"{nameof(FeatureSkillMustNotExistValidator)} can only validate {nameof(FeatureSkillAddedV1)} events."
+                $"{nameof(FeatureSkillMustNotExistValidator)} can only validate {nameof(FeatureSkillAddedV1)} or {nameof(FeatureSkillAddedV2)} events."
             );
         }
 
         var state = (FeatureStateData)stateData;
-        var exists = state.RelatedSkillIds.Contains(eventData.SkillId);
+        var exists = state.RelatedSkillIds.Contains(skillId.Value);
 
         return EventValidationResult.FromPayload(
             payload,
@@ -40,18 +47,25 @@ public sealed class FeatureSkillMustExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not FeatureSkillRemovedV1 eventData)
+        var skillId = payload.EventData switch
+        {
+            FeatureSkillRemovedV1 eventData => eventData.SkillId,
+            FeatureSkillRemovedV2 eventData => eventData.SkillId,
+            _ => (AggregateId?)null
+        };
+
+        if (skillId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(FeatureSkillMustExistValidator),
                 false,
-                $"{nameof(FeatureSkillMustExistValidator)} can only validate {nameof(FeatureSkillRemovedV1)} events."
+                $"{nameof(FeatureSkillMustExistValidator)} can only validate {nameof(FeatureSkillRemovedV1)} or {nameof(FeatureSkillRemovedV2)} events."
             );
         }
 
         var state = (FeatureStateData)stateData;
-        var exists = state.RelatedSkillIds.Contains(eventData.SkillId);
+        var exists = state.RelatedSkillIds.Contains(skillId.Value);
 
         return EventValidationResult.FromPayload(
             payload,

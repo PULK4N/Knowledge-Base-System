@@ -56,9 +56,15 @@ public sealed class FeaturesController(
 
     [HttpPost]
     public async Task<ActionResult<FeatureCreatedCommandResult>> Add(
-        [FromBody] AddFeatureCommand command
+        [FromBody] AddFeatureRequest request,
+        [FromServices] AddFeatureCommand command
     )
     {
+        command.ProjectId = request.ProjectId;
+        command.Name = request.Name;
+        command.Summary = request.Summary;
+        command.Status = request.Status;
+        command.UseUserOrigin();
         var result = (FeatureCreatedCommandResult)await Execute(command);
 
         return CreatedAtAction(
@@ -88,6 +94,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeatureCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         return Ok((FeatureCommandResult)await Execute(command));
     }
@@ -99,6 +106,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateFeatureStatusCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Status = request.Status;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -111,6 +119,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateFeatureSummaryCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Summary = request.Summary;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -123,6 +132,7 @@ public sealed class FeaturesController(
         [FromServices] AddFeatureSkillCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.SkillId = request.SkillId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -135,6 +145,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeatureSkillCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.SkillId = request.SkillId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -149,6 +160,7 @@ public sealed class FeaturesController(
         [FromServices] AddFeatureRecordCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.UserMessage = request.UserMessage;
         command.AiAnswer = request.AiAnswer;
@@ -164,6 +176,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateFeatureRecordCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.RecordId = request.RecordId;
         command.UserMessage = request.UserMessage;
@@ -178,6 +191,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeatureRecordCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.RecordId = request.RecordId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -192,6 +206,7 @@ public sealed class FeaturesController(
         [FromServices] AddFeatureReviewNoteCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Title = request.Title;
         command.Content = request.Content;
@@ -207,6 +222,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateFeatureReviewNoteCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.ReviewNoteId = request.ReviewNoteId;
         command.Title = request.Title;
@@ -221,6 +237,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeatureReviewNoteCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.ReviewNoteId = request.ReviewNoteId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -235,6 +252,7 @@ public sealed class FeaturesController(
         [FromServices] AddFeatureResearchDiscoveryCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Title = request.Title;
         command.Content = request.Content;
@@ -256,6 +274,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateFeatureResearchDiscoveryCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.DiscoveryId = request.DiscoveryId;
         command.Title = request.Title;
@@ -274,6 +293,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeatureResearchDiscoveryCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.DiscoveryId = request.DiscoveryId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -286,6 +306,7 @@ public sealed class FeaturesController(
         [FromServices] AddFeaturePlanCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Title = request.Title;
         command.Content = request.Content;
@@ -302,6 +323,7 @@ public sealed class FeaturesController(
         [FromServices] UpdateCurrentFeaturePlanCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Title = request.Title;
         command.Content = request.Content;
@@ -316,6 +338,7 @@ public sealed class FeaturesController(
         [FromServices] ChangeCurrentFeaturePlanCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.PlanId = request.PlanId;
         return Ok((FeatureCommandResult)await Execute(command));
@@ -328,6 +351,7 @@ public sealed class FeaturesController(
         [FromServices] RemoveFeaturePlanCommand command
     )
     {
+        command.UseUserOrigin();
         command.FeatureId = featureId;
         command.PlanId = request.PlanId;
         return Ok((FeatureCommandResult)await Execute(command));

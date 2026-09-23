@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -21,6 +22,32 @@ TURN_ID = "019fb72e-e3c3-7093-a89d-050d309ca4ac"
 
 
 class WriteToolUseTests(unittest.TestCase):
+    def test_feature_mutations_receive_session_context_through_configured_matcher(self):
+        hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
+        matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
+        source = (SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs").read_text(encoding="utf-8")
+        mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
+        self.assertEqual(19, len(mutations))
+        self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
+        for tool in mutations:
+            with self.subTest(tool=tool):
+                event = {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "mcp__mcp_knowledge_base__" + tool,
+                    "session_id": SESSION_ID,
+                    "tool_input": {"featureId": "feature-id", "sessionId": "stale"},
+                }
+                self.assertIsNotNone(re.search(matcher, event["tool_name"]))
+                result = write_tool_use.process_hook(event)["hookSpecificOutput"]
+                self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
+                self.assertEqual("feature-id", result["updatedInput"]["featureId"])
+                self.assertEqual("stale", event["tool_input"]["sessionId"])
+        for tool in ("feature_get", "feature_list", "feature_plan_get", "feature_record_list", "feature_research_discovery_search"):
+            with self.subTest(read=tool):
+                name = "mcp__mcp_knowledge_base__" + tool
+                self.assertIsNone(re.search(matcher, name))
+                self.assertIsNone(write_tool_use.process_hook({"hook_event_name": "PreToolUse", "tool_name": name}))
+
     def test_tool_use_hook_url_uses_knowledge_base_override(self):
         with mock.patch.dict(
             write_tool_use.os.environ,

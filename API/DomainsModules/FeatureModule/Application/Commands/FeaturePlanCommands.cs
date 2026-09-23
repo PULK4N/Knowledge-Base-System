@@ -28,16 +28,20 @@ public sealed class AddFeaturePlanCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         var planId = FeaturePlanId.New();
 
         await ExecuteEvent(
             executor,
-            new FeaturePlanAddedV1(
+            new FeaturePlanAddedV2(
                 planId,
                 Title,
                 Content,
-                ContentType
-            )
+                ContentType,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return FeaturePlanCreatedCommandResult.Ok(planId.Value);
@@ -62,15 +66,22 @@ public sealed class UpdateCurrentFeaturePlanCommand(
             && Enum.IsDefined(ContentType)
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new CurrentFeaturePlanUpdatedV1(
+            new CurrentFeaturePlanUpdatedV2(
                 Title,
                 Content,
-                ContentType
-            )
+                ContentType,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class ChangeCurrentFeaturePlanCommand(
@@ -85,13 +96,20 @@ public sealed class ChangeCurrentFeaturePlanCommand(
             && PlanId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new CurrentFeaturePlanChangedV1(
-                FeaturePlanId.FromDatabaseGuid(PlanId)
-            )
+            new CurrentFeaturePlanChangedV2(
+                FeaturePlanId.FromDatabaseGuid(PlanId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveFeaturePlanCommand(
@@ -106,11 +124,18 @@ public sealed class RemoveFeaturePlanCommand(
             && PlanId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeaturePlanRemovedV1(
-                FeaturePlanId.FromDatabaseGuid(PlanId)
-            )
+            new FeaturePlanRemovedV2(
+                FeaturePlanId.FromDatabaseGuid(PlanId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

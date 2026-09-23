@@ -113,3 +113,14 @@ public sealed record FeaturePlanRequest
 {
     public required Guid PlanId { get; init; }
 }
+
+public sealed record AddFeatureRequest
+{
+    public required Guid ProjectId { get; init; }
+
+    public required string Name { get; init; }
+
+    public required string Summary { get; init; }
+
+    public required string Status { get; init; }
+}

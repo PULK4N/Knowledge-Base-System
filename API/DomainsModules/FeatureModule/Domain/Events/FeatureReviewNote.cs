@@ -77,3 +77,98 @@ public readonly record struct FeatureReviewNoteRemovedV1(
         return state;
     }
 }
+
+public readonly record struct FeatureReviewNoteRemovedV2(
+    FeatureReviewNoteId ReviewNoteId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureReviewNoteRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var reviewNoteId = ReviewNoteId;
+        var reviewNote = state.ReviewNotes.Single(
+            item => item.Id == reviewNoteId
+        );
+        state.ReviewNotes.Remove(reviewNote);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureReviewNoteAddedV2(
+    FeatureReviewNoteId ReviewNoteId,
+    string Title,
+    string Content,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureReviewNoteAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.ReviewNotes.Add(
+            new Models.FeatureReviewNote
+            {
+                Id = ReviewNoteId,
+                Title = Title,
+                Content = Content,
+                CreatedAt = eventExecutionInfo.Timestamp,
+                UpdatedAt = eventExecutionInfo.Timestamp
+            }
+        );
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeatureReviewNoteUpdatedV2(
+    FeatureReviewNoteId ReviewNoteId,
+    string Title,
+    string Content,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeatureReviewNoteUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var reviewNoteId = ReviewNoteId;
+        var reviewNote = state.ReviewNotes.Single(
+            item => item.Id == reviewNoteId
+        );
+        reviewNote.Title = Title;
+        reviewNote.Content = Content;
+        reviewNote.UpdatedAt = eventExecutionInfo.Timestamp;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

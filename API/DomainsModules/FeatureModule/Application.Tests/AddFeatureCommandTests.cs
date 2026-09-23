@@ -40,6 +40,7 @@ public sealed class AddFeatureCommandTests
             Summary = "Trace implementation decisions.",
             Status = "Starting backend implementation."
         };
+        command.UseUserOrigin();
         var executor = new Executor
         {
             Id = EventExecutor.FromDatabaseGuid(
@@ -52,7 +53,7 @@ public sealed class AddFeatureCommandTests
         );
 
         var payload = Assert.Single(outbox.Written);
-        var created = Assert.IsType<FeatureAddedV1>(payload.EventData);
+        var created = Assert.IsType<FeatureAddedV2>(payload.EventData);
         Assert.Equal("OK", result.Status);
         Assert.NotEqual(Guid.Empty, result.FeatureId);
         Assert.Equal(

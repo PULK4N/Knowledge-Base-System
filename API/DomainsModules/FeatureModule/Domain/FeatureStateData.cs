@@ -7,6 +7,8 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
 {
     public AggregateId Id { get; init; } = id;
 
+    public List<MemoryHistoryRecord> MemoryHistory { get; set; } = [];
+
     public bool IsDeleted { get; set; }
 
     public AggregateId ProjectId { get; set; }

@@ -105,3 +105,127 @@ public readonly record struct FeaturePlanRemovedV1(
         return state;
     }
 }
+
+public readonly record struct CurrentFeaturePlanUpdatedV2(
+    string Title,
+    string Content,
+    FeaturePlanContentType ContentType,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ICurrentFeaturePlanUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var plan = state.Plans.Single(
+            item => item.Id == state.CurrentPlanId!.Value
+        );
+        plan.Title = Title;
+        plan.Content = Content;
+        plan.ContentType = ContentType;
+        plan.UpdatedAt = eventExecutionInfo.Timestamp;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct CurrentFeaturePlanChangedV2(
+    FeaturePlanId PlanId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ICurrentFeaturePlanChanged
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.CurrentPlanId = PlanId;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeaturePlanRemovedV2(
+    FeaturePlanId PlanId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeaturePlanRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        var planId = PlanId;
+        var plan = state.Plans.Single(item => item.Id == planId);
+        state.Plans.Remove(plan);
+
+        if (state.CurrentPlanId == PlanId)
+            state.CurrentPlanId = null;
+
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct FeaturePlanAddedV2(
+    FeaturePlanId PlanId,
+    string Title,
+    string Content,
+    FeaturePlanContentType ContentType,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IFeaturePlanAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var state = (FeatureStateData)stateData;
+        state.Plans.Add(
+            new Models.FeaturePlan
+            {
+                Id = PlanId,
+                Title = Title,
+                Content = Content,
+                ContentType = ContentType,
+                CreatedAt = eventExecutionInfo.Timestamp,
+                UpdatedAt = eventExecutionInfo.Timestamp
+            }
+        );
+        state.CurrentPlanId = PlanId;
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

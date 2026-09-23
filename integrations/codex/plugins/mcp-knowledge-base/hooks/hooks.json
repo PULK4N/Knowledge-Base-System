@@ -48,13 +48,13 @@
     ],
     "PreToolUse": [
       {
-        "matcher": ".*skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))$",
+        "matcher": "(?:.*skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))$|.*(?:feature_add|feature_remove|feature_status_update|feature_summary_update|feature_skill_add|feature_skill_remove|feature_record_add|feature_record_update|feature_record_remove|feature_review_note_add|feature_review_note_update|feature_review_note_remove|feature_research_discovery_add|feature_research_discovery_update|feature_research_discovery_remove|feature_plan_add|feature_plan_current_update|feature_plan_current_change|feature_plan_remove)$)",
         "hooks": [
           {
             "type": "command",
             "command": "python \"${PLUGIN_ROOT}/hooks/write_tool_use.py\"",
             "timeout": 5,
-            "statusMessage": "Adding session context to skill change"
+            "statusMessage": "Adding session context to skill or feature change"
           }
         ]
       }

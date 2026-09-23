@@ -17,13 +17,20 @@ public sealed class AddFeatureSkillCommand(
             && SkillId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureSkillAddedV1(
-                AggregateId.FromDatabaseGuid(SkillId)
-            )
+            new FeatureSkillAddedV2(
+                AggregateId.FromDatabaseGuid(SkillId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveFeatureSkillCommand(
@@ -38,11 +45,18 @@ public sealed class RemoveFeatureSkillCommand(
             && SkillId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteEvent(
             executor,
-            new FeatureSkillRemovedV1(
-                AggregateId.FromDatabaseGuid(SkillId)
-            )
+            new FeatureSkillRemovedV2(
+                AggregateId.FromDatabaseGuid(SkillId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
