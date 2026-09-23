@@ -95,6 +95,49 @@ class WriteToolUseTests(unittest.TestCase):
             turn_id = self.queued_payloads(data)[0]["turn_id"]
             self.assertEqual(turn_id, str(uuid.UUID(turn_id)))
 
+    def test_pre_tool_use_adds_the_session_to_every_skill_mutation(self):
+        for tool in write_tool_use.SKILL_MUTATION_TOOLS:
+            with self.subTest(tool=tool):
+                event = self.event(
+                    "PreToolUse",
+                    tool_name=f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}",
+                    tool_input={"name": "example", "sessionId": "model-supplied"},
+                )
+                original = json.loads(json.dumps(event))
+
+                output = write_tool_use.process_hook(event)
+
+                self.assertEqual(
+                    {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "updatedInput": {
+                                "name": "example",
+                                "sessionId": SESSION_ID,
+                            },
+                        }
+                    },
+                    output,
+                )
+                self.assertEqual(original, event)
+
+    def test_pre_tool_use_rejects_invalid_context(self):
+        for values in ({"session_id": "invalid"}, {"tool_input": None}):
+            with self.subTest(values=values):
+                event = self.event(
+                    "PreToolUse", tool_name="skill_add", tool_input={}
+                )
+                event.update(values)
+                with self.assertRaises(write_memory.MemoryHookError):
+                    write_tool_use.process_hook(event)
+
+    def test_pre_tool_use_ignores_other_tools(self):
+        for tool in ("skill_get", "skill_reference_get", "Bash"):
+            with self.subTest(tool=tool):
+                self.assertIsNone(write_tool_use.process_hook(
+                    self.event("PreToolUse", tool_name=tool, tool_input={})
+                ))
+
     def test_other_events_are_ignored(self):
         with tempfile.TemporaryDirectory() as data:
             queue, turns = self.storage(data)

@@ -24,6 +24,21 @@ from write_memory import (
 )
 
 
+SKILL_MUTATION_TOOLS = frozenset(
+    {
+        "skill_add",
+        "skill_update",
+        "skill_delete",
+        "skill_reference_add",
+        "skill_reference_update",
+        "skill_reference_auto_load_update",
+        "skill_reference_delete",
+        "skill_attachment_add",
+        "skill_attachment_delete",
+    }
+)
+
+
 def process_hook(
     event: dict[str, Any],
     *,
@@ -31,7 +46,10 @@ def process_hook(
     turns: TurnRegistry | None = None,
     worker_starter: Callable[[], None] | None = None,
 ) -> dict[str, Any] | None:
-    if str(event.get("hook_event_name", "")) != "PostToolUse":
+    event_name = str(event.get("hook_event_name", ""))
+    if event_name == "PreToolUse":
+        return _inject_skill_session(event)
+    if event_name != "PostToolUse":
         return None
 
     session_id = _required_guid(event, "session_id")
@@ -43,6 +61,30 @@ def process_hook(
     tool_queue.enqueue({**event, "turn_id": turn_id})
     (worker_starter or _start_worker)()
     return _backlog_warning(previous_failure)
+
+
+def _inject_skill_session(event: dict[str, Any]) -> dict[str, Any] | None:
+    """Adds the Claude session to a skill change so the API can link it to memory.
+
+    ``permissionDecision`` is left out on purpose: Claude Code applies
+    ``updatedInput`` on its own, so the user's normal permission rules still
+    decide whether the skill change may run.
+    """
+    tool_name = str(event.get("tool_name", "")).rsplit("__", 1)[-1]
+    if tool_name not in SKILL_MUTATION_TOOLS:
+        return None
+
+    session_id = _required_guid(event, "session_id")
+    tool_input = event.get("tool_input")
+    if not isinstance(tool_input, dict):
+        raise MemoryHookError("Claude PreToolUse input did not include tool_input.")
+
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "updatedInput": {**tool_input, "sessionId": session_id},
+        }
+    }
 
 
 def _start_worker() -> None:
