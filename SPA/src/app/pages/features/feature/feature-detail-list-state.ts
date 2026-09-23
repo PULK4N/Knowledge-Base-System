@@ -22,7 +22,8 @@ export type FeatureTab =
   | 'plans'
   | 'research'
   | 'conversations'
-  | 'review-notes';
+  | 'review-notes'
+  | 'history';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
 export type FeatureResearchSort =
@@ -61,6 +62,7 @@ const FEATURE_TABS: readonly FeatureTab[] = [
   'research',
   'conversations',
   'review-notes',
+  'history',
 ];
 const SORT_DIRECTIONS: readonly ListSortDirection[] = [
   'Ascending',

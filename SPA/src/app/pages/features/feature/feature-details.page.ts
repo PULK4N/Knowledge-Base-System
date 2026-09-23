@@ -47,6 +47,7 @@ import {
   selectFeatureResearch,
   selectFeatureReviewNotes,
 } from './feature-detail-list-state';
+import { toFeatureHistory } from './feature-history';
 
 const PLAN_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'All', label: 'All content types' },
@@ -346,12 +347,14 @@ export class FeatureDetailsPage {
                 vm.state.data.reviewNotes,
                 vm.listState.reviewNotes,
               ),
+              history: toFeatureHistory(vm.state.data.memoryHistory),
             }
           : {
               plans: [],
               research: [],
               conversations: [],
               reviewNotes: [],
+              history: [],
             },
     })),
     shareReplay({ bufferSize: 1, refCount: true }),

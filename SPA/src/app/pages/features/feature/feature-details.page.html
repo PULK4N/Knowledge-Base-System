@@ -73,6 +73,16 @@
         >
           Review notes <span>{{ vm.state.data.reviewNotes.length }}</span>
         </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'history' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'history'"
+          [class.active]="vm.listState.activeTab === 'history'"
+        >
+          History <span>{{ vm.collections.history.length }}</span>
+        </a>
       </nav>
 
       @if (vm.listState.activeTab === 'overview') {
@@ -1016,6 +1026,40 @@
             </div>
           }
         </div>
+        </section>
+      }
+
+      @if (vm.listState.activeTab === 'history') {
+        <section class="section-card surface-card tab-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Changes by chat or web app</span>
+              <h2>History</h2>
+            </div>
+          </div>
+
+          <div class="history-list">
+            @for (item of vm.collections.history; track item.key) {
+              <article class="history-item">
+                <span class="history-icon" aria-hidden="true">↻</span>
+                <div>
+                  <h3>{{ item.action }}</h3>
+                  <p>{{ item.timestamp | date: 'medium' }}</p>
+                </div>
+                @if (item.memoryId; as memoryId) {
+                  <a class="history-source" [routerLink]="['/memories', memoryId]">
+                    Open chat <span aria-hidden="true">→</span>
+                  </a>
+                } @else {
+                  <span class="history-source muted">Web app</span>
+                }
+              </article>
+            } @empty {
+              <div class="empty-section">
+                No changes have been linked to a chat or the web app yet.
+              </div>
+            }
+          </div>
         </section>
       }
 

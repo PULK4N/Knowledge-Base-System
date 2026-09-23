@@ -50,6 +50,20 @@ const feature: Feature = {
     },
   ],
   plans: [],
+  memoryHistory: [
+    {
+      eventName: 'FeatureAddedV2',
+      timestamp: '2026-08-20T09:00:00Z',
+      memoryId: 'memory-1',
+      isUserOriginated: false,
+    },
+    {
+      eventName: 'FeatureSummaryUpdatedV2',
+      timestamp: '2026-08-21T09:00:00Z',
+      memoryId: 'user-memory',
+      isUserOriginated: true,
+    },
+  ],
 };
 
 const featureWithPlans: Feature = {
@@ -233,6 +247,28 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(element.querySelector('.summary-block .text-toggle')).toBeNull();
     expect(element.querySelector('.current-plan')).toBeNull();
     expect(element.textContent).not.toContain('Current plan');
+  });
+
+  it('lists the newest change first and links chat changes to their memory', async () => {
+    await harness.navigateByUrl(
+      '/features/feature-history?tab=history',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+
+    const element = harness.routeNativeElement as HTMLElement;
+    const items = Array.from(element.querySelectorAll('.history-item'));
+
+    expect(items.map(item => item.querySelector('h3')?.textContent)).toEqual([
+      'Summary updated',
+      'Feature added',
+    ]);
+    expect(items[0].querySelector('.history-source')?.textContent).toContain(
+      'Web app',
+    );
+    expect(
+      items[1].querySelector('a.history-source')?.getAttribute('href'),
+    ).toBe('/memories/memory-1');
   });
 
   it('shows related skills by name and falls back to a short ID', async () => {

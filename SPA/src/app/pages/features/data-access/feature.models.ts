@@ -54,6 +54,13 @@ export interface FeaturePlan {
   readonly updatedAt: string;
 }
 
+export interface FeatureMemoryHistoryEntry {
+  readonly eventName: string;
+  readonly timestamp: string;
+  readonly memoryId: string;
+  readonly isUserOriginated: boolean;
+}
+
 export interface Feature extends FeatureSummary {
   readonly isDeleted: boolean;
   readonly relatedSkillIds: readonly string[];
@@ -61,6 +68,7 @@ export interface Feature extends FeatureSummary {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
+  readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
 export interface FeatureSearchRequest {
@@ -100,6 +108,7 @@ export interface FeatureDto {
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
   readonly currentPlanId: string | null;
+  readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
 export interface AddFeatureRequest {

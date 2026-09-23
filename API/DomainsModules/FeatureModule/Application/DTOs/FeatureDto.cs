@@ -31,6 +31,9 @@ public sealed record FeatureDto
 
     public Guid? CurrentPlanId { get; init; }
 
+    public required IReadOnlyCollection<FeatureMemoryHistoryDto>
+        MemoryHistory { get; init; }
+
     public static FeatureDto FromStateData(FeatureStateData state) =>
         new()
         {
@@ -55,7 +58,10 @@ public sealed record FeatureDto
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),
-            CurrentPlanId = state.CurrentPlanId?.Value
+            CurrentPlanId = state.CurrentPlanId?.Value,
+            MemoryHistory = state.MemoryHistory
+                .Select(FeatureMemoryHistoryDto.FromModel)
+                .ToList()
         };
 }
 
@@ -164,4 +170,20 @@ public sealed record FeaturePlanDto
             CreatedAt = plan.CreatedAt,
             UpdatedAt = plan.UpdatedAt
         };
+}
+
+public sealed record FeatureMemoryHistoryDto(
+    string EventName,
+    DateTime Timestamp,
+    Guid MemoryId,
+    bool IsUserOriginated
+)
+{
+    public static FeatureMemoryHistoryDto FromModel(MemoryHistoryRecord record) =>
+        new(
+            record.EventName,
+            record.Timestamp,
+            record.AggregateId.Value,
+            record.AggregateId.Value == SharedModule.Constants.MemoryAggregateIds.User
+        );
 }

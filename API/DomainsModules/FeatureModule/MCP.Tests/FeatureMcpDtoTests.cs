@@ -30,7 +30,8 @@ public sealed class FeatureMcpDtoTests
             ReviewNotes = [ReviewNote("Intended behaviour", now)],
             ResearchDiscoveries = discoveries,
             Plans = [currentPlan, otherPlan],
-            CurrentPlanId = currentPlan.Id
+            CurrentPlanId = currentPlan.Id,
+            MemoryHistory = []
         };
 
         var result = FeatureMcpDto.FromFeature(feature);

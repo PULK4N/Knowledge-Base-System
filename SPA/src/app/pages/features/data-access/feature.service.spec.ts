@@ -56,6 +56,7 @@ const feature: FeatureDto = {
     },
   ],
   currentPlanId: 'plan-1',
+  memoryHistory: [],
 };
 
 describe('FeatureService', () => {
