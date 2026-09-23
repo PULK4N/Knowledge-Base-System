@@ -10,17 +10,26 @@ public sealed class EventFamilyInterfaceTests
     [
         typeof(SkillCreatedV1),
         typeof(SkillCreatedV2),
+        typeof(SkillCreatedV3),
         typeof(SkillUpdatedV1),
         typeof(SkillDetailsUpdatedV1),
+        typeof(SkillDetailsUpdatedV2),
         typeof(SkillDeletedV1),
+        typeof(SkillDeletedV2),
         typeof(SkillReferenceAddedV1),
         typeof(SkillReferenceAddedV2),
+        typeof(SkillReferenceAddedV3),
         typeof(SkillReferenceUpdatedV1),
         typeof(SkillReferenceUpdatedV2),
+        typeof(SkillReferenceUpdatedV3),
         typeof(SkillReferenceAutoLoadUpdatedV1),
+        typeof(SkillReferenceAutoLoadUpdatedV2),
         typeof(SkillReferenceDeletedV1),
+        typeof(SkillReferenceDeletedV2),
         typeof(SkillAttachmentAddedV1),
-        typeof(SkillAttachmentDeletedV1)
+        typeof(SkillAttachmentAddedV2),
+        typeof(SkillAttachmentDeletedV1),
+        typeof(SkillAttachmentDeletedV2)
     ];
 
     [Fact]

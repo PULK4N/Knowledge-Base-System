@@ -12,9 +12,17 @@ public sealed class DeleteSkillReferenceCommand(StateMachineHandler stateMachine
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(RelativePath));
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+        return await ExecuteEvent(
             executor,
-            new SkillReferenceDeletedV1(RelativePath)
+            new SkillReferenceDeletedV2(
+                RelativePath,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

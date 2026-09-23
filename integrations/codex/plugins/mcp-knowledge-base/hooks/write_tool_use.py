@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,6 +26,19 @@ from write_memory import (
 DEFAULT_TOOL_USE_HOOK_URL = (
     "http://localhost:5231/api/memory/codex/tool-calls"
 )
+SKILL_MUTATION_TOOLS = frozenset(
+    {
+        "skill_add",
+        "skill_update",
+        "skill_delete",
+        "skill_reference_add",
+        "skill_reference_update",
+        "skill_reference_auto_load_update",
+        "skill_reference_delete",
+        "skill_attachment_add",
+        "skill_attachment_delete",
+    }
+)
 
 
 def process_hook(
@@ -33,7 +47,10 @@ def process_hook(
     queue: MemoryHookQueue | None = None,
     worker_starter: Callable[[], None] | None = None,
 ) -> dict[str, Any] | None:
-    if str(event.get("hook_event_name", "")) != "PostToolUse":
+    event_name = str(event.get("hook_event_name", ""))
+    if event_name == "PreToolUse":
+        return _inject_skill_session(event)
+    if event_name != "PostToolUse":
         return None
 
     _required_guid(event, "session_id")
@@ -44,6 +61,48 @@ def process_hook(
     tool_queue.enqueue(event)
     (worker_starter or _start_worker)()
     return _backlog_warning(previous_failure)
+
+
+def _inject_skill_session(event: dict[str, Any]) -> dict[str, Any] | None:
+    tool_name = str(event.get("tool_name", "")).rsplit("__", 1)[-1]
+    if tool_name not in SKILL_MUTATION_TOOLS:
+        return None
+
+    session_id = _required_guid(event, "session_id")
+    tool_input = event.get("tool_input")
+    if not isinstance(tool_input, dict):
+        raise MemoryHookError("Codex PreToolUse input did not include tool_input.")
+
+    updated_input = dict(tool_input)
+    updated_input["sessionId"] = session_id
+
+    payload = event.get("payload")
+    for container in (event, payload, tool_input):
+        if not isinstance(container, dict):
+            continue
+        memory_aggregate_id = container.get(
+            "memoryAggregateId",
+            container.get("memory_aggregate_id"),
+        )
+        if memory_aggregate_id is None:
+            continue
+        try:
+            updated_input["memoryAggregateId"] = str(
+                uuid.UUID(str(memory_aggregate_id))
+            )
+        except ValueError as error:
+            raise MemoryHookError(
+                "Codex PreToolUse included an invalid memory aggregate ID."
+            ) from error
+        break
+
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": updated_input,
+        }
+    }
 
 
 def _start_worker() -> None:

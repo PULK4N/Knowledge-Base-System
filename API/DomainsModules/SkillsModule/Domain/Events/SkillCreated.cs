@@ -18,7 +18,6 @@ public readonly record struct SkillCreatedV1(
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;
-
         state.IsDeleted = false;
         state.Name = Name;
         state.Description = Description;
@@ -44,7 +43,6 @@ public readonly record struct SkillCreatedV2(
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (SkillStateData)stateData;
-
         state.IsDeleted = false;
         state.Name = Name;
         state.Description = Description;
@@ -55,6 +53,41 @@ public readonly record struct SkillCreatedV2(
             reference => reference.Value,
             StringComparer.Ordinal
         );
+        return state;
+    }
+}
+
+public readonly record struct SkillCreatedV3(
+    string Name,
+    string Description,
+    string Content,
+    ImmutableArray<string> Tags,
+    ImmutableDictionary<string, SkillReference2> References,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ISkillCreated
+{
+    public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
+    {
+        var state = (SkillStateData)stateData;
+        state.IsDeleted = false;
+        state.Name = Name;
+        state.Description = Description;
+        state.Content = Content;
+        state.Tags = Tags.ToList();
+        state.References = References.ToDictionary(
+            reference => reference.Key,
+            reference => reference.Value,
+            StringComparer.Ordinal
+        );
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+
         return state;
     }
 }

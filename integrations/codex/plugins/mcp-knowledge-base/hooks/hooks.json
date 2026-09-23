@@ -46,6 +46,19 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": ".*skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/write_tool_use.py\"",
+            "timeout": 5,
+            "statusMessage": "Adding session context to skill change"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [

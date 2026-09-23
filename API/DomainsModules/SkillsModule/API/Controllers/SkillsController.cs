@@ -57,9 +57,16 @@ public sealed class SkillsController(
 
     [HttpPost]
     public async Task<ActionResult<SkillCreatedCommandResult>> Add(
-        [FromBody] AddSkillCommand command
+        [FromBody] AddSkillCommand body,
+        [FromServices] AddSkillCommand command
     )
     {
+        command.Name = body.Name;
+        command.Description = body.Description;
+        command.Content = body.Content;
+        command.Tags = body.Tags;
+        command.References = body.References;
+        command.UseUserOrigin();
         var result = (SkillCreatedCommandResult)await Execute(command);
 
         return CreatedAtAction(
@@ -89,6 +96,7 @@ public sealed class SkillsController(
             command.SkillId = skillId;
             command.Attachment = attachment;
             command.Bytes = bytes;
+            command.UseUserOrigin();
 
             await command.Execute(executor);
         }
@@ -117,6 +125,7 @@ public sealed class SkillsController(
         command.Description = body.Description;
         command.Content = body.Content;
         command.Tags = body.Tags;
+        command.UseUserOrigin();
 
         return Ok((SkillCommandResult)await Execute(command));
     }
@@ -124,10 +133,12 @@ public sealed class SkillsController(
     [HttpPost("{skillId:guid}/delete")]
     public async Task<ActionResult<SkillCommandResult>> Delete(
         Guid skillId,
+        [FromQuery] Guid? sessionId,
         [FromServices] DeleteSkillCommand command
     )
     {
         command.SkillId = skillId;
+        command.UseUserOrigin();
 
         return Ok((SkillCommandResult)await Execute(command));
     }
@@ -143,6 +154,7 @@ public sealed class SkillsController(
         command.RelativePath = body.RelativePath;
         command.Content = body.Content;
         command.LoadAutomatically = body.LoadAutomatically;
+        command.UseUserOrigin();
 
         var result = (SkillCommandResult)await Execute(command);
 
@@ -159,6 +171,7 @@ public sealed class SkillsController(
         command.SkillId = skillId;
         command.RelativePath = body.RelativePath;
         command.LoadAutomatically = body.LoadAutomatically;
+        command.UseUserOrigin();
 
         return Ok((SkillCommandResult)await Execute(command));
     }
@@ -174,6 +187,7 @@ public sealed class SkillsController(
         command.RelativePath = body.RelativePath;
         command.Content = body.Content;
         command.LoadAutomatically = body.LoadAutomatically;
+        command.UseUserOrigin();
 
         return Ok((SkillCommandResult)await Execute(command));
     }
@@ -187,6 +201,24 @@ public sealed class SkillsController(
     {
         command.SkillId = skillId;
         command.RelativePath = body.RelativePath;
+        command.UseUserOrigin();
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{skillId:guid}/attachments/{attachmentId:guid}/delete")]
+    public async Task<ActionResult<SkillCommandResult>> DeleteAttachment(
+        Guid skillId,
+        Guid attachmentId,
+        [FromQuery] Guid? sessionId,
+        [FromServices] DeleteSkillAttachmentCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.AttachmentId = SkillsModule.Domain.Models.FileId.FromDatabaseGuid(
+            attachmentId
+        );
+        command.UseUserOrigin();
 
         return Ok((SkillCommandResult)await Execute(command));
     }

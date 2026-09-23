@@ -67,6 +67,8 @@ public sealed class SkillMcpFunctionsTests
                 .GetProperty("properties");
 
             Assert.False(properties.TryGetProperty("services", out _));
+            Assert.False(properties.TryGetProperty("sessionId", out _));
+            Assert.False(properties.TryGetProperty("memoryAggregateId", out _));
 
             var tool = McpServerTool.Create(function);
 

@@ -21,6 +21,7 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(CodexMemoryMigratedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV2));
+        EventTypeContainer.AddEventType(typeof(MemoryRelationAddedV1));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
@@ -40,7 +41,8 @@ public sealed class MemoryStateMachineDefinitionTests
                 nameof(CodexToolCallRecordedV1),
                 nameof(ClaudePromptHookRecordedV1),
                 nameof(ClaudeToolCallRecordedV1),
-                nameof(CodexMemoryMigratedV1)
+                nameof(CodexMemoryMigratedV1),
+                nameof(MemoryRelationAddedV1)
             ],
             definition.InitializationEvents
         );

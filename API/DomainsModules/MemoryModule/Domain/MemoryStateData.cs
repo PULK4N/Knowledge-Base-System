@@ -14,6 +14,7 @@ public sealed class MemoryStateData(AggregateId id) : ISharedStateData
     public ChatSummary ChatSummary { get; set; } = new();
 
     public HashSet<MemoryRelatedEntity> RelatedEntities { get; set; } = [];
+    public List<MemoryRelation> Relations { get; set; } = [];
 
     [JsonIgnore]
     public bool HasSummary =>

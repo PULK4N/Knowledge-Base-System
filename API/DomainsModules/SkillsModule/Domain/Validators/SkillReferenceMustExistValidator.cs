@@ -15,6 +15,9 @@ public sealed class SkillReferenceMustExistValidator : IPreEventValidator
             SkillReferenceAutoLoadUpdatedV1 eventData =>
                 eventData.RelativePath,
             SkillReferenceDeletedV1 eventData => eventData.RelativePath,
+            SkillReferenceUpdatedV3 eventData => eventData.RelativePath,
+            SkillReferenceAutoLoadUpdatedV2 eventData => eventData.RelativePath,
+            SkillReferenceDeletedV2 eventData => eventData.RelativePath,
             _ => null
         };
 

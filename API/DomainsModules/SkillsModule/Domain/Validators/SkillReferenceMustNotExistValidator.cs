@@ -12,6 +12,7 @@ public sealed class SkillReferenceMustNotExistValidator : IPreEventValidator
         {
             SkillReferenceAddedV1 eventData => eventData.RelativePath,
             SkillReferenceAddedV2 eventData => eventData.RelativePath,
+            SkillReferenceAddedV3 eventData => eventData.RelativePath,
             _ => null
         };
 

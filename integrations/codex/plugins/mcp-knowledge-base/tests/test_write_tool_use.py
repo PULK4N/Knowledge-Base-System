@@ -118,6 +118,60 @@ class WriteToolUseTests(unittest.TestCase):
                     self.assertEqual([], list(queue._root.glob("*.json")))
                     self.assertIsNone(queue.last_failure())
 
+    def test_pre_tool_use_injects_context_for_every_skill_mutation(self):
+        memory_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+        for tool in write_tool_use.SKILL_MUTATION_TOOLS:
+            for source in ("event", "payload", "tool_input"):
+                for key in ("memoryAggregateId", "memory_aggregate_id"):
+                    with self.subTest(tool=tool, source=source, key=key):
+                        event = self.event(
+                            hook_event_name="PreToolUse",
+                            tool_name=f"mcp__mcp_knowledge_base__{tool}",
+                            tool_input={"name": "example", "sessionId": TURN_ID},
+                            payload={},
+                        )
+                        container = event if source == "event" else event[source]
+                        container[key] = memory_id.upper()
+                        original = json.loads(json.dumps(event))
+
+                        result = write_tool_use.process_hook(event)["hookSpecificOutput"]
+
+                        self.assertEqual("PreToolUse", result["hookEventName"])
+                        self.assertEqual("allow", result["permissionDecision"])
+                        self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
+                        self.assertEqual(memory_id, result["updatedInput"]["memoryAggregateId"])
+                        self.assertEqual("example", result["updatedInput"]["name"])
+                        self.assertEqual(original, event)
+
+    def test_pre_tool_use_without_memory_id_leaves_resolution_to_server(self):
+        result = write_tool_use.process_hook(self.event(
+            hook_event_name="PreToolUse", tool_name="skill_add", tool_input={}
+        ))
+        self.assertEqual(
+            {"sessionId": SESSION_ID}, result["hookSpecificOutput"]["updatedInput"]
+        )
+
+    def test_pre_tool_use_rejects_invalid_context(self):
+        for values in (
+            {"memoryAggregateId": "invalid"},
+            {"session_id": "invalid"},
+            {"tool_input": None},
+        ):
+            with self.subTest(values=values):
+                event = self.event(
+                    hook_event_name="PreToolUse", tool_name="skill_add", tool_input={}
+                )
+                event.update(values)
+                with self.assertRaises(write_tool_use.MemoryHookError):
+                    write_tool_use.process_hook(event)
+
+    def test_pre_tool_use_ignores_non_mutations(self):
+        for tool in ("skill_get", "skill_reference_get", "Bash"):
+            with self.subTest(tool=tool):
+                self.assertIsNone(write_tool_use.process_hook(self.event(
+                    hook_event_name="PreToolUse", tool_name=tool, tool_input={}
+                )))
+
     def test_other_events_are_ignored(self):
         with tempfile.TemporaryDirectory() as data:
             queue = write_tool_use.MemoryHookQueue(Path(data))

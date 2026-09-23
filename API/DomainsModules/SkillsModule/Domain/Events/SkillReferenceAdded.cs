@@ -42,3 +42,29 @@ public readonly record struct SkillReferenceAddedV2(
         return state;
     }
 }
+
+public readonly record struct SkillReferenceAddedV3(
+    string RelativePath,
+    string Content,
+    bool LoadAutomatically,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ISkillReferenceAdded
+{
+    public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
+    {
+        var state = (SkillStateData)stateData;
+        state.References.Add(
+            RelativePath,
+            new SkillReference2(Content, LoadAutomatically)
+        );
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

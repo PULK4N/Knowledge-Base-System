@@ -1,6 +1,7 @@
 using EventSourcing.Shared.Models;
 using Shared.Interfaces;
 using SkillsModule.Domain.Events;
+using SkillsModule.Domain.Models;
 
 namespace SkillsModule.Domain.Validators;
 
@@ -12,20 +13,26 @@ public sealed class SkillAttachmentMustExistValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not SkillAttachmentDeletedV1 eventData)
+        FileId? attachmentId = payload.EventData switch
+        {
+            SkillAttachmentDeletedV1 eventData => eventData.AttachmentId,
+            SkillAttachmentDeletedV2 eventData => eventData.AttachmentId,
+            _ => null
+        };
+        if (attachmentId is null)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(SkillAttachmentMustExistValidator),
                 false,
                 $"{nameof(SkillAttachmentMustExistValidator)} can only validate "
-                    + $"{nameof(SkillAttachmentDeletedV1)} events."
+                    + $"{nameof(ISkillAttachmentDeleted)} events."
             );
         }
 
         var state = (SkillStateData)stateData;
         var attachmentExists = state.Attachments.ContainsKey(
-            eventData.AttachmentId
+            attachmentId.Value
         );
 
         return EventValidationResult.FromPayload(
@@ -34,7 +41,7 @@ public sealed class SkillAttachmentMustExistValidator
             attachmentExists,
             attachmentExists
                 ? null
-                : $"A skill attachment with ID '{eventData.AttachmentId}' does not exist."
+                : $"A skill attachment with ID '{attachmentId.Value}' does not exist."
         );
     }
 }

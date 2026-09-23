@@ -23,17 +23,21 @@ public sealed class AddSkillCommand(StateMachineHandler stateMachineHandler)
     )
     {
         var skillId = AggregateId.New();
+        var memoryAggregateId = await ResolveMemoryAggregateId();
 
         await ExecuteEvent(
             executor,
             skillId,
-            new SkillCreatedV2(
+            new SkillCreatedV3(
                 Name,
                 Description,
                 Content,
                 Tags.ToImmutableArray(),
-                References.ToImmutableDictionary(StringComparer.Ordinal)
-            )
+                References.ToImmutableDictionary(StringComparer.Ordinal),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return SkillCreatedCommandResult.Ok(skillId.Value);

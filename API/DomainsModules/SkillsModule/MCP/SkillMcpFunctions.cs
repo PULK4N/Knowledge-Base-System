@@ -33,17 +33,17 @@ public static class SkillMcpFunctions
             "Gets a skill by ID as joined Markdown text. References marked for automatic loading include their content; other references are listed by path. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Task<SkillCreatedCommandResult>>)Add,
+            (Func<IServiceProvider, string, string, string, List<string>?, Dictionary<string, SkillReference2>?, Guid?, Guid?, Task<SkillCreatedCommandResult>>)Add,
             "skill_add",
             "Creates a skill. References map relative file paths to content and whether they should load automatically."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, string, List<string>, Task<SkillCommandResult>>)Update,
+            (Func<IServiceProvider, Guid, string, string, string, List<string>, Guid?, Guid?, Task<SkillCommandResult>>)Update,
             "skill_update",
             "Replaces an existing skill's name, description, content, and tags."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Task<SkillCommandResult>>)Delete,
+            (Func<IServiceProvider, Guid, Guid?, Guid?, Task<SkillCommandResult>>)Delete,
             "skill_delete",
             "Deletes an existing skill."
         ),
@@ -53,32 +53,32 @@ public static class SkillMcpFunctions
             "Gets one skill reference as Markdown text by skill ID and exact relative path. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)AddReference,
+            (Func<IServiceProvider, Guid, string, string, bool, Guid?, Guid?, Task<SkillCommandResult>>)AddReference,
             "skill_reference_add",
             "Adds a text reference at a relative path. loadAutomatically defaults to false."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, bool, Task<SkillCommandResult>>)UpdateReference,
+            (Func<IServiceProvider, Guid, string, string, bool, Guid?, Guid?, Task<SkillCommandResult>>)UpdateReference,
             "skill_reference_update",
             "Updates an existing skill reference's text content and automatic-loading setting."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, bool, Task<SkillCommandResult>>)UpdateReferenceAutoLoad,
+            (Func<IServiceProvider, Guid, string, bool, Guid?, Guid?, Task<SkillCommandResult>>)UpdateReferenceAutoLoad,
             "skill_reference_auto_load_update",
             "Changes whether an existing skill reference loads automatically without changing its content."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, Task<SkillCommandResult>>)DeleteReference,
+            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<SkillCommandResult>>)DeleteReference,
             "skill_reference_delete",
             "Deletes an existing text reference from a skill."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, byte[], Task<SkillAttachmentAddedMcpResult>>)AddAttachment,
+            (Func<IServiceProvider, Guid, string, string, byte[], Guid?, Guid?, Task<SkillAttachmentAddedMcpResult>>)AddAttachment,
             "skill_attachment_add",
             "Adds a binary attachment to a skill. Content is supplied as base64-encoded bytes."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Task<SkillCommandResult>>)DeleteAttachment,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<SkillCommandResult>>)DeleteAttachment,
             "skill_attachment_delete",
             "Deletes an existing binary attachment from a skill."
         )
@@ -94,7 +94,14 @@ public static class SkillMcpFunctions
             new AIFunctionFactoryOptions
             {
                 Name = name,
-                Description = description
+                Description = description,
+                ConfigureParameterBinding = parameter =>
+                    parameter.Name is "sessionId" or "memoryAggregateId"
+                        ? new AIFunctionFactoryOptions.ParameterBindingOptions
+                        {
+                            ExcludeFromSchema = true
+                        }
+                        : default
             }
         );
 
@@ -174,7 +181,9 @@ public static class SkillMcpFunctions
         string description,
         string content,
         List<string>? tags = null,
-        Dictionary<string, SkillReference2>? references = null
+        Dictionary<string, SkillReference2>? references = null,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             AddSkillCommand,
@@ -197,6 +206,8 @@ public static class SkillMcpFunctions
                 ) ?? new Dictionary<string, SkillReference2>(
                     StringComparer.Ordinal
                 );
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -206,7 +217,9 @@ public static class SkillMcpFunctions
         string name,
         string description,
         string content,
-        List<string> tags
+        List<string> tags,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             UpdateSkillCommand,
@@ -220,19 +233,28 @@ public static class SkillMcpFunctions
                 command.Description = description;
                 command.Content = content;
                 command.Tags = tags;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<SkillCommandResult> Delete(
         IServiceProvider services,
-        Guid skillId
+        Guid skillId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             DeleteSkillCommand,
             SkillCommandResult
         >(
             services,
-            command => command.SkillId = skillId
+            command =>
+            {
+                command.SkillId = skillId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 
     private static async Task<string?> GetReference(
@@ -269,7 +291,9 @@ public static class SkillMcpFunctions
         Guid skillId,
         string relativePath,
         string content,
-        bool loadAutomatically = false
+        bool loadAutomatically = false,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             AddSkillReferenceCommand,
@@ -282,6 +306,8 @@ public static class SkillMcpFunctions
                 command.RelativePath = relativePath;
                 command.Content = content;
                 command.LoadAutomatically = loadAutomatically;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -290,7 +316,9 @@ public static class SkillMcpFunctions
         Guid skillId,
         string relativePath,
         string content,
-        bool loadAutomatically = false
+        bool loadAutomatically = false,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             UpdateSkillReferenceCommand,
@@ -303,13 +331,17 @@ public static class SkillMcpFunctions
                 command.RelativePath = relativePath;
                 command.Content = content;
                 command.LoadAutomatically = loadAutomatically;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<SkillCommandResult> DeleteReference(
         IServiceProvider services,
         Guid skillId,
-        string relativePath
+        string relativePath,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             DeleteSkillReferenceCommand,
@@ -320,6 +352,8 @@ public static class SkillMcpFunctions
             {
                 command.SkillId = skillId;
                 command.RelativePath = relativePath;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -327,7 +361,9 @@ public static class SkillMcpFunctions
         IServiceProvider services,
         Guid skillId,
         string relativePath,
-        bool loadAutomatically
+        bool loadAutomatically,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             UpdateSkillReferenceAutoLoadCommand,
@@ -339,6 +375,8 @@ public static class SkillMcpFunctions
                 command.SkillId = skillId;
                 command.RelativePath = relativePath;
                 command.LoadAutomatically = loadAutomatically;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -347,7 +385,9 @@ public static class SkillMcpFunctions
         Guid skillId,
         string name,
         string fileType,
-        byte[] content
+        byte[] content,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     )
     {
         var attachment = new Attachment
@@ -370,6 +410,8 @@ public static class SkillMcpFunctions
                 command.SkillId = skillId;
                 command.Attachment = attachment;
                 command.Bytes = content;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -382,7 +424,9 @@ public static class SkillMcpFunctions
     private static Task<SkillCommandResult> DeleteAttachment(
         IServiceProvider services,
         Guid skillId,
-        Guid attachmentId
+        Guid attachmentId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         SkillMcpActionExecutor.ExecuteCommand<
             DeleteSkillAttachmentCommand,
@@ -394,6 +438,8 @@ public static class SkillMcpFunctions
                 command.SkillId = skillId;
                 command.AttachmentId =
                     FileId.FromDatabaseGuid(attachmentId);
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 }

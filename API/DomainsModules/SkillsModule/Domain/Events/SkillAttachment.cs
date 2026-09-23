@@ -41,3 +41,45 @@ public readonly record struct SkillAttachmentDeletedV1(
         return state;
     }
 }
+
+public readonly record struct SkillAttachmentAddedV2(
+    Attachment Attachment,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ISkillAttachmentAdded
+{
+    public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
+    {
+        var state = (SkillStateData)stateData;
+        state.Attachments.TryAdd(Attachment.Id, Attachment);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}
+
+public readonly record struct SkillAttachmentDeletedV2(
+    FileId AttachmentId,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ISkillAttachmentDeleted
+{
+    public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
+    {
+        var state = (SkillStateData)stateData;
+        state.Attachments.Remove(AttachmentId);
+        state.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return state;
+    }
+}

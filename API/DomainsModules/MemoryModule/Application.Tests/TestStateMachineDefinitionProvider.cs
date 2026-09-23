@@ -19,7 +19,8 @@ internal sealed class TestStateMachineDefinitionProvider
                     nameof(CodexToolCallRecordedV1),
                     nameof(ClaudePromptHookRecordedV1),
                     nameof(ClaudeToolCallRecordedV1),
-                    nameof(CodexMemoryMigratedV1)
+                    nameof(CodexMemoryMigratedV1),
+                    nameof(MemoryRelationAddedV1)
                 ]
             },
             new StateMachineDefinition

@@ -16,15 +16,19 @@ public sealed class DeleteSkillAttachmentCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(AttachmentId.Value != Guid.Empty);
 
-    protected override async Task<object> ExecuteInternal(
-        Executor executor
-    )
+    protected override async Task<object> ExecuteInternal(Executor executor)
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         await attachmentContentStorage.Delete(AttachmentId);
 
         return await ExecuteEvent(
             executor,
-            new SkillAttachmentDeletedV1(AttachmentId)
+            new SkillAttachmentDeletedV2(
+                AttachmentId,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
     }
 }

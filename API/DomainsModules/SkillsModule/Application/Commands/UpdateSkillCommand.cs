@@ -16,14 +16,20 @@ public sealed class UpdateSkillCommand(StateMachineHandler stateMachineHandler)
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(Name));
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+        return await ExecuteEvent(
             executor,
-            new SkillDetailsUpdatedV1(
+            new SkillDetailsUpdatedV2(
                 Name,
                 Description,
                 Content,
-                Tags.ToImmutableArray()
-            )
+                Tags.ToImmutableArray(),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

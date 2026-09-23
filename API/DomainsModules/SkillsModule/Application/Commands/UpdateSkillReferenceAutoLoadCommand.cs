@@ -14,12 +14,18 @@ public sealed class UpdateSkillReferenceAutoLoadCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(RelativePath));
 
-    protected override Task<object> ExecuteInternal(Executor executor) =>
-        ExecuteEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+        return await ExecuteEvent(
             executor,
-            new SkillReferenceAutoLoadUpdatedV1(
+            new SkillReferenceAutoLoadUpdatedV2(
                 RelativePath,
-                LoadAutomatically
-            )
+                LoadAutomatically,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

@@ -6,6 +6,7 @@ initializationEvents:
   - ClaudePromptHookRecordedV1
   - ClaudeToolCallRecordedV1
   - CodexMemoryMigratedV1
+  - MemoryRelationAddedV1
 projections:
   - MemorySearchProjector
   - MemorySummaryProjector
@@ -20,3 +21,4 @@ events:
   CodexMemoryMigratedV1: {}
   ChatSummaryAddedV1: {}
   ChatSummaryAddedV2: {}
+  MemoryRelationAddedV1: {}

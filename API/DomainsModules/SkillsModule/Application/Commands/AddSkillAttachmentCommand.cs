@@ -20,15 +20,15 @@ public sealed class AddSkillAttachmentCommand(
             && Attachment.Size == Bytes.LongLength
         );
 
-    protected override async Task<object> ExecuteInternal(
-        Executor executor
-    )
+    protected override async Task<object> ExecuteInternal(Executor executor)
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
         await attachmentContentStorage.Save(Attachment, Bytes);
 
         return await ExecuteEvent(
             executor,
-            new SkillAttachmentAddedV1(Attachment)
+            new SkillAttachmentAddedV2(Attachment, SessionId, memoryAggregateId),
+            memoryAggregateId
         );
     }
 }
