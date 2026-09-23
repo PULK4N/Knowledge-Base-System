@@ -22,6 +22,7 @@ const skill: SkillDto = {
     },
   },
   attachments: {},
+  memoryHistory: [],
 };
 
 describe('SkillService', () => {

@@ -5,6 +5,7 @@ describe('parseSkillTab', () => {
     ['content', 'content'],
     ['references', 'references'],
     ['attachments', 'attachments'],
+    ['history', 'history'],
     [null, 'content'],
     ['unknown', 'content'],
   ] as const)('maps %s to %s', (value, expected) => {

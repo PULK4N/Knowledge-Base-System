@@ -162,13 +162,15 @@
 }
 
 .reference-list,
-.attachment-list {
+.attachment-list,
+.history-list {
   display: grid;
   gap: 16px;
 }
 
 .reference-item,
-.attachment-item {
+.attachment-item,
+.history-item {
   border: 1px solid #e0e4eb;
   border-radius: 10px;
   background: #fcfcfd;
@@ -246,6 +248,51 @@
 .attachment-item p {
   margin-top: 5px;
   color: var(--muted);
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.history-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--indigo);
+  background: #f0efff;
+  font-size: 20px;
+}
+
+.history-item h3,
+.history-item p {
+  margin: 0;
+}
+
+.history-item h3 {
+  font-size: 16px;
+}
+
+.history-item p {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.history-source {
+  color: var(--indigo);
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.history-source.muted {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .empty-tab {

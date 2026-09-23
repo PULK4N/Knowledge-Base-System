@@ -26,6 +26,11 @@ public sealed record SkillDto
         get;
         init;
     }
+    public required IReadOnlyCollection<SkillMemoryHistoryDto> MemoryHistory
+    {
+        get;
+        init;
+    }
 
     public static SkillDto FromStateData(
         SkillStateData stateData,
@@ -67,7 +72,10 @@ public sealed record SkillDto
                 attachment => AttachmentDto.FromModel(
                     attachment.Value
                 )
-            )
+            ),
+            MemoryHistory = stateData.MemoryHistory
+                .Select(SkillMemoryHistoryDto.FromModel)
+                .ToList()
         };
 }
 
@@ -97,5 +105,21 @@ public sealed record AttachmentDto(
             attachment.Size,
             attachment.FileType,
             attachment.Extension
+        );
+}
+
+public sealed record SkillMemoryHistoryDto(
+    string EventName,
+    DateTime Timestamp,
+    Guid MemoryId,
+    bool IsUserOriginated
+)
+{
+    public static SkillMemoryHistoryDto FromModel(MemoryHistoryRecord record) =>
+        new(
+            record.EventName,
+            record.Timestamp,
+            record.AggregateId.Value,
+            record.AggregateId.Value == SharedModule.Constants.MemoryAggregateIds.User
         );
 }

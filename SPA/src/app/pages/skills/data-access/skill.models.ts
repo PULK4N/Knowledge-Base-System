@@ -26,11 +26,19 @@ export interface SkillAttachment {
   readonly extension: string;
 }
 
+export interface SkillMemoryHistoryEntry {
+  readonly eventName: string;
+  readonly timestamp: string;
+  readonly memoryId: string;
+  readonly isUserOriginated: boolean;
+}
+
 export interface Skill extends SkillListItem {
   readonly isDeleted: boolean;
   readonly content: string;
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
+  readonly memoryHistory: readonly SkillMemoryHistoryEntry[];
 }
 
 export type SkillSearchSortField =
@@ -69,6 +77,7 @@ export interface SkillDto {
   readonly tags: readonly string[];
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
+  readonly memoryHistory: readonly SkillMemoryHistoryEntry[];
 }
 
 export interface UpdateSkillRequest {

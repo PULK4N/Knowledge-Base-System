@@ -17,6 +17,7 @@ const skill: Skill = {
     },
   },
   attachments: {},
+  memoryHistory: [],
 };
 
 describe('createSkillReferenceView', () => {

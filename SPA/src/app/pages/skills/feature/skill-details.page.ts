@@ -1,4 +1,9 @@
-import { AsyncPipe, DecimalPipe, KeyValuePipe } from '@angular/common';
+import {
+  AsyncPipe,
+  DatePipe,
+  DecimalPipe,
+  KeyValuePipe,
+} from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -21,17 +26,20 @@ import {
   parseMarkdownBlocks,
 } from '../ui/markdown-blocks';
 import { MarkdownContentComponent } from '../ui/markdown-content.component';
+import { SkillHistoryItem, toSkillHistory } from './skill-history';
 import { parseSkillTab } from './skill-tabs';
 
 interface SkillDetailsView {
   readonly skill: Skill;
   readonly blocks: readonly MarkdownBlock[];
+  readonly history: readonly SkillHistoryItem[];
 }
 
 @Component({
   selector: 'app-skill-details-page',
   imports: [
     AsyncPipe,
+    DatePipe,
     DecimalPipe,
     KeyValuePipe,
     MarkdownContentComponent,
@@ -62,6 +70,7 @@ export class SkillDetailsPage {
             data: {
               skill,
               blocks: parseMarkdownBlocks(skill.content),
+              history: toSkillHistory(skill.memoryHistory),
             },
           }) as const),
           startWith({ status: 'loading' } as const),

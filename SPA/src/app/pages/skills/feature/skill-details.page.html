@@ -80,6 +80,17 @@
           Attachments
           <span>{{ (vm.state.data.skill.attachments | keyvalue).length }}</span>
         </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'history' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.activeTab === 'history'"
+          [class.active]="vm.activeTab === 'history'"
+        >
+          History
+          <span>{{ vm.state.data.history.length }}</span>
+        </a>
       </div>
 
       <section class="tab-panel surface-card">
@@ -163,6 +174,30 @@
                 </article>
               } @empty {
                 <div class="empty-tab">This skill has no attachments.</div>
+              }
+            </div>
+          }
+          @case ('history') {
+            <div class="history-list">
+              @for (item of vm.state.data.history; track item.key) {
+                <article class="history-item">
+                  <span class="history-icon" aria-hidden="true">↻</span>
+                  <div>
+                    <h3>{{ item.action }}</h3>
+                    <p>{{ item.timestamp | date: 'medium' }}</p>
+                  </div>
+                  @if (item.memoryId; as memoryId) {
+                    <a class="history-source" [routerLink]="['/memories', memoryId]">
+                      Open chat <span aria-hidden="true">→</span>
+                    </a>
+                  } @else {
+                    <span class="history-source muted">Web app</span>
+                  }
+                </article>
+              } @empty {
+                <div class="empty-tab">
+                  No changes have been linked to a chat or the web app yet.
+                </div>
               }
             </div>
           }
