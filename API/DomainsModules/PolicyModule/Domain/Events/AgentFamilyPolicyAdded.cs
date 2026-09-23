@@ -25,3 +25,32 @@ public readonly record struct AgentFamilyPolicyAddedV1(
         return generalPolicies;
     }
 }
+
+public readonly record struct AgentFamilyPolicyAddedV2(
+    AgentFamilyName AgentFamilyName,
+    Policy Policy,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IAgentFamilyPolicyAdded
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.AgentFamilies[AgentFamilyName].Policies.Add(
+            Policy.PolicyId,
+            Policy
+        );
+
+        generalPolicies.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return generalPolicies;
+    }
+}

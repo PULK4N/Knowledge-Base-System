@@ -1,3 +1,9 @@
+using ActionModule.Shared;
+using ActionModule.Shared.Models;
+using PolicyModule.Application.Commands;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 using ModelContextProtocol.Server;
 
 namespace PolicyModule.MCP.Tests;
@@ -40,6 +46,55 @@ public sealed class PolicyMcpFunctionsTests
         "policy_agent_family_policy_remove"
     ];
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Mutation_binds_injected_context_even_when_hidden_from_schema(bool supplyMemoryId)
+    {
+        var command = new UpdateGeneralPolicyCommand(null!)
+        {
+            PolicyId = Guid.Empty,
+            Title = string.Empty, Description = string.Empty
+        };
+        using var services = new ServiceCollection()
+            .AddSingleton(command)
+            .AddSingleton<IExecutorProvider>(new UnavailableExecutorProvider())
+            .BuildServiceProvider();
+        var policyId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var memoryId = Guid.NewGuid();
+        var arguments = new AIFunctionArguments
+        {
+            Services = services,
+            ["policyId"] = JsonSerializer.SerializeToElement(policyId),
+            ["title"] = "Policy",
+            ["description"] = "Description",
+            ["sessionId"] = JsonSerializer.SerializeToElement(sessionId)
+        };
+        if (supplyMemoryId)
+            arguments["memoryAggregateId"] = JsonSerializer.SerializeToElement(memoryId);
+        var function = PolicyMcpFunctions.Create().Single(
+            function => function.Name == "policy_general_update"
+        );
+
+        await Assert.ThrowsAsync<ExecutorUnavailableException>(
+            () => function.InvokeAsync(arguments).AsTask()
+        );
+
+        Assert.Equal(policyId, command.PolicyId);
+        Assert.Equal("Policy", command.Title);
+        Assert.Equal("Description", command.Description);
+        Assert.Equal(sessionId, command.SessionId);
+        Assert.Equal(supplyMemoryId ? memoryId : Guid.Empty, command.MemoryAggregateId);
+    }
+
+    private sealed class ExecutorUnavailableException : Exception;
+
+    private sealed class UnavailableExecutorProvider : IExecutorProvider
+    {
+        public Task<Executor> GetExecutor() => throw new ExecutorUnavailableException();
+    }
+
     [Fact]
     public void Create_exposes_every_policy_action_as_an_mcp_compatible_function()
     {
@@ -56,6 +111,8 @@ public sealed class PolicyMcpFunctionsTests
                 .GetProperty("properties");
 
             Assert.False(properties.TryGetProperty("services", out _));
+            Assert.False(properties.TryGetProperty("sessionId", out _));
+            Assert.False(properties.TryGetProperty("memoryAggregateId", out _));
 
             var tool = McpServerTool.Create(function);
 

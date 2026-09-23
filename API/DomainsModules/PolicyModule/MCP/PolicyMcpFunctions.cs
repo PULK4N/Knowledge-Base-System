@@ -25,7 +25,14 @@ public static class PolicyMcpFunctions
             new AIFunctionFactoryOptions
             {
                 Name = name,
-                Description = description
+                Description = description,
+                ConfigureParameterBinding = parameter =>
+                    parameter.Name is "sessionId" or "memoryAggregateId"
+                        ? new AIFunctionFactoryOptions.ParameterBindingOptions
+                        {
+                            ExcludeFromSchema = true
+                        }
+                        : default
             }
         );
 }

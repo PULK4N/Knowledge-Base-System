@@ -22,6 +22,37 @@ TURN_ID = "019fb72e-e3c3-7093-a89d-050d309ca4ac"
 
 
 class WriteToolUseTests(unittest.TestCase):
+    def test_policy_mutations_receive_session_context_through_configured_matcher(self):
+        hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
+        matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
+        source_directory = SCRIPT.parents[5] / "API" / "DomainsModules" / "PolicyModule" / "MCP"
+        mutations = {
+            name
+            for source in source_directory.glob("*PolicyMcpFunctions.cs")
+            for name in re.findall(r'"(policy_[a-z_]+)"', source.read_text(encoding="utf-8"))
+            if name.endswith(("_add", "_update", "_remove", "_create", "_delete"))
+        }
+        self.assertEqual(24, len(mutations))
+        self.assertEqual(mutations, write_tool_use.POLICY_MUTATION_TOOLS)
+        for tool in mutations:
+            with self.subTest(tool=tool):
+                event = {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "mcp__mcp_knowledge_base__" + tool,
+                    "session_id": SESSION_ID,
+                    "tool_input": {"title": "policy", "sessionId": "stale"},
+                }
+                self.assertIsNotNone(re.search(matcher, event["tool_name"]))
+                result = write_tool_use.process_hook(event)["hookSpecificOutput"]
+                self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
+                self.assertEqual("policy", result["updatedInput"]["title"])
+                self.assertEqual("stale", event["tool_input"]["sessionId"])
+        for tool in ("policy_general_list", "policy_project_list", "policy_project_get_by_name", "policy_topic_policy_list", "policy_agent_family_list"):
+            with self.subTest(read=tool):
+                name = "mcp__mcp_knowledge_base__" + tool
+                self.assertIsNone(re.search(matcher, name))
+                self.assertIsNone(write_tool_use.process_hook({"hook_event_name": "PreToolUse", "tool_name": name}))
+
     def test_feature_mutations_receive_session_context_through_configured_matcher(self):
         hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
         matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]

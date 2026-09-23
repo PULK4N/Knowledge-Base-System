@@ -21,3 +21,28 @@ public readonly record struct TopicRemovedV1(
         return generalPolicies;
     }
 }
+
+public readonly record struct TopicRemovedV2(
+    TopicName TopicName,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ITopicRemoved
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.Topics.Remove(TopicName);
+
+        generalPolicies.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return generalPolicies;
+    }
+}

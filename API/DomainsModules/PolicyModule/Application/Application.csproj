@@ -6,6 +6,8 @@
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
     <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
     <ProjectReference Include="../../SharedModule/Exceptions/Exceptions.csproj" />
+    <ProjectReference Include="../../MemoryModule/Application/Application.csproj" />
+    <ProjectReference Include="../../MemoryModule/Domain/Domain.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
     <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
   </ItemGroup>

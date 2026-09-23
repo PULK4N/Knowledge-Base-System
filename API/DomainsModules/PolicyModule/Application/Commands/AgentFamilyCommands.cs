@@ -16,18 +16,23 @@ public sealed class CreateAgentFamilyCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(AgentFamilyName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyCreatedV1(
+            new AgentFamilyCreatedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
-                Description
-            )
+                Description,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class UpdateAgentFamilyCommand(
@@ -40,18 +45,23 @@ public sealed class UpdateAgentFamilyCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(AgentFamilyName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyUpdatedV1(
+            new AgentFamilyUpdatedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
-                Description
-            )
+                Description,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveAgentFamilyCommand(
@@ -63,17 +73,22 @@ public sealed class RemoveAgentFamilyCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(AgentFamilyName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyRemovedV1(
+            new AgentFamilyRemovedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class AddAgentFamilyPolicyCommand(
@@ -94,11 +109,13 @@ public sealed class AddAgentFamilyPolicyCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var policyId = PolicyId.New();
 
         await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyPolicyAddedV1(
+            new AgentFamilyPolicyAddedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
@@ -106,8 +123,11 @@ public sealed class AddAgentFamilyPolicyCommand(
                     policyId,
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return PolicyAddedCommandResult.Ok(policyId.Value);
@@ -130,12 +150,13 @@ public sealed class UpdateAgentFamilyPolicyCommand(
             && !string.IsNullOrWhiteSpace(Title)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyPolicyUpdatedV1(
+            new AgentFamilyPolicyUpdatedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
@@ -143,9 +164,13 @@ public sealed class UpdateAgentFamilyPolicyCommand(
                     Domain.Models.PolicyId.FromDatabaseGuid(PolicyId),
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveAgentFamilyPolicyCommand(
@@ -161,16 +186,21 @@ public sealed class RemoveAgentFamilyPolicyCommand(
             && PolicyId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new AgentFamilyPolicyRemovedV1(
+            new AgentFamilyPolicyRemovedV2(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
-                Domain.Models.PolicyId.FromDatabaseGuid(PolicyId)
-            )
+                Domain.Models.PolicyId.FromDatabaseGuid(PolicyId),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

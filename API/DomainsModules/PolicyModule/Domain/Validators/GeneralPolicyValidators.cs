@@ -12,10 +12,15 @@ public sealed class GeneralPolicyMustNotExistValidator
         EventPayload payload
     )
     {
-        var eventData = (GeneralPolicyAddedV1)payload.EventData;
+        var policy = payload.EventData switch
+        {
+            GeneralPolicyAddedV1 data => data.Policy,
+            GeneralPolicyAddedV2 data => data.Policy,
+            _ => throw new InvalidCastException()
+        };
         var state = (GeneralPoliciesStateData)stateData;
         var exists = state.Policies.ContainsKey(
-            eventData.Policy.PolicyId
+            policy.PolicyId
         );
 
         return EventValidationResult.FromPayload(
@@ -23,7 +28,7 @@ public sealed class GeneralPolicyMustNotExistValidator
             nameof(GeneralPolicyMustNotExistValidator),
             !exists,
             exists
-                ? $"A general policy with ID '{eventData.Policy.PolicyId.Value}' already exists."
+                ? $"A general policy with ID '{policy.PolicyId.Value}' already exists."
                 : null
         );
     }
@@ -41,7 +46,10 @@ public sealed class GeneralPolicyMustExistValidator
         {
             GeneralPolicyUpdatedV1 eventData =>
                 eventData.Policy.PolicyId,
+            GeneralPolicyUpdatedV2 eventData =>
+                eventData.Policy.PolicyId,
             GeneralPolicyRemovedV1 eventData => eventData.PolicyId,
+            GeneralPolicyRemovedV2 eventData => eventData.PolicyId,
             _ => throw new InvalidCastException()
         };
 

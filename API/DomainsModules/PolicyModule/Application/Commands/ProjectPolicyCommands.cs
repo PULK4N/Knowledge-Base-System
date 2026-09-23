@@ -31,6 +31,8 @@ public sealed class CreateProjectCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var projectId = AggregateId.New();
         var payloads = new List<EventPayload>
         {
@@ -38,10 +40,12 @@ public sealed class CreateProjectCommand(
                 executor,
                 projectId,
                 Constants.StateMachineIds.ProjectPolicies,
-                new ProjectCreatedV1(
+                new ProjectCreatedV2(
                     ProjectName,
                     ProjectDescription,
-                    RepositoryPaths.ToImmutableArray()
+                    RepositoryPaths.ToImmutableArray(),
+                    SessionId,
+                    memoryAggregateId
                 )
             )
         };
@@ -60,6 +64,7 @@ public sealed class CreateProjectCommand(
             )
         );
 
+        AddMemoryRelation(payloads, executor, payloads[0], memoryAggregateId);
         await ExecuteEvents(payloads);
 
         return ProjectCreatedCommandResult.Ok(
@@ -85,17 +90,22 @@ public sealed class AddProjectPolicyCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var policyId = PolicyId.New();
 
         await ExecuteProjectPoliciesEvent(
             executor,
-            new ProjectPolicyAddedV1(
+            new ProjectPolicyAddedV2(
                 CreatePolicy(
                     policyId,
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return PolicyAddedCommandResult.Ok(policyId.Value);
@@ -118,6 +128,8 @@ public sealed class AddRepositoryToProjectCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             ProjectId
         );
@@ -125,10 +137,15 @@ public sealed class AddRepositoryToProjectCommand(
             executor,
             projectAggregateId,
             Constants.StateMachineIds.ProjectPolicies,
-            new RepositoryAddedToProjectV1(RepositoryPath)
+            new RepositoryAddedToProjectV2(
+                RepositoryPath,
+                SessionId,
+                memoryAggregateId
+            )
         );
 
         await ExecuteEvents(
+            executor,
             repositoryAdded,
             _ =>
                 [
@@ -141,7 +158,8 @@ public sealed class AddRepositoryToProjectCommand(
                             projectAggregateId
                         )
                     )
-                ]
+                ],
+            memoryAggregateId
         );
 
         return PolicyCommandResult.Ok;
@@ -161,16 +179,21 @@ public sealed class UpdateProjectCommand(
             && !string.IsNullOrWhiteSpace(ProjectName)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteProjectPoliciesEvent(
             executor,
-            new ProjectUpdatedV1(
+            new ProjectUpdatedV2(
                 ProjectName,
-                ProjectDescription
-            )
+                ProjectDescription,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class DeleteProjectCommand(
@@ -181,6 +204,8 @@ public sealed class DeleteProjectCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             ProjectId
         );
@@ -188,10 +213,14 @@ public sealed class DeleteProjectCommand(
             executor,
             projectAggregateId,
             Constants.StateMachineIds.ProjectPolicies,
-            new ProjectDeletedV1()
+            new ProjectDeletedV2(
+                SessionId,
+                memoryAggregateId
+            )
         );
 
         await ExecuteEvents(
+            executor,
             projectDeleted,
             projectStateInfos =>
                 ((ProjectPoliciesStateData)projectStateInfos[0].StateData)
@@ -207,7 +236,8 @@ public sealed class DeleteProjectCommand(
                             )
                         )
                     )
-                    .ToList()
+                    .ToList(),
+            memoryAggregateId
         );
 
         return PolicyCommandResult.Ok;
@@ -229,21 +259,26 @@ public sealed class UpdateProjectPolicyCommand(
             && !string.IsNullOrWhiteSpace(Title)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteProjectPoliciesEvent(
             executor,
-            new ProjectPolicyUpdatedV1(
+            new ProjectPolicyUpdatedV2(
                 CreatePolicy(
                     PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveProjectPolicyCommand(
@@ -258,17 +293,22 @@ public sealed class RemoveProjectPolicyCommand(
             && PolicyId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteProjectPoliciesEvent(
             executor,
-            new ProjectPolicyRemovedV1(
+            new ProjectPolicyRemovedV2(
                 PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                     PolicyId
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class AddTopicRelationToProjectCommand(
@@ -283,15 +323,20 @@ public sealed class AddTopicRelationToProjectCommand(
             && !string.IsNullOrWhiteSpace(TopicName)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteProjectPoliciesEvent(
             executor,
-            new TopicRelationAddedToProjectV1(
-                new TopicName(TopicName)
-            )
+            new TopicRelationAddedToProjectV2(
+                new TopicName(TopicName),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveTopicRelationFromProjectCommand(
@@ -306,13 +351,18 @@ public sealed class RemoveTopicRelationFromProjectCommand(
             && !string.IsNullOrWhiteSpace(TopicName)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteProjectPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteProjectPoliciesEvent(
             executor,
-            new TopicRelationRemovedFromProjectV1(
-                new TopicName(TopicName)
-            )
+            new TopicRelationRemovedFromProjectV2(
+                new TopicName(TopicName),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

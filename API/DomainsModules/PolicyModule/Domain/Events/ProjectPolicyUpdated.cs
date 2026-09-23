@@ -21,3 +21,28 @@ public readonly record struct ProjectPolicyUpdatedV1(
         return projectPolicies;
     }
 }
+
+public readonly record struct ProjectPolicyUpdatedV2(
+    Policy Policy,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : IProjectPolicyUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var projectPolicies = (ProjectPoliciesStateData)stateData;
+        projectPolicies.Policies[Policy.PolicyId] = Policy;
+
+        projectPolicies.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return projectPolicies;
+    }
+}

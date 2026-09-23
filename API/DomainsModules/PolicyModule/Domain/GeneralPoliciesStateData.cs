@@ -10,6 +10,8 @@ public class GeneralPoliciesStateData(AggregateId id) : ISharedStateData
         AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
         );
+    public List<MemoryHistoryRecord> MemoryHistory { get; set; } = [];
+
     public bool IsDeleted { get; set; }
     public Dictionary<PolicyId, Policy> Policies { get; } = new Dictionary<PolicyId, Policy>();
     public Dictionary<TopicName, Topic> Topics { get; } = new Dictionary<TopicName, Topic>();

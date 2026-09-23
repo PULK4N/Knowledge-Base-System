@@ -20,17 +20,22 @@ public sealed class AddGeneralPolicyCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var policyId = PolicyId.New();
 
         await ExecuteGeneralPoliciesEvent(
             executor,
-            new GeneralPolicyAddedV1(
+            new GeneralPolicyAddedV2(
                 CreatePolicy(
                     policyId,
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return PolicyAddedCommandResult.Ok(policyId.Value);
@@ -51,21 +56,26 @@ public sealed class UpdateGeneralPolicyCommand(
             && !string.IsNullOrWhiteSpace(Title)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new GeneralPolicyUpdatedV1(
+            new GeneralPolicyUpdatedV2(
                 CreatePolicy(
                     PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveGeneralPolicyCommand(
@@ -77,15 +87,20 @@ public sealed class RemoveGeneralPolicyCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(PolicyId != Guid.Empty);
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new GeneralPolicyRemovedV1(
+            new GeneralPolicyRemovedV2(
                 PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                     PolicyId
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

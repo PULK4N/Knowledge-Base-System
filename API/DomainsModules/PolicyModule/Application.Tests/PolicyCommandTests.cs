@@ -20,7 +20,7 @@ using UUIDNext;
 
 namespace PolicyModule.Application.Tests;
 
-public sealed class PolicyCommandTests
+public sealed partial class PolicyCommandTests
 {
     private static readonly object RegistrationLock = new();
     private static bool _typesRegistered;
@@ -56,7 +56,7 @@ public sealed class PolicyCommandTests
             definition.Projections
         );
         Assert.Equal(
-            [nameof(ProjectCreatedV1)],
+            [nameof(ProjectCreatedV1), nameof(ProjectCreatedV2)],
             definition.InitializationEvents
         );
         Assert.All(
@@ -90,9 +90,9 @@ public sealed class PolicyCommandTests
         );
         Assert.Equal(
             [
-                nameof(GeneralPolicyAddedV1),
-                nameof(TopicCreatedV1),
-                nameof(AgentFamilyCreatedV1)
+                nameof(GeneralPolicyAddedV1), nameof(GeneralPolicyAddedV2),
+                nameof(TopicCreatedV1), nameof(TopicCreatedV2),
+                nameof(AgentFamilyCreatedV1), nameof(AgentFamilyCreatedV2)
             ],
             definition.InitializationEvents
         );
@@ -108,23 +108,23 @@ public sealed class PolicyCommandTests
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
         var addResult = Assert.IsType<PolicyAddedCommandResult>(
-            await new AddGeneralPolicyCommand(handler)
+            await ExecuteAsUser(new AddGeneralPolicyCommand(handler)
             {
                 Title = "Always run focused tests",
                 Description = "Verify only the affected behavior."
-            }.Execute(Executor)
+            })
         );
 
-        await new UpdateGeneralPolicyCommand(handler)
+        await ExecuteAsUser(new UpdateGeneralPolicyCommand(handler)
         {
             PolicyId = addResult.PolicyId,
             Title = "Always run the smallest focused tests",
             Description = "Verify the affected behavior first."
-        }.Execute(Executor);
-        await new RemoveGeneralPolicyCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveGeneralPolicyCommand(handler)
         {
             PolicyId = addResult.PolicyId
-        }.Execute(Executor);
+        });
 
         var globalAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
@@ -134,7 +134,7 @@ public sealed class PolicyCommandTests
             events,
             payload =>
             {
-                var added = Assert.IsType<GeneralPolicyAddedV1>(
+                var added = Assert.IsType<GeneralPolicyAddedV2>(
                     payload.EventData
                 );
                 Assert.Equal(
@@ -148,7 +148,7 @@ public sealed class PolicyCommandTests
             },
             payload =>
             {
-                var updated = Assert.IsType<GeneralPolicyUpdatedV1>(
+                var updated = Assert.IsType<GeneralPolicyUpdatedV2>(
                     payload.EventData
                 );
                 Assert.Equal(
@@ -157,7 +157,7 @@ public sealed class PolicyCommandTests
                 );
             },
             payload =>
-                Assert.IsType<GeneralPolicyRemovedV1>(
+                Assert.IsType<GeneralPolicyRemovedV2>(
                     payload.EventData
                 )
         );
@@ -175,40 +175,40 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string topicName = "cloud";
 
-        await new CreateTopicCommand(handler)
+        await ExecuteAsUser(new CreateTopicCommand(handler)
         {
             TopicName = topicName,
             Description = "Policies for cloud usage."
-        }.Execute(Executor);
-        await new UpdateTopicCommand(handler)
+        });
+        await ExecuteAsUser(new UpdateTopicCommand(handler)
         {
             TopicName = topicName,
             Description = "Updated cloud policies."
-        }.Execute(Executor);
+        });
         var addedPolicy = Assert.IsType<PolicyAddedCommandResult>(
-            await new AddTopicPolicyCommand(handler)
+            await ExecuteAsUser(new AddTopicPolicyCommand(handler)
             {
                 TopicName = topicName,
                 Title = "Use managed identities",
                 Description = "Do not store service credentials."
-            }.Execute(Executor)
+            })
         );
-        await new UpdateTopicPolicyCommand(handler)
+        await ExecuteAsUser(new UpdateTopicPolicyCommand(handler)
         {
             TopicName = topicName,
             PolicyId = addedPolicy.PolicyId,
             Title = "Use workload identities",
             Description = "Do not store service credentials."
-        }.Execute(Executor);
-        await new RemoveTopicPolicyCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveTopicPolicyCommand(handler)
         {
             TopicName = topicName,
             PolicyId = addedPolicy.PolicyId
-        }.Execute(Executor);
-        await new RemoveTopicCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveTopicCommand(handler)
         {
             TopicName = topicName
-        }.Execute(Executor);
+        });
 
         var globalAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
@@ -216,16 +216,16 @@ public sealed class PolicyCommandTests
         var events = eventStore.GetStoredEvents(globalAggregateId);
         Assert.Collection(
             events,
-            payload => Assert.IsType<TopicCreatedV1>(payload.EventData),
-            payload => Assert.IsType<TopicUpdatedV1>(payload.EventData),
-            payload => Assert.IsType<TopicPolicyAddedV1>(payload.EventData),
+            payload => Assert.IsType<TopicCreatedV2>(payload.EventData),
+            payload => Assert.IsType<TopicUpdatedV2>(payload.EventData),
+            payload => Assert.IsType<TopicPolicyAddedV2>(payload.EventData),
             payload =>
-                Assert.IsType<TopicPolicyUpdatedV1>(
+                Assert.IsType<TopicPolicyUpdatedV2>(
                     payload.EventData
                 ),
             payload =>
             {
-                var removed = Assert.IsType<TopicPolicyRemovedV1>(
+                var removed = Assert.IsType<TopicPolicyRemovedV2>(
                     payload.EventData
                 );
                 Assert.Equal(
@@ -233,7 +233,7 @@ public sealed class PolicyCommandTests
                     removed.PolicyId.Value
                 );
             },
-            payload => Assert.IsType<TopicRemovedV1>(payload.EventData)
+            payload => Assert.IsType<TopicRemovedV2>(payload.EventData)
         );
         var state = Assert.IsType<GeneralPoliciesStateData>(
             eventStore.LastWritten[globalAggregateId].StateData
@@ -252,40 +252,40 @@ public sealed class PolicyCommandTests
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
 
-        await new CreateAgentFamilyCommand(handler)
+        await ExecuteAsUser(new CreateAgentFamilyCommand(handler)
         {
             AgentFamilyName = requestedName,
             Description = "Policies for this agent family."
-        }.Execute(Executor);
-        await new UpdateAgentFamilyCommand(handler)
+        });
+        await ExecuteAsUser(new UpdateAgentFamilyCommand(handler)
         {
             AgentFamilyName = requestedName,
             Description = "Updated agent family policies."
-        }.Execute(Executor);
+        });
         var addedPolicy = Assert.IsType<PolicyAddedCommandResult>(
-            await new AddAgentFamilyPolicyCommand(handler)
+            await ExecuteAsUser(new AddAgentFamilyPolicyCommand(handler)
             {
                 AgentFamilyName = requestedName,
                 Title = "Prefer the dedicated file tools",
                 Description = "Read and edit through the provided tools."
-            }.Execute(Executor)
+            })
         );
-        await new UpdateAgentFamilyPolicyCommand(handler)
+        await ExecuteAsUser(new UpdateAgentFamilyPolicyCommand(handler)
         {
             AgentFamilyName = requestedName,
             PolicyId = addedPolicy.PolicyId,
             Title = "Prefer the dedicated file tools",
             Description = "Read and edit through the dedicated tools."
-        }.Execute(Executor);
-        await new RemoveAgentFamilyPolicyCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveAgentFamilyPolicyCommand(handler)
         {
             AgentFamilyName = requestedName,
             PolicyId = addedPolicy.PolicyId
-        }.Execute(Executor);
-        await new RemoveAgentFamilyCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveAgentFamilyCommand(handler)
         {
             AgentFamilyName = requestedName
-        }.Execute(Executor);
+        });
 
         var globalAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
@@ -295,7 +295,7 @@ public sealed class PolicyCommandTests
             events,
             payload =>
             {
-                var created = Assert.IsType<AgentFamilyCreatedV1>(
+                var created = Assert.IsType<AgentFamilyCreatedV2>(
                     payload.EventData
                 );
                 Assert.Equal(
@@ -304,18 +304,18 @@ public sealed class PolicyCommandTests
                 );
             },
             payload =>
-                Assert.IsType<AgentFamilyUpdatedV1>(payload.EventData),
+                Assert.IsType<AgentFamilyUpdatedV2>(payload.EventData),
             payload =>
-                Assert.IsType<AgentFamilyPolicyAddedV1>(
+                Assert.IsType<AgentFamilyPolicyAddedV2>(
                     payload.EventData
                 ),
             payload =>
-                Assert.IsType<AgentFamilyPolicyUpdatedV1>(
+                Assert.IsType<AgentFamilyPolicyUpdatedV2>(
                     payload.EventData
                 ),
             payload =>
             {
-                var removed = Assert.IsType<AgentFamilyPolicyRemovedV1>(
+                var removed = Assert.IsType<AgentFamilyPolicyRemovedV2>(
                     payload.EventData
                 );
                 Assert.Equal(
@@ -324,7 +324,7 @@ public sealed class PolicyCommandTests
                 );
             },
             payload =>
-                Assert.IsType<AgentFamilyRemovedV1>(payload.EventData)
+                Assert.IsType<AgentFamilyRemovedV2>(payload.EventData)
         );
         var state = Assert.IsType<GeneralPoliciesStateData>(
             eventStore.LastWritten[globalAggregateId].StateData
@@ -344,12 +344,12 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/agent-family-project";
         var project = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Agent family project",
                 ProjectDescription = "Agent family query test project.",
                 RepositoryPaths = [repositoryPath]
-            }.Execute(Executor)
+            })
         );
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             project.ProjectId
@@ -385,12 +385,12 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/unknown-family-project";
         var project = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Unknown family project",
                 ProjectDescription = "Agent family is not created yet.",
                 RepositoryPaths = [repositoryPath]
-            }.Execute(Executor)
+            })
         );
         var policyTextRepository = new StubPolicyTextRepository();
         policyTextRepository.PolicyTexts[
@@ -452,56 +452,56 @@ public sealed class PolicyCommandTests
             "/workspace/secondary-checkout"
         };
         var created = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "MCP Knowledge Base",
                 ProjectDescription = "Event-sourced Codex tooling.",
                 RepositoryPaths = repositoryPaths
-            }.Execute(Executor)
+            })
         );
         var projectId = AggregateId.FromDatabaseGuid(created.ProjectId);
 
-        await new UpdateProjectCommand(handler)
+        await ExecuteAsUser(new UpdateProjectCommand(handler)
         {
             ProjectId = created.ProjectId,
             ProjectName = "MCP Skill and Policy System",
             ProjectDescription = "Updated event-sourced tooling."
-        }.Execute(Executor);
+        });
 
         var addedPolicy = Assert.IsType<PolicyAddedCommandResult>(
-            await new AddProjectPolicyCommand(handler)
+            await ExecuteAsUser(new AddProjectPolicyCommand(handler)
             {
                 ProjectId = created.ProjectId,
                 Title = "Keep policies separate from skills",
                 Description = "Policies are injected into every chat."
-            }.Execute(Executor)
+            })
         );
-        await new UpdateProjectPolicyCommand(handler)
+        await ExecuteAsUser(new UpdateProjectPolicyCommand(handler)
         {
             ProjectId = created.ProjectId,
             PolicyId = addedPolicy.PolicyId,
             Title = "Keep policies distinct from skills",
             Description = "Policies are injected into every chat."
-        }.Execute(Executor);
-        await new RemoveProjectPolicyCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveProjectPolicyCommand(handler)
         {
             ProjectId = created.ProjectId,
             PolicyId = addedPolicy.PolicyId
-        }.Execute(Executor);
-        await new AddTopicRelationToProjectCommand(handler)
+        });
+        await ExecuteAsUser(new AddTopicRelationToProjectCommand(handler)
         {
             ProjectId = created.ProjectId,
             TopicName = "cloud"
-        }.Execute(Executor);
-        await new RemoveTopicRelationFromProjectCommand(handler)
+        });
+        await ExecuteAsUser(new RemoveTopicRelationFromProjectCommand(handler)
         {
             ProjectId = created.ProjectId,
             TopicName = "cloud"
-        }.Execute(Executor);
-        await new DeleteProjectCommand(handler)
+        });
+        await ExecuteAsUser(new DeleteProjectCommand(handler)
         {
             ProjectId = created.ProjectId
-        }.Execute(Executor);
+        });
 
         Assert.NotEqual(Guid.Empty, created.ProjectId);
         var projectEvents = eventStore.GetStoredEvents(projectId);
@@ -509,7 +509,7 @@ public sealed class PolicyCommandTests
             projectEvents,
             payload =>
             {
-                Assert.IsType<ProjectCreatedV1>(payload.EventData);
+                Assert.IsType<ProjectCreatedV2>(payload.EventData);
                 Assert.Equal(
                     "MCP KNOWLEDGE BASE",
                     Assert.Single(
@@ -517,13 +517,13 @@ public sealed class PolicyCommandTests
                     ).ValueToHash
                 );
             },
-            payload => Assert.IsType<ProjectUpdatedV1>(payload.EventData),
-            payload => Assert.IsType<ProjectPolicyAddedV1>(payload.EventData),
-            payload => Assert.IsType<ProjectPolicyUpdatedV1>(payload.EventData),
-            payload => Assert.IsType<ProjectPolicyRemovedV1>(payload.EventData),
-            payload => Assert.IsType<TopicRelationAddedToProjectV1>(payload.EventData),
-            payload => Assert.IsType<TopicRelationRemovedFromProjectV1>(payload.EventData),
-            payload => Assert.IsType<ProjectDeletedV1>(payload.EventData)
+            payload => Assert.IsType<ProjectUpdatedV2>(payload.EventData),
+            payload => Assert.IsType<ProjectPolicyAddedV2>(payload.EventData),
+            payload => Assert.IsType<ProjectPolicyUpdatedV2>(payload.EventData),
+            payload => Assert.IsType<ProjectPolicyRemovedV2>(payload.EventData),
+            payload => Assert.IsType<TopicRelationAddedToProjectV2>(payload.EventData),
+            payload => Assert.IsType<TopicRelationRemovedFromProjectV2>(payload.EventData),
+            payload => Assert.IsType<ProjectDeletedV2>(payload.EventData)
         );
         var mapAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.RepositoryToProjectMap
@@ -560,31 +560,31 @@ public sealed class PolicyCommandTests
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
         var project = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Deleted project",
                 ProjectDescription = "Validation test.",
                 RepositoryPaths = []
-            }.Execute(Executor)
+            })
         );
         var projectId = AggregateId.FromDatabaseGuid(
             project.ProjectId
         );
 
-        await new DeleteProjectCommand(handler)
+        await ExecuteAsUser(new DeleteProjectCommand(handler)
         {
             ProjectId = project.ProjectId
-        }.Execute(Executor);
+        });
         var eventCount = eventStore.GetStoredEvents(projectId).Count;
 
         var exception = await Assert.ThrowsAsync<EventValidationException>(
             () =>
-                new UpdateProjectCommand(handler)
+                ExecuteAsUser(new UpdateProjectCommand(handler)
                 {
                     ProjectId = project.ProjectId,
                     ProjectName = "Invalid update",
                     ProjectDescription = "Must not be persisted."
-                }.Execute(Executor)
+                })
         );
 
         Assert.Contains("project is deleted", exception.Message);
@@ -601,26 +601,26 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/reusable";
         var firstProject = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "First project",
                 ProjectDescription = "Will be deleted.",
                 RepositoryPaths = [repositoryPath]
-            }.Execute(Executor)
+            })
         );
 
-        await new DeleteProjectCommand(handler)
+        await ExecuteAsUser(new DeleteProjectCommand(handler)
         {
             ProjectId = firstProject.ProjectId
-        }.Execute(Executor);
+        });
 
         var secondProject = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Second project",
                 ProjectDescription = "Reuses the released path.",
                 RepositoryPaths = [repositoryPath]
-            }.Execute(Executor)
+            })
         );
         var mapAggregateId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.RepositoryToProjectMap
@@ -654,28 +654,28 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/new-repository";
         var project = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Repository target",
                 ProjectDescription = "Starts without a repository.",
                 RepositoryPaths = []
-            }.Execute(Executor)
+            })
         );
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             project.ProjectId
         );
 
-        var result = await new AddRepositoryToProjectCommand(handler)
+        var result = await ExecuteAsUser(new AddRepositoryToProjectCommand(handler)
         {
             ProjectId = project.ProjectId,
             RepositoryPath = repositoryPath
-        }.Execute(Executor);
+        });
 
         Assert.Same(PolicyCommandResult.Ok, result);
         Assert.Collection(
             eventStore.GetStoredEvents(projectAggregateId),
-            payload => Assert.IsType<ProjectCreatedV1>(payload.EventData),
-            payload => Assert.IsType<RepositoryAddedToProjectV1>(
+            payload => Assert.IsType<ProjectCreatedV2>(payload.EventData),
+            payload => Assert.IsType<RepositoryAddedToProjectV2>(
                 payload.EventData
             )
         );
@@ -703,46 +703,46 @@ public sealed class PolicyCommandTests
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/policy-project";
 
-        await new AddGeneralPolicyCommand(handler)
+        await ExecuteAsUser(new AddGeneralPolicyCommand(handler)
         {
             Title = "General policy",
             Description = "Applies to every project."
-        }.Execute(Executor);
-        await new CreateTopicCommand(handler)
+        });
+        await ExecuteAsUser(new CreateTopicCommand(handler)
         {
             TopicName = "cloud",
             Description = "Cloud policies."
-        }.Execute(Executor);
-        await new CreateTopicCommand(handler)
+        });
+        await ExecuteAsUser(new CreateTopicCommand(handler)
         {
             TopicName = "dotnet",
             Description = ".NET development policies."
-        }.Execute(Executor);
-        await new AddTopicPolicyCommand(handler)
+        });
+        await ExecuteAsUser(new AddTopicPolicyCommand(handler)
         {
             TopicName = "cloud",
             Title = "Cloud policy",
             Description = "Applies to cloud projects."
-        }.Execute(Executor);
+        });
         var project = Assert.IsType<ProjectCreatedCommandResult>(
-            await new CreateProjectCommand(handler)
+            await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Policy project",
                 ProjectDescription = "Query test project.",
                 RepositoryPaths = [repositoryPath]
-            }.Execute(Executor)
+            })
         );
-        await new AddProjectPolicyCommand(handler)
+        await ExecuteAsUser(new AddProjectPolicyCommand(handler)
         {
             ProjectId = project.ProjectId,
             Title = "Project policy",
             Description = "Applies only to this project."
-        }.Execute(Executor);
-        await new AddTopicRelationToProjectCommand(handler)
+        });
+        await ExecuteAsUser(new AddTopicRelationToProjectCommand(handler)
         {
             ProjectId = project.ProjectId,
             TopicName = "cloud"
-        }.Execute(Executor);
+        });
         var policyTextRepository = new StubPolicyTextRepository();
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             project.ProjectId
@@ -854,10 +854,10 @@ public sealed class PolicyCommandTests
         Assert.Equal([repositoryPath], projectDetails.RepositoryPaths);
         Assert.Equal(["cloud"], projectDetails.TopicNames);
 
-        await new RemoveTopicCommand(handler)
+        await ExecuteAsUser(new RemoveTopicCommand(handler)
         {
             TopicName = "cloud"
-        }.Execute(Executor);
+        });
         policyTextRepository.PolicyTexts[projectAggregateId] =
             "# Project \"Policy project\" policies\n\n"
             + "## Project policy\nApplies only to this project.\n\n"
@@ -882,10 +882,10 @@ public sealed class PolicyCommandTests
             updatedResult.Policies
         );
 
-        await new DeleteProjectCommand(handler)
+        await ExecuteAsUser(new DeleteProjectCommand(handler)
         {
             ProjectId = project.ProjectId
-        }.Execute(Executor);
+        });
         Assert.Null(
             await new GetPolicyProjectQuery(
                 CreateCalculator(),
@@ -926,6 +926,12 @@ public sealed class PolicyCommandTests
         var option = Assert.Single(missing.Projects);
         Assert.Equal("Available project", option.ProjectName);
         Assert.Equal(["/workspace/available"], option.RepositoryPaths);
+    }
+
+    private static Task<object> ExecuteAsUser(PolicyCommand command)
+    {
+        command.UseUserOrigin();
+        return command.Execute(Executor);
     }
 
     private static StateMachineHandler CreateHandler(
@@ -988,7 +994,8 @@ public sealed class PolicyCommandTests
                 return;
 
             new ServiceCollection().RegisterEventSourcingCore(
-                typeof(GeneralPoliciesStateData).Assembly
+                typeof(GeneralPoliciesStateData).Assembly,
+                typeof(MemoryModule.Domain.MemoryStateData).Assembly
             );
             _typesRegistered = true;
         }
@@ -998,6 +1005,8 @@ public sealed class PolicyCommandTests
         : IEventStoreWithOutbox, IEventStore
     {
         private readonly Dictionary<AggregateId, List<EventPayload>> eventsByAggregate = [];
+
+        public int WriteCount { get; private set; }
 
         public Dictionary<AggregateId, StateInfo> LastWritten { get; private set; } = [];
 
@@ -1015,6 +1024,7 @@ public sealed class PolicyCommandTests
             Dictionary<AggregateId, StateInfo> stateInfos
         )
         {
+            WriteCount++;
             LastWritten = stateInfos;
 
             foreach (var (aggregateId, stateInfo) in stateInfos)
@@ -1087,6 +1097,10 @@ public sealed class PolicyCommandTests
                         new ProjectPoliciesStateData(aggregateId),
                     PolicyModule.Application.Constants.StateMachineIds.RepositoryToProjectMap =>
                         new RepositoryToProjectMapStateData(aggregateId),
+                    MemoryModule.Application.Constants.StateMachineIds.Memory =>
+                        new MemoryModule.Domain.MemoryStateData(aggregateId),
+                    MemoryModule.Application.Constants.StateMachineIds.SessionAggregateMap =>
+                        new MemoryModule.Domain.SessionAggregateMapStateData(aggregateId),
                     _ => throw new InvalidOperationException(
                         $"Unknown state machine '{stateMachineId}'."
                     )

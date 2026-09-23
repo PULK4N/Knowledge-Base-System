@@ -2,8 +2,11 @@ id: general-policies-state-machine
 stateData: GeneralPoliciesStateData
 initializationEvents:
   - GeneralPolicyAddedV1
+  - GeneralPolicyAddedV2
   - TopicCreatedV1
+  - TopicCreatedV2
   - AgentFamilyCreatedV1
+  - AgentFamilyCreatedV2
 projections:
   - GeneralPolicyTextProjector
   - TopicPolicyTextProjector
@@ -12,22 +15,44 @@ events:
   GeneralPolicyAddedV1:
     preEventValidators:
       - GeneralPolicyMustNotExistValidator
+  GeneralPolicyAddedV2:
+    preEventValidators:
+      - GeneralPolicyMustNotExistValidator
   GeneralPolicyUpdatedV1:
+    preEventValidators:
+      - GeneralPolicyMustExistValidator
+  GeneralPolicyUpdatedV2:
     preEventValidators:
       - GeneralPolicyMustExistValidator
   GeneralPolicyRemovedV1:
     preEventValidators:
       - GeneralPolicyMustExistValidator
+  GeneralPolicyRemovedV2:
+    preEventValidators:
+      - GeneralPolicyMustExistValidator
   TopicCreatedV1:
+    preEventValidators:
+      - TopicMustNotExistValidator
+  TopicCreatedV2:
     preEventValidators:
       - TopicMustNotExistValidator
   TopicUpdatedV1:
     preEventValidators:
       - TopicMustExistValidator
+  TopicUpdatedV2:
+    preEventValidators:
+      - TopicMustExistValidator
   TopicRemovedV1:
     preEventValidators:
       - TopicMustExistValidator
+  TopicRemovedV2:
+    preEventValidators:
+      - TopicMustExistValidator
   TopicPolicyAddedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustNotExistValidator
+  TopicPolicyAddedV2:
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustNotExistValidator
@@ -35,20 +60,41 @@ events:
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustExistValidator
+  TopicPolicyUpdatedV2:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustExistValidator
   TopicPolicyRemovedV1:
+    preEventValidators:
+      - TopicMustExistValidator
+      - TopicPolicyMustExistValidator
+  TopicPolicyRemovedV2:
     preEventValidators:
       - TopicMustExistValidator
       - TopicPolicyMustExistValidator
   AgentFamilyCreatedV1:
     preEventValidators:
       - AgentFamilyMustNotExistValidator
+  AgentFamilyCreatedV2:
+    preEventValidators:
+      - AgentFamilyMustNotExistValidator
   AgentFamilyUpdatedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+  AgentFamilyUpdatedV2:
     preEventValidators:
       - AgentFamilyMustExistValidator
   AgentFamilyRemovedV1:
     preEventValidators:
       - AgentFamilyMustExistValidator
+  AgentFamilyRemovedV2:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
   AgentFamilyPolicyAddedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustNotExistValidator
+  AgentFamilyPolicyAddedV2:
     preEventValidators:
       - AgentFamilyMustExistValidator
       - AgentFamilyPolicyMustNotExistValidator
@@ -56,7 +102,15 @@ events:
     preEventValidators:
       - AgentFamilyMustExistValidator
       - AgentFamilyPolicyMustExistValidator
+  AgentFamilyPolicyUpdatedV2:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustExistValidator
   AgentFamilyPolicyRemovedV1:
+    preEventValidators:
+      - AgentFamilyMustExistValidator
+      - AgentFamilyPolicyMustExistValidator
+  AgentFamilyPolicyRemovedV2:
     preEventValidators:
       - AgentFamilyMustExistValidator
       - AgentFamilyPolicyMustExistValidator

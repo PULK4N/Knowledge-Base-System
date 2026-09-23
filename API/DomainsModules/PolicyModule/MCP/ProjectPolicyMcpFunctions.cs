@@ -102,7 +102,9 @@ internal static class ProjectPolicyMcpFunctions
         IServiceProvider services,
         string projectName,
         string projectDescription,
-        List<string> repositoryPaths
+        List<string> repositoryPaths,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<CreateProjectCommand, ProjectCreatedCommandResult>(
             services,
@@ -111,6 +113,8 @@ internal static class ProjectPolicyMcpFunctions
                 command.ProjectName = projectName;
                 command.ProjectDescription = projectDescription;
                 command.RepositoryPaths = repositoryPaths;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -118,7 +122,9 @@ internal static class ProjectPolicyMcpFunctions
         IServiceProvider services,
         Guid projectId,
         string projectName,
-        string projectDescription
+        string projectDescription,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<UpdateProjectCommand, PolicyCommandResult>(
             services,
@@ -127,22 +133,33 @@ internal static class ProjectPolicyMcpFunctions
                 command.ProjectId = projectId;
                 command.ProjectName = projectName;
                 command.ProjectDescription = projectDescription;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> DeleteProject(
         IServiceProvider services,
-        Guid projectId
+        Guid projectId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<DeleteProjectCommand, PolicyCommandResult>(
             services,
-            command => command.ProjectId = projectId
+            command =>
+            {
+                command.ProjectId = projectId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 
     private static Task<PolicyCommandResult> AddRepository(
         IServiceProvider services,
         Guid projectId,
-        string repositoryPath
+        string repositoryPath,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             AddRepositoryToProjectCommand,
@@ -153,6 +170,8 @@ internal static class ProjectPolicyMcpFunctions
             {
                 command.ProjectId = projectId;
                 command.RepositoryPath = repositoryPath;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -160,7 +179,9 @@ internal static class ProjectPolicyMcpFunctions
         IServiceProvider services,
         Guid projectId,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<AddProjectPolicyCommand, PolicyAddedCommandResult>(
             services,
@@ -169,6 +190,8 @@ internal static class ProjectPolicyMcpFunctions
                 command.ProjectId = projectId;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -177,7 +200,9 @@ internal static class ProjectPolicyMcpFunctions
         Guid projectId,
         Guid policyId,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<UpdateProjectPolicyCommand, PolicyCommandResult>(
             services,
@@ -187,13 +212,17 @@ internal static class ProjectPolicyMcpFunctions
                 command.PolicyId = policyId;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemovePolicy(
         IServiceProvider services,
         Guid projectId,
-        Guid policyId
+        Guid policyId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<RemoveProjectPolicyCommand, PolicyCommandResult>(
             services,
@@ -201,13 +230,17 @@ internal static class ProjectPolicyMcpFunctions
             {
                 command.ProjectId = projectId;
                 command.PolicyId = policyId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> AddTopic(
         IServiceProvider services,
         Guid projectId,
-        string topicName
+        string topicName,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             AddTopicRelationToProjectCommand,
@@ -218,13 +251,17 @@ internal static class ProjectPolicyMcpFunctions
             {
                 command.ProjectId = projectId;
                 command.TopicName = topicName;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemoveTopic(
         IServiceProvider services,
         Guid projectId,
-        string topicName
+        string topicName,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             RemoveTopicRelationFromProjectCommand,
@@ -235,6 +272,8 @@ internal static class ProjectPolicyMcpFunctions
             {
                 command.ProjectId = projectId;
                 command.TopicName = topicName;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 }

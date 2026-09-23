@@ -48,13 +48,13 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "(?:.*skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))$|.*(?:feature_add|feature_remove|feature_status_update|feature_summary_update|feature_skill_add|feature_skill_remove|feature_record_add|feature_record_update|feature_record_remove|feature_review_note_add|feature_review_note_update|feature_review_note_remove|feature_research_discovery_add|feature_research_discovery_update|feature_research_discovery_remove|feature_plan_add|feature_plan_current_update|feature_plan_current_change|feature_plan_remove)$)",
+        "matcher": "(?:(?:.*skill_(add|update|delete|reference_(add|update|auto_load_update|delete)|attachment_(add|delete))$|.*(?:feature_add|feature_remove|feature_status_update|feature_summary_update|feature_skill_add|feature_skill_remove|feature_record_add|feature_record_update|feature_record_remove|feature_review_note_add|feature_review_note_update|feature_review_note_remove|feature_research_discovery_add|feature_research_discovery_update|feature_research_discovery_remove|feature_plan_add|feature_plan_current_update|feature_plan_current_change|feature_plan_remove)$)|.*(?:policy_agent_family_create|policy_agent_family_policy_add|policy_agent_family_policy_remove|policy_agent_family_policy_update|policy_agent_family_remove|policy_agent_family_update|policy_general_add|policy_general_remove|policy_general_update|policy_project_create|policy_project_delete|policy_project_policy_add|policy_project_policy_remove|policy_project_policy_update|policy_project_repository_add|policy_project_topic_add|policy_project_topic_remove|policy_project_update|policy_topic_create|policy_topic_policy_add|policy_topic_policy_remove|policy_topic_policy_update|policy_topic_remove|policy_topic_update)$)",
         "hooks": [
           {
             "type": "command",
             "command": "python \"${PLUGIN_ROOT}/hooks/write_tool_use.py\"",
             "timeout": 5,
-            "statusMessage": "Adding session context to skill or feature change"
+            "statusMessage": "Adding session context to knowledge base change"
           }
         ]
       }

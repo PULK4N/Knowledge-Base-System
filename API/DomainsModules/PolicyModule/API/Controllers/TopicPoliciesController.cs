@@ -1,3 +1,4 @@
+using PolicyModule.API.Requests;
 using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
@@ -56,39 +57,77 @@ public sealed class TopicPoliciesController(
 
     [HttpPost]
     public async Task<ActionResult<PolicyCommandResult>> Create(
-        [FromBody] CreateTopicCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] CreateTopicRequest request,
+        [FromServices] CreateTopicCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("update")]
     public async Task<ActionResult<PolicyCommandResult>> Update(
-        [FromBody] UpdateTopicCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateTopicRequest request,
+        [FromServices] UpdateTopicCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("remove")]
     public async Task<ActionResult<PolicyCommandResult>> Remove(
-        [FromBody] RemoveTopicCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveTopicRequest request,
+        [FromServices] RemoveTopicCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies")]
     public async Task<ActionResult<PolicyAddedCommandResult>> AddPolicy(
-        [FromBody] AddTopicPolicyCommand command
-    ) =>
-        Ok(
+        [FromBody] AddTopicPolicyRequest request,
+        [FromServices] AddTopicPolicyCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok(
             (PolicyAddedCommandResult)await Execute(command)
         );
+    }
 
     [HttpPost("policies/update")]
     public async Task<ActionResult<PolicyCommandResult>> UpdatePolicy(
-        [FromBody] UpdateTopicPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateTopicPolicyRequest request,
+        [FromServices] UpdateTopicPolicyCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.PolicyId = request.PolicyId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies/remove")]
     public async Task<ActionResult<PolicyCommandResult>> RemovePolicy(
-        [FromBody] RemoveTopicPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveTopicPolicyRequest request,
+        [FromServices] RemoveTopicPolicyCommand command
+    )
+    {
+        command.TopicName = request.TopicName;
+        command.PolicyId = request.PolicyId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 }

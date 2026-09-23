@@ -26,3 +26,33 @@ public readonly record struct TopicCreatedV1(
         return generalPoliciesStateData;
     }
 }
+
+public readonly record struct TopicCreatedV2(
+    TopicName TopicName,
+    string Description,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ITopicCreated
+{
+    public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
+    {
+        var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
+        generalPoliciesStateData.Topics.Add(
+            TopicName,
+            new Topic
+            {
+                TopicName = TopicName,
+                Description = Description
+            }
+        );
+
+        generalPoliciesStateData.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return generalPoliciesStateData;
+    }
+}

@@ -31,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="../../../../StateMachines/memory.yaml" Link="StateMachines/memory.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../StateMachines/memory-session-aggregate-map.yaml" Link="StateMachines/memory-session-aggregate-map.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/general-policies.yaml" Link="StateMachines/general-policies.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/project-policies.yaml" Link="StateMachines/project-policies.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/repository-to-project-map.yaml" Link="StateMachines/repository-to-project-map.yaml" CopyToOutputDirectory="PreserveNewest" />

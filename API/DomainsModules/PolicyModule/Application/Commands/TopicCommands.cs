@@ -16,16 +16,21 @@ public sealed class CreateTopicCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(TopicName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicCreatedV1(
+            new TopicCreatedV2(
                 new TopicName(TopicName),
-                Description
-            )
+                Description,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class UpdateTopicCommand(
@@ -38,16 +43,21 @@ public sealed class UpdateTopicCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(TopicName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicUpdatedV1(
+            new TopicUpdatedV2(
                 new TopicName(TopicName),
-                Description
-            )
+                Description,
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class RemoveTopicCommand(
@@ -59,13 +69,20 @@ public sealed class RemoveTopicCommand(
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(!string.IsNullOrWhiteSpace(TopicName));
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicRemovedV1(new TopicName(TopicName))
+            new TopicRemovedV2(
+                new TopicName(TopicName),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class AddTopicPolicyCommand(
@@ -86,18 +103,23 @@ public sealed class AddTopicPolicyCommand(
         Executor executor
     )
     {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
         var policyId = PolicyId.New();
 
         await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicPolicyAddedV1(
+            new TopicPolicyAddedV2(
                 new TopicName(TopicName),
                 CreatePolicy(
                     policyId,
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
 
         return PolicyAddedCommandResult.Ok(policyId.Value);
@@ -117,18 +139,23 @@ public sealed class RemoveTopicPolicyCommand(
             && PolicyId != Guid.Empty
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicPolicyRemovedV1(
+            new TopicPolicyRemovedV2(
                 new TopicName(TopicName),
                 PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
                     PolicyId
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }
 
 public sealed class UpdateTopicPolicyCommand(
@@ -147,12 +174,13 @@ public sealed class UpdateTopicPolicyCommand(
             && !string.IsNullOrWhiteSpace(Title)
         );
 
-    protected override Task<object> ExecuteInternal(
-        Executor executor
-    ) =>
-        ExecuteGeneralPoliciesEvent(
+    protected override async Task<object> ExecuteInternal(Executor executor)
+    {
+        var memoryAggregateId = await ResolveMemoryAggregateId();
+
+        return await ExecuteGeneralPoliciesEvent(
             executor,
-            new TopicPolicyUpdatedV1(
+            new TopicPolicyUpdatedV2(
                 new TopicName(TopicName),
                 CreatePolicy(
                     PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
@@ -160,7 +188,11 @@ public sealed class UpdateTopicPolicyCommand(
                     ),
                     Title,
                     Description
-                )
-            )
+                ),
+                SessionId,
+                memoryAggregateId
+            ),
+            memoryAggregateId
         );
+    }
 }

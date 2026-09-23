@@ -75,7 +75,9 @@ internal static class AgentFamilyPolicyMcpFunctions
     private static Task<PolicyCommandResult> CreateAgentFamily(
         IServiceProvider services,
         string agentFamilyName,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             CreateAgentFamilyCommand,
@@ -86,13 +88,17 @@ internal static class AgentFamilyPolicyMcpFunctions
             {
                 command.AgentFamilyName = agentFamilyName;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> UpdateAgentFamily(
         IServiceProvider services,
         string agentFamilyName,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             UpdateAgentFamilyCommand,
@@ -103,26 +109,37 @@ internal static class AgentFamilyPolicyMcpFunctions
             {
                 command.AgentFamilyName = agentFamilyName;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemoveAgentFamily(
         IServiceProvider services,
-        string agentFamilyName
+        string agentFamilyName,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             RemoveAgentFamilyCommand,
             PolicyCommandResult
         >(
             services,
-            command => command.AgentFamilyName = agentFamilyName
+            command =>
+            {
+                command.AgentFamilyName = agentFamilyName;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 
     private static Task<PolicyAddedCommandResult> AddPolicy(
         IServiceProvider services,
         string agentFamilyName,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             AddAgentFamilyPolicyCommand,
@@ -134,6 +151,8 @@ internal static class AgentFamilyPolicyMcpFunctions
                 command.AgentFamilyName = agentFamilyName;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -142,7 +161,9 @@ internal static class AgentFamilyPolicyMcpFunctions
         string agentFamilyName,
         Guid policyId,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             UpdateAgentFamilyPolicyCommand,
@@ -155,13 +176,17 @@ internal static class AgentFamilyPolicyMcpFunctions
                 command.PolicyId = policyId;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemovePolicy(
         IServiceProvider services,
         string agentFamilyName,
-        Guid policyId
+        Guid policyId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             RemoveAgentFamilyPolicyCommand,
@@ -172,6 +197,8 @@ internal static class AgentFamilyPolicyMcpFunctions
             {
                 command.AgentFamilyName = agentFamilyName;
                 command.PolicyId = policyId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 }

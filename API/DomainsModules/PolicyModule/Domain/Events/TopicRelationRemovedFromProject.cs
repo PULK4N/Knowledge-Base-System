@@ -21,3 +21,28 @@ public readonly record struct TopicRelationRemovedFromProjectV1(
         return projectPolicies;
     }
 }
+
+public readonly record struct TopicRelationRemovedFromProjectV2(
+    TopicName TopicName,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ITopicRelationRemovedFromProject
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var projectPolicies = (ProjectPoliciesStateData)stateData;
+        projectPolicies.RelatedTopics.Remove(TopicName);
+
+        projectPolicies.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return projectPolicies;
+    }
+}

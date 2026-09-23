@@ -1,3 +1,4 @@
+using PolicyModule.API.Requests;
 using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
@@ -71,9 +72,14 @@ public sealed class ProjectPoliciesController(
     public async Task<
         ActionResult<ProjectCreatedCommandResult>
     > Create(
-        [FromBody] CreateProjectCommand command
+        [FromBody] CreateProjectRequest request,
+        [FromServices] CreateProjectCommand command
     )
     {
+        command.ProjectName = request.ProjectName;
+        command.ProjectDescription = request.ProjectDescription;
+        command.RepositoryPaths = request.RepositoryPaths;
+        command.UseUserOrigin();
         var result =
             (ProjectCreatedCommandResult)await Execute(
                 command
@@ -88,51 +94,102 @@ public sealed class ProjectPoliciesController(
 
     [HttpPost("update")]
     public async Task<ActionResult<PolicyCommandResult>> Update(
-        [FromBody] UpdateProjectCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateProjectRequest request,
+        [FromServices] UpdateProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.ProjectName = request.ProjectName;
+        command.ProjectDescription = request.ProjectDescription;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("delete")]
     public async Task<ActionResult<PolicyCommandResult>> Delete(
-        [FromBody] DeleteProjectCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] DeleteProjectRequest request,
+        [FromServices] DeleteProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("repositories")]
     public async Task<ActionResult<PolicyCommandResult>> AddRepository(
-        [FromBody] AddRepositoryToProjectCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] AddRepositoryToProjectRequest request,
+        [FromServices] AddRepositoryToProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.RepositoryPath = request.RepositoryPath;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies")]
     public async Task<ActionResult<PolicyAddedCommandResult>> AddPolicy(
-        [FromBody] AddProjectPolicyCommand command
-    ) =>
-        Ok(
+        [FromBody] AddProjectPolicyRequest request,
+        [FromServices] AddProjectPolicyCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok(
             (PolicyAddedCommandResult)await Execute(command)
         );
+    }
 
     [HttpPost("policies/update")]
     public async Task<ActionResult<PolicyCommandResult>> UpdatePolicy(
-        [FromBody] UpdateProjectPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateProjectPolicyRequest request,
+        [FromServices] UpdateProjectPolicyCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.PolicyId = request.PolicyId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies/remove")]
     public async Task<ActionResult<PolicyCommandResult>> RemovePolicy(
-        [FromBody] RemoveProjectPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveProjectPolicyRequest request,
+        [FromServices] RemoveProjectPolicyCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.PolicyId = request.PolicyId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("topics")]
     public async Task<ActionResult<PolicyCommandResult>> AddTopic(
-        [FromBody] AddTopicRelationToProjectCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] AddTopicRelationToProjectRequest request,
+        [FromServices] AddTopicRelationToProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.TopicName = request.TopicName;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("topics/remove")]
     public async Task<ActionResult<PolicyCommandResult>> RemoveTopic(
-        [FromBody] RemoveTopicRelationFromProjectCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveTopicRelationFromProjectRequest request,
+        [FromServices] RemoveTopicRelationFromProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.TopicName = request.TopicName;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 }

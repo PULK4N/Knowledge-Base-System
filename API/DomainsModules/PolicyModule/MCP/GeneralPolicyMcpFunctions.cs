@@ -16,17 +16,17 @@ internal static class GeneralPolicyMcpFunctions
             "Returns every general policy that applies to every project and chat as joined Markdown text."
         ),
         PolicyMcpFunctions.Create(
-            (Func<IServiceProvider, string, string, Task<PolicyAddedCommandResult>>)Add,
+            (Func<IServiceProvider, string, string, Guid?, Guid?, Task<PolicyAddedCommandResult>>)Add,
             "policy_general_add",
             "Adds a general policy that applies to every project and chat."
         ),
         PolicyMcpFunctions.Create(
-            (Func<IServiceProvider, Guid, string, string, Task<PolicyCommandResult>>)Update,
+            (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<PolicyCommandResult>>)Update,
             "policy_general_update",
             "Updates an existing general policy."
         ),
         PolicyMcpFunctions.Create(
-            (Func<IServiceProvider, Guid, Task<PolicyCommandResult>>)Remove,
+            (Func<IServiceProvider, Guid, Guid?, Guid?, Task<PolicyCommandResult>>)Remove,
             "policy_general_remove",
             "Removes an existing general policy."
         )
@@ -43,7 +43,9 @@ internal static class GeneralPolicyMcpFunctions
     private static Task<PolicyAddedCommandResult> Add(
         IServiceProvider services,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             AddGeneralPolicyCommand,
@@ -54,6 +56,8 @@ internal static class GeneralPolicyMcpFunctions
             {
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -61,7 +65,9 @@ internal static class GeneralPolicyMcpFunctions
         IServiceProvider services,
         Guid policyId,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             UpdateGeneralPolicyCommand,
@@ -73,18 +79,27 @@ internal static class GeneralPolicyMcpFunctions
                 command.PolicyId = policyId;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> Remove(
         IServiceProvider services,
-        Guid policyId
+        Guid policyId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<
             RemoveGeneralPolicyCommand,
             PolicyCommandResult
         >(
             services,
-            command => command.PolicyId = policyId
+            command =>
+            {
+                command.PolicyId = policyId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 }

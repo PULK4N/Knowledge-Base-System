@@ -1,3 +1,4 @@
+using PolicyModule.API.Requests;
 using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
@@ -56,39 +57,77 @@ public sealed class AgentFamilyPoliciesController(
 
     [HttpPost]
     public async Task<ActionResult<PolicyCommandResult>> Create(
-        [FromBody] CreateAgentFamilyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] CreateAgentFamilyRequest request,
+        [FromServices] CreateAgentFamilyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("update")]
     public async Task<ActionResult<PolicyCommandResult>> Update(
-        [FromBody] UpdateAgentFamilyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateAgentFamilyRequest request,
+        [FromServices] UpdateAgentFamilyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("remove")]
     public async Task<ActionResult<PolicyCommandResult>> Remove(
-        [FromBody] RemoveAgentFamilyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveAgentFamilyRequest request,
+        [FromServices] RemoveAgentFamilyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies")]
     public async Task<ActionResult<PolicyAddedCommandResult>> AddPolicy(
-        [FromBody] AddAgentFamilyPolicyCommand command
-    ) =>
-        Ok(
+        [FromBody] AddAgentFamilyPolicyRequest request,
+        [FromServices] AddAgentFamilyPolicyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok(
             (PolicyAddedCommandResult)await Execute(command)
         );
+    }
 
     [HttpPost("policies/update")]
     public async Task<ActionResult<PolicyCommandResult>> UpdatePolicy(
-        [FromBody] UpdateAgentFamilyPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] UpdateAgentFamilyPolicyRequest request,
+        [FromServices] UpdateAgentFamilyPolicyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.PolicyId = request.PolicyId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 
     [HttpPost("policies/remove")]
     public async Task<ActionResult<PolicyCommandResult>> RemovePolicy(
-        [FromBody] RemoveAgentFamilyPolicyCommand command
-    ) =>
-        Ok((PolicyCommandResult)await Execute(command));
+        [FromBody] RemoveAgentFamilyPolicyRequest request,
+        [FromServices] RemoveAgentFamilyPolicyCommand command
+    )
+    {
+        command.AgentFamilyName = request.AgentFamilyName;
+        command.PolicyId = request.PolicyId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 }

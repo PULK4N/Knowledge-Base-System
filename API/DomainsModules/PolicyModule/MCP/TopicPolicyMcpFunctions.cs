@@ -72,7 +72,9 @@ internal static class TopicPolicyMcpFunctions
     private static Task<PolicyCommandResult> CreateTopic(
         IServiceProvider services,
         string topicName,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<CreateTopicCommand, PolicyCommandResult>(
             services,
@@ -80,13 +82,17 @@ internal static class TopicPolicyMcpFunctions
             {
                 command.TopicName = topicName;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> UpdateTopic(
         IServiceProvider services,
         string topicName,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<UpdateTopicCommand, PolicyCommandResult>(
             services,
@@ -94,23 +100,34 @@ internal static class TopicPolicyMcpFunctions
             {
                 command.TopicName = topicName;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemoveTopic(
         IServiceProvider services,
-        string topicName
+        string topicName,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<RemoveTopicCommand, PolicyCommandResult>(
             services,
-            command => command.TopicName = topicName
+            command =>
+            {
+                command.TopicName = topicName;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
         );
 
     private static Task<PolicyAddedCommandResult> AddPolicy(
         IServiceProvider services,
         string topicName,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<AddTopicPolicyCommand, PolicyAddedCommandResult>(
             services,
@@ -119,6 +136,8 @@ internal static class TopicPolicyMcpFunctions
                 command.TopicName = topicName;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
@@ -127,7 +146,9 @@ internal static class TopicPolicyMcpFunctions
         string topicName,
         Guid policyId,
         string title,
-        string description
+        string description,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<UpdateTopicPolicyCommand, PolicyCommandResult>(
             services,
@@ -137,13 +158,17 @@ internal static class TopicPolicyMcpFunctions
                 command.PolicyId = policyId;
                 command.Title = title;
                 command.Description = description;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 
     private static Task<PolicyCommandResult> RemovePolicy(
         IServiceProvider services,
         string topicName,
-        Guid policyId
+        Guid policyId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
     ) =>
         PolicyMcpActionExecutor.ExecuteCommand<RemoveTopicPolicyCommand, PolicyCommandResult>(
             services,
@@ -151,6 +176,8 @@ internal static class TopicPolicyMcpFunctions
             {
                 command.TopicName = topicName;
                 command.PolicyId = policyId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
 }

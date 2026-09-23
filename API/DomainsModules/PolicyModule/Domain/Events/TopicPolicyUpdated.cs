@@ -24,3 +24,31 @@ public readonly record struct TopicPolicyUpdatedV1(
         return generalPolicies;
     }
 }
+
+public readonly record struct TopicPolicyUpdatedV2(
+    TopicName TopicName,
+    Policy Policy,
+    Guid SessionId,
+    AggregateId MemoryAggregateId
+) : ITopicPolicyUpdated
+{
+    public object Apply(
+        object stateData,
+        EventExecutionInfo eventExecutionInfo
+    )
+    {
+        var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.Topics[TopicName].Policies[
+            Policy.PolicyId
+        ] = Policy;
+
+        generalPolicies.MemoryHistory.Add(
+            new MemoryHistoryRecord(
+                eventExecutionInfo.EventName,
+                eventExecutionInfo.Timestamp,
+                MemoryAggregateId
+            )
+        );
+        return generalPolicies;
+    }
+}
