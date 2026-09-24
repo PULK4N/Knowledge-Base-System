@@ -13,7 +13,8 @@ internal sealed class SkillListQueryProfile
         SkillSearchFilters,
         SkillSearchSortField,
         SkillListItem
-    >
+    >,
+    ISearchRankedEntityQueryProfile<SkillListEntry>
 {
     public IQueryable<SkillListEntry> ApplyFilters(
         IQueryable<SkillListEntry> query,
@@ -61,6 +62,14 @@ internal sealed class SkillListQueryProfile
         return query.Where(
             skill => skill.SearchText.Contains(normalizedSearch)
         );
+    }
+
+    public Expression<Func<SkillListEntry, bool>> IsPrimarySearchMatch(
+        string search
+    )
+    {
+        var normalizedSearch = Normalize(search);
+        return skill => skill.NormalizedName.Contains(normalizedSearch);
     }
 
     public IOrderedQueryable<SkillListEntry> ApplySort(

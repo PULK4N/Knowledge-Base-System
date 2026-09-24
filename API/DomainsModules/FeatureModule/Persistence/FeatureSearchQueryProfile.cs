@@ -13,7 +13,8 @@ internal sealed class FeatureSearchQueryProfile
         FeatureSearchFilters,
         FeatureSearchSortField,
         FeatureSummary
-    >
+    >,
+    ISearchRankedEntityQueryProfile<FeatureSearchEntry>
 {
     public IQueryable<FeatureSearchEntry> ApplyFilters(
         IQueryable<FeatureSearchEntry> query,
@@ -44,6 +45,14 @@ internal sealed class FeatureSearchQueryProfile
         return query.Where(
             feature => feature.SearchText.Contains(normalizedSearch)
         );
+    }
+
+    public Expression<Func<FeatureSearchEntry, bool>> IsPrimarySearchMatch(
+        string search
+    )
+    {
+        var normalizedSearch = Normalize(search);
+        return feature => feature.NormalizedName.Contains(normalizedSearch);
     }
 
     public IOrderedQueryable<FeatureSearchEntry> ApplySort(

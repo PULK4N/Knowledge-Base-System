@@ -40,6 +40,36 @@ public sealed class EntityQueryExecutorTests
         Assert.Equal("Alpha two", Assert.Single(result.Items));
     }
 
+    [Fact]
+    public async Task Execute_places_primary_search_matches_before_requested_sort()
+    {
+        await using var context = CreateContext();
+        context.Entries.AddRange(
+            new TestEntry { Id = 1, Group = 1, Name = "Alpha", Note = "beta" },
+            new TestEntry { Id = 2, Group = 1, Name = "Beta two" },
+            new TestEntry { Id = 3, Group = 1, Name = "Beta one" },
+            new TestEntry { Id = 4, Group = 1, Name = "Gamma" }
+        );
+        await context.SaveChangesAsync();
+        var request = new EntityQuery<TestFilter, TestSort>(
+            new PageRequest(1, 10),
+            "beta",
+            new TestFilter(1),
+            new SortRequest<TestSort>(
+                TestSort.Name,
+                SortDirection.Ascending
+            )
+        );
+
+        var result = await EntityQueryExecutor.Execute(
+            context.Entries,
+            request,
+            new RankedTestProfile()
+        );
+
+        Assert.Equal(["Beta one", "Beta two", "Alpha"], result.Items);
+    }
+
     private static TestDbContext CreateContext()
     {
         var context = new TestDbContext(
@@ -65,6 +95,7 @@ public sealed class EntityQueryExecutorTests
         public int Id { get; set; }
         public int Group { get; set; }
         public required string Name { get; set; }
+        public string Note { get; set; } = "";
     }
 
     private sealed record TestFilter(int Group);
@@ -74,7 +105,7 @@ public sealed class EntityQueryExecutorTests
         Name
     }
 
-    private sealed class TestProfile
+    private class TestProfile
         : IEntityQueryProfile<
             TestEntry,
             TestFilter,
@@ -94,7 +125,9 @@ public sealed class EntityQueryExecutorTests
             search is null
                 ? query
                 : query.Where(
-                    entry => entry.Name.ToLower().Contains(search.ToLower())
+                    entry =>
+                        entry.Name.ToLower().Contains(search.ToLower())
+                        || entry.Note.ToLower().Contains(search.ToLower())
                 );
 
         public IOrderedQueryable<TestEntry> ApplySort(
@@ -111,5 +144,14 @@ public sealed class EntityQueryExecutorTests
 
         public Expression<Func<TestEntry, string>> Projection =>
             entry => entry.Name;
+    }
+
+    private sealed class RankedTestProfile
+        : TestProfile,
+        ISearchRankedEntityQueryProfile<TestEntry>
+    {
+        public Expression<Func<TestEntry, bool>> IsPrimarySearchMatch(
+            string search
+        ) => entry => entry.Name.ToLower().Contains(search.ToLower());
     }
 }

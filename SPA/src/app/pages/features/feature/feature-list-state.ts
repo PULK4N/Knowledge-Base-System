@@ -13,8 +13,8 @@ import {
   FeatureSearchSortField,
 } from '../data-access/feature.models';
 
-export const FEATURE_DEFAULT_PAGE_SIZE = 6;
-export const FEATURE_PAGE_SIZES = [6, 12, 24] as const;
+export const FEATURE_DEFAULT_PAGE_SIZE = 10;
+export const FEATURE_PAGE_SIZES = [10, 25, 50] as const;
 const MAXIMUM_OFFSET = 100_000;
 const MAXIMUM_SEARCH_LENGTH = 500;
 const GUID_PATTERN =

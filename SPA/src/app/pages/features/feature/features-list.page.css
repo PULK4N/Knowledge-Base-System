@@ -121,7 +121,7 @@
   line-height: 1.45;
 }
 
-.feature-status span {
+.feature-status span:first-child {
   display: block;
   margin-bottom: 4px;
   color: #717c94;
@@ -129,6 +129,14 @@
   font-weight: 760;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.feature-status-text {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .feature-card footer {

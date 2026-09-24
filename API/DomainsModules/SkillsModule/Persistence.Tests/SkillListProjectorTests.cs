@@ -136,6 +136,39 @@ public sealed class SkillListProjectorTests
         Assert.Equal(SkillId(expectedFirstId), result.Items[0].SkillId);
     }
 
+    [Theory]
+    [InlineData(SkillSearchSortField.Name, SortDirection.Ascending)]
+    [InlineData(SkillSearchSortField.ReferenceCount, SortDirection.Ascending)]
+    public async Task Search_places_name_matches_before_other_matches(
+        SkillSearchSortField sortBy,
+        SortDirection direction
+    )
+    {
+        await using var context = CreateContext();
+        var descriptionMatch = CreateEntry(1, "Alpha", 1, 1);
+        descriptionMatch.SearchText = "ALPHA\nWORKS WITH ZEBRA";
+        context.SkillListEntries.AddRange(
+            descriptionMatch,
+            CreateEntry(3, "Zebra", 2, 1),
+            CreateEntry(2, "Beta", 3, 2)
+        );
+        await context.SaveChangesAsync();
+
+        var result = await new SkillListRepository(context).Search(
+            CreateRequest(
+                new SkillSearchFilters(null, null, null),
+                " zebra ",
+                sortBy,
+                direction
+            )
+        );
+
+        Assert.Equal(
+            [SkillId(3), SkillId(1)],
+            result.Items.Select(skill => skill.SkillId).ToList()
+        );
+    }
+
     [Fact]
     public async Task Search_uses_skill_id_as_the_final_tie_breaker()
     {

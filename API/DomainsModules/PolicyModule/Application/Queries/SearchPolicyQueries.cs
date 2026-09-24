@@ -375,9 +375,11 @@ internal static class PolicySearch
         string? search
     )
     {
-        if (!string.IsNullOrWhiteSpace(search))
+        var normalizedSearch = string.IsNullOrWhiteSpace(search)
+            ? null
+            : search.Trim();
+        if (normalizedSearch is not null)
         {
-            var normalizedSearch = search.Trim();
             policies = policies.Where(
                 policy =>
                     policy.Title.Contains(
@@ -392,7 +394,15 @@ internal static class PolicySearch
         }
 
         var ordered = policies
-            .OrderBy(
+            .OrderByDescending(
+                policy =>
+                    normalizedSearch is not null
+                    && policy.Title.Contains(
+                        normalizedSearch,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            )
+            .ThenBy(
                 policy => policy.Title,
                 StringComparer.OrdinalIgnoreCase
             )

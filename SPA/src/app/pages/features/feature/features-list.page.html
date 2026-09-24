@@ -60,7 +60,9 @@
               <p class="feature-summary">{{ feature.summary }}</p>
               <p class="feature-status">
                 <span>Status</span>
-                {{ feature.status || 'No progress update yet.' }}
+                <span class="feature-status-text" [title]="feature.status">
+                  {{ feature.status || 'No progress update yet.' }}
+                </span>
               </p>
               <footer>
                 <span>{{ feature.planCount }} {{ feature.planCount === 1 ? 'plan' : 'plans' }}</span>

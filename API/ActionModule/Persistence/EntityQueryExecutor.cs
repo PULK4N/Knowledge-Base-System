@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ActionModule.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -91,8 +92,86 @@ public static class EntityQueryExecutor
         EntityQuery<TFilter, TSort> request,
         IEntityQueryProfile<TEntry, TFilter, TSort, TResult> profile
     ) where TSort : struct, Enum =>
-        profile.ApplySort(filtered, request.Sort)
+        ApplySort(filtered, request, profile)
             .Skip(request.Page.Offset)
             .Take(request.Page.Size)
             .Select(profile.Projection);
+
+    private static IQueryable<TEntry> ApplySort<
+        TEntry,
+        TFilter,
+        TSort,
+        TResult
+    >(
+        IQueryable<TEntry> filtered,
+        EntityQuery<TFilter, TSort> request,
+        IEntityQueryProfile<TEntry, TFilter, TSort, TResult> profile
+    ) where TSort : struct, Enum
+    {
+        var sorted = profile.ApplySort(filtered, request.Sort);
+        if (
+            request.NormalizedSearch is null
+            || profile is not ISearchRankedEntityQueryProfile<TEntry> ranked
+        )
+            return sorted;
+
+        var rankedSource = filtered.OrderByDescending(
+            ranked.IsPrimarySearchMatch(request.NormalizedSearch)
+        );
+        var rewriter = new LeadingOrderingRewriter(
+            filtered.Expression,
+            rankedSource.Expression
+        );
+        var expression = rewriter.Visit(sorted.Expression);
+
+        return rewriter.Rewritten
+            ? sorted.Provider.CreateQuery<TEntry>(expression)
+            : sorted;
+    }
+
+    /// <summary>
+    /// Turns the profile's first OrderBy over the filtered query into a
+    /// ThenBy over the search-ranked query, so the rank becomes the leading
+    /// sort key while the profile keeps its full ordering and tie-breakers.
+    /// </summary>
+    private sealed class LeadingOrderingRewriter(
+        Expression source,
+        Expression rankedSource
+    ) : ExpressionVisitor
+    {
+        public bool Rewritten { get; private set; }
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            if (
+                Rewritten
+                || node.Method.DeclaringType != typeof(Queryable)
+                || node.Arguments[0] != source
+                || node.Method.Name is not (
+                    nameof(Queryable.OrderBy)
+                    or nameof(Queryable.OrderByDescending)
+                )
+            )
+                return base.VisitMethodCall(node);
+
+            var thenByName = node.Method.Name == nameof(Queryable.OrderBy)
+                ? nameof(Queryable.ThenBy)
+                : nameof(Queryable.ThenByDescending);
+            var thenBy = typeof(Queryable)
+                .GetMethods()
+                .Single(
+                    method =>
+                        method.Name == thenByName
+                        && method.GetParameters().Length
+                            == node.Arguments.Count
+                )
+                .MakeGenericMethod(node.Method.GetGenericArguments());
+            Rewritten = true;
+
+            return Expression.Call(
+                thenBy,
+                node.Arguments.Skip(1).Prepend(rankedSource)
+            );
+        }
+    }
 }

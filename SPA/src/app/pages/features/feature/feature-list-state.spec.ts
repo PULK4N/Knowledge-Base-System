@@ -13,7 +13,7 @@ describe('Feature list route state', () => {
       parseFeatureSearchRequest(
         convertToParamMap({
           page: '3',
-          pageSize: '12',
+          pageSize: '25',
           search: ' projection ',
           projectId,
           sortBy: 'PlanCount',
@@ -22,7 +22,7 @@ describe('Feature list route state', () => {
       ),
     ).toEqual({
       page: 3,
-      pageSize: 12,
+      pageSize: 25,
       search: 'projection',
       projectId,
       sortBy: 'PlanCount',
@@ -47,7 +47,7 @@ describe('Feature list route state', () => {
   it('prevents URLs from exceeding the backend pagination limit', () => {
     expect(
       parseFeatureSearchRequest(
-        convertToParamMap({ page: '100000', pageSize: '24' }),
+        convertToParamMap({ page: '100000', pageSize: '50' }),
       ).page,
     ).toBe(1);
   });
