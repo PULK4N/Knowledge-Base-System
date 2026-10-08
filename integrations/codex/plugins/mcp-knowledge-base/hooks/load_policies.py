@@ -168,7 +168,7 @@ def process_hook(
             )
             if changes:
                 output = _context_output(event_name, "POLICY CHANGE:\n" + changes)
-        # Advance the comparison baseline only after the policy file was written.
+        # Advance the comparison baseline only after all available repositories were written.
         _write_cache(
             cache_path,
             {"repositoryPath": repository_path, "result": result},
@@ -271,7 +271,7 @@ def _policy_file_output(
     policies = _get_case_insensitive(result, "policies") or ""
     document = _policy_document(str(policies))
     announce = not _has_loaded_policies(repository_path)
-    _write_policy_file(repository_path, document)
+    _write_project_policy_files(repository_path, result, document)
 
     if not announce:
         # The agent reads the policy file on its own; saying so every turn only
@@ -281,6 +281,38 @@ def _policy_file_output(
         event_name,
         f"Policies written to {POLICY_FILE_NAME}.",
     )
+
+
+def _write_project_policy_files(
+    repository_path: str, result: dict[str, Any], document: str
+) -> None:
+    """Synchronize local project repositories; paths on other machines may be absent."""
+    mapped_paths = _get_case_insensitive(result, "repositoryPaths")
+    if mapped_paths is None:
+        mapped_paths = []  # Older APIs only support the current repository.
+    if not isinstance(mapped_paths, list) or any(
+        not isinstance(path, str) for path in mapped_paths
+    ):
+        raise PolicyBootstrapError("Policy API returned invalid repositoryPaths.")
+
+    seen: set[str] = set()
+    failures: list[str] = []
+    for path in [repository_path, *mapped_paths]:
+        normalized = os.path.normcase(os.path.normpath(path))
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if path != repository_path and (
+            not os.path.isabs(path) or not os.path.isdir(path)
+        ):
+            print(f"Policy sync skipped unavailable repository: {path}", file=sys.stderr)
+            continue
+        try:
+            _write_policy_file(path, document)
+        except PolicyBootstrapError as error:
+            failures.append(str(error))
+    if failures:
+        raise PolicyBootstrapError("\n".join(failures))
 
 
 def _has_loaded_policies(repository_path: str) -> bool:
@@ -420,12 +452,20 @@ def _write_policy_file(repository_path: str, document: str) -> bool:
     except (OSError, UnicodeDecodeError):
         pass
 
-    temporary = path.with_name(f"{POLICY_FILE_NAME}.mcp-tmp")
+    temporary: Path | None = None
     try:
-        temporary.write_text(document, encoding="utf-8")
+        # Each session needs its own temporary file. Close it before replacing
+        # the destination so the same sequence works on Windows and Linux.
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix=f"{POLICY_FILE_NAME}.", suffix=".mcp-tmp", delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            stream.write(document)
         temporary.replace(path)
     except OSError as error:
-        temporary.unlink(missing_ok=True)
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
         raise PolicyBootstrapError(
             f"Could not write authoritative policies to {path}: {error}"
         ) from error

@@ -343,14 +343,21 @@ public sealed partial class PolicyCommandTests
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
         const string repositoryPath = "/workspace/agent-family-project";
+        const string secondRepositoryPath = "/workspace/agent-family-project-second";
         var project = Assert.IsType<ProjectCreatedCommandResult>(
             await ExecuteAsUser(new CreateProjectCommand(handler)
             {
                 ProjectName = "Agent family project",
                 ProjectDescription = "Agent family query test project.",
-                RepositoryPaths = [repositoryPath]
+                RepositoryPaths = [repositoryPath, secondRepositoryPath]
             })
         );
+        await ExecuteAsUser(new CreateProjectCommand(handler)
+        {
+            ProjectName = "Unrelated project",
+            ProjectDescription = "Must not receive this project's policies.",
+            RepositoryPaths = ["/workspace/unrelated"]
+        });
         var projectAggregateId = AggregateId.FromDatabaseGuid(
             project.ProjectId
         );
@@ -376,6 +383,10 @@ public sealed partial class PolicyCommandTests
             policyTextRepository.LastProjectId
         );
         Assert.Equal(agentFamily, policyTextRepository.LastAgentFamily);
+        Assert.Equal(
+            new List<string> { repositoryPath, secondRepositoryPath },
+            result.RepositoryPaths
+        );
     }
 
     [Fact]

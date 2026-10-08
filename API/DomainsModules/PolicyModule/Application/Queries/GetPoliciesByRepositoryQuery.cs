@@ -81,7 +81,14 @@ public sealed class GetPoliciesByRepositoryQuery(
         return GetPoliciesByRepositoryResult.Found(
             RepositoryPath,
             policies
-        );
+        ) with
+        {
+            RepositoryPaths = repositoryMap.RepositoryToProjectMap
+                .Where(mapping => mapping.Value == projectAggregateId)
+                .Select(mapping => mapping.Key)
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToList()
+        };
     }
 
     private async Task<NotFoundException> CreateNotFoundException() =>

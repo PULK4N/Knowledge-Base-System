@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
@@ -40,6 +41,71 @@ class FakeClient:
 
 
 class LoadPoliciesTests(unittest.TestCase):
+    def test_syncs_all_project_repositories_on_every_fetch(self):
+        with tempfile.TemporaryDirectory() as root:
+            first, second, unrelated, data = [
+                Path(root) / name for name in ("first", "second", "unrelated", "data")
+            ]
+            for directory in (first, second, unrelated):
+                directory.mkdir()
+            client = FakeClient({
+                "status": "OK", "policies": "# General policies\n## Tests\nCurrent.",
+                "repositoryPaths": [str(first), str(second), str(second)],
+            })
+            event = self.event(str(first))
+            for attempt in range(2):
+                with self.subTest(attempt=attempt):
+                    (second / "AGENTS.md").write_text("Stale", encoding="utf-8")
+                    with mock.patch.object(load_policies, "_write_policy_file", wraps=load_policies._write_policy_file) as writer:
+                        load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+                    self.assertEqual(2, writer.call_count)
+                    for directory in (first, second):
+                        self.assertEqual(client.result["policies"], (directory / "AGENTS.md").read_text(encoding="utf-8"))
+                    self.assertFalse((unrelated / "AGENTS.md").exists())
+            self.assertEqual(2, client.read_count)
+
+    def test_unavailable_and_relative_paths_are_reported_without_creating_directories(self):
+        with tempfile.TemporaryDirectory() as root:
+            missing = Path(root) / "missing"
+            client = FakeClient({
+                "status": "OK", "policies": "# General policies\n## Tests\nCurrent.",
+                "repositoryPaths": [str(missing), "relative/repository"],
+            })
+            with mock.patch.object(load_policies.sys, "stderr", new_callable=io.StringIO) as stderr:
+                load_policies.process_hook(self.event(root), client_factory=lambda: client, data_directory=Path(root) / "data")
+            self.assertIn(str(missing), stderr.getvalue())
+            self.assertIn("relative/repository", stderr.getvalue())
+            self.assertFalse(missing.exists())
+            self.assertTrue((Path(root) / "AGENTS.md").exists())
+
+    def test_secondary_write_failure_attempts_remaining_repositories_and_keeps_baseline(self):
+        with tempfile.TemporaryDirectory() as root:
+            directories = [Path(root) / name for name in ("first", "second", "third")]
+            for directory in directories:
+                directory.mkdir()
+            client = FakeClient({
+                "status": "OK", "policies": "# General policies\n## Tests\nOld.",
+                "repositoryPaths": [str(path) for path in directories],
+            })
+            event = self.event(str(directories[0]))
+            data = Path(root) / "data"
+            load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            client.result = {**client.result, "policies": "# General policies\n## Tests\nNew."}
+            original_writer = load_policies._write_policy_file
+
+            def write(path, document):
+                if path == str(directories[1]):
+                    raise load_policies.PolicyBootstrapError("Permission denied")
+                return original_writer(path, document)
+
+            with mock.patch.object(load_policies, "_write_policy_file", side_effect=write):
+                with self.assertRaisesRegex(load_policies.PolicyBootstrapError, "Permission denied"):
+                    load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            self.assertIn("New.", (directories[2] / "AGENTS.md").read_text(encoding="utf-8"))
+            output = load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            self.assertIn("POLICY CHANGE:", self.context(output))
+            self.assertIn("New.", (directories[1] / "AGENTS.md").read_text(encoding="utf-8"))
+
     def test_policy_loader_runs_for_every_session_start_source(self):
         hooks = json.loads(HOOKS_CONFIG.read_text(encoding="utf-8"))["hooks"]
         policy_loader = next(
