@@ -112,7 +112,7 @@ class LoadPoliciesTests(unittest.TestCase):
 
             self.assertNotIn("Secret sauce policy", self.context(output))
 
-    def test_later_prompt_uses_session_cache_without_another_request(self):
+    def test_later_prompt_fetches_api_even_when_policies_are_unchanged(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
             first = FakeClient(
                 {"status": "OK", "policies": "# General policies\n\nCached policy"}
@@ -125,14 +125,15 @@ class LoadPoliciesTests(unittest.TestCase):
             )
 
             output = load_policies.process_hook(
-                event,
-                client_factory=lambda: self.fail("MCP should not be called twice"),
+                {**event, "hook_event_name": "UserPromptSubmit"},
+                client_factory=lambda: first,
                 data_directory=Path(data),
             )
 
             self.assertIsNone(output)
+            self.assertEqual(2, first.read_count)
 
-    def test_deleted_agents_md_is_restored_from_the_session_cache(self):
+    def test_deleted_agents_md_is_restored_from_the_api(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
             event = self.event(cwd)
             load_policies.process_hook(
@@ -147,12 +148,97 @@ class LoadPoliciesTests(unittest.TestCase):
 
             output = load_policies.process_hook(
                 {**event, "hook_event_name": "UserPromptSubmit"},
-                client_factory=lambda: self.fail("MCP should not be called on resume"),
+                client_factory=lambda: FakeClient(
+                    {"status": "OK", "policies": "Cached policy"}
+                ),
                 data_directory=Path(data),
             )
 
             self.assertIn("Cached policy", agents_md.read_text(encoding="utf-8"))
             self.assertIn("AGENTS.md", self.context(output))
+
+    def test_each_session_receives_changes_even_if_another_session_updated_file(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            original = "# General policies\n\n## Tests\nOld.\n\n## Style\nKeep."
+            updated = original.replace("Old.", "New.")
+            client = FakeClient({"status": "OK", "policies": original})
+            first = self.event(cwd)
+            second = {**first, "session_id": "session-2"}
+            for event in (first, second):
+                load_policies.process_hook(
+                    event, client_factory=lambda: client, data_directory=Path(data)
+                )
+            client.result = {"status": "OK", "policies": updated}
+            for event in (second, first):
+                with self.subTest(session=event["session_id"]):
+                    output = load_policies.process_hook(
+                        {**event, "hook_event_name": "UserPromptSubmit"},
+                        client_factory=lambda: client,
+                        data_directory=Path(data),
+                    )
+                    self.assertEqual(
+                        "POLICY CHANGE:\n# General policies\n\n## Tests\nNew.",
+                        self.context(output),
+                    )
+                    self.assertIsNone(load_policies.process_hook(
+                        event, client_factory=lambda: client, data_directory=Path(data)
+                    ))
+
+    def test_policy_diffs_preserve_scope_and_report_additions_and_removals(self):
+        previous = (
+            "# General policies\n\n## Same title\nKeep.\n\n"
+            "# Project policies\n\n## Same title\nOld.\n\n## Removed\nObsolete."
+        )
+        current = (
+            "# General policies\n\n## Same title\nKeep.\n\n"
+            "# Project policies\n\n## Same title\nNew.\n\n## Added\nFresh."
+        )
+        changes = load_policies._policy_changes(previous, current)
+        self.assertNotIn("General policies", changes)
+        self.assertNotIn("Keep.", changes)
+        self.assertIn("# Project policies\n\n## Same title\nNew.", changes)
+        self.assertIn("## Added\nFresh.", changes)
+        self.assertIn("Removed policy (no longer applies):\n# Project policies\n## Removed", changes)
+
+    def test_file_edits_do_not_trigger_policy_changes(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            event = self.event(cwd)
+            policies = "# General policies\n## Tests\nKeep."
+            client = FakeClient({"status": "OK", "policies": policies})
+            load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            agents_md = Path(cwd) / "AGENTS.md"
+            agents_md.write_text("# General policies\n## Other session\nDifferent.", encoding="utf-8")
+            output = load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            self.assertIsNone(output)
+            self.assertEqual(policies, agents_md.read_text(encoding="utf-8"))
+
+    def test_api_failure_is_not_hidden_by_cached_policies(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            event = self.event(cwd)
+            client = FakeClient({"status": "OK", "policies": "# General policies\n## Tests\nKeep."})
+            load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            with mock.patch.object(client, "get_policies", side_effect=load_policies.PolicyBootstrapError("API unavailable")):
+                with self.assertRaises(load_policies.PolicyBootstrapError):
+                    load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+
+    def test_policy_examples_and_subheadings_remain_part_of_changed_policy(self):
+        previous = "# General policies\n## Tests\n### Example\n```python\n# Comment\nold()\n```"
+        current = previous.replace("old()", "new()")
+        self.assertEqual(current.replace("policies\n", "policies\n\n", 1),
+                         load_policies._policy_changes(previous, current))
+
+    def test_failed_write_does_not_advance_session_baseline(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            event = self.event(cwd)
+            client = FakeClient({"status": "OK", "policies": "# General policies\n## Tests\nOld."})
+            load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            client.result = {"status": "OK", "policies": "# General policies\n## Tests\nNew."}
+            with mock.patch.object(load_policies, "_write_policy_file", side_effect=load_policies.PolicyBootstrapError("Write failed")):
+                with self.assertRaises(load_policies.PolicyBootstrapError):
+                    load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            output = load_policies.process_hook(event, client_factory=lambda: client, data_directory=Path(data))
+            self.assertIn("POLICY CHANGE:", self.context(output))
+            self.assertIn("New.", self.context(output))
 
     def test_unmapped_repository_leaves_agents_md_untouched(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:

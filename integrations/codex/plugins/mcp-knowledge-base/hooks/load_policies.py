@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -135,15 +136,12 @@ def process_hook(
     repository_path = _repository_path(str(event.get("cwd", "")))
     cached = _read_cache(cache_path)
     cached_result = cached.get("result") if cached else None
-    if (
+    if not (
         cached
         and cached.get("repositoryPath") == repository_path
         and isinstance(cached_result, dict)
     ):
-        return _policy_file_output(event_name, repository_path, cached_result)
-
-    if cached:
-        cache_path.unlink(missing_ok=True)
+        cached_result = None
 
     client = (
         client_factory()
@@ -156,17 +154,92 @@ def process_hook(
         client.close()
 
     status = str(_get_case_insensitive(result, "status") or "")
-    if status == "OK":
-        _write_cache(
-            cache_path,
-            {"repositoryPath": repository_path, "result": result},
-        )
-    elif status != "RepositoryMappingRequired":
+    if status not in ("OK", "RepositoryMappingRequired"):
         raise PolicyBootstrapError(
             f"Policy retrieval returned unexpected status '{status or 'missing'}'."
         )
 
-    return _policy_file_output(event_name, repository_path, result)
+    output = _policy_file_output(event_name, repository_path, result)
+    if status == "OK":
+        if cached_result is not None:
+            changes = _policy_changes(
+                str(_get_case_insensitive(cached_result, "policies") or ""),
+                str(_get_case_insensitive(result, "policies") or ""),
+            )
+            if changes:
+                output = _context_output(event_name, "POLICY CHANGE:\n" + changes)
+        # Advance the comparison baseline only after the policy file was written.
+        _write_cache(
+            cache_path,
+            {"repositoryPath": repository_path, "result": result},
+        )
+    return output
+
+
+def _policy_sections(document: str) -> dict[tuple[str, str, int], str]:
+    """Identify policies by scope and heading, preserving duplicate occurrences.
+
+    The API emits scope headings with # and policy headings with ##. Deeper
+    headings and fenced examples belong to the policy body.
+    """
+    sections: dict[tuple[str, str, int], str] = {}
+    scope = ""
+    heading = ""
+    lines: list[str] = []
+    counts: dict[tuple[str, str], int] = {}
+    fence = ""
+
+    def flush() -> None:
+        body = "\n".join(lines).strip()
+        if not body:
+            return
+        identity = (scope, heading)
+        occurrence = counts.get(identity, 0)
+        counts[identity] = occurrence + 1
+        sections[(scope, heading, occurrence)] = body
+
+    for line in document.splitlines():
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if marker:
+            token = marker.group(1)
+            if not fence:
+                fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence):
+                fence = ""
+            lines.append(line)
+            continue
+        match = re.match(r"^(#{1,2})\s+(.+)$", line) if not fence else None
+        if match:
+            flush()
+            lines = []
+            if len(match.group(1)) == 1:
+                scope = line.strip()
+                heading = ""
+            else:
+                heading = line.strip()
+                lines.append(line)
+        else:
+            lines.append(line)
+    flush()
+    return sections
+
+
+def _policy_changes(previous: str, current: str) -> str:
+    before = _policy_sections(previous)
+    after = _policy_sections(current)
+    changes = [
+        "\n\n".join(part for part in (key[0], body) if part)
+        for key, body in after.items()
+        if before.get(key) != body
+    ]
+    changes.extend(
+        "Removed policy (no longer applies):\n"
+        + "\n".join(part for part in key[:2] if part)
+        + ("\n" + body if not key[1] else "")
+        for key, body in before.items()
+        if key not in after
+    )
+    return "\n\n".join(changes)
 
 
 def _fetch_policies(

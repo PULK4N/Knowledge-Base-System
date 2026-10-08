@@ -1,6 +1,6 @@
 {
   "name": "mcp-knowledge-base",
-  "version": "0.2.6+e76794ef89ce",
+  "version": "0.2.7+7698dc03ea68",
   "description": "Loads repository policies before Codex works and exposes MCP-managed skills, policies, and memory.",
   "author": {
     "name": "Nikola",
