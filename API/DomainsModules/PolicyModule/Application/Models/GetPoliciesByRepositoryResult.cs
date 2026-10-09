@@ -9,8 +9,6 @@ public sealed record GetPoliciesByRepositoryResult(
     List<ProjectRepositoryOption> Projects
 )
 {
-    public List<string> RepositoryPaths { get; init; } = [];
-
     public const string OkStatus = "OK";
     public const string RepositoryMappingRequiredStatus =
         "RepositoryMappingRequired";

@@ -34,6 +34,17 @@ public sealed class ProjectPoliciesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("by-repository")]
+    public async Task<ActionResult<PolicyProjectDetailsDto>> GetByRepository(
+        [FromQuery, Required] string repositoryPath,
+        [FromServices] GetPolicyProjectByRepositoryQuery query
+    )
+    {
+        query.RepositoryPath = repositoryPath;
+        var project = await Execute(query);
+        return project is null ? NotFound() : Ok(project);
+    }
+
     [HttpGet("{projectId:guid}")]
     public async Task<ActionResult<PolicyProjectDetailsDto>> Get(
         Guid projectId,

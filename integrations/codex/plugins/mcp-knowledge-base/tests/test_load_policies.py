@@ -16,8 +16,10 @@ SPEC.loader.exec_module(load_policies)
 
 
 class FakeClient:
-    def __init__(self, result, missing_agent_family=False):
+    def __init__(self, result, missing_agent_family=False, repository_paths=None):
         self.result = result
+        self.repository_paths = repository_paths
+        self.project_read_count = 0
         self.missing_agent_family = missing_agent_family
         self.requested_repository = None
         self.requested_agent_family = None
@@ -33,6 +35,10 @@ class FakeClient:
             raise load_policies.AgentFamilyMissingError(agent_family)
         return self.result
 
+    def get_project(self, repository_path):
+        self.project_read_count += 1
+        return {"repositoryPaths": self.repository_paths if self.repository_paths is not None else [repository_path]}
+
     def create_agent_family(self, agent_family):
         self.created_families.append(agent_family)
 
@@ -41,6 +47,52 @@ class FakeClient:
 
 
 class LoadPoliciesTests(unittest.TestCase):
+    def test_project_request_encodes_windows_and_linux_paths(self):
+        client = load_policies.PolicyHttpClient(
+            "https://kb.example/api/policies", "https://kb.example/api/policies/agent-families"
+        )
+        for path in ("/home/user/a repo+#", "C:\\Users\\Name\\a repo+#", "\\\\server\\share\\repo"):
+            with self.subTest(path=path):
+                project = {"projectId": "project-1", "repositoryPaths": [path]}
+                response = mock.MagicMock()
+                response.__enter__.return_value.read.return_value = json.dumps(project).encode("utf-8")
+                with mock.patch.object(load_policies.urllib.request, "urlopen", return_value=response) as send:
+                    self.assertEqual(project, client.get_project(path))
+                request = send.call_args.args[0]
+                url = load_policies.urllib.parse.urlsplit(request.full_url)
+                self.assertEqual("/api/policies/projects/by-repository", url.path)
+                self.assertEqual({"repositoryPath": [path]}, load_policies.urllib.parse.parse_qs(url.query))
+
+    def test_project_failure_preserves_files_and_session_baseline(self):
+        with tempfile.TemporaryDirectory() as root:
+            client = FakeClient({"status": "OK", "policies": "# General policies\n## Rule\nOld"})
+            data = Path(root) / "cache"
+            event = self.event(root)
+            load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            client.result["policies"] = "# General policies\n## Rule\nNew"
+            with mock.patch.object(client, "get_project", side_effect=load_policies.PolicyBootstrapError("Project unavailable")):
+                with self.assertRaisesRegex(load_policies.PolicyBootstrapError, "Project unavailable"):
+                    load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            self.assertIn("Old", (Path(root) / "AGENTS.md").read_text(encoding="utf-8"))
+            output = load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)
+            self.assertIn("POLICY CHANGE:", self.context(output))
+            self.assertIn("New", self.context(output))
+
+    def test_invalid_project_does_not_write_policies(self):
+        for paths in (None, "wrong", [1], ["/another/repository"]):
+            with self.subTest(paths=paths), tempfile.TemporaryDirectory() as root:
+                client = FakeClient({"status": "OK", "policies": "Policy"})
+                with mock.patch.object(client, "get_project", return_value={"repositoryPaths": paths}):
+                    with self.assertRaises(load_policies.PolicyBootstrapError):
+                        load_policies.process_hook(self.event(root), client_factory=lambda: client, data_directory=Path(root) / "cache")
+                self.assertFalse((Path(root) / "AGENTS.md").exists())
+
+    def test_mapping_required_does_not_fetch_project(self):
+        with tempfile.TemporaryDirectory() as root:
+            client = FakeClient({"status": "RepositoryMappingRequired", "projects": []})
+            load_policies.process_hook(self.event(root), client_factory=lambda: client, data_directory=Path(root) / "cache")
+            self.assertEqual(0, client.project_read_count)
+
     def test_syncs_all_project_repositories_on_every_fetch(self):
         with tempfile.TemporaryDirectory() as root:
             first, second, unrelated, data = [
@@ -50,8 +102,7 @@ class LoadPoliciesTests(unittest.TestCase):
                 directory.mkdir()
             client = FakeClient({
                 "status": "OK", "policies": "# General policies\n## Tests\nCurrent.",
-                "repositoryPaths": [str(first), str(second), str(second)],
-            })
+            }, repository_paths=[str(first), str(second), str(second)])
             event = self.event(str(first))
             for attempt in range(2):
                 with self.subTest(attempt=attempt):
@@ -63,14 +114,14 @@ class LoadPoliciesTests(unittest.TestCase):
                         self.assertEqual(client.result["policies"], (directory / "AGENTS.md").read_text(encoding="utf-8"))
                     self.assertFalse((unrelated / "AGENTS.md").exists())
             self.assertEqual(2, client.read_count)
+            self.assertEqual(2, client.project_read_count)
 
     def test_unavailable_and_relative_paths_are_reported_without_creating_directories(self):
         with tempfile.TemporaryDirectory() as root:
             missing = Path(root) / "missing"
             client = FakeClient({
                 "status": "OK", "policies": "# General policies\n## Tests\nCurrent.",
-                "repositoryPaths": [str(missing), "relative/repository"],
-            })
+            }, repository_paths=[root, str(missing), "relative/repository"])
             with mock.patch.object(load_policies.sys, "stderr", new_callable=io.StringIO) as stderr:
                 load_policies.process_hook(self.event(root), client_factory=lambda: client, data_directory=Path(root) / "data")
             self.assertIn(str(missing), stderr.getvalue())
@@ -85,8 +136,7 @@ class LoadPoliciesTests(unittest.TestCase):
                 directory.mkdir()
             client = FakeClient({
                 "status": "OK", "policies": "# General policies\n## Tests\nOld.",
-                "repositoryPaths": [str(path) for path in directories],
-            })
+            }, repository_paths=[str(path) for path in directories])
             event = self.event(str(directories[0]))
             data = Path(root) / "data"
             load_policies.process_hook(event, client_factory=lambda: client, data_directory=data)

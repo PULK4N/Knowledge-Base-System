@@ -383,10 +383,43 @@ public sealed partial class PolicyCommandTests
             policyTextRepository.LastProjectId
         );
         Assert.Equal(agentFamily, policyTextRepository.LastAgentFamily);
+        Assert.Null(typeof(GetPoliciesByRepositoryResult).GetProperty("RepositoryPaths"));
+        var resolvedProject = Assert.IsType<PolicyProjectDetailsDto>(
+            await new GetPolicyProjectByRepositoryQuery(
+                CreateCalculator(), eventStore
+            ) { RepositoryPath = secondRepositoryPath }.Execute(Executor)
+        );
+        Assert.Equal(project.ProjectId, resolvedProject.ProjectId);
         Assert.Equal(
             new List<string> { repositoryPath, secondRepositoryPath },
-            result.RepositoryPaths
+            resolvedProject.RepositoryPaths
         );
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetPolicyProjectByRepository_ReturnsNullForUnmappedOrDeletedProject(bool deleted)
+    {
+        var eventStore = new CapturingEventStoreWithOutbox();
+        const string path = "/workspace/deleted-project";
+        if (deleted)
+        {
+            var handler = CreateHandler(eventStore);
+            var project = Assert.IsType<ProjectCreatedCommandResult>(
+                await ExecuteAsUser(new CreateProjectCommand(handler)
+                {
+                    ProjectName = "Deleted project",
+                    ProjectDescription = "Lookup test",
+                    RepositoryPaths = [path]
+                })
+            );
+            await ExecuteAsUser(new DeleteProjectCommand(handler) { ProjectId = project.ProjectId });
+        }
+        var result = await new GetPolicyProjectByRepositoryQuery(
+            CreateCalculator(), eventStore
+        ) { RepositoryPath = path }.Execute(Executor);
+        Assert.Null(result);
     }
 
     [Fact]

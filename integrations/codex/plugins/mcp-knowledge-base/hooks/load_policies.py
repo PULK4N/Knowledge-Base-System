@@ -113,6 +113,26 @@ class PolicyHttpClient:
                 f"Could not create agent family '{agent_family}': {error}"
             ) from error
 
+    def get_project(self, repository_path: str) -> dict[str, Any]:
+        query = urllib.parse.urlencode({"repositoryPath": repository_path})
+        request = urllib.request.Request(
+            f"{self._url.rstrip('/')}/projects/by-repository?{query}", method="GET"
+        )
+        request.add_header("Accept", "application/json")
+        try:
+            with urllib.request.urlopen(
+                request, timeout=self._timeout_seconds
+            ) as response:
+                body = response.read().decode("utf-8")
+        except urllib.error.HTTPError as error:
+            details = error.read().decode("utf-8", errors="replace")
+            raise PolicyBootstrapError(
+                f"Project API returned HTTP {error.code}: {details or error.reason}"
+            ) from error
+        except (OSError, urllib.error.URLError) as error:
+            raise PolicyBootstrapError(f"Project API is unavailable: {error}") from error
+        return _parse_result(body, "Project API")
+
     def close(self) -> None:
         """Kept so callers can manage the client uniformly; HTTP needs no teardown."""
 
@@ -150,6 +170,11 @@ def process_hook(
     )
     try:
         result = _fetch_policies(client, repository_path, _agent_family())
+        project = (
+            client.get_project(repository_path)
+            if _get_case_insensitive(result, "status") == "OK"
+            else None
+        )
     finally:
         client.close()
 
@@ -159,7 +184,7 @@ def process_hook(
             f"Policy retrieval returned unexpected status '{status or 'missing'}'."
         )
 
-    output = _policy_file_output(event_name, repository_path, result)
+    output = _policy_file_output(event_name, repository_path, result, project)
     if status == "OK":
         if cached_result is not None:
             changes = _policy_changes(
@@ -260,7 +285,8 @@ def _fetch_policies(
 
 
 def _policy_file_output(
-    event_name: str, repository_path: str, result: dict[str, Any]
+    event_name: str, repository_path: str, result: dict[str, Any],
+    project: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
     status = str(_get_case_insensitive(result, "status") or "")
     if status == "RepositoryMappingRequired":
@@ -271,7 +297,7 @@ def _policy_file_output(
     policies = _get_case_insensitive(result, "policies") or ""
     document = _policy_document(str(policies))
     announce = not _has_loaded_policies(repository_path)
-    _write_project_policy_files(repository_path, result, document)
+    _write_project_policy_files(repository_path, project, document)
 
     if not announce:
         # The agent reads the policy file on its own; saying so every turn only
@@ -284,16 +310,16 @@ def _policy_file_output(
 
 
 def _write_project_policy_files(
-    repository_path: str, result: dict[str, Any], document: str
+    repository_path: str, project: dict[str, Any] | None, document: str
 ) -> None:
     """Synchronize local project repositories; paths on other machines may be absent."""
-    mapped_paths = _get_case_insensitive(result, "repositoryPaths")
-    if mapped_paths is None:
-        mapped_paths = []  # Older APIs only support the current repository.
+    mapped_paths = _get_case_insensitive(project, "repositoryPaths")
     if not isinstance(mapped_paths, list) or any(
         not isinstance(path, str) for path in mapped_paths
     ):
-        raise PolicyBootstrapError("Policy API returned invalid repositoryPaths.")
+        raise PolicyBootstrapError("Project API returned invalid repositoryPaths.")
+    if repository_path not in mapped_paths:
+        raise PolicyBootstrapError("Project API did not include the requested repository.")
 
     seen: set[str] = set()
     failures: list[str] = []
@@ -507,15 +533,15 @@ def _failure_output(message: str) -> dict[str, Any]:
     return {"continue": False, "stopReason": reason, "systemMessage": reason}
 
 
-def _parse_result(body: str) -> dict[str, Any]:
+def _parse_result(body: str, source: str = "Policy API") -> dict[str, Any]:
     try:
         parsed = json.loads(body)
     except json.JSONDecodeError as error:
         raise PolicyBootstrapError(
-            "Policy API returned invalid JSON."
+            f"{source} returned invalid JSON."
         ) from error
     if not isinstance(parsed, dict):
-        raise PolicyBootstrapError("Policy API returned a non-object result.")
+        raise PolicyBootstrapError(f"{source} returned a non-object result.")
     return parsed
 
 
