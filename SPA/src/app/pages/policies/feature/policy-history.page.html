@@ -25,7 +25,12 @@
         </span>
         <div>
           <h1 class="page-heading">{{ vm.state.data.policy.title }}</h1>
-          <p class="policy-description">{{ vm.state.data.policy.description }}</p>
+          <app-markdown-content
+            class="readme-document policy-description"
+            [blocks]="emptyBlocks"
+            [markdown]="vm.state.data.policy.description"
+            emptyMessage="This policy has no description."
+          />
         </div>
       </article>
 

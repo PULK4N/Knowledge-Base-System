@@ -31,6 +31,7 @@ import {
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { policyHistoryLink } from './policy-history';
 import { policySearchRequests } from './policy-search-requests';
 
@@ -124,7 +125,13 @@ export function policyScopeFromRoute(
 
 @Component({
   selector: 'app-policy-list-page',
-  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink],
+  imports: [
+    AsyncPipe,
+    FormsModule,
+    MarkdownContentComponent,
+    PaginationComponent,
+    RouterLink,
+  ],
   templateUrl: './policy-list.page.html',
   styleUrls: ['./policy-list.page.css', '../ui/knowledge-list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,6 +148,7 @@ export class PolicyListPage {
   private readonly actions = new Subject<PolicyAction>();
   private readonly connectionRequests = new Subject<ProjectConnectionAction>();
 
+  protected readonly emptyBlocks = [];
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly confirmingPolicyId = signal<string | null>(null);
   protected readonly confirmingProjectTopicName = signal<string | null>(null);

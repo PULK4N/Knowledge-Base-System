@@ -3,6 +3,7 @@ import { convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, of } from 'rxjs';
+import { provideKnowledgeMarkdown } from '../../../shared/markdown/markdown.providers';
 import { PolicyProjectDetails } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
 import { PolicyListPage, policyScopeFromRoute } from './policy-list.page';
@@ -121,8 +122,8 @@ describe('PolicyListPage project topics', () => {
   });
 });
 
-describe('PolicyListPage history link', () => {
-  it('links each policy to its history page', async () => {
+describe('PolicyListPage policy rows', () => {
+  it('links each policy to its history page and renders its description as Markdown', async () => {
     await TestBed.configureTestingModule({
       imports: [PolicyListPage],
       providers: [
@@ -133,13 +134,18 @@ describe('PolicyListPage history link', () => {
             data: { policyScope: 'topic' },
           },
         ]),
+        ...provideKnowledgeMarkdown(),
         {
           provide: PolicyService,
           useValue: {
             searchPolicies: vi.fn(() =>
               of({
                 items: [
-                  { id: 'policy-1', title: 'Title', description: 'Text' },
+                  {
+                    id: 'policy-1',
+                    title: 'Title',
+                    description: 'Use **bold** and `code`.',
+                  },
                 ],
                 page: 1,
                 pageSize: 10,
@@ -160,5 +166,12 @@ describe('PolicyListPage history link', () => {
     expect(
       element.querySelector('.history-link')?.getAttribute('href'),
     ).toBe('/policies/topics/Angular/policies/policy-1/history');
+
+    await vi.waitFor(() =>
+      expect(element.querySelector('.policy-description strong')).not.toBeNull(),
+    );
+    const description = element.querySelector('.policy-description');
+    expect(description?.querySelector('strong')?.textContent).toBe('bold');
+    expect(description?.querySelector('code')?.textContent).toBe('code');
   });
 });

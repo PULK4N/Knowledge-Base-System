@@ -358,12 +358,10 @@
   font-weight: 650;
 }
 
-.policy-copy span {
+.policy-copy .policy-description {
+  display: block;
+  min-width: 0;
   max-width: 900px;
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1.6;
-  white-space: pre-wrap;
 }
 
 @media (max-width: 720px) {

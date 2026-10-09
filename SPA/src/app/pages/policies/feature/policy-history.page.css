@@ -52,11 +52,9 @@
 }
 
 .policy-description {
-  margin: 12px 0 0;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  display: block;
+  min-width: 0;
+  margin-top: 12px;
 }
 
 .history-panel {

@@ -285,7 +285,12 @@
               } @else {
                 <span class="policy-copy">
                   <strong>{{ policy.title }}</strong>
-                  <span>{{ policy.description }}</span>
+                  <app-markdown-content
+                    class="readme-document policy-description"
+                    [blocks]="emptyBlocks"
+                    [markdown]="policy.description"
+                    emptyMessage="This policy has no description."
+                  />
                   @if (
                     vm.mutation.status === 'error' &&
                     vm.mutation.policyId === policy.id

@@ -15,6 +15,7 @@ import {
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { PolicyScope, PolicyWithHistory } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
+import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { policyScopeFromRoute } from './policy-list.page';
 import {
   PolicyHistoryItem,
@@ -29,12 +30,13 @@ interface PolicyHistoryView {
 
 @Component({
   selector: 'app-policy-history-page',
-  imports: [AsyncPipe, DatePipe, RouterLink],
+  imports: [AsyncPipe, DatePipe, MarkdownContentComponent, RouterLink],
   templateUrl: './policy-history.page.html',
   styleUrls: ['./policy-history.page.css', '../ui/knowledge-list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PolicyHistoryPage {
+  protected readonly emptyBlocks = [];
   private readonly route = inject(ActivatedRoute);
   private readonly policies = inject(PolicyService);
 
