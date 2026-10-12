@@ -191,11 +191,15 @@ public sealed class FeatureResearchSearchProjector(
                     ["planId"] = plan.Id.Value.ToString(),
                     ["title"] = plan.Title,
                     ["contentType"] = plan.ContentType.ToString(),
-                    ["isCurrent"] = feature.CurrentPlanId == plan.Id,
+                    ["status"] = plan.Status.ToString(),
+                    ["additionalInfo"] = plan.AdditionalInfo,
+                    ["branch"] = plan.Branch?.Name,
                     ["createdAt"] = plan.CreatedAt,
                     ["updatedAt"] = plan.UpdatedAt
                 }),
-                $"# {plan.Title}\n\n{plan.Content}"
+                string.IsNullOrWhiteSpace(plan.AdditionalInfo)
+                    ? $"# {plan.Title}\n\n{plan.Content}"
+                    : $"# {plan.Title}\n\n{plan.AdditionalInfo}\n\n{plan.Content}"
             );
         }
 

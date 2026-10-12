@@ -168,3 +168,33 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
+  FeaturePlanAddedV3:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustNotExistValidator
+  FeaturePlanUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+  FeaturePlanStatusChangedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+  FeaturePlanBranchAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePlanBranchParentValidator
+      - FeaturePlanBranchNameMustBeAvailableValidator
+  FeaturePlanBranchUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePlanBranchMustExistValidator
+      - FeaturePlanBranchNameMustBeAvailableValidator
+  FeaturePlanBranchRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePlanBranchMustExistValidator
+      - FeaturePlanBaseBranchCannotBeRemovedValidator

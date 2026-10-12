@@ -100,20 +100,6 @@ public sealed record RemoveFeatureResearchDiscoveryRequest
     public required Guid DiscoveryId { get; init; }
 }
 
-public sealed record FeaturePlanContentRequest
-{
-    public required string Title { get; init; }
-
-    public required string Content { get; init; }
-
-    public FeaturePlanContentType ContentType { get; init; }
-}
-
-public sealed record FeaturePlanRequest
-{
-    public required Guid PlanId { get; init; }
-}
-
 public sealed record AddFeatureRequest
 {
     public required Guid ProjectId { get; init; }

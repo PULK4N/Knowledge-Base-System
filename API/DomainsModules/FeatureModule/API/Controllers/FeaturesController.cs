@@ -302,58 +302,121 @@ public sealed class FeaturesController(
     [HttpPost("{featureId:guid}/plans")]
     public async Task<ActionResult<FeaturePlanCreatedCommandResult>> AddPlan(
         Guid featureId,
-        [FromBody] FeaturePlanContentRequest request,
+        [FromBody] AddFeaturePlanRequest request,
         [FromServices] AddFeaturePlanCommand command
     )
     {
         command.UseUserOrigin();
         command.FeatureId = featureId;
-        command.Title = request.Title;
-        command.Content = request.Content;
-        command.ContentType = request.ContentType;
+        command.BranchName = request.BranchName;
+        command.BranchDescription = request.BranchDescription;
+        MapPlanContent(request, command);
         return Ok(
             (FeaturePlanCreatedCommandResult)await Execute(command)
         );
     }
 
-    [HttpPost("{featureId:guid}/plans/current")]
-    public async Task<ActionResult<FeatureCommandResult>> UpdateCurrentPlan(
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/update")]
+    public async Task<ActionResult<FeatureCommandResult>> UpdatePlan(
         Guid featureId,
+        Guid planId,
         [FromBody] FeaturePlanContentRequest request,
-        [FromServices] UpdateCurrentFeaturePlanCommand command
+        [FromServices] UpdateFeaturePlanCommand command
     )
     {
         command.UseUserOrigin();
         command.FeatureId = featureId;
-        command.Title = request.Title;
-        command.Content = request.Content;
-        command.ContentType = request.ContentType;
+        command.PlanId = planId;
+        MapPlanContent(request, command);
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
-    [HttpPost("{featureId:guid}/plans/current/change")]
-    public async Task<ActionResult<FeatureCommandResult>> ChangeCurrentPlan(
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/status")]
+    public async Task<ActionResult<FeatureCommandResult>> ChangePlanStatus(
         Guid featureId,
-        [FromBody] FeaturePlanRequest request,
-        [FromServices] ChangeCurrentFeaturePlanCommand command
+        Guid planId,
+        [FromBody] ChangeFeaturePlanStatusRequest request,
+        [FromServices] ChangeFeaturePlanStatusCommand command
     )
     {
         command.UseUserOrigin();
         command.FeatureId = featureId;
-        command.PlanId = request.PlanId;
+        command.PlanId = planId;
+        command.Status = request.Status;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
-    [HttpPost("{featureId:guid}/plans/remove")]
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/remove")]
     public async Task<ActionResult<FeatureCommandResult>> RemovePlan(
         Guid featureId,
-        [FromBody] FeaturePlanRequest request,
+        Guid planId,
         [FromServices] RemoveFeaturePlanCommand command
     )
     {
         command.UseUserOrigin();
         command.FeatureId = featureId;
-        command.PlanId = request.PlanId;
+        command.PlanId = planId;
         return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/branches")]
+    public async Task<ActionResult<FeatureCommandResult>> AddPlanBranch(
+        Guid featureId,
+        Guid planId,
+        [FromBody] AddFeaturePlanBranchRequest request,
+        [FromServices] AddFeaturePlanBranchCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.PlanId = planId;
+        command.BranchName = request.BranchName;
+        command.Description = request.Description;
+        command.ParentBranchName = request.ParentBranchName;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/branches/update")]
+    public async Task<ActionResult<FeatureCommandResult>> UpdatePlanBranch(
+        Guid featureId,
+        Guid planId,
+        [FromBody] UpdateFeaturePlanBranchRequest request,
+        [FromServices] UpdateFeaturePlanBranchCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.PlanId = planId;
+        command.BranchName = request.BranchName;
+        command.NewBranchName = request.NewBranchName;
+        command.Description = request.Description;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/branches/remove")]
+    public async Task<ActionResult<FeatureCommandResult>> RemovePlanBranch(
+        Guid featureId,
+        Guid planId,
+        [FromBody] RemoveFeaturePlanBranchRequest request,
+        [FromServices] RemoveFeaturePlanBranchCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.PlanId = planId;
+        command.BranchName = request.BranchName;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    private static void MapPlanContent(
+        FeaturePlanContentRequest request,
+        FeaturePlanContentCommand command
+    )
+    {
+        command.Title = request.Title;
+        command.Content = request.Content;
+        command.ContentType = request.ContentType;
+        command.AdditionalInfo = request.AdditionalInfo;
+        command.Status = request.Status;
     }
 }

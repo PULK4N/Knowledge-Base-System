@@ -25,7 +25,6 @@ public sealed record FeatureSummary(
     string Name,
     string Summary,
     string Status,
-    Guid? CurrentPlanId,
     int PlanCount,
     int RecordCount
 );

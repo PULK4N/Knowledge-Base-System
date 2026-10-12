@@ -8,7 +8,6 @@ public sealed class FeatureSummaryEntry
     public required string Name { get; set; }
     public required string Summary { get; set; }
     public required string Status { get; set; }
-    public Guid? CurrentPlanId { get; set; }
     public int PlanCount { get; set; }
     public int RecordCount { get; set; }
 }

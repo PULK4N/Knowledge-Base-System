@@ -122,7 +122,6 @@ public sealed class FeatureSearchRepository(
             SearchText = $"{normalizedName}\n{normalizedSummary}",
             Status = feature.Status,
             IsDeleted = feature.IsDeleted,
-            CurrentPlanId = feature.CurrentPlanId?.Value,
             PlanCount = feature.Plans.Count,
             RecordCount = feature.Records.Count,
             ProjectedOrderNumber = update.OrderNumber
@@ -160,10 +159,6 @@ public sealed class FeatureSearchRepository(
                     .SetProperty(
                         current => current.IsDeleted,
                         entry.IsDeleted
-                    )
-                    .SetProperty(
-                        current => current.CurrentPlanId,
-                        entry.CurrentPlanId
                     )
                     .SetProperty(
                         current => current.PlanCount,

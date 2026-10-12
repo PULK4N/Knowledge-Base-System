@@ -5,6 +5,9 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Domain.Tests;
 
+// Covers replay of released plan events that are now obsolete.
+#pragma warning disable CS0618
+
 public sealed class FeatureEventTests
 {
     private static readonly AggregateId FeatureId = Id(

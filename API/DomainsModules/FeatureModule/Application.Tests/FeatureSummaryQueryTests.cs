@@ -26,7 +26,6 @@ public sealed class FeatureSummaryQueryTests
                     "Pagination",
                     "Study paging patterns.",
                     "Planning",
-                    null,
                     0,
                     0
                 )
@@ -52,7 +51,6 @@ public sealed class FeatureSummaryQueryTests
             "Pagination",
             "Study paging patterns.",
             "Planning",
-            null,
             0,
             0
         );
@@ -78,7 +76,6 @@ public sealed class FeatureSummaryQueryTests
                         "Pagination",
                         "Study paging patterns.",
                         "Planning",
-                        null,
                         2,
                         3
                     )

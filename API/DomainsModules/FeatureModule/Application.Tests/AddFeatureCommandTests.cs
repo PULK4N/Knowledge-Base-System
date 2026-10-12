@@ -82,7 +82,6 @@ public sealed class AddFeatureCommandTests
                     "Feature journal",
                     "Summary",
                     "Active",
-                    null,
                     0,
                     0
                 )

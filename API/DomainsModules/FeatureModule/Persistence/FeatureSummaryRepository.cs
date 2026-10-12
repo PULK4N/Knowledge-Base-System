@@ -230,7 +230,6 @@ public sealed class FeatureSummaryRepository(
             Name = feature.Name,
             Summary = feature.Summary,
             Status = feature.Status,
-            CurrentPlanId = feature.CurrentPlanId?.Value,
             PlanCount = feature.Plans.Count,
             RecordCount = feature.Records.Count
         };
@@ -347,7 +346,6 @@ public sealed class FeatureSummaryRepository(
             feature.Name,
             feature.Summary,
             feature.Status,
-            feature.CurrentPlanId,
             feature.PlanCount,
             feature.RecordCount
         );

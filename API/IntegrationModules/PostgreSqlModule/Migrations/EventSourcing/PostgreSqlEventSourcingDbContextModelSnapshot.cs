@@ -130,9 +130,6 @@ namespace PostgreSqlModule.Migrations.EventSourcing
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid?>("CurrentPlanId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("FeatureAggregateId")
                         .HasColumnType("uuid");
 
@@ -210,9 +207,6 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid?>("CurrentPlanId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("FeatureAggregateId")
                         .HasColumnType("uuid");

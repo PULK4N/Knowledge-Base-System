@@ -6,11 +6,16 @@ namespace FeatureModule.MCP.Tests;
 public sealed class FeatureMcpDtoTests
 {
     [Fact]
-    public void FromFeature_BoundsFullContentAndKeepsReferencesForTheRest()
+    public void FromFeature_ReturnsPlanSummariesWithoutContentAndBoundsTheRest()
     {
         var now = DateTime.UtcNow;
-        var currentPlan = Plan("Current", now.AddDays(-2));
-        var otherPlan = Plan("Previous", now.AddDays(-1));
+        var olderPlan = Plan("Research", now.AddDays(-2));
+        var newerPlan = Plan("Implementation", now.AddDays(-1)) with
+        {
+            Status = FeaturePlanStatus.InProgress,
+            AdditionalInfo = "Production implementation.",
+            Branch = new FeaturePlanBranchDto("feature/plans", "Plan rework", [])
+        };
         var discoveries = Enumerable.Range(1, 7)
             .Select(index => Discovery($"Discovery {index}", now.AddDays(-index)))
             .ToList();
@@ -29,24 +34,38 @@ public sealed class FeatureMcpDtoTests
             Records = records,
             ReviewNotes = [ReviewNote("Intended behaviour", now)],
             ResearchDiscoveries = discoveries,
-            Plans = [currentPlan, otherPlan],
-            CurrentPlanId = currentPlan.Id,
+            Plans = [olderPlan, newerPlan],
             MemoryHistory = []
         };
 
         var result = FeatureMcpDto.FromFeature(feature);
 
-        Assert.Equal(currentPlan, result.CurrentPlan);
+        Assert.Equal(
+            [
+                new FeatureMcpPlanSummaryDto
+                {
+                    Id = newerPlan.Id,
+                    Title = "Implementation",
+                    Status = FeaturePlanStatus.InProgress,
+                    AdditionalInfo = "Production implementation.",
+                    Branch = "feature/plans - Plan rework"
+                },
+                new FeatureMcpPlanSummaryDto
+                {
+                    Id = olderPlan.Id,
+                    Title = "Research",
+                    Status = FeaturePlanStatus.NotStarted,
+                    AdditionalInfo = string.Empty
+                }
+            ],
+            result.Plans
+        );
         Assert.DoesNotContain(
             typeof(FeatureMcpDto).GetProperties(),
             property => property.Name.Contains("ReviewNote")
         );
         Assert.Equal(records.Take(5), result.LatestConversationRecords);
         Assert.Equal(discoveries.Take(5), result.LatestResearchDiscoveries);
-        Assert.Equal(
-            [new FeatureMcpReferenceDto(otherPlan.Id, otherPlan.Title)],
-            result.OtherPlans
-        );
         Assert.Equal(
             discoveries.Skip(5).Select(discovery =>
                 new FeatureMcpReferenceDto(discovery.Id, discovery.Title)
@@ -62,6 +81,8 @@ public sealed class FeatureMcpDtoTests
             Title = title,
             Content = $"{title} content",
             ContentType = FeaturePlanContentType.Markdown,
+            AdditionalInfo = string.Empty,
+            Status = FeaturePlanStatus.NotStarted,
             CreatedAt = updatedAt,
             UpdatedAt = updatedAt
         };

@@ -45,13 +45,12 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     /// </summary>
     public List<FeatureResearchDiscovery> ResearchDiscoveries { get; set; } = [];
 
-    /// <summary>
-    /// Retains both the selected plan and previous plans so any retained plan can be selected again.
-    /// </summary>
     public List<FeaturePlan> Plans { get; set; } = [];
 
     /// <summary>
-    /// Selects the current plan from <see cref="Plans"/>; all other retained plans are previous plans.
+    /// Legacy current-plan selection kept only so released current-plan events replay.
+    /// New plan events do not read or change it.
     /// </summary>
+    [Obsolete("Replay only. Current-plan selection was removed.")]
     public FeaturePlanId? CurrentPlanId { get; set; }
 }

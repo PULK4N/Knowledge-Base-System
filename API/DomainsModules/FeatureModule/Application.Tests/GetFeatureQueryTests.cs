@@ -13,6 +13,9 @@ using Shared.Interfaces;
 
 namespace FeatureModule.Application.Tests;
 
+// Covers replay of released plan events that are now obsolete.
+#pragma warning disable CS0618
+
 public sealed class GetFeatureQueryTests
 {
     private static readonly AggregateId FeatureId =
@@ -45,9 +48,8 @@ public sealed class GetFeatureQueryTests
         Assert.Equal(expectedStatus, feature.Status);
         Assert.Equal(
             Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            feature.CurrentPlanId
+            Assert.Single(feature.Plans).Id
         );
-        Assert.Single(feature.Plans);
         Assert.Equal(
             expectedDiscoveryCount,
             feature.ResearchDiscoveries.Count

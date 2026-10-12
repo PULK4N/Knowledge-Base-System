@@ -8,6 +8,9 @@ using FeatureModule.Domain.Validators;
 
 namespace FeatureModule.Domain.Tests;
 
+// Covers replay of released plan events that are now obsolete.
+#pragma warning disable CS0618
+
 public sealed class FeatureStateMachineDefinitionTests
 {
     private static readonly object RegistrationLock = new();
@@ -76,7 +79,13 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(CurrentFeaturePlanChangedV1),
                 nameof(CurrentFeaturePlanChangedV2),
                 nameof(FeaturePlanRemovedV1),
-                nameof(FeaturePlanRemovedV2)
+                nameof(FeaturePlanRemovedV2),
+                nameof(FeaturePlanAddedV3),
+                nameof(FeaturePlanUpdatedV1),
+                nameof(FeaturePlanStatusChangedV1),
+                nameof(FeaturePlanBranchAddedV1),
+                nameof(FeaturePlanBranchUpdatedV1),
+                nameof(FeaturePlanBranchRemovedV1)
             ],
             definition.Events.Keys
         );
@@ -336,7 +345,13 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(CurrentFeaturePlanChangedV1),
         typeof(CurrentFeaturePlanChangedV2),
         typeof(FeaturePlanRemovedV1),
-        typeof(FeaturePlanRemovedV2)
+        typeof(FeaturePlanRemovedV2),
+        typeof(FeaturePlanAddedV3),
+        typeof(FeaturePlanUpdatedV1),
+        typeof(FeaturePlanStatusChangedV1),
+        typeof(FeaturePlanBranchAddedV1),
+        typeof(FeaturePlanBranchUpdatedV1),
+        typeof(FeaturePlanBranchRemovedV1)
     ];
 
     private static List<Type> ValidatorTypes { get; } =
@@ -353,6 +368,10 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureResearchDiscoveryMustExistValidator),
         typeof(FeaturePlanMustNotExistValidator),
         typeof(FeaturePlanMustExistValidator),
-        typeof(CurrentFeaturePlanMustExistValidator)
+        typeof(CurrentFeaturePlanMustExistValidator),
+        typeof(FeaturePlanBranchParentValidator),
+        typeof(FeaturePlanBranchNameMustBeAvailableValidator),
+        typeof(FeaturePlanBranchMustExistValidator),
+        typeof(FeaturePlanBaseBranchCannotBeRemovedValidator)
     ];
 }

@@ -11,7 +11,6 @@ public sealed class FeatureSearchEntry
     public required string SearchText { get; set; }
     public required string Status { get; set; }
     public bool IsDeleted { get; set; }
-    public Guid? CurrentPlanId { get; set; }
     public int PlanCount { get; set; }
     public int RecordCount { get; set; }
     public long ProjectedOrderNumber { get; set; }

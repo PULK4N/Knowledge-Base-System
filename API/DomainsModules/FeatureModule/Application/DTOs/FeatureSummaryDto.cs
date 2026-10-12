@@ -8,7 +8,6 @@ public sealed record FeatureSummaryDto(
     string Name,
     string Summary,
     string Status,
-    Guid? CurrentPlanId,
     int PlanCount,
     int RecordCount
 )
@@ -22,7 +21,6 @@ public sealed record FeatureSummaryDto(
             readModel.Name,
             readModel.Summary,
             readModel.Status,
-            readModel.CurrentPlanId,
             readModel.PlanCount,
             readModel.RecordCount
         );

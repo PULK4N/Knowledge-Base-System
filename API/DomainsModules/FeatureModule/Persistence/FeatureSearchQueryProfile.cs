@@ -109,7 +109,6 @@ internal sealed class FeatureSearchQueryProfile
             feature.Name,
             feature.Summary,
             feature.Status,
-            feature.CurrentPlanId,
             feature.PlanCount,
             feature.RecordCount
         );

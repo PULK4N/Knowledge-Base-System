@@ -29,8 +29,6 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
-    public Guid? CurrentPlanId { get; init; }
-
     public required IReadOnlyCollection<FeatureMemoryHistoryDto>
         MemoryHistory { get; init; }
 
@@ -58,7 +56,6 @@ public sealed record FeatureDto
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),
-            CurrentPlanId = state.CurrentPlanId?.Value,
             MemoryHistory = state.MemoryHistory
                 .Select(FeatureMemoryHistoryDto.FromModel)
                 .ToList()
@@ -143,32 +140,6 @@ public sealed record FeatureResearchDiscoveryDto
             SourceReference = discovery.SourceReference,
             CreatedAt = discovery.CreatedAt,
             UpdatedAt = discovery.UpdatedAt
-        };
-}
-
-public sealed record FeaturePlanDto
-{
-    public required Guid Id { get; init; }
-
-    public required string Title { get; init; }
-
-    public required string Content { get; init; }
-
-    public required FeaturePlanContentType ContentType { get; init; }
-
-    public required DateTime CreatedAt { get; init; }
-
-    public required DateTime UpdatedAt { get; init; }
-
-    public static FeaturePlanDto FromModel(FeaturePlan plan) =>
-        new()
-        {
-            Id = plan.Id.Value,
-            Title = plan.Title,
-            Content = plan.Content,
-            ContentType = plan.ContentType,
-            CreatedAt = plan.CreatedAt,
-            UpdatedAt = plan.UpdatedAt
         };
 }
 

@@ -59,11 +59,12 @@ public sealed class FeatureResearchSearchProjectorTests
                 Title = "Implementation",
                 Content = "# Build the global projection",
                 ContentType = FeaturePlanContentType.Markdown,
+                AdditionalInfo = "Production implementation.",
+                Status = FeaturePlanStatus.InProgress,
                 CreatedAt = createdAt,
                 UpdatedAt = updatedAt
             }
         );
-        state.CurrentPlanId = planId;
         state.Records.Add(
             new FeatureRecord
             {
@@ -120,6 +121,20 @@ public sealed class FeatureResearchSearchProjectorTests
                 .OrderBy(sourceType => sourceType)
                 .ToList()
         );
+        var globalPlan = knowledgeRepository.Documents.First(
+            document => document.SourceType
+                == KnowledgeSearchSourceTypes.FeaturePlan
+        );
+        Assert.Equal(
+            "InProgress",
+            globalPlan.Metadata.GetProperty("status").GetString()
+        );
+        Assert.Equal(
+            "Production implementation.",
+            globalPlan.Metadata.GetProperty("additionalInfo").GetString()
+        );
+        Assert.False(globalPlan.Metadata.TryGetProperty("isCurrent", out _));
+        Assert.Contains("Production implementation.", globalPlan.Text);
         var globalResearch = knowledgeRepository.Documents.First(
             document => document.SourceType
                 == KnowledgeSearchSourceTypes.FeatureResearchDiscovery

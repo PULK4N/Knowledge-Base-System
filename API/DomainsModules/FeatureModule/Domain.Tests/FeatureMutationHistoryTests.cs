@@ -8,6 +8,9 @@ using Shared.Interfaces;
 
 namespace FeatureModule.Domain.Tests;
 
+// Covers replay of released plan events that are now obsolete.
+#pragma warning disable CS0618
+
 public sealed class FeatureMutationHistoryTests
 {
     private static readonly AggregateId FeatureId = AggregateId.FromDatabaseGuid(Guid.NewGuid());

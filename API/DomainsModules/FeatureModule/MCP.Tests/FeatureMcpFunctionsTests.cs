@@ -36,8 +36,11 @@ public sealed class FeatureMcpFunctionsTests
         "feature_research_discovery_update",
         "feature_research_discovery_remove",
         "feature_plan_add",
-        "feature_plan_current_update",
-        "feature_plan_current_change",
+        "feature_plan_update",
+        "feature_plan_status_update",
+        "feature_plan_branch_add",
+        "feature_plan_branch_update",
+        "feature_plan_branch_remove",
         "feature_plan_remove"
     ];
 
@@ -141,8 +144,8 @@ public sealed class FeatureMcpFunctionsTests
 
     [Theory]
     [InlineData("feature_plan_add")]
-    [InlineData("feature_plan_current_update")]
-    public void PlanWrite_ExposesOptionalContentType(
+    [InlineData("feature_plan_update")]
+    public void PlanWrite_ExposesOptionalContentTypeAndPlanDetails(
         string functionName
     )
     {
@@ -168,6 +171,17 @@ public sealed class FeatureMcpFunctionsTests
                 .Select(element => element.GetString())
         );
         Assert.DoesNotContain("contentType", required);
+        Assert.Equal(
+            "NotStarted",
+            schema.GetProperty("properties").GetProperty("status")
+                .GetProperty("default").GetString()
+        );
+        Assert.False(
+            schema.GetProperty("properties").TryGetProperty("branch", out _)
+        );
+        Assert.DoesNotContain("additionalInfo", required);
+        Assert.DoesNotContain("status", required);
+        Assert.Equal(functionName == "feature_plan_add", required.Contains("branchName"));
     }
 
     [Theory]

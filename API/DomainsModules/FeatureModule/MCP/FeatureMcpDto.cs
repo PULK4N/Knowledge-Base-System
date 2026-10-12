@@ -16,16 +16,17 @@ public sealed record FeatureMcpDto
 
     public required IReadOnlyCollection<Guid> RelatedSkillIds { get; init; }
 
-    public FeaturePlanDto? CurrentPlan { get; init; }
+    /// <summary>
+    /// Plan summaries without content; load a plan with feature_plan_get when needed.
+    /// </summary>
+    public required IReadOnlyCollection<FeatureMcpPlanSummaryDto>
+        Plans { get; init; }
 
     public required IReadOnlyCollection<FeatureResearchDiscoveryDto>
         LatestResearchDiscoveries { get; init; }
 
     public required IReadOnlyCollection<FeatureRecordDto>
         LatestConversationRecords { get; init; }
-
-    public required IReadOnlyCollection<FeatureMcpReferenceDto>
-        OtherPlans { get; init; }
 
     public required IReadOnlyCollection<FeatureMcpReferenceDto>
         OtherResearchDiscoveries { get; init; }
@@ -49,20 +50,16 @@ public sealed record FeatureMcpDto
             Summary = feature.Summary,
             Status = feature.Status,
             RelatedSkillIds = feature.RelatedSkillIds,
-            CurrentPlan = feature.Plans.SingleOrDefault(
-                plan => plan.Id == feature.CurrentPlanId
-            ),
+            Plans = feature.Plans
+                .OrderByDescending(plan => plan.UpdatedAt)
+                .ThenBy(plan => plan.Id)
+                .Select(FeatureMcpPlanSummaryDto.FromPlan)
+                .ToList(),
             LatestResearchDiscoveries = latestDiscoveries,
             LatestConversationRecords = feature.Records
                 .OrderByDescending(record => record.UpdatedAt)
                 .ThenBy(record => record.Id)
                 .Take(5)
-                .ToList(),
-            OtherPlans = feature.Plans
-                .Where(plan => plan.Id != feature.CurrentPlanId)
-                .OrderByDescending(plan => plan.UpdatedAt)
-                .ThenBy(plan => plan.Id)
-                .Select(plan => new FeatureMcpReferenceDto(plan.Id, plan.Title))
                 .ToList(),
             OtherResearchDiscoveries = feature.ResearchDiscoveries
                 .Where(discovery => !latestDiscoveryIds.Contains(discovery.Id))
