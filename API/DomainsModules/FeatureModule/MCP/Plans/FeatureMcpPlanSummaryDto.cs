@@ -14,9 +14,9 @@ public sealed record FeatureMcpPlanSummaryDto
     public required string AdditionalInfo { get; init; }
 
     /// <summary>
-    /// Base branch and sub-branches rendered as a tree; null only for plans created before plans required a base branch.
+    /// The plan done before this one; the feature's branch tree shows where each plan branched from.
     /// </summary>
-    public string? Branch { get; init; }
+    public Guid? PreviousPlanId { get; init; }
 
     public static FeatureMcpPlanSummaryDto FromPlan(FeaturePlanDto plan) =>
         new()
@@ -25,6 +25,6 @@ public sealed record FeatureMcpPlanSummaryDto
             Title = plan.Title,
             Status = plan.Status,
             AdditionalInfo = plan.AdditionalInfo,
-            Branch = FeaturePlanBranchTreeFormatter.Format(plan.Branch)
+            PreviousPlanId = plan.PreviousPlanId
         };
 }

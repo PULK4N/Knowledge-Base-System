@@ -18,6 +18,8 @@ public sealed record FeatureMcpPlanDto
     /// </summary>
     public string? Branch { get; init; }
 
+    public Guid? PreviousPlanId { get; init; }
+
     public required FeaturePlanContentType ContentType { get; init; }
 
     public required string Content { get; init; }
@@ -34,6 +36,7 @@ public sealed record FeatureMcpPlanDto
             Status = plan.Status,
             AdditionalInfo = plan.AdditionalInfo,
             Branch = FeaturePlanBranchTreeFormatter.Format(plan.Branch),
+            PreviousPlanId = plan.PreviousPlanId,
             ContentType = plan.ContentType,
             Content = plan.Content,
             CreatedAt = plan.CreatedAt,

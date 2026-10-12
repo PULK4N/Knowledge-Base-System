@@ -48,6 +48,11 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     public List<FeaturePlan> Plans { get; set; } = [];
 
     /// <summary>
+    /// Null until the feature branch is created; features are often written before it.
+    /// </summary>
+    public FeatureBranch? Branch { get; set; }
+
+    /// <summary>
     /// Legacy current-plan selection kept only so released current-plan events replay.
     /// New plan events do not read or change it.
     /// </summary>

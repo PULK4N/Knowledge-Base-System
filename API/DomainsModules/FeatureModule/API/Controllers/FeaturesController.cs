@@ -310,6 +310,7 @@ public sealed class FeaturesController(
         command.FeatureId = featureId;
         command.BranchName = request.BranchName;
         command.BranchDescription = request.BranchDescription;
+        command.PreviousPlanId = request.PreviousPlanId;
         MapPlanContent(request, command);
         return Ok(
             (FeaturePlanCreatedCommandResult)await Execute(command)
@@ -356,6 +357,35 @@ public sealed class FeaturesController(
         command.UseUserOrigin();
         command.FeatureId = featureId;
         command.PlanId = planId;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/branch")]
+    public async Task<ActionResult<FeatureCommandResult>> SetBranch(
+        Guid featureId,
+        [FromBody] SetFeatureBranchRequest request,
+        [FromServices] SetFeatureBranchCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.BranchName = request.BranchName;
+        command.Description = request.Description;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/previous-plan")]
+    public async Task<ActionResult<FeatureCommandResult>> SetPlanPreviousPlan(
+        Guid featureId,
+        Guid planId,
+        [FromBody] SetFeaturePlanPreviousPlanRequest request,
+        [FromServices] SetFeaturePlanPreviousPlanCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.PlanId = planId;
+        command.PreviousPlanId = request.PreviousPlanId;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 

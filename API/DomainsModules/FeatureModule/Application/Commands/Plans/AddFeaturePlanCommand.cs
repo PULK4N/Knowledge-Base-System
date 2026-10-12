@@ -14,6 +14,11 @@ public sealed class AddFeaturePlanCommand(
 
     public string BranchDescription { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The plan done before this one, or null when the base branch comes from the feature branch.
+    /// </summary>
+    public Guid? PreviousPlanId { get; set; }
+
     public override async Task<bool> CanExecute(Executor executor) =>
         !string.IsNullOrWhiteSpace(BranchName) && await base.CanExecute(executor);
 
@@ -26,7 +31,7 @@ public sealed class AddFeaturePlanCommand(
 
         await ExecuteEvent(
             executor,
-            new FeaturePlanAddedV3(
+            new FeaturePlanAddedV4(
                 planId,
                 Title,
                 Content,
@@ -35,6 +40,9 @@ public sealed class AddFeaturePlanCommand(
                 Status,
                 BranchName.Trim(),
                 BranchDescription,
+                PreviousPlanId is { } previousPlanId
+                    ? FeaturePlanId.FromDatabaseGuid(previousPlanId)
+                    : null,
                 SessionId,
                 memoryAggregateId
             ),

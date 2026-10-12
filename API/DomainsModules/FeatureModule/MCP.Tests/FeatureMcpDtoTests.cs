@@ -47,8 +47,7 @@ public sealed class FeatureMcpDtoTests
                     Id = newerPlan.Id,
                     Title = "Implementation",
                     Status = FeaturePlanStatus.InProgress,
-                    AdditionalInfo = "Production implementation.",
-                    Branch = "feature/plans - Plan rework"
+                    AdditionalInfo = "Production implementation."
                 },
                 new FeatureMcpPlanSummaryDto
                 {

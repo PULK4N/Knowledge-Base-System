@@ -25,7 +25,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its overview, plan summaries (ID, title, status, additional info, and branch tree) without plan content, five latest research discoveries, five latest conversation records, and title/ID references for other discoveries. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, a branch tree that nests each plan's branches under the feature branch or the plan done before it, plan summaries (ID, title, status, additional info, previous plan ID) without plan content, five latest research discoveries, five latest conversation records, and title/ID references for other discoveries. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
@@ -128,9 +128,9 @@ public static class FeatureMcpFunctions
             "Removes a research discovery from the current feature state while retaining event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, string, FeaturePlanContentType, string, FeaturePlanStatus, string, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
+            (Func<IServiceProvider, Guid, string, string, string, FeaturePlanContentType, string, FeaturePlanStatus, string, Guid?, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
             "feature_plan_add",
-            "Adds a Markdown or HTML plan with its required base branch (branchName, optional branchDescription). additionalInfo is short text returned with feature_get so an AI can tell what the plan is for, for example research only or production implementation, without loading its content. Add sub-branches with feature_plan_branch_add."
+            "Adds a Markdown or HTML plan with its required base branch (branchName, optional branchDescription). additionalInfo is short text returned with feature_get so an AI can tell what the plan is for, for example research only or production implementation, without loading its content. previousPlanId is the plan done before this one, whose base branch this plan's base branch was checked out from; omit it when the branch comes from the feature branch. Add sub-branches with feature_plan_branch_add."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, string, string, FeaturePlanContentType, string, FeaturePlanStatus, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlan,
@@ -141,6 +141,16 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, Guid, FeaturePlanStatus, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlanStatus,
             "feature_plan_status_update",
             "Changes only a plan's status: NotStarted, InProgress, Delayed, or Completed."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)SetPlanPreviousPlan,
+            "feature_plan_previous_set",
+            "Sets the plan done before this plan, whose base branch this plan's base branch was checked out from. Omit previousPlanId when the branch comes from the feature branch. The previous plan must belong to the same feature and cannot come after this plan."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureCommandResult>>)SetBranch,
+            "feature_branch_set",
+            "Sets or replaces the feature's source-control branch. Plans without a previous plan check out their base branch from it."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, string, string, string?, Guid?, Guid?, Task<FeatureCommandResult>>)AddPlanBranch,
@@ -667,6 +677,7 @@ public static class FeatureMcpFunctions
         string additionalInfo = "",
         FeaturePlanStatus status = FeaturePlanStatus.NotStarted,
         string branchDescription = "",
+        Guid? previousPlanId = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -685,6 +696,7 @@ public static class FeatureMcpFunctions
                 command.Status = status;
                 command.BranchName = branchName;
                 command.BranchDescription = branchDescription;
+                command.PreviousPlanId = previousPlanId;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -740,6 +752,52 @@ public static class FeatureMcpFunctions
                 command.FeatureId = featureId;
                 command.PlanId = planId;
                 command.Status = status;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<FeatureCommandResult> SetPlanPreviousPlan(
+        IServiceProvider services,
+        Guid featureId,
+        Guid planId,
+        Guid? previousPlanId = null,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            SetFeaturePlanPreviousPlanCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.PlanId = planId;
+                command.PreviousPlanId = previousPlanId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<FeatureCommandResult> SetBranch(
+        IServiceProvider services,
+        Guid featureId,
+        string branchName,
+        string description = "",
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            SetFeatureBranchCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.BranchName = branchName;
+                command.Description = description;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

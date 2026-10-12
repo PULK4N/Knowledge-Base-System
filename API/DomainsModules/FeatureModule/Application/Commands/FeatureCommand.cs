@@ -7,6 +7,7 @@ using Constants = MemoryModule.Application.Constants;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
+using FeatureModule.Domain;
 using FeatureModule.Application.Models;
 
 namespace FeatureModule.Application.Commands;
@@ -125,6 +126,59 @@ public abstract class FeatureCommand(StateMachineHandler stateMachineHandler)
         );
         return FeatureCommandResult.Ok;
     }
+
+    /// <summary>
+    /// Executes a feature event, then follow-up feature events built from the
+    /// feature state after it, all in one write.
+    /// </summary>
+    protected async Task<object> ExecuteEvents(
+        Executor executor,
+        AggregateId featureId,
+        IEvent eventData,
+        Func<FeatureStateData, List<IEvent>> followUpEvents,
+        AggregateId memoryAggregateId
+    )
+    {
+        var conditionalEvent = EventPayload.Create(
+            executor.Id,
+            featureId,
+            StateMachineId,
+            eventData
+        );
+
+        await stateMachineHandler.ExecuteEvents(
+            conditionalEvent,
+            stateInfos =>
+            {
+                var feature = stateInfos
+                    .Select(stateInfo => stateInfo.StateData)
+                    .OfType<FeatureStateData>()
+                    .Single(state => state.Id == featureId);
+                var payloads = followUpEvents(feature)
+                    .Select(followUp => EventPayload.Create(
+                        executor.Id,
+                        featureId,
+                        StateMachineId,
+                        followUp
+                    ))
+                    .ToList();
+
+                if (!_isUserOriginated)
+                {
+                    payloads.Add(EventPayload.Create(
+                        executor.Id,
+                        memoryAggregateId,
+                        Constants.StateMachineIds.Memory,
+                        new MemoryRelationAddedV1(eventData.GetType().Name, featureId)
+                    ));
+                }
+
+                return payloads;
+            }
+        );
+
+        return FeatureCommandResult.Ok;
+    }
 }
 
 public abstract class ExistingFeatureCommand(StateMachineHandler stateMachineHandler)
@@ -151,6 +205,20 @@ public abstract class ExistingFeatureCommand(StateMachineHandler stateMachineHan
             executor,
             AggregateId.FromDatabaseGuid(FeatureId),
             eventData,
+            memoryAggregateId
+        );
+
+    protected Task<object> ExecuteEvents(
+        Executor executor,
+        IEvent eventData,
+        Func<FeatureStateData, List<IEvent>> followUpEvents,
+        AggregateId memoryAggregateId
+    ) =>
+        ExecuteEvents(
+            executor,
+            AggregateId.FromDatabaseGuid(FeatureId),
+            eventData,
+            followUpEvents,
             memoryAggregateId
         );
 }

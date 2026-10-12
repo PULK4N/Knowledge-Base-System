@@ -22,12 +22,13 @@ public sealed class FeaturePlanEventTests
 
     public static IEnumerable<object[]> Events()
     {
-        yield return [new FeaturePlanAddedV3(PlanId, "Research", "content", FeaturePlanContentType.Markdown, "Research only.", FeaturePlanStatus.NotStarted, Root, "Plan storage rework", SessionId, MemoryId), false];
+        yield return [new FeaturePlanAddedV4(PlanId, "Research", "content", FeaturePlanContentType.Markdown, "Research only.", FeaturePlanStatus.NotStarted, Root, "Plan storage rework", null, SessionId, MemoryId), false];
         yield return [new FeaturePlanUpdatedV1(PlanId, "Implementation", "new content", FeaturePlanContentType.Html, "Production.", FeaturePlanStatus.InProgress, SessionId, MemoryId), true];
         yield return [new FeaturePlanStatusChangedV1(PlanId, FeaturePlanStatus.Delayed, SessionId, MemoryId), true];
         yield return [new FeaturePlanBranchAddedV1(PlanId, "feature/new", "New work", Root, SessionId, MemoryId), true];
         yield return [new FeaturePlanBranchUpdatedV1(PlanId, Api, "feature/plans-backend", "Backend", SessionId, MemoryId), true];
         yield return [new FeaturePlanBranchRemovedV1(PlanId, Api, SessionId, MemoryId), true];
+        yield return [new FeaturePlanPreviousPlanSetV1(PlanId, null, SessionId, MemoryId), true];
     }
 
     [Theory]
@@ -59,7 +60,7 @@ public sealed class FeaturePlanEventTests
     }
 
     [Fact]
-    public void Added_v3_stores_plan_details_and_base_branch_without_current_selection()
+    public void Added_v4_stores_plan_details_and_base_branch_without_current_selection()
     {
         var state = new FeatureStateData(FeatureId);
         var eventData = (IEvent)Events().First()[0];
@@ -211,6 +212,66 @@ public sealed class FeaturePlanEventTests
         );
 
         Assert.Equal(succeeds, result.Succeded);
+    }
+
+    [Fact]
+    public void Added_v4_and_previous_plan_set_v1_link_and_clear_the_previous_plan()
+    {
+        var state = StateWithPlan();
+        var nextPlanId = new FeaturePlanId(Guid.NewGuid());
+        var added = new FeaturePlanAddedV4(nextPlanId, "Next", "content", FeaturePlanContentType.Markdown, "", FeaturePlanStatus.NotStarted, "feature/next", "", PlanId, SessionId, MemoryId);
+        var cleared = new FeaturePlanPreviousPlanSetV1(nextPlanId, null, SessionId, MemoryId);
+
+        added.Apply(state, Payload(added).EventExecutionInfo);
+        Assert.Equal(PlanId, state.Plans.Single(plan => plan.Id == nextPlanId).PreviousPlanId);
+
+        cleared.Apply(state, Payload(cleared).EventExecutionInfo);
+        Assert.Null(state.Plans.Single(plan => plan.Id == nextPlanId).PreviousPlanId);
+    }
+
+    [Theory]
+    [InlineData("none", true)]
+    [InlineData("missing", false)]
+    [InlineData("self", false)]
+    [InlineData("follower", false)]
+    [InlineData("earlier", true)]
+    public void Previous_plan_validator_requires_an_existing_earlier_plan(string previous, bool succeeds)
+    {
+        var first = new FeaturePlanId(Guid.NewGuid());
+        var follower = new FeaturePlanId(Guid.NewGuid());
+        var state = StateWithPlan();
+        state.Plans[0].PreviousPlanId = first;
+        state.Plans.Add(new FeaturePlan { Id = first });
+        state.Plans.Add(new FeaturePlan { Id = follower, PreviousPlanId = PlanId });
+        FeaturePlanId? previousPlanId = previous switch
+        {
+            "missing" => new FeaturePlanId(Guid.NewGuid()),
+            "self" => PlanId,
+            "follower" => follower,
+            "earlier" => first,
+            _ => null
+        };
+
+        var result = new FeaturePreviousPlanValidator().Validate(
+            state,
+            Payload(new FeaturePlanPreviousPlanSetV1(PlanId, previousPlanId, SessionId, MemoryId))
+        );
+
+        Assert.Equal(succeeds, result.Succeded);
+    }
+
+    [Fact]
+    public void Feature_branch_set_v1_replaces_the_feature_branch()
+    {
+        var state = new FeatureStateData(FeatureId);
+        IEvent first = new FeatureBranchSetV1("develop", "Main line", SessionId, MemoryId);
+        IEvent second = new FeatureBranchSetV1("feature/outbox", "", SessionId, MemoryId);
+
+        first.Apply(state, Payload(first).EventExecutionInfo);
+        second.Apply(state, Payload(second).EventExecutionInfo);
+
+        Assert.Equal(("feature/outbox", ""), (state.Branch!.Name, state.Branch.Description));
+        Assert.Equal(2, state.MemoryHistory.Count);
     }
 
     private static List<string> BranchNames(FeaturePlan plan) =>

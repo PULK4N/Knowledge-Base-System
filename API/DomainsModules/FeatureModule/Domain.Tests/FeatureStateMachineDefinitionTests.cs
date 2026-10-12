@@ -85,7 +85,10 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeaturePlanStatusChangedV1),
                 nameof(FeaturePlanBranchAddedV1),
                 nameof(FeaturePlanBranchUpdatedV1),
-                nameof(FeaturePlanBranchRemovedV1)
+                nameof(FeaturePlanBranchRemovedV1),
+                nameof(FeatureBranchSetV1),
+                nameof(FeaturePlanAddedV4),
+                nameof(FeaturePlanPreviousPlanSetV1)
             ],
             definition.Events.Keys
         );
@@ -351,7 +354,10 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeaturePlanStatusChangedV1),
         typeof(FeaturePlanBranchAddedV1),
         typeof(FeaturePlanBranchUpdatedV1),
-        typeof(FeaturePlanBranchRemovedV1)
+        typeof(FeaturePlanBranchRemovedV1),
+        typeof(FeatureBranchSetV1),
+        typeof(FeaturePlanAddedV4),
+        typeof(FeaturePlanPreviousPlanSetV1)
     ];
 
     private static List<Type> ValidatorTypes { get; } =
@@ -372,6 +378,7 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeaturePlanBranchParentValidator),
         typeof(FeaturePlanBranchNameMustBeAvailableValidator),
         typeof(FeaturePlanBranchMustExistValidator),
-        typeof(FeaturePlanBaseBranchCannotBeRemovedValidator)
+        typeof(FeaturePlanBaseBranchCannotBeRemovedValidator),
+        typeof(FeaturePreviousPlanValidator)
     ];
 }

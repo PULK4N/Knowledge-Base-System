@@ -22,6 +22,8 @@ public sealed record FeaturePlanDto
     /// </summary>
     public FeaturePlanBranchDto? Branch { get; init; }
 
+    public Guid? PreviousPlanId { get; init; }
+
     public required DateTime CreatedAt { get; init; }
 
     public required DateTime UpdatedAt { get; init; }
@@ -38,6 +40,7 @@ public sealed record FeaturePlanDto
             Branch = plan.Branch is null
                 ? null
                 : FeaturePlanBranchDto.FromModel(plan.Branch),
+            PreviousPlanId = plan.PreviousPlanId?.Value,
             CreatedAt = plan.CreatedAt,
             UpdatedAt = plan.UpdatedAt
         };

@@ -1,4 +1,5 @@
 using ActionModule.Shared.Models;
+using EventSourcing.Shared.Interfaces;
 using EventSourcing.Core;
 using FeatureModule.Application.Models;
 using FeatureModule.Domain.Events;
@@ -21,14 +22,21 @@ public sealed class RemoveFeaturePlanCommand(
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
+        var planId = FeaturePlanId.FromDatabaseGuid(PlanId);
 
-        return await ExecuteEvent(
+        // Plans that followed the removed plan now branch from the feature branch.
+        return await ExecuteEvents(
             executor,
-            new FeaturePlanRemovedV2(
-                FeaturePlanId.FromDatabaseGuid(PlanId),
-                SessionId,
-                memoryAggregateId
-            ),
+            new FeaturePlanRemovedV2(planId, SessionId, memoryAggregateId),
+            feature => feature.Plans
+                .Where(plan => plan.PreviousPlanId == planId)
+                .Select(plan => (IEvent)new FeaturePlanPreviousPlanSetV1(
+                    plan.Id,
+                    null,
+                    SessionId,
+                    memoryAggregateId
+                ))
+                .ToList(),
             memoryAggregateId
         );
     }

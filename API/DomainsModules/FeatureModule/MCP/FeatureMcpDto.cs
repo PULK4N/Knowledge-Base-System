@@ -17,6 +17,11 @@ public sealed record FeatureMcpDto
     public required IReadOnlyCollection<Guid> RelatedSkillIds { get; init; }
 
     /// <summary>
+    /// Feature branch with every plan's branches, nested in the order plans were done.
+    /// </summary>
+    public string? BranchTree { get; init; }
+
+    /// <summary>
     /// Plan summaries without content; load a plan with feature_plan_get when needed.
     /// </summary>
     public required IReadOnlyCollection<FeatureMcpPlanSummaryDto>
@@ -50,6 +55,7 @@ public sealed record FeatureMcpDto
             Summary = feature.Summary,
             Status = feature.Status,
             RelatedSkillIds = feature.RelatedSkillIds,
+            BranchTree = FeatureBranchTreeFormatter.Format(feature),
             Plans = feature.Plans
                 .OrderByDescending(plan => plan.UpdatedAt)
                 .ThenBy(plan => plan.Id)

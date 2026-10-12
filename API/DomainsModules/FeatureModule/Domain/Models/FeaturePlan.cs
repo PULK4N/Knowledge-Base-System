@@ -74,6 +74,12 @@ public sealed class FeaturePlan
     /// </summary>
     public FeaturePlanBranch? Branch { get; set; }
 
+    /// <summary>
+    /// The plan done before this one. Its base branch is where this plan's base
+    /// branch was checked out from; null means it came from the feature branch.
+    /// </summary>
+    public FeaturePlanId? PreviousPlanId { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

@@ -20,6 +20,7 @@ public sealed class FeaturePlanMustNotExistValidator : IPreEventValidator
             FeaturePlanAddedV1 eventData => eventData.PlanId,
             FeaturePlanAddedV2 eventData => eventData.PlanId,
             FeaturePlanAddedV3 eventData => eventData.PlanId,
+            FeaturePlanAddedV4 eventData => eventData.PlanId,
             _ => (FeaturePlanId?)null
         };
 

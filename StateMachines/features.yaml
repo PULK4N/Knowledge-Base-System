@@ -198,3 +198,16 @@ events:
       - FeaturePlanMustExistValidator
       - FeaturePlanBranchMustExistValidator
       - FeaturePlanBaseBranchCannotBeRemovedValidator
+  FeatureBranchSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+  FeaturePlanAddedV4:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustNotExistValidator
+      - FeaturePreviousPlanValidator
+  FeaturePlanPreviousPlanSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePreviousPlanValidator

@@ -29,6 +29,8 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
+    public FeatureBranchDto? Branch { get; init; }
+
     public required IReadOnlyCollection<FeatureMemoryHistoryDto>
         MemoryHistory { get; init; }
 
@@ -56,6 +58,9 @@ public sealed record FeatureDto
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),
+            Branch = state.Branch is null
+                ? null
+                : FeatureBranchDto.FromModel(state.Branch),
             MemoryHistory = state.MemoryHistory
                 .Select(FeatureMemoryHistoryDto.FromModel)
                 .ToList()
