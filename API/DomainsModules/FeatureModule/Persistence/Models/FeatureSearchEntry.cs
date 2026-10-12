@@ -13,5 +13,6 @@ public sealed class FeatureSearchEntry
     public bool IsDeleted { get; set; }
     public int PlanCount { get; set; }
     public int RecordCount { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public long ProjectedOrderNumber { get; set; }
 }

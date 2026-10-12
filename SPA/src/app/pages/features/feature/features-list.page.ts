@@ -34,6 +34,7 @@ import {
 } from './feature-list-state';
 
 const FEATURE_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'UpdatedAt', label: 'Last updated' },
   { value: 'Name', label: 'Name' },
   { value: 'PlanCount', label: 'Plan count' },
   { value: 'RecordCount', label: 'Record count' },

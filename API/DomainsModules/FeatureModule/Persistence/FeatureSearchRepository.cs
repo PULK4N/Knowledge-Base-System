@@ -124,6 +124,7 @@ public sealed class FeatureSearchRepository(
             IsDeleted = feature.IsDeleted,
             PlanCount = feature.Plans.Count,
             RecordCount = feature.Records.Count,
+            UpdatedAt = update.UpdatedAt,
             ProjectedOrderNumber = update.OrderNumber
         };
     }
@@ -169,6 +170,10 @@ public sealed class FeatureSearchRepository(
                         entry.RecordCount
                     )
                     .SetProperty(
+                        current => current.UpdatedAt,
+                        entry.UpdatedAt
+                    )
+                    .SetProperty(
                         current => current.ProjectedOrderNumber,
                         entry.ProjectedOrderNumber
                     ),
@@ -178,5 +183,6 @@ public sealed class FeatureSearchRepository(
 
 internal sealed record FeatureSearchUpdate(
     FeatureStateData State,
-    long OrderNumber
+    long OrderNumber,
+    DateTime UpdatedAt
 );

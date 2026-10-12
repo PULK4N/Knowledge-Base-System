@@ -301,6 +301,21 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     entry => new
                     {
                         entry.ProjectId,
+                        entry.UpdatedAt,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.UpdatedAt,
+                        entry.FeatureAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
+                feature.HasIndex(
+                    entry => new
+                    {
+                        entry.ProjectId,
                         entry.PlanCount,
                         entry.FeatureAggregateId
                     }

@@ -121,6 +121,8 @@ public sealed class FeatureSearchProjectorTests
     [InlineData(FeatureSearchSortField.PlanCount, SortDirection.Descending, 3)]
     [InlineData(FeatureSearchSortField.RecordCount, SortDirection.Ascending, 1)]
     [InlineData(FeatureSearchSortField.RecordCount, SortDirection.Descending, 2)]
+    [InlineData(FeatureSearchSortField.UpdatedAt, SortDirection.Ascending, 3)]
+    [InlineData(FeatureSearchSortField.UpdatedAt, SortDirection.Descending, 2)]
     public async Task Search_applies_each_allowlisted_sort(
         FeatureSearchSortField sortBy,
         SortDirection direction,
@@ -129,9 +131,9 @@ public sealed class FeatureSearchProjectorTests
     {
         await using var context = CreateContext();
         context.FeatureSearchEntries.AddRange(
-            CreateEntry(1, "Zebra", "Planning", 2, 1),
-            CreateEntry(2, "Alpha", "Active", 1, 3),
-            CreateEntry(3, "Beta", "Review", 3, 2)
+            CreateEntry(1, "Zebra", "Planning", 2, 1, updatedDay: 2),
+            CreateEntry(2, "Alpha", "Active", 1, 3, updatedDay: 3),
+            CreateEntry(3, "Beta", "Review", 3, 2, updatedDay: 1)
         );
         await context.SaveChangesAsync();
 
@@ -308,7 +310,8 @@ public sealed class FeatureSearchProjectorTests
         string name,
         string status,
         int planCount,
-        int recordCount
+        int recordCount,
+        int updatedDay = 1
     ) =>
         new()
         {
@@ -321,6 +324,7 @@ public sealed class FeatureSearchProjectorTests
             Status = status,
             PlanCount = planCount,
             RecordCount = recordCount,
+            UpdatedAt = new DateTime(2026, 10, updatedDay, 0, 0, 0, DateTimeKind.Utc),
             ProjectedOrderNumber = 1
         };
 

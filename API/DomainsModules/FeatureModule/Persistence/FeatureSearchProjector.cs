@@ -17,7 +17,8 @@ public sealed class FeatureSearchProjector(
                 .Select(
                     stateInfo => new FeatureSearchUpdate(
                         (FeatureStateData)stateInfo.StateData,
-                        stateInfo.CurrentOrderNumber
+                        stateInfo.CurrentOrderNumber,
+                        stateInfo.LastUpdateTimestamp
                     )
                 )
                 .ToList()

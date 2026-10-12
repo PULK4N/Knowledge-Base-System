@@ -168,6 +168,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FeatureAggregateId")
@@ -185,6 +188,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.HasIndex("RecordCount", "FeatureAggregateId")
                         .HasFilter("\"IsDeleted\" = FALSE");
 
+                    b.HasIndex("UpdatedAt", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
                     b.HasIndex("NormalizedName", "Name", "FeatureAggregateId")
                         .HasFilter("\"IsDeleted\" = FALSE");
 
@@ -192,6 +198,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.HasIndex("ProjectId", "RecordCount", "FeatureAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("ProjectId", "UpdatedAt", "FeatureAggregateId")
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.HasIndex("ProjectId", "NormalizedName", "Name", "FeatureAggregateId")

@@ -21,6 +21,7 @@ const GUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const FEATURE_SORT_FIELDS: readonly FeatureSearchSortField[] = [
+  'UpdatedAt',
   'Name',
   'PlanCount',
   'RecordCount',
@@ -35,8 +36,8 @@ export const DEFAULT_FEATURE_SEARCH_REQUEST: FeatureSearchRequest = {
   pageSize: FEATURE_DEFAULT_PAGE_SIZE,
   search: '',
   projectId: '',
-  sortBy: 'Name',
-  sortDirection: 'Ascending',
+  sortBy: 'UpdatedAt',
+  sortDirection: 'Descending',
 };
 
 export function parseFeatureSearchRequest(params: ParamMap): FeatureSearchRequest {
@@ -58,12 +59,17 @@ export function parseFeatureSearchRequest(params: ParamMap): FeatureSearchReques
       MAXIMUM_SEARCH_LENGTH,
     ),
     projectId: GUID_PATTERN.test(projectId) ? projectId : '',
-    sortBy: readAllowedValue(params, 'sortBy', FEATURE_SORT_FIELDS, 'Name'),
+    sortBy: readAllowedValue(
+      params,
+      'sortBy',
+      FEATURE_SORT_FIELDS,
+      DEFAULT_FEATURE_SEARCH_REQUEST.sortBy,
+    ),
     sortDirection: readAllowedValue(
       params,
       'sortDirection',
       SORT_DIRECTIONS,
-      'Ascending',
+      DEFAULT_FEATURE_SEARCH_REQUEST.sortDirection,
     ),
   };
 }
@@ -76,8 +82,11 @@ export function featureSearchQueryParams(
     pageSize: omitDefault(request.pageSize, FEATURE_DEFAULT_PAGE_SIZE),
     search: omitEmpty(request.search),
     projectId: omitEmpty(request.projectId),
-    sortBy: omitDefault(request.sortBy, 'Name'),
-    sortDirection: omitDefault(request.sortDirection, 'Ascending'),
+    sortBy: omitDefault(request.sortBy, DEFAULT_FEATURE_SEARCH_REQUEST.sortBy),
+    sortDirection: omitDefault(
+      request.sortDirection,
+      DEFAULT_FEATURE_SEARCH_REQUEST.sortDirection,
+    ),
   } satisfies Params;
 }
 

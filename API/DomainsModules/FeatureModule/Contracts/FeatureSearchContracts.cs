@@ -6,5 +6,6 @@ public enum FeatureSearchSortField
 {
     Name,
     PlanCount,
-    RecordCount
+    RecordCount,
+    UpdatedAt
 }

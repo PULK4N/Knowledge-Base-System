@@ -30,6 +30,13 @@ describe('Feature list route state', () => {
     });
   });
 
+  it('lists the most recently updated features first by default', () => {
+    expect(parseFeatureSearchRequest(convertToParamMap({}))).toMatchObject({
+      sortBy: 'UpdatedAt',
+      sortDirection: 'Descending',
+    });
+  });
+
   it('falls back to safe defaults for unsupported route values', () => {
     expect(
       parseFeatureSearchRequest(

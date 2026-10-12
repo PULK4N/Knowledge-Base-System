@@ -103,7 +103,11 @@ export interface FeatureSearchRequest {
   readonly sortDirection: ListSortDirection;
 }
 
-export type FeatureSearchSortField = 'Name' | 'PlanCount' | 'RecordCount';
+export type FeatureSearchSortField =
+  | 'UpdatedAt'
+  | 'Name'
+  | 'PlanCount'
+  | 'RecordCount';
 
 export type FeatureSearchResult = PagedResult<FeatureSummary>;
 
