@@ -35,11 +35,19 @@ export class FeatureBranchOverviewComponent {
   readonly branchSet = output<SetFeatureBranchRequest>();
 
   protected readonly tree = computed(() => buildFeatureBranchTree(this.feature()));
-  protected readonly collapsed = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Nodes whose open state differs from the default: the feature branch starts
+   * open and every branch below it starts collapsed.
+   */
+  protected readonly toggled = signal<ReadonlySet<string>>(new Set());
   protected readonly editingBranch = signal(false);
 
+  protected isOpen(key: string): boolean {
+    return (key === ROOT_KEY) !== this.toggled().has(key);
+  }
+
   protected toggle(key: string): void {
-    this.collapsed.update(current => {
+    this.toggled.update(current => {
       const next = new Set(current);
       if (!next.delete(key)) next.add(key);
       return next;
@@ -47,11 +55,11 @@ export class FeatureBranchOverviewComponent {
   }
 
   protected expandAll(): void {
-    this.collapsed.set(new Set());
+    this.toggled.set(new Set(parentKeys(this.tree()).filter(key => key !== ROOT_KEY)));
   }
 
   protected collapseAll(): void {
-    this.collapsed.set(new Set(parentKeys(this.tree()).filter(key => key !== 'feature')));
+    this.toggled.set(new Set());
   }
 
   protected setBranch(branchName: string, description: string): void {
@@ -62,6 +70,8 @@ export class FeatureBranchOverviewComponent {
     this.editingBranch.set(false);
   }
 }
+
+const ROOT_KEY = 'feature';
 
 function parentKeys(node: FeatureBranchTreeNode): string[] {
   return node.children.length === 0

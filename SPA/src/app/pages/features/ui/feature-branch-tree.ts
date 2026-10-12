@@ -31,25 +31,34 @@ export function buildFeatureBranchTree(feature: Feature): FeatureBranchTreeNode 
           : null;
       return previous === previousPlanId;
     });
-  const planNode = (plan: FeaturePlan): FeatureBranchTreeNode => ({
-    key: `plan:${plan.id}`,
-    name: plan.branch?.name ?? null,
-    description: plan.branch?.description ?? '',
-    plan,
-    children: [
-      ...(plan.branch?.subBranches ?? []).map(branch =>
-        subBranchNode(plan.id, branch),
-      ),
-      ...followersOf(plan.id).map(planNode),
-    ],
-  });
+  // A plan without a base branch is left out; its followers move up to where it would be.
+  const planNodes = (plan: FeaturePlan): FeatureBranchTreeNode[] => {
+    const followers = followersOf(plan.id).flatMap(planNodes);
+
+    return plan.branch
+      ? [
+          {
+            key: `plan:${plan.id}`,
+            name: plan.branch.name,
+            description: plan.branch.description,
+            plan,
+            children: [
+              ...plan.branch.subBranches.map(branch =>
+                subBranchNode(plan.id, branch),
+              ),
+              ...followers,
+            ],
+          },
+        ]
+      : followers;
+  };
 
   return {
     key: 'feature',
     name: feature.branch?.name ?? null,
     description: feature.branch?.description ?? '',
     plan: null,
-    children: followersOf(null).map(planNode),
+    children: followersOf(null).flatMap(planNodes),
   };
 }
 

@@ -31,31 +31,37 @@ describe('FeaturePlanBranchTreeComponent', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('renders every nested branch and marks only the base branch', () => {
+  it('starts with only the base branch open and marks only the base branch', () => {
     expect(branchNames()).toEqual([
       'feature/plans',
       'feature/plans-api',
-      'feature/plans-api-tests',
       'feature/plans-ui',
     ]);
+    expect(rowFor('feature/plans-api')?.querySelector('small')?.textContent).toBe(
+      '1 hidden',
+    );
     expect(element.querySelectorAll('.base-badge')).toHaveLength(1);
     expect(element.querySelector('.count-badge')?.textContent?.trim()).toBe('4');
   });
 
-  it('collapses and expands a branch and all branches', () => {
+  it('opens and collapses a branch and all branches', () => {
     toggleFor('feature/plans-api')?.click();
     fixture.detectChanges();
 
-    expect(branchNames()).not.toContain('feature/plans-api-tests');
+    expect(branchNames()).toContain('feature/plans-api-tests');
     expect(toggleFor('feature/plans-api')?.getAttribute('aria-label')).toBe(
-      'Expand feature/plans-api',
+      'Collapse feature/plans-api',
     );
+
+    button(element, 'Collapse all')?.click();
+    fixture.detectChanges();
+    expect(branchNames()).not.toContain('feature/plans-api-tests');
 
     button(element, 'Expand all')?.click();
     fixture.detectChanges();
-    expect(branchNames()).toContain('feature/plans-api-tests');
+    expect(branchNames()).toHaveLength(4);
 
-    button(element, 'Collapse all')?.click();
+    toggleFor('feature/plans')?.click();
     fixture.detectChanges();
     expect(branchNames()).toEqual(['feature/plans']);
   });
@@ -79,7 +85,7 @@ describe('FeaturePlanBranchTreeComponent', () => {
     const added = vi.fn();
     fixture.componentInstance.branchAdded.subscribe(added);
 
-    button(rows()[3], 'Add sub-branch')?.click();
+    button(rowFor('feature/plans-ui')!, 'Add sub-branch')?.click();
     fixture.detectChanges();
     await fixture.whenStable();
     setValue('.branch-form [name="name"]', ' feature/plans-ui-tests ');
@@ -126,10 +132,12 @@ describe('FeaturePlanBranchTreeComponent', () => {
     return rows().map(row => row.querySelector('code')?.textContent ?? '');
   }
 
+  function rowFor(name: string): HTMLElement | undefined {
+    return rows().find(row => row.querySelector('code')?.textContent === name);
+  }
+
   function toggleFor(name: string): HTMLButtonElement | null | undefined {
-    return rows()
-      .find(row => row.querySelector('code')?.textContent === name)
-      ?.querySelector<HTMLButtonElement>('.branch-toggle');
+    return rowFor(name)?.querySelector<HTMLButtonElement>('.branch-toggle');
   }
 
   function setValue(selector: string, value: string): void {

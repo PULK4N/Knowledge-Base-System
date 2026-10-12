@@ -38,7 +38,11 @@ export class FeaturePlanBranchTreeComponent {
   readonly branchUpdated = output<UpdateFeaturePlanBranchRequest>();
   readonly branchRemoved = output<string>();
 
-  protected readonly collapsed = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Branches whose open state differs from the default: the base branch starts
+   * open and every other branch starts collapsed.
+   */
+  protected readonly toggled = signal<ReadonlySet<string>>(new Set());
   protected readonly editor = signal<BranchEditor | null>(null);
   protected readonly confirmingRemoval = signal<string | null>(null);
 
@@ -51,8 +55,12 @@ export class FeaturePlanBranchTreeComponent {
       .map(branch => branch.name),
   );
 
+  protected isOpen(branchName: string, isBase: boolean): boolean {
+    return isBase !== this.toggled().has(branchName);
+  }
+
   protected toggle(branchName: string): void {
-    this.collapsed.update(current => {
+    this.toggled.update(current => {
       const next = new Set(current);
       if (!next.delete(branchName)) next.add(branchName);
       return next;
@@ -60,11 +68,14 @@ export class FeaturePlanBranchTreeComponent {
   }
 
   protected expandAll(): void {
-    this.collapsed.set(new Set());
+    const baseName = this.branch()?.name;
+    this.toggled.set(
+      new Set(this.parentBranchNames().filter(name => name !== baseName)),
+    );
   }
 
   protected collapseAll(): void {
-    this.collapsed.set(new Set(this.parentBranchNames()));
+    this.toggled.set(new Set());
   }
 
   protected isEditing(mode: BranchEditor['mode'], branchName: string | null): boolean {
@@ -86,7 +97,7 @@ export class FeaturePlanBranchTreeComponent {
     branchName: string,
     description: string,
   ): void {
-    if (parentBranchName !== null) this.expand(parentBranchName);
+    if (parentBranchName !== null) this.open(parentBranchName);
     this.branchAdded.emit({
       branchName: branchName.trim(),
       description: description.trim(),
@@ -113,11 +124,9 @@ export class FeaturePlanBranchTreeComponent {
     this.confirmingRemoval.set(null);
   }
 
-  private expand(branchName: string): void {
-    this.collapsed.update(current => {
-      const next = new Set(current);
-      next.delete(branchName);
-      return next;
-    });
+  private open(branchName: string): void {
+    if (this.isOpen(branchName, branchName === this.branch()?.name)) return;
+    this.toggle(branchName);
   }
+
 }

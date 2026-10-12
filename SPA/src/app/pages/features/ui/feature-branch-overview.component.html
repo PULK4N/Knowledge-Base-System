@@ -60,17 +60,17 @@
   <li
     class="branch-node"
     role="treeitem"
-    [attr.aria-expanded]="node.children.length > 0 ? !collapsed().has(node.key) : null"
+    [attr.aria-expanded]="node.children.length > 0 ? isOpen(node.key) : null"
   >
     <div class="branch-row" [class.plan-node]="node.plan">
       @if (node.children.length > 0) {
         <button
           type="button"
           class="branch-toggle"
-          [attr.aria-label]="(collapsed().has(node.key) ? 'Expand ' : 'Collapse ') + (node.name ?? 'branch')"
+          [attr.aria-label]="(!isOpen(node.key) ? 'Expand ' : 'Collapse ') + (node.name ?? 'branch')"
           (click)="toggle(node.key)"
         >
-          <span aria-hidden="true" [class.collapsed]="collapsed().has(node.key)">▾</span>
+          <span aria-hidden="true" [class.collapsed]="!isOpen(node.key)">▾</span>
         </button>
       } @else {
         <span class="branch-toggle-spacer" aria-hidden="true"></span>
@@ -82,7 +82,7 @@
             <code>{{ node.name }}</code>
           } @else {
             <span class="missing-branch">
-              {{ node.key === 'feature' ? 'Feature branch not set' : 'No base branch' }}
+              Feature branch not set
             </span>
           }
           @if (node.key === 'feature') {
@@ -96,7 +96,7 @@
               {{ plan.status | featurePlanStatus }}
             </span>
           }
-          @if (node.children.length > 0 && collapsed().has(node.key)) {
+          @if (node.children.length > 0 && !isOpen(node.key)) {
             <small>{{ node.children.length }} hidden</small>
           }
         </div>
@@ -106,7 +106,7 @@
       </div>
     </div>
 
-    @if (node.children.length > 0 && !collapsed().has(node.key)) {
+    @if (node.children.length > 0 && isOpen(node.key)) {
       <ul class="branch-children" role="group">
         @for (child of node.children; track child.key) {
           <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child }" />

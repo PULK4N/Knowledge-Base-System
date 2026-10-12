@@ -47,7 +47,7 @@ describe('buildFeatureBranchTree', () => {
   it('nests each plan under the plan done before it and keeps sub-branches first', () => {
     const tree = buildFeatureBranchTree({
       branch: { name: 'develop', description: '' },
-      plans,
+      plans: [...plans, plan('after-legacy', 'legacy', 'feature/after-legacy', 5)],
     } as unknown as Feature);
 
     expect(outline(tree)).toEqual([
@@ -58,7 +58,8 @@ describe('buildFeatureBranchTree', () => {
       '      feature/impl-api',
       '      feature/retry [retry]',
       '        feature/retry-api',
-      '  - [legacy]',
+      '  feature/after-legacy [after-legacy]',
+      '    feature/after-legacy-api',
     ]);
   });
 });

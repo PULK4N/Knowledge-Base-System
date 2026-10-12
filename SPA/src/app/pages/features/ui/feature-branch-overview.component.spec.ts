@@ -44,23 +44,26 @@ describe('FeatureBranchOverviewComponent', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('nests plan branches under the plan done before them with plan links', () => {
-    expect(names()).toEqual(['develop', 'feature/research', 'feature/outbox']);
+  it('starts collapsed below the first level and links plans', () => {
+    expect(names()).toEqual(['develop', 'feature/research']);
     const link = element.querySelector<HTMLAnchorElement>('.plan-link');
     expect(link?.getAttribute('href')).toBe('/features/feature-1/plans/research');
-    expect(element.querySelectorAll('.plan-status')[1].textContent?.trim()).toBe(
-      'In progress',
+    expect(element.querySelector('.plan-status')?.textContent?.trim()).toBe(
+      'Completed',
     );
   });
 
-  it('collapses and expands every branch below the feature branch', () => {
+  it('expands and collapses every branch below the feature branch', () => {
+    button('Expand all')?.click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['develop', 'feature/research', 'feature/outbox']);
+    expect(element.querySelectorAll('.plan-status')[1].textContent?.trim()).toBe(
+      'In progress',
+    );
+
     button('Collapse all')?.click();
     fixture.detectChanges();
     expect(names()).toEqual(['develop', 'feature/research']);
-
-    button('Expand all')?.click();
-    fixture.detectChanges();
-    expect(names()).toContain('feature/outbox');
   });
 
   it('emits the feature branch from the form', async () => {
