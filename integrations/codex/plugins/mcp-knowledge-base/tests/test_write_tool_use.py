@@ -58,7 +58,7 @@ class WriteToolUseTests(unittest.TestCase):
         matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
         source = (SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs").read_text(encoding="utf-8")
         mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
-        self.assertEqual(19, len(mutations))
+        self.assertEqual(22, len(mutations))
         self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):

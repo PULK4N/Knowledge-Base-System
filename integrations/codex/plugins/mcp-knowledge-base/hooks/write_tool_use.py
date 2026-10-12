@@ -59,8 +59,11 @@ FEATURE_MUTATION_TOOLS = frozenset(
         "feature_research_discovery_update",
         "feature_research_discovery_remove",
         "feature_plan_add",
-        "feature_plan_current_update",
-        "feature_plan_current_change",
+        "feature_plan_update",
+        "feature_plan_status_update",
+        "feature_plan_branch_add",
+        "feature_plan_branch_update",
+        "feature_plan_branch_remove",
         "feature_plan_remove",
     }
 )
