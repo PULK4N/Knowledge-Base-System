@@ -12,6 +12,7 @@ const htmlPlan: FeaturePlan = {
   additionalInfo: '',
   status: 'NotStarted',
   branch: null,
+  previousPlanId: null,
   createdAt: '2026-08-26T10:00:00Z',
   updatedAt: '2026-08-26T10:00:00Z',
 };

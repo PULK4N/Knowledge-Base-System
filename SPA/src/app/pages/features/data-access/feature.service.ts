@@ -28,6 +28,7 @@ import {
   FeaturePlanContentRequest,
   FeaturePlanCreatedCommandResult,
   FeaturePlanStatus,
+  SetFeatureBranchRequest,
   FeatureRecordContentRequest,
   FeatureRecordCreatedCommandResult,
   FeatureResearchDiscoveryContentRequest,
@@ -259,6 +260,20 @@ export class FeatureService {
   ): Observable<Feature> {
     return this.postAndRefresh(id, `${this.planPath(planId)}/status`, {
       status,
+    });
+  }
+
+  setBranch(id: string, request: SetFeatureBranchRequest): Observable<Feature> {
+    return this.postAndRefresh(id, 'branch', request);
+  }
+
+  setPlanPreviousPlan(
+    id: string,
+    planId: string,
+    previousPlanId: string | null,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, `${this.planPath(planId)}/previous-plan`, {
+      previousPlanId,
     });
   }
 

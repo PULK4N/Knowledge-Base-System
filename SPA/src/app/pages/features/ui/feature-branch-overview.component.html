@@ -1,0 +1,117 @@
+<div class="branch-tree-heading">
+  <div>
+    <span class="eyebrow">Source control</span>
+    <h2>Branch tree</h2>
+  </div>
+  <div class="branch-tree-actions">
+    @if (tree().children.length > 0) {
+      <button type="button" (click)="expandAll()">Expand all</button>
+      <button type="button" (click)="collapseAll()">Collapse all</button>
+    }
+    <button
+      type="button"
+      [attr.aria-expanded]="editingBranch()"
+      (click)="editingBranch.set(!editingBranch())"
+    >
+      {{ editingBranch() ? 'Cancel' : feature().branch ? 'Change feature branch' : 'Set feature branch' }}
+    </button>
+  </div>
+</div>
+
+@if (editingBranch()) {
+  <form
+    class="branch-form feature-branch-form"
+    #branchForm="ngForm"
+    (ngSubmit)="setBranch(branchName.value, branchDescription.value)"
+  >
+    <label>
+      <span>Feature branch</span>
+      <input
+        #branchName="ngModel"
+        name="featureBranchName"
+        type="text"
+        required
+        placeholder="feature/my-feature"
+        [ngModel]="feature().branch?.name ?? ''"
+      />
+    </label>
+    <label>
+      <span>Description</span>
+      <input
+        #branchDescription="ngModel"
+        name="featureBranchDescription"
+        type="text"
+        [ngModel]="feature().branch?.description ?? ''"
+      />
+    </label>
+    <div class="branch-form-actions">
+      <button type="submit" class="primary-action" [disabled]="branchForm.invalid || saving()">
+        Save feature branch
+      </button>
+    </div>
+  </form>
+}
+
+<ul class="branch-tree" role="tree" aria-label="Feature branch tree">
+  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: tree() }" />
+</ul>
+
+<ng-template #nodeTemplate let-node>
+  <li
+    class="branch-node"
+    role="treeitem"
+    [attr.aria-expanded]="node.children.length > 0 ? !collapsed().has(node.key) : null"
+  >
+    <div class="branch-row" [class.plan-node]="node.plan">
+      @if (node.children.length > 0) {
+        <button
+          type="button"
+          class="branch-toggle"
+          [attr.aria-label]="(collapsed().has(node.key) ? 'Expand ' : 'Collapse ') + (node.name ?? 'branch')"
+          (click)="toggle(node.key)"
+        >
+          <span aria-hidden="true" [class.collapsed]="collapsed().has(node.key)">▾</span>
+        </button>
+      } @else {
+        <span class="branch-toggle-spacer" aria-hidden="true"></span>
+      }
+      <span class="branch-icon" aria-hidden="true">⑂</span>
+      <div class="branch-text">
+        <div class="branch-name">
+          @if (node.name) {
+            <code>{{ node.name }}</code>
+          } @else {
+            <span class="missing-branch">
+              {{ node.key === 'feature' ? 'Feature branch not set' : 'No base branch' }}
+            </span>
+          }
+          @if (node.key === 'feature') {
+            <span class="base-badge">Feature</span>
+          }
+          @if (node.plan; as plan) {
+            <a class="plan-link" [routerLink]="['/features', feature().id, 'plans', plan.id]">
+              {{ plan.title }}
+            </a>
+            <span [class]="'plan-status status-' + plan.status">
+              {{ plan.status | featurePlanStatus }}
+            </span>
+          }
+          @if (node.children.length > 0 && collapsed().has(node.key)) {
+            <small>{{ node.children.length }} hidden</small>
+          }
+        </div>
+        @if (node.description) {
+          <p>{{ node.description }}</p>
+        }
+      </div>
+    </div>
+
+    @if (node.children.length > 0 && !collapsed().has(node.key)) {
+      <ul class="branch-children" role="group">
+        @for (child of node.children; track child.key) {
+          <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child }" />
+        }
+      </ul>
+    }
+  </li>
+</ng-template>

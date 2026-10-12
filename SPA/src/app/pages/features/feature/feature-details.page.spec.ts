@@ -49,6 +49,7 @@ const feature: Feature = {
     },
   ],
   plans: [],
+  branch: null,
   memoryHistory: [
     {
       eventName: 'FeatureAddedV2',
@@ -83,6 +84,7 @@ const featureWithPlans: Feature = {
           { name: 'feature/plans-api', description: '', subBranches: [] },
         ],
       },
+      previousPlanId: null,
       createdAt: '2026-08-20T10:00:00Z',
       updatedAt: '2026-08-22T10:00:00Z',
     },
@@ -94,6 +96,7 @@ const featureWithPlans: Feature = {
       additionalInfo: '',
       status: 'Completed',
       branch: null,
+      previousPlanId: null,
       createdAt: '2026-08-18T10:00:00Z',
       updatedAt: '2026-08-19T10:00:00Z',
     },
@@ -631,6 +634,7 @@ describe('FeatureDetailsPage research discoveries', () => {
 
     expect(features.addPlan).toHaveBeenCalledWith(featureWithPlans.id, {
       title: 'Follow-up plan',
+      previousPlanId: null,
       branchName: 'feature/follow-up',
       branchDescription: '',
       status: 'NotStarted',

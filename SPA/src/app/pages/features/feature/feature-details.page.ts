@@ -37,9 +37,11 @@ import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import {
   AddFeaturePlanRequest,
   Feature,
+  SetFeatureBranchRequest,
   FeatureResearchDiscoverySourceType,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import { FeatureBranchOverviewComponent } from '../ui/feature-branch-overview.component';
 import {
   FEATURE_PLAN_STATUS_OPTIONS,
   FeaturePlanStatusPipe,
@@ -163,6 +165,11 @@ type FeatureAction =
       readonly request: AddFeaturePlanRequest;
     }
   | { readonly kind: 'remove-plan'; readonly featureId: string; readonly planId: string }
+  | {
+      readonly kind: 'set-branch';
+      readonly featureId: string;
+      readonly request: SetFeatureBranchRequest;
+    }
   | { readonly kind: 'remove-feature'; readonly featureId: string };
 
 type MutationState =
@@ -176,6 +183,7 @@ type MutationState =
     AsyncPipe,
     ClampOverflowDirective,
     DatePipe,
+    FeatureBranchOverviewComponent,
     FeaturePlanStatusPipe,
     FormsModule,
     ListControlsComponent,
@@ -612,6 +620,10 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'remove-plan', featureId, planId });
   }
 
+  protected setBranch(featureId: string, request: SetFeatureBranchRequest): void {
+    this.actions.next({ kind: 'set-branch', featureId, request });
+  }
+
   protected removeFeature(featureId: string): void {
     this.actions.next({ kind: 'remove-feature', featureId });
   }
@@ -688,6 +700,8 @@ export class FeatureDetailsPage {
         return this.features.addPlan(action.featureId, action.request);
       case 'remove-plan':
         return this.features.removePlan(action.featureId, action.planId);
+      case 'set-branch':
+        return this.features.setBranch(action.featureId, action.request);
       case 'remove-feature':
         return this.features.remove(action.featureId);
     }

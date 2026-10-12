@@ -60,6 +60,31 @@
   line-height: 1.6;
 }
 
+.previous-plan-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.previous-plan-control span {
+  color: var(--text-strong);
+  font-weight: 680;
+}
+
+.previous-plan-control select {
+  min-width: 260px;
+  padding: 8px 11px;
+  border: 1px solid #ccd3df;
+  border-radius: 7px;
+  color: #33415e;
+  background: white;
+  font: inherit;
+}
+
 .plan-editor-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -189,7 +214,32 @@ button:disabled {
     flex-direction: column;
   }
 
-  .plan-editor-row {
+  .previous-plan-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.previous-plan-control span {
+  color: var(--text-strong);
+  font-weight: 680;
+}
+
+.previous-plan-control select {
+  min-width: 260px;
+  padding: 8px 11px;
+  border: 1px solid #ccd3df;
+  border-radius: 7px;
+  color: #33415e;
+  background: white;
+  font: inherit;
+}
+
+.plan-editor-row {
     grid-template-columns: 1fr;
   }
 

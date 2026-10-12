@@ -55,6 +55,11 @@ export interface FeaturePlanBranch {
   readonly subBranches: readonly FeaturePlanBranch[];
 }
 
+export interface FeatureBranch {
+  readonly name: string;
+  readonly description: string;
+}
+
 export interface FeaturePlan {
   readonly id: string;
   readonly title: string;
@@ -64,6 +69,8 @@ export interface FeaturePlan {
   readonly status: FeaturePlanStatus;
   /** Base branch with nested sub-branches; null only for plans made before branches were required. */
   readonly branch: FeaturePlanBranch | null;
+  /** Plan done before this one; its base branch is where this plan's base branch came from. */
+  readonly previousPlanId: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -82,6 +89,8 @@ export interface Feature extends FeatureSummary {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
+  /** Null until the feature branch is set; features are often written before it exists. */
+  readonly branch: FeatureBranch | null;
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
@@ -120,6 +129,7 @@ export interface FeatureDto {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
+  readonly branch: FeatureBranch | null;
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
@@ -199,6 +209,13 @@ export interface FeaturePlanContentRequest {
 export interface AddFeaturePlanRequest extends FeaturePlanContentRequest {
   readonly branchName: string;
   readonly branchDescription: string;
+  /** Null when the base branch comes from the feature branch. */
+  readonly previousPlanId: string | null;
+}
+
+export interface SetFeatureBranchRequest {
+  readonly branchName: string;
+  readonly description: string;
 }
 
 export interface AddFeaturePlanBranchRequest {

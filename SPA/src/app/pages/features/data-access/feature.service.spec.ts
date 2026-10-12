@@ -54,10 +54,12 @@ const feature: FeatureDto = {
       additionalInfo: 'Production implementation.',
       status: 'InProgress',
       branch: { name: 'feature/plans', description: '', subBranches: [] },
+      previousPlanId: null,
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
+  branch: null,
   memoryHistory: [],
 };
 
@@ -73,6 +75,7 @@ const addPlanRequest = {
   ...planContent,
   branchName: 'feature/plans',
   branchDescription: 'Plan rework',
+  previousPlanId: 'plan-1',
 } as const;
 
 describe('FeatureService', () => {
@@ -285,6 +288,20 @@ describe('FeatureService', () => {
       body: { status: 'Delayed' },
       action: (api: FeatureService) =>
         api.changePlanStatus(feature.id, 'plan-1', 'Delayed'),
+    },
+    {
+      name: 'sets the feature branch',
+      path: 'branch',
+      body: { branchName: 'develop', description: 'Main line' },
+      action: (api: FeatureService) =>
+        api.setBranch(feature.id, { branchName: 'develop', description: 'Main line' }),
+    },
+    {
+      name: 'clears a plan previous plan',
+      path: 'plans/plan-1/previous-plan',
+      body: { previousPlanId: null },
+      action: (api: FeatureService) =>
+        api.setPlanPreviousPlan(feature.id, 'plan-1', null),
     },
     {
       name: 'removes a plan',

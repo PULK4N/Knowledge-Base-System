@@ -32,6 +32,7 @@ import {
   UpdateFeaturePlanBranchRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import { previousPlanOptions } from '../ui/feature-branch-tree';
 import { FeaturePlanBranchTreeComponent } from '../ui/feature-plan-branch-tree.component';
 import { FeaturePlanContentComponent } from '../ui/feature-plan-content.component';
 import {
@@ -42,6 +43,7 @@ import {
 interface FeaturePlanDetailsView {
   readonly feature: Feature;
   readonly plan: FeaturePlan;
+  readonly previousPlanOptions: readonly FeaturePlan[];
 }
 
 interface PlanTarget {
@@ -53,6 +55,7 @@ type PlanAction =
   | ({ readonly kind: 'update'; readonly request: FeaturePlanContentRequest } & PlanTarget)
   | ({ readonly kind: 'status'; readonly status: FeaturePlanStatus } & PlanTarget)
   | ({ readonly kind: 'remove' } & PlanTarget)
+  | ({ readonly kind: 'previous-plan'; readonly previousPlanId: string | null } & PlanTarget)
   | ({ readonly kind: 'add-branch'; readonly request: AddFeaturePlanBranchRequest } & PlanTarget)
   | ({ readonly kind: 'update-branch'; readonly request: UpdateFeaturePlanBranchRequest } & PlanTarget)
   | ({ readonly kind: 'remove-branch'; readonly branchName: string } & PlanTarget);
@@ -108,7 +111,14 @@ export class FeaturePlanDetailsPage {
             const plan = feature.plans.find(item => item.id === planId);
 
             return plan
-              ? ({ status: 'success', data: { feature, plan } } as const)
+              ? ({
+                  status: 'success',
+                  data: {
+                    feature,
+                    plan,
+                    previousPlanOptions: previousPlanOptions(feature.plans, plan.id),
+                  },
+                } as const)
               : ({
                   status: 'error',
                   message: 'The requested plan could not be found.',
@@ -177,6 +187,14 @@ export class FeaturePlanDetailsPage {
     this.actions.next({ kind: 'status', ...target, status });
   }
 
+  protected setPreviousPlan(target: PlanTarget, previousPlanId: string): void {
+    this.actions.next({
+      kind: 'previous-plan',
+      ...target,
+      previousPlanId: previousPlanId || null,
+    });
+  }
+
   protected removePlan(target: PlanTarget): void {
     this.actions.next({ kind: 'remove', ...target });
   }
@@ -215,6 +233,12 @@ export class FeaturePlanDetailsPage {
         );
       case 'remove':
         return this.features.removePlan(action.featureId, action.planId);
+      case 'previous-plan':
+        return this.features.setPlanPreviousPlan(
+          action.featureId,
+          action.planId,
+          action.previousPlanId,
+        );
       case 'add-branch':
         return this.features.addPlanBranch(
           action.featureId,

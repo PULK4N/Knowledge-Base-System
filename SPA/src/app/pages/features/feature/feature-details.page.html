@@ -234,6 +234,13 @@
       }
 
       @if (vm.listState.activeTab === 'plans') {
+        <section class="section-card surface-card tab-section feature-branch-section">
+          <app-feature-branch-overview
+            [feature]="vm.state.data"
+            [saving]="vm.mutation.status === 'saving'"
+            (branchSet)="setBranch(vm.state.data.id, $event)"
+          />
+        </section>
         <section class="section-card surface-card tab-section">
           <div class="section-heading">
             <div>
@@ -264,6 +271,7 @@
               #planForm="ngForm"
               (ngSubmit)="addPlan(vm.state.data.id, {
                 title: planTitle.value,
+                previousPlanId: planPreviousPlan.value || null,
                 branchName: planBranchName.value,
                 branchDescription: planBranchDescription.value,
                 status: planStatus.value,
@@ -281,6 +289,23 @@
                   required
                   ngModel
                 />
+              </label>
+              <label>
+                <span>Previous plan</span>
+                <select
+                  #planPreviousPlan="ngModel"
+                  name="planPreviousPlan"
+                  ngModel=""
+                >
+                  <option value="">
+                    None (branched from {{ vm.state.data.branch?.name ?? 'the feature branch' }})
+                  </option>
+                  @for (plan of vm.state.data.plans; track plan.id) {
+                    <option [value]="plan.id">
+                      {{ plan.title }}{{ plan.branch ? ' (' + plan.branch.name + ')' : '' }}
+                    </option>
+                  }
+                </select>
               </label>
               <label>
                 <span>Base branch</span>

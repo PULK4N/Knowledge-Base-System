@@ -1,0 +1,29 @@
+.branch-row {
+  grid-template-columns: 26px 22px minmax(0, 1fr);
+}
+
+.plan-node .branch-name code {
+  color: var(--indigo);
+}
+
+.plan-link {
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.plan-link:hover {
+  color: var(--indigo);
+  text-decoration: underline;
+}
+
+.missing-branch {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.feature-branch-form {
+  margin: 0 0 16px;
+}
