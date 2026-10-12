@@ -34,18 +34,6 @@
   font-size: 24px;
 }
 
-.project-link {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  color: #52617d;
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.project-link:hover {
-  color: var(--indigo);
-}
-
 .overview-editor {
   min-width: 0;
   padding: 20px 28px 24px;

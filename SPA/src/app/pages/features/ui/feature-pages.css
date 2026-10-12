@@ -24,8 +24,7 @@
 }
 
 .back-link:hover,
-.section-heading a:hover,
-.project-link:hover {
+.section-heading a:hover {
   color: var(--indigo);
 }
 
