@@ -148,13 +148,17 @@
   color: var(--muted);
 }
 
-.current-badge {
-  padding: 5px 9px;
-  border-radius: 999px;
-  color: #3340a6;
-  background: #e8eaff;
-  font-size: 12px;
-  font-weight: 720;
+.plan-branch-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.plan-row-info {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: 13px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .open-plan {

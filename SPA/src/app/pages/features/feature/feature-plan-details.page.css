@@ -21,14 +21,49 @@
   font-weight: 680;
 }
 
-.heading-labels .current-badge {
-  color: #2933bc;
-  background: #efefff;
+.heading-labels .plan-status {
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
-.heading-labels .previous-badge {
-  color: #6e5876;
-  background: #f5eff6;
+.heading-labels .branch-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.status-control select {
+  padding: 9px 12px;
+  border: 1px solid #ccd3df;
+  border-radius: 7px;
+  color: #33415e;
+  background: white;
+  font: inherit;
+  font-weight: 650;
+}
+
+.plan-info,
+.plan-branches {
+  margin-top: 24px;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.plan-info .eyebrow {
+  color: var(--indigo);
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plan-info p {
+  margin: 8px 0 0;
+  color: var(--text-strong);
+  line-height: 1.6;
+}
+
+.plan-editor-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .plan-heading > div > p {
@@ -152,6 +187,10 @@ button:disabled {
 @media (max-width: 620px) {
   .plan-heading {
     flex-direction: column;
+  }
+
+  .plan-editor-row {
+    grid-template-columns: 1fr;
   }
 
   .plan-controls {

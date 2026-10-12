@@ -35,11 +35,15 @@ import { SkillService } from '../../skills/data-access/skill.service';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import {
+  AddFeaturePlanRequest,
   Feature,
-  FeaturePlanContentType,
   FeatureResearchDiscoverySourceType,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import {
+  FEATURE_PLAN_STATUS_OPTIONS,
+  FeaturePlanStatusPipe,
+} from '../ui/feature-plan-status';
 import {
   parseFeatureDetailListState,
   selectFeaturePlans,
@@ -156,11 +160,8 @@ type FeatureAction =
   | {
       readonly kind: 'add-plan';
       readonly featureId: string;
-      readonly title: string;
-      readonly content: string;
-      readonly contentType: FeaturePlanContentType;
+      readonly request: AddFeaturePlanRequest;
     }
-  | { readonly kind: 'select-plan'; readonly featureId: string; readonly planId: string }
   | { readonly kind: 'remove-plan'; readonly featureId: string; readonly planId: string }
   | { readonly kind: 'remove-feature'; readonly featureId: string };
 
@@ -175,6 +176,7 @@ type MutationState =
     AsyncPipe,
     ClampOverflowDirective,
     DatePipe,
+    FeaturePlanStatusPipe,
     FormsModule,
     ListControlsComponent,
     MarkdownContentComponent,
@@ -214,6 +216,7 @@ export class FeatureDetailsPage {
   protected readonly emptyBlocks = [];
   protected readonly planFilterOptions = PLAN_FILTER_OPTIONS;
   protected readonly planSortOptions = PLAN_SORT_OPTIONS;
+  protected readonly planStatusOptions = FEATURE_PLAN_STATUS_OPTIONS;
   protected readonly researchFilterOptions = RESEARCH_FILTER_OPTIONS;
   protected readonly researchSortOptions = RESEARCH_SORT_OPTIONS;
   protected readonly conversationFilterOptions = CONVERSATION_FILTER_OPTIONS;
@@ -298,7 +301,7 @@ export class FeatureDetailsPage {
           if (action.kind === 'add-plan') {
             this.addingPlan.set(false);
           }
-          if (action.kind === 'remove-plan' || action.kind === 'select-plan') {
+          if (action.kind === 'remove-plan') {
             this.confirmingPlanRemoval.set(null);
           }
           if (action.kind === 'remove-feature') {
@@ -591,23 +594,18 @@ export class FeatureDetailsPage {
     });
   }
 
-  protected addPlan(
-    featureId: string,
-    title: string,
-    content: string,
-    contentType: FeaturePlanContentType,
-  ): void {
+  protected addPlan(featureId: string, request: AddFeaturePlanRequest): void {
     this.actions.next({
       kind: 'add-plan',
       featureId,
-      title: title.trim(),
-      content,
-      contentType,
+      request: {
+        ...request,
+        title: request.title.trim(),
+        branchName: request.branchName.trim(),
+        branchDescription: request.branchDescription.trim(),
+        additionalInfo: request.additionalInfo.trim(),
+      },
     });
-  }
-
-  protected selectPlan(featureId: string, planId: string): void {
-    this.actions.next({ kind: 'select-plan', featureId, planId });
   }
 
   protected removePlan(featureId: string, planId: string): void {
@@ -687,13 +685,7 @@ export class FeatureDetailsPage {
           action.discoveryId,
         );
       case 'add-plan':
-        return this.features.addPlan(action.featureId, {
-          title: action.title,
-          content: action.content,
-          contentType: action.contentType,
-        });
-      case 'select-plan':
-        return this.features.changeCurrentPlan(action.featureId, action.planId);
+        return this.features.addPlan(action.featureId, action.request);
       case 'remove-plan':
         return this.features.removePlan(action.featureId, action.planId);
       case 'remove-feature':

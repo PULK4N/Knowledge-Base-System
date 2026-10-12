@@ -106,3 +106,33 @@
     flex-direction: column;
   }
 }
+
+.plan-status {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 720;
+  white-space: nowrap;
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+
+.plan-status.status-InProgress {
+  color: var(--indigo);
+  background: color-mix(in srgb, var(--indigo) 12%, transparent);
+}
+
+.plan-status.status-Delayed {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+.plan-status.status-Completed {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 13%, transparent);
+}
+
+.plan-additional-info {
+  white-space: pre-wrap;
+}

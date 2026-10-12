@@ -1,0 +1,190 @@
+<div class="branch-tree-heading">
+  <div>
+    <span class="eyebrow">Source control</span>
+    <h2>Branches</h2>
+  </div>
+  @if (branch()) {
+    <div class="branch-tree-actions">
+      <span class="count-badge">{{ branchCount() }}</span>
+      <button type="button" (click)="expandAll()">Expand all</button>
+      <button type="button" (click)="collapseAll()">Collapse all</button>
+    </div>
+  }
+</div>
+
+@if (branch(); as base) {
+  <ul class="branch-tree" role="tree" aria-label="Plan branches">
+    <ng-container
+      *ngTemplateOutlet="node; context: { $implicit: base, isBase: true }"
+    />
+  </ul>
+} @else {
+  <div class="branch-empty">
+    <p>This plan was created before plans required a base branch.</p>
+    @if (isEditing('add', null)) {
+      <ng-container
+        *ngTemplateOutlet="addForm; context: { parentBranchName: null }"
+      />
+    } @else {
+      <button
+        type="button"
+        class="primary-action"
+        (click)="openEditor({ mode: 'add', parentBranchName: null })"
+      >
+        Add base branch
+      </button>
+    }
+  </div>
+}
+
+<ng-template #node let-branch let-isBase="isBase">
+  <li
+    class="branch-node"
+    role="treeitem"
+    [attr.aria-expanded]="
+      branch.subBranches.length > 0 ? !collapsed().has(branch.name) : null
+    "
+  >
+    <div class="branch-row">
+      @if (branch.subBranches.length > 0) {
+        <button
+          type="button"
+          class="branch-toggle"
+          [attr.aria-label]="
+            (collapsed().has(branch.name) ? 'Expand ' : 'Collapse ') + branch.name
+          "
+          (click)="toggle(branch.name)"
+        >
+          <span
+            aria-hidden="true"
+            [class.collapsed]="collapsed().has(branch.name)"
+          >▾</span>
+        </button>
+      } @else {
+        <span class="branch-toggle-spacer" aria-hidden="true"></span>
+      }
+      <span class="branch-icon" aria-hidden="true">⑂</span>
+      <div class="branch-text">
+        <div class="branch-name">
+          <code>{{ branch.name }}</code>
+          @if (isBase) {
+            <span class="base-badge">Base</span>
+          }
+          @if (branch.subBranches.length > 0 && collapsed().has(branch.name)) {
+            <small>{{ branch.subBranches.length }} hidden</small>
+          }
+        </div>
+        @if (branch.description) {
+          <p>{{ branch.description }}</p>
+        }
+      </div>
+      <div class="branch-actions">
+        <button
+          type="button"
+          [disabled]="saving()"
+          (click)="openEditor({ mode: 'add', parentBranchName: branch.name })"
+        >
+          Add sub-branch
+        </button>
+        <button
+          type="button"
+          [disabled]="saving()"
+          (click)="openEditor({ mode: 'edit', branchName: branch.name })"
+        >
+          Edit
+        </button>
+        @if (!isBase) {
+          @if (confirmingRemoval() === branch.name) {
+            <button
+              type="button"
+              class="danger-button"
+              [disabled]="saving()"
+              (click)="removeBranch(branch.name)"
+            >
+              Confirm remove
+            </button>
+            <button type="button" (click)="confirmingRemoval.set(null)">
+              Cancel
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="danger-link"
+              [disabled]="saving()"
+              [title]="
+                branch.subBranches.length > 0
+                  ? 'Removes its sub-branches too'
+                  : 'Remove branch'
+              "
+              (click)="confirmingRemoval.set(branch.name)"
+            >
+              Remove
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    @if (isEditing('edit', branch.name)) {
+      <form
+        class="branch-form"
+        #editForm="ngForm"
+        (ngSubmit)="updateBranch(branch.name, editName.value, editDescription.value)"
+      >
+        <label>
+          <span>Name</span>
+          <input #editName="ngModel" name="name" type="text" required [ngModel]="branch.name" />
+        </label>
+        <label>
+          <span>Description</span>
+          <input #editDescription="ngModel" name="description" type="text" [ngModel]="branch.description" />
+        </label>
+        <div class="branch-form-actions">
+          <button type="submit" class="primary-action" [disabled]="editForm.invalid || saving()">
+            Save branch
+          </button>
+          <button type="button" (click)="editor.set(null)">Cancel</button>
+        </div>
+      </form>
+    }
+
+    @if (isEditing('add', branch.name)) {
+      <ng-container
+        *ngTemplateOutlet="addForm; context: { parentBranchName: branch.name }"
+      />
+    }
+
+    @if (branch.subBranches.length > 0 && !collapsed().has(branch.name)) {
+      <ul class="branch-children" role="group">
+        @for (subBranch of branch.subBranches; track subBranch.name) {
+          <ng-container
+            *ngTemplateOutlet="node; context: { $implicit: subBranch, isBase: false }"
+          />
+        }
+      </ul>
+    }
+  </li>
+</ng-template>
+
+<ng-template #addForm let-parentBranchName="parentBranchName">
+  <form
+    class="branch-form"
+    #addBranchForm="ngForm"
+    (ngSubmit)="addBranch(parentBranchName, addName.value, addDescription.value)"
+  >
+    <label>
+      <span>{{ parentBranchName ? 'Sub-branch of ' + parentBranchName : 'Base branch name' }}</span>
+      <input #addName="ngModel" name="name" type="text" required placeholder="feature/my-branch" ngModel />
+    </label>
+    <label>
+      <span>Description</span>
+      <input #addDescription="ngModel" name="description" type="text" ngModel />
+    </label>
+    <div class="branch-form-actions">
+      <button type="submit" class="primary-action" [disabled]="addBranchForm.invalid || saving()">
+        Add branch
+      </button>
+      <button type="button" (click)="editor.set(null)">Cancel</button>
+    </div>
+  </form>
+</ng-template>

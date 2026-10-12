@@ -51,13 +51,29 @@ const feature: FeatureDto = {
       title: 'Frontend plan',
       content: '# Build pages',
       contentType: 'Markdown',
+      additionalInfo: 'Production implementation.',
+      status: 'InProgress',
+      branch: { name: 'feature/plans', description: '', subBranches: [] },
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
-  currentPlanId: 'plan-1',
   memoryHistory: [],
 };
+
+const planContent = {
+  title: 'Plan',
+  content: '<p>Plan</p>',
+  contentType: 'Html',
+  additionalInfo: 'Research only.',
+  status: 'NotStarted',
+} as const;
+
+const addPlanRequest = {
+  ...planContent,
+  branchName: 'feature/plans',
+  branchDescription: 'Plan rework',
+} as const;
 
 describe('FeatureService', () => {
   let service: FeatureService;
@@ -104,7 +120,6 @@ describe('FeatureService', () => {
           name: feature.name,
           summary: feature.summary,
           status: feature.status,
-          currentPlanId: feature.currentPlanId,
           planCount: 1,
           recordCount: 1,
         },
@@ -253,38 +268,66 @@ describe('FeatureService', () => {
     {
       name: 'adds a plan',
       path: 'plans',
-      body: { title: 'Plan', content: '# Plan', contentType: 'Markdown' },
-      action: (api: FeatureService) =>
-        api.addPlan(feature.id, {
-          title: 'Plan',
-          content: '# Plan',
-          contentType: 'Markdown',
-        }),
+      body: addPlanRequest,
+      action: (api: FeatureService) => api.addPlan(feature.id, addPlanRequest),
       result: { status: 'OK', planId: 'plan-2' },
     },
     {
-      name: 'updates the current plan',
-      path: 'plans/current',
-      body: { title: 'Plan', content: '<p>Plan</p>', contentType: 'Html' },
+      name: 'updates a plan by ID',
+      path: 'plans/plan-1/update',
+      body: planContent,
       action: (api: FeatureService) =>
-        api.updateCurrentPlan(feature.id, {
-          title: 'Plan',
-          content: '<p>Plan</p>',
-          contentType: 'Html',
-        }),
+        api.updatePlan(feature.id, 'plan-1', planContent),
     },
     {
-      name: 'changes the current plan',
-      path: 'plans/current/change',
-      body: { planId: 'plan-1' },
+      name: 'changes a plan status',
+      path: 'plans/plan-1/status',
+      body: { status: 'Delayed' },
       action: (api: FeatureService) =>
-        api.changeCurrentPlan(feature.id, 'plan-1'),
+        api.changePlanStatus(feature.id, 'plan-1', 'Delayed'),
     },
     {
       name: 'removes a plan',
-      path: 'plans/remove',
-      body: { planId: 'plan-1' },
+      path: 'plans/plan-1/remove',
+      body: {},
       action: (api: FeatureService) => api.removePlan(feature.id, 'plan-1'),
+    },
+    {
+      name: 'adds a plan sub-branch',
+      path: 'plans/plan-1/branches',
+      body: {
+        branchName: 'feature/plans-api',
+        description: 'Backend',
+        parentBranchName: 'feature/plans',
+      },
+      action: (api: FeatureService) =>
+        api.addPlanBranch(feature.id, 'plan-1', {
+          branchName: 'feature/plans-api',
+          description: 'Backend',
+          parentBranchName: 'feature/plans',
+        }),
+    },
+    {
+      name: 'renames a plan branch',
+      path: 'plans/plan-1/branches/update',
+      body: {
+        branchName: 'feature/plans-api',
+        newBranchName: 'feature/plans-backend',
+        description: 'Backend',
+      },
+      action: (api: FeatureService) =>
+        api.updatePlanBranch(feature.id, 'plan-1', {
+          branchName: 'feature/plans-api',
+          newBranchName: 'feature/plans-backend',
+          description: 'Backend',
+        }),
+    },
+    {
+      name: 'removes a plan branch',
+      path: 'plans/plan-1/branches/remove',
+      body: { branchName: 'feature/plans-api' },
+      action: (api: FeatureService) =>
+        api.removePlanBranch(feature.id, 'plan-1', 'feature/plans-api'),
     },
   ])('$name and refreshes feature state', async testCase => {
     const resultPromise = firstValueFrom(

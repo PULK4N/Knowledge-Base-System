@@ -14,6 +14,8 @@ import {
   PagedResult,
 } from '../../../core/store/entity-store.service';
 import {
+  AddFeaturePlanBranchRequest,
+  AddFeaturePlanRequest,
   AddFeatureRequest,
   Feature,
   FeatureCommandResult,
@@ -25,12 +27,14 @@ import {
   FeatureSummaryDto,
   FeaturePlanContentRequest,
   FeaturePlanCreatedCommandResult,
+  FeaturePlanStatus,
   FeatureRecordContentRequest,
   FeatureRecordCreatedCommandResult,
   FeatureResearchDiscoveryContentRequest,
   FeatureResearchDiscoveryCreatedCommandResult,
   FeatureReviewNoteContentRequest,
   FeatureReviewNoteCreatedCommandResult,
+  UpdateFeaturePlanBranchRequest,
   UpdateFeatureRecordRequest,
   UpdateFeatureResearchDiscoveryRequest,
   UpdateFeatureReviewNoteRequest,
@@ -91,7 +95,6 @@ export class FeatureService {
             name: item.name,
             summary: item.summary,
             status: item.status,
-            currentPlanId: item.currentPlanId,
             planCount: item.planCount,
             recordCount: item.recordCount,
           })),
@@ -231,7 +234,7 @@ export class FeatureService {
 
   addPlan(
     id: string,
-    request: FeaturePlanContentRequest,
+    request: AddFeaturePlanRequest,
   ): Observable<Feature> {
     return this.http
       .post<FeaturePlanCreatedCommandResult>(
@@ -241,19 +244,58 @@ export class FeatureService {
       .pipe(switchMap(() => this.refresh(id)));
   }
 
-  updateCurrentPlan(
+  updatePlan(
     id: string,
+    planId: string,
     request: FeaturePlanContentRequest,
   ): Observable<Feature> {
-    return this.postAndRefresh(id, 'plans/current', request);
+    return this.postAndRefresh(id, `${this.planPath(planId)}/update`, request);
   }
 
-  changeCurrentPlan(id: string, planId: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'plans/current/change', { planId });
+  changePlanStatus(
+    id: string,
+    planId: string,
+    status: FeaturePlanStatus,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, `${this.planPath(planId)}/status`, {
+      status,
+    });
   }
 
   removePlan(id: string, planId: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'plans/remove', { planId });
+    return this.postAndRefresh(id, `${this.planPath(planId)}/remove`, {});
+  }
+
+  addPlanBranch(
+    id: string,
+    planId: string,
+    request: AddFeaturePlanBranchRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, `${this.planPath(planId)}/branches`, request);
+  }
+
+  updatePlanBranch(
+    id: string,
+    planId: string,
+    request: UpdateFeaturePlanBranchRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(
+      id,
+      `${this.planPath(planId)}/branches/update`,
+      request,
+    );
+  }
+
+  removePlanBranch(
+    id: string,
+    planId: string,
+    branchName: string,
+  ): Observable<Feature> {
+    return this.postAndRefresh(
+      id,
+      `${this.planPath(planId)}/branches/remove`,
+      { branchName },
+    );
   }
 
   private postAndRefresh(
@@ -264,6 +306,10 @@ export class FeatureService {
     return this.http
       .post<FeatureCommandResult>(`${this.featurePath(id)}/${path}`, body)
       .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  private planPath(planId: string): string {
+    return `plans/${encodeURIComponent(planId)}`;
   }
 
   private featurePath(id: string): string {

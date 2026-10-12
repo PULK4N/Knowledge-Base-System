@@ -15,9 +15,14 @@
       </div>
     }
     @case ('success') {
+      @let feature = vm.state.data.feature;
+      @let plan = vm.state.data.plan;
+      @let target = { featureId: feature.id, planId: plan.id };
+      @let saving = vm.mutation.status === 'saving';
+
       <a
         class="back-link"
-        [routerLink]="['/features', vm.state.data.feature.id]"
+        [routerLink]="['/features', feature.id]"
         [queryParams]="{ tab: 'plans' }"
       >
         <span aria-hidden="true">←</span> Back to plans
@@ -26,41 +31,45 @@
       <header class="plan-heading">
         <div>
           <div class="heading-labels">
-            @if (vm.state.data.isCurrent) {
-              <span class="current-badge">Current plan</span>
-            } @else {
-              <span class="previous-badge">Previous plan</span>
+            <span class="plan-status" [class]="'plan-status status-' + plan.status">
+              {{ plan.status | featurePlanStatus }}
+            </span>
+            <span>{{ plan.contentType }}</span>
+            @if (plan.branch) {
+              <span class="branch-label">⑂ {{ plan.branch.name }}</span>
             }
-            <span>{{ vm.state.data.plan.contentType }}</span>
           </div>
-          <h1 class="page-heading">{{ vm.state.data.plan.title }}</h1>
+          <h1 class="page-heading">{{ plan.title }}</h1>
           <p>
-            {{ vm.state.data.feature.name }} · Updated
-            {{ vm.state.data.plan.updatedAt | date: 'medium' }}
+            {{ feature.name }} · Updated
+            {{ plan.updatedAt | date: 'medium' }}
           </p>
         </div>
         <div class="plan-controls">
-          @if (vm.state.data.isCurrent) {
-            @if (editing()) {
-              <button type="button" (click)="editing.set(false)">Cancel editing</button>
-            } @else {
-              <button type="button" (click)="editing.set(true)">Edit current plan</button>
-            }
-          } @else {
-            <button
-              type="button"
-              [disabled]="vm.mutation.status === 'saving'"
-              (click)="selectPlan(vm.state.data.feature.id, vm.state.data.plan.id)"
+          <label class="status-control">
+            <span class="sr-only">Plan status</span>
+            <select
+              name="planStatus"
+              [disabled]="saving"
+              [ngModel]="plan.status"
+              (ngModelChange)="changeStatus(target, $event)"
             >
-              Make current
-            </button>
+              @for (option of statusOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+          @if (editing()) {
+            <button type="button" (click)="editing.set(false)">Cancel editing</button>
+          } @else {
+            <button type="button" (click)="editing.set(true)">Edit plan</button>
           }
           @if (confirmingRemoval()) {
             <button
               type="button"
               class="danger-button"
-              [disabled]="vm.mutation.status === 'saving'"
-              (click)="removePlan(vm.state.data.feature.id, vm.state.data.plan.id)"
+              [disabled]="saving"
+              (click)="removePlan(target)"
             >
               Confirm delete
             </button>
@@ -72,42 +81,86 @@
         </div>
       </header>
 
-      @if (editing() && vm.state.data.isCurrent) {
+      @if (vm.mutation.status === 'error') {
+        <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+      }
+
+      @if (plan.additionalInfo && !editing()) {
+        <section class="plan-info surface-card">
+          <span class="eyebrow">Additional info</span>
+          <p class="plan-additional-info">{{ plan.additionalInfo }}</p>
+        </section>
+      }
+
+      <section class="plan-branches surface-card">
+        <app-feature-plan-branch-tree
+          [branch]="plan.branch"
+          [saving]="saving"
+          (branchAdded)="addBranch(target, $event)"
+          (branchUpdated)="updateBranch(target, $event)"
+          (branchRemoved)="removeBranch(target, $event)"
+        />
+      </section>
+
+      @if (editing()) {
         <form
           class="plan-editor surface-card"
           #planForm="ngForm"
-          (ngSubmit)="updatePlan(vm.state.data.feature.id, title.value, content.value, contentType.value)"
+          (ngSubmit)="updatePlan(
+            target,
+            title.value,
+            status.value,
+            additionalInfo.value,
+            contentType.value,
+            content.value
+          )"
         >
           <label>
             <span>Title</span>
-            <input #title="ngModel" name="title" type="text" required [ngModel]="vm.state.data.plan.title" />
+            <input #title="ngModel" name="title" type="text" required [ngModel]="plan.title" />
           </label>
+          <div class="plan-editor-row">
+            <label>
+              <span>Status</span>
+              <select #status="ngModel" name="status" required [ngModel]="plan.status">
+                @for (option of statusOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              <span>Content type</span>
+              <select #contentType="ngModel" name="contentType" required [ngModel]="plan.contentType">
+                <option value="Markdown">Markdown</option>
+                <option value="Html">HTML</option>
+              </select>
+            </label>
+          </div>
           <label>
-            <span>Content type</span>
-            <select #contentType="ngModel" name="contentType" required [ngModel]="vm.state.data.plan.contentType">
-              <option value="Markdown">Markdown</option>
-              <option value="Html">HTML</option>
-            </select>
+            <span>Additional info</span>
+            <textarea
+              #additionalInfo="ngModel"
+              name="additionalInfo"
+              rows="3"
+              placeholder="What the plan is for, for example research only or production implementation"
+              [ngModel]="plan.additionalInfo"
+            ></textarea>
           </label>
           <label>
             <span>Plan content</span>
-            <textarea #content="ngModel" name="content" rows="20" required [ngModel]="vm.state.data.plan.content"></textarea>
+            <textarea #content="ngModel" name="content" rows="20" required [ngModel]="plan.content"></textarea>
           </label>
           <button
             type="submit"
-            [disabled]="planForm.invalid || vm.mutation.status === 'saving'"
+            [disabled]="planForm.invalid || saving"
           >
-            Save current plan
+            Save plan
           </button>
         </form>
       } @else {
         <section class="plan-document surface-card">
-          <app-feature-plan-content [plan]="vm.state.data.plan" />
+          <app-feature-plan-content [plan]="plan" />
         </section>
-      }
-
-      @if (vm.mutation.status === 'error') {
-        <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
       }
     }
   }

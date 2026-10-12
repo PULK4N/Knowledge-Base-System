@@ -16,7 +16,6 @@ const feature: Feature = {
   name: 'Feature journal',
   summary: 'Trace implementation decisions.',
   status: 'Frontend implementation is in progress.',
-  currentPlanId: null,
   planCount: 0,
   recordCount: 1,
   relatedSkillIds: [],
@@ -68,7 +67,6 @@ const feature: Feature = {
 
 const featureWithPlans: Feature = {
   ...feature,
-  currentPlanId: 'plan-current',
   planCount: 2,
   plans: [
     {
@@ -76,6 +74,15 @@ const featureWithPlans: Feature = {
       title: 'Current plan',
       content: '# Current',
       contentType: 'Markdown',
+      additionalInfo: 'Production implementation.',
+      status: 'InProgress',
+      branch: {
+        name: 'feature/plans',
+        description: 'Plan rework',
+        subBranches: [
+          { name: 'feature/plans-api', description: '', subBranches: [] },
+        ],
+      },
       createdAt: '2026-08-20T10:00:00Z',
       updatedAt: '2026-08-22T10:00:00Z',
     },
@@ -84,6 +91,9 @@ const featureWithPlans: Feature = {
       title: 'Previous plan',
       content: '# Previous',
       contentType: 'Markdown',
+      additionalInfo: '',
+      status: 'Completed',
+      branch: null,
       createdAt: '2026-08-18T10:00:00Z',
       updatedAt: '2026-08-19T10:00:00Z',
     },
@@ -102,7 +112,6 @@ describe('FeatureDetailsPage research discoveries', () => {
     updateReviewNote: ReturnType<typeof vi.fn>;
     removeReviewNote: ReturnType<typeof vi.fn>;
     addPlan: ReturnType<typeof vi.fn>;
-    changeCurrentPlan: ReturnType<typeof vi.fn>;
     removePlan: ReturnType<typeof vi.fn>;
   };
 
@@ -123,7 +132,6 @@ describe('FeatureDetailsPage research discoveries', () => {
       updateReviewNote: vi.fn(() => of(feature)),
       removeReviewNote: vi.fn(() => of(feature)),
       addPlan: vi.fn(() => of(feature)),
-      changeCurrentPlan: vi.fn(() => of(feature)),
       removePlan: vi.fn(() => of(feature)),
     };
 
@@ -549,26 +557,37 @@ describe('FeatureDetailsPage research discoveries', () => {
     );
   });
 
-  it('offers edit, make current, and delete on each plans-tab row', async () => {
+  it('shows status, base branch, and additional info on each plans-tab row', async () => {
     const element = await openPlansTab(harness, features);
     const rows = element.querySelectorAll<HTMLElement>('.tab-plan-row');
 
     expect(rows).toHaveLength(2);
-    expect(
-      rows[0].querySelector('.plan-row-actions .plan-row-link')?.textContent?.trim(),
-    ).toBe('Edit');
-    expect(
-      rows[1].querySelector('.plan-row-actions .plan-row-link')?.textContent?.trim(),
-    ).toBe('View');
-    expect(rows[0].querySelector('.current-badge')).not.toBeNull();
-
-    planAction(rows[1], 'Make current')?.click();
-    harness.detectChanges();
-
-    expect(features.changeCurrentPlan).toHaveBeenCalledWith(
-      featureWithPlans.id,
-      'plan-previous',
+    expect(rows[0].querySelector('.plan-status')?.textContent?.trim()).toBe(
+      'In progress',
     );
+    expect(rows[0].querySelector('.plan-branch-name')?.textContent).toContain(
+      'feature/plans',
+    );
+    expect(rows[0].querySelector('.plan-row-info')?.textContent).toBe(
+      'Production implementation.',
+    );
+    expect(rows[1].querySelector('.plan-status')?.textContent?.trim()).toBe(
+      'Completed',
+    );
+    expect(rows[1].querySelector('.plan-branch-name')).toBeNull();
+    expect(element.textContent).not.toContain('Make current');
+  });
+
+  it('finds plans by sub-branch name', async () => {
+    features.watch.mockReturnValue(of(featureWithPlans));
+    await harness.navigateByUrl(
+      '/features/feature-plans?tab=plans&planSearch=plans-api',
+      FeatureDetailsPage,
+    );
+    harness.detectChanges();
+    const element = harness.routeNativeElement as HTMLElement;
+
+    expect(element.querySelectorAll('.tab-plan-row')).toHaveLength(1);
   });
 
   it('requires confirmation before deleting a plan from the tab', async () => {
@@ -602,6 +621,8 @@ describe('FeatureDetailsPage research discoveries', () => {
     harness.detectChanges();
 
     setControlValue(element, '[name="planTitle"]', ' Follow-up plan ');
+    setControlValue(element, '[name="planBranchName"]', ' feature/follow-up ');
+    setControlValue(element, '[name="planAdditionalInfo"]', ' Research only. ');
     setControlValue(element, '[name="planContent"]', '# Follow-up');
 
     const form = element.querySelector('form.plan-editor') as HTMLFormElement;
@@ -610,8 +631,12 @@ describe('FeatureDetailsPage research discoveries', () => {
 
     expect(features.addPlan).toHaveBeenCalledWith(featureWithPlans.id, {
       title: 'Follow-up plan',
-      content: '# Follow-up',
+      branchName: 'feature/follow-up',
+      branchDescription: '',
+      status: 'NotStarted',
+      additionalInfo: 'Research only.',
       contentType: 'Markdown',
+      content: '# Follow-up',
     });
   });
 

@@ -9,6 +9,9 @@ const htmlPlan: FeaturePlan = {
   content:
     '<!doctype html><html><head><style>body { color: tomato; }</style></head><body><h1>Plan</h1></body></html>',
   contentType: 'Html',
+  additionalInfo: '',
+  status: 'NotStarted',
+  branch: null,
   createdAt: '2026-08-26T10:00:00Z',
   updatedAt: '2026-08-26T10:00:00Z',
 };

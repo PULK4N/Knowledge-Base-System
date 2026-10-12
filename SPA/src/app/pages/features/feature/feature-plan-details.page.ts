@@ -23,26 +23,39 @@ import {
   tap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
-import { Feature, FeaturePlan } from '../data-access/feature.models';
+import {
+  AddFeaturePlanBranchRequest,
+  Feature,
+  FeaturePlan,
+  FeaturePlanContentRequest,
+  FeaturePlanStatus,
+  UpdateFeaturePlanBranchRequest,
+} from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import { FeaturePlanBranchTreeComponent } from '../ui/feature-plan-branch-tree.component';
 import { FeaturePlanContentComponent } from '../ui/feature-plan-content.component';
+import {
+  FEATURE_PLAN_STATUS_OPTIONS,
+  FeaturePlanStatusPipe,
+} from '../ui/feature-plan-status';
 
 interface FeaturePlanDetailsView {
   readonly feature: Feature;
   readonly plan: FeaturePlan;
-  readonly isCurrent: boolean;
+}
+
+interface PlanTarget {
+  readonly featureId: string;
+  readonly planId: string;
 }
 
 type PlanAction =
-  | {
-      readonly kind: 'update';
-      readonly featureId: string;
-      readonly title: string;
-      readonly content: string;
-      readonly contentType: 'Markdown' | 'Html';
-    }
-  | { readonly kind: 'select'; readonly featureId: string; readonly planId: string }
-  | { readonly kind: 'remove'; readonly featureId: string; readonly planId: string };
+  | ({ readonly kind: 'update'; readonly request: FeaturePlanContentRequest } & PlanTarget)
+  | ({ readonly kind: 'status'; readonly status: FeaturePlanStatus } & PlanTarget)
+  | ({ readonly kind: 'remove' } & PlanTarget)
+  | ({ readonly kind: 'add-branch'; readonly request: AddFeaturePlanBranchRequest } & PlanTarget)
+  | ({ readonly kind: 'update-branch'; readonly request: UpdateFeaturePlanBranchRequest } & PlanTarget)
+  | ({ readonly kind: 'remove-branch'; readonly branchName: string } & PlanTarget);
 
 type MutationState =
   | { readonly status: 'idle' }
@@ -54,7 +67,9 @@ type MutationState =
   imports: [
     AsyncPipe,
     DatePipe,
+    FeaturePlanBranchTreeComponent,
     FeaturePlanContentComponent,
+    FeaturePlanStatusPipe,
     FormsModule,
     RouterLink,
   ],
@@ -70,6 +85,7 @@ export class FeaturePlanDetailsPage {
 
   protected readonly editing = signal(false);
   protected readonly confirmingRemoval = signal(false);
+  protected readonly statusOptions = FEATURE_PLAN_STATUS_OPTIONS;
 
   private readonly state$: Observable<LoadState<FeaturePlanDetailsView>> =
     this.route.paramMap.pipe(
@@ -92,14 +108,7 @@ export class FeaturePlanDetailsPage {
             const plan = feature.plans.find(item => item.id === planId);
 
             return plan
-              ? ({
-                  status: 'success',
-                  data: {
-                    feature,
-                    plan,
-                    isCurrent: feature.currentPlanId === plan.id,
-                  },
-                } as const)
+              ? ({ status: 'success', data: { feature, plan } } as const)
               : ({
                   status: 'error',
                   message: 'The requested plan could not be found.',
@@ -144,40 +153,86 @@ export class FeaturePlanDetailsPage {
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected updatePlan(
-    featureId: string,
+    target: PlanTarget,
     title: string,
-    content: string,
+    status: FeaturePlanStatus,
+    additionalInfo: string,
     contentType: 'Markdown' | 'Html',
+    content: string,
   ): void {
     this.actions.next({
       kind: 'update',
-      featureId,
-      title: title.trim(),
-      content,
-      contentType,
+      ...target,
+      request: {
+        title: title.trim(),
+        status,
+        additionalInfo: additionalInfo.trim(),
+        contentType,
+        content,
+      },
     });
   }
 
-  protected selectPlan(featureId: string, planId: string): void {
-    this.actions.next({ kind: 'select', featureId, planId });
+  protected changeStatus(target: PlanTarget, status: FeaturePlanStatus): void {
+    this.actions.next({ kind: 'status', ...target, status });
   }
 
-  protected removePlan(featureId: string, planId: string): void {
-    this.actions.next({ kind: 'remove', featureId, planId });
+  protected removePlan(target: PlanTarget): void {
+    this.actions.next({ kind: 'remove', ...target });
+  }
+
+  protected addBranch(
+    target: PlanTarget,
+    request: AddFeaturePlanBranchRequest,
+  ): void {
+    this.actions.next({ kind: 'add-branch', ...target, request });
+  }
+
+  protected updateBranch(
+    target: PlanTarget,
+    request: UpdateFeaturePlanBranchRequest,
+  ): void {
+    this.actions.next({ kind: 'update-branch', ...target, request });
+  }
+
+  protected removeBranch(target: PlanTarget, branchName: string): void {
+    this.actions.next({ kind: 'remove-branch', ...target, branchName });
   }
 
   private execute(action: PlanAction): Observable<Feature> {
     switch (action.kind) {
       case 'update':
-        return this.features.updateCurrentPlan(action.featureId, {
-          title: action.title,
-          content: action.content,
-          contentType: action.contentType,
-        });
-      case 'select':
-        return this.features.changeCurrentPlan(action.featureId, action.planId);
+        return this.features.updatePlan(
+          action.featureId,
+          action.planId,
+          action.request,
+        );
+      case 'status':
+        return this.features.changePlanStatus(
+          action.featureId,
+          action.planId,
+          action.status,
+        );
       case 'remove':
         return this.features.removePlan(action.featureId, action.planId);
+      case 'add-branch':
+        return this.features.addPlanBranch(
+          action.featureId,
+          action.planId,
+          action.request,
+        );
+      case 'update-branch':
+        return this.features.updatePlanBranch(
+          action.featureId,
+          action.planId,
+          action.request,
+        );
+      case 'remove-branch':
+        return this.features.removePlanBranch(
+          action.featureId,
+          action.planId,
+          action.branchName,
+        );
     }
   }
 }

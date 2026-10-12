@@ -16,6 +16,7 @@ import {
   FeatureResearchDiscoverySourceType,
   FeatureReviewNote,
 } from '../data-access/feature.models';
+import { flattenBranches } from '../ui/feature-plan-branches';
 
 export type FeatureTab =
   | 'overview'
@@ -224,7 +225,13 @@ export function selectFeaturePlans(
   state: FeatureDetailListState['plans'],
 ): readonly FeaturePlan[] {
   return selectClientList(plans, state, {
-    searchText: plan => `${plan.title}\n${plan.content}`,
+    searchText: plan =>
+      [
+        plan.title,
+        plan.additionalInfo,
+        ...flattenBranches(plan.branch).map(branch => branch.name),
+        plan.content,
+      ].join('\n'),
     matchesFilter: (plan, filter) =>
       filter === 'All' || plan.contentType === filter,
     compare: (left, right, sortBy) => {

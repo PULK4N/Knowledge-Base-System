@@ -2,6 +2,11 @@ import { PagedResult } from '../../../core/store/entity-store.service';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 
 export type FeaturePlanContentType = 'Markdown' | 'Html';
+export type FeaturePlanStatus =
+  | 'NotStarted'
+  | 'InProgress'
+  | 'Delayed'
+  | 'Completed';
 export type FeatureResearchDiscoverySourceType =
   | 'Other'
   | 'Code'
@@ -14,7 +19,6 @@ export interface FeatureSummary {
   readonly name: string;
   readonly summary: string;
   readonly status: string;
-  readonly currentPlanId: string | null;
   readonly planCount: number;
   readonly recordCount: number;
 }
@@ -45,11 +49,21 @@ export interface FeatureResearchDiscovery {
   readonly updatedAt: string;
 }
 
+export interface FeaturePlanBranch {
+  readonly name: string;
+  readonly description: string;
+  readonly subBranches: readonly FeaturePlanBranch[];
+}
+
 export interface FeaturePlan {
   readonly id: string;
   readonly title: string;
   readonly content: string;
   readonly contentType: FeaturePlanContentType;
+  readonly additionalInfo: string;
+  readonly status: FeaturePlanStatus;
+  /** Base branch with nested sub-branches; null only for plans made before branches were required. */
+  readonly branch: FeaturePlanBranch | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -90,7 +104,6 @@ export interface FeatureSummaryDto {
   readonly name: string;
   readonly summary: string;
   readonly status: string;
-  readonly currentPlanId: string | null;
   readonly planCount: number;
   readonly recordCount: number;
 }
@@ -107,7 +120,6 @@ export interface FeatureDto {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
-  readonly currentPlanId: string | null;
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
@@ -180,4 +192,24 @@ export interface FeaturePlanContentRequest {
   readonly title: string;
   readonly content: string;
   readonly contentType: FeaturePlanContentType;
+  readonly additionalInfo: string;
+  readonly status: FeaturePlanStatus;
+}
+
+export interface AddFeaturePlanRequest extends FeaturePlanContentRequest {
+  readonly branchName: string;
+  readonly branchDescription: string;
+}
+
+export interface AddFeaturePlanBranchRequest {
+  readonly branchName: string;
+  readonly description: string;
+  /** Null only adds a base branch to a plan that has none. */
+  readonly parentBranchName: string | null;
+}
+
+export interface UpdateFeaturePlanBranchRequest {
+  readonly branchName: string;
+  readonly newBranchName: string;
+  readonly description: string;
 }

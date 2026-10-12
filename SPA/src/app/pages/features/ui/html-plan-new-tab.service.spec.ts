@@ -10,6 +10,9 @@ describe('HtmlPlanNewTabService', () => {
       title: 'Plan one',
       content: '<!doctype html><html><body><h1>Plan</h1></body></html>',
       contentType: 'Html',
+      additionalInfo: '',
+      status: 'NotStarted',
+      branch: null,
       createdAt: '2026-08-26T10:00:00Z',
       updatedAt: '2026-08-26T10:00:00Z',
     };

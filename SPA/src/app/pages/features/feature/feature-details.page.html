@@ -253,20 +253,24 @@
             </div>
           </div>
           <p class="section-description">
-            Search plan content, filter by format, and sort the loaded feature
-            projection without another API request.
+            Search plan titles, additional info, branches, and content, filter
+            by format, and sort the loaded feature projection without another
+            API request.
           </p>
 
           @if (addingPlan()) {
             <form
               class="inline-editor plan-editor"
               #planForm="ngForm"
-              (ngSubmit)="addPlan(
-                vm.state.data.id,
-                planTitle.value,
-                planContent.value,
-                planContentType.value
-              )"
+              (ngSubmit)="addPlan(vm.state.data.id, {
+                title: planTitle.value,
+                branchName: planBranchName.value,
+                branchDescription: planBranchDescription.value,
+                status: planStatus.value,
+                additionalInfo: planAdditionalInfo.value,
+                contentType: planContentType.value,
+                content: planContent.value
+              })"
             >
               <label>
                 <span>Title</span>
@@ -277,6 +281,49 @@
                   required
                   ngModel
                 />
+              </label>
+              <label>
+                <span>Base branch</span>
+                <input
+                  #planBranchName="ngModel"
+                  name="planBranchName"
+                  type="text"
+                  required
+                  placeholder="feature/my-feature"
+                  ngModel
+                />
+              </label>
+              <label>
+                <span>Branch description</span>
+                <input
+                  #planBranchDescription="ngModel"
+                  name="planBranchDescription"
+                  type="text"
+                  ngModel
+                />
+              </label>
+              <label>
+                <span>Status</span>
+                <select
+                  #planStatus="ngModel"
+                  name="planStatus"
+                  required
+                  ngModel="NotStarted"
+                >
+                  @for (option of planStatusOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                <span>Additional info</span>
+                <textarea
+                  #planAdditionalInfo="ngModel"
+                  name="planAdditionalInfo"
+                  rows="3"
+                  placeholder="What the plan is for, for example research only or production implementation"
+                  ngModel
+                ></textarea>
               </label>
               <label>
                 <span>Content type</span>
@@ -301,8 +348,7 @@
                 ></textarea>
               </label>
               <small class="editor-note">
-                The new plan becomes the current plan; the existing plan remains
-                in history.
+                Add sub-branches from the plan page after it is created.
               </small>
               <button
                 type="submit"
@@ -343,28 +389,25 @@
                 >
                   <strong>{{ plan.title }}</strong>
                   <small>
+                    @if (plan.branch) {
+                      <span class="plan-branch-name">⑂ {{ plan.branch.name }}</span> ·
+                    }
                     {{ plan.contentType }} · Updated
                     {{ plan.updatedAt | date: 'medium' }}
                   </small>
-                </a>
-                @if (plan.id === vm.state.data.currentPlanId) {
-                  <span class="current-badge">Current</span>
-                }
-                <div class="plan-row-actions">
-                  @if (plan.id !== vm.state.data.currentPlanId) {
-                    <button
-                      type="button"
-                      [disabled]="vm.mutation.status === 'saving'"
-                      (click)="selectPlan(vm.state.data.id, plan.id)"
-                    >
-                      Make current
-                    </button>
+                  @if (plan.additionalInfo) {
+                    <span class="plan-row-info">{{ plan.additionalInfo }}</span>
                   }
+                </a>
+                <span [class]="'plan-status status-' + plan.status">
+                  {{ plan.status | featurePlanStatus }}
+                </span>
+                <div class="plan-row-actions">
                   <a
                     class="plan-row-link"
                     [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
                   >
-                    {{ plan.id === vm.state.data.currentPlanId ? 'Edit' : 'View' }}
+                    Open
                   </a>
                   @if (confirmingPlanRemoval() === plan.id) {
                     <button
