@@ -34,12 +34,20 @@ public sealed class SearchMemoryQuery(
 
     public int MaxTokens { get; set; } = DefaultMaximumTokens;
 
+    /// <summary>
+    /// Inclusive bounds on when the matched text was written. A time without a
+    /// zone is read as UTC.
+    /// </summary>
+    public DateTime? From { get; set; }
+    public DateTime? To { get; set; }
+
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             !string.IsNullOrWhiteSpace(SearchText)
             && SearchKeywordLimits.AreValid(Keywords)
             && MaxTokens is >= MinimumMaximumTokens
                 and <= MaximumMaximumTokens
+            && MemoryActivityRange.IsValid(From, To)
         );
 
     protected override async Task<MemorySearchQueryResult> ExecuteInternal(
@@ -53,7 +61,11 @@ public sealed class SearchMemoryQuery(
             {
                 ResultCount = RankedChunkCount,
                 CandidateCount = CandidateChunkCount,
-                SourceResultCount = DistinctSessionCount
+                SourceResultCount = DistinctSessionCount,
+                TimeRange = new MemorySearchTimeRange(
+                    MemoryActivityRange.ToUtc(From),
+                    MemoryActivityRange.ToUtc(To)
+                )
             }
         );
         // The ranked window can be filled by one session, so the

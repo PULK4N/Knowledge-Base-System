@@ -13,6 +13,10 @@ namespace MemoryModule.MCP;
 public static class MemoryMcpFunctions
 {
     private const int TimeSearchPageSize = 10;
+    private const string FromDescription =
+        "Start of the range as an ISO 8601 timestamp, for example 2026-10-16T08:00:00Z. A timestamp without a zone is read as UTC.";
+    private const string ToDescription =
+        "End of the range as an ISO 8601 timestamp, for example 2026-10-16T18:00:00Z. A timestamp without a zone is read as UTC.";
 
     public static List<AIFunction> Create() =>
         [
@@ -22,10 +26,12 @@ public static class MemoryMcpFunctions
                     string,
                     List<string>,
                     int,
+                    DateTime?,
+                    DateTime?,
                     Task<MemorySearchQueryResult>
                 >)Search,
                 "memory_search",
-                "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Returns distinct relevant sessions within a bounded token budget."
+                "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Optional from and to limit matches to text written in that time range. Returns distinct relevant sessions within a bounded token budget."
             ),
             CreateFunction(
                 (Func<
@@ -83,7 +89,11 @@ public static class MemoryMcpFunctions
         string query,
         [Description("Words that must all appear in a matching record. Every word is required, so pass only the distinctive terms, and include common words only when the exact wording matters.")]
         List<string> keywords,
-        int maxTokens = SearchMemoryQuery.DefaultMaximumTokens
+        int maxTokens = SearchMemoryQuery.DefaultMaximumTokens,
+        [Description(FromDescription)]
+        DateTime? from = null,
+        [Description(ToDescription)]
+        DateTime? to = null
     ) =>
         MemoryMcpActionExecutor.ExecuteQuery<
             SearchMemoryQuery,
@@ -95,14 +105,16 @@ public static class MemoryMcpFunctions
                 search.SearchText = query;
                 search.Keywords = keywords;
                 search.MaxTokens = maxTokens;
+                search.From = from;
+                search.To = to;
             }
         );
 
     private static Task<PagedResult<MemorySummaryDto>> SearchByTime(
         IServiceProvider services,
-        [Description("Start of the range as an ISO 8601 timestamp, for example 2026-10-16T08:00:00Z. A timestamp without a zone is read as UTC.")]
+        [Description(FromDescription)]
         DateTime? from = null,
-        [Description("End of the range as an ISO 8601 timestamp, for example 2026-10-16T18:00:00Z. A timestamp without a zone is read as UTC.")]
+        [Description(ToDescription)]
         DateTime? to = null,
         int page = Pagination.DefaultPage,
         [Description("Memories per page, from 1 to 100.")]

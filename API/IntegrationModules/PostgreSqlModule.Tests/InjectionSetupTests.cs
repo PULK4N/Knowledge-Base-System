@@ -814,6 +814,59 @@ public sealed class InjectionSetupTests
         Assert.Contains("::vector", vectorSql);
     }
 
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void MemorySearchQueries_filter_every_search_by_time(
+        bool hasFrom,
+        bool hasTo
+    )
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlMemorySearchRepository(context);
+        var timeRange = new MemorySearchTimeRange(
+            hasFrom ? DateTime.UnixEpoch : null,
+            hasTo ? DateTime.UnixEpoch.AddDays(1) : null
+        );
+        var embedding = Enumerable.Repeat(0.1f, 1024).ToImmutableArray();
+
+        var queries = new List<string>
+        {
+            repository.CreateTextQuery(["event"], 50, timeRange)
+                .ToQueryString(),
+            repository.CreateVectorQuery(embedding, 50, timeRange)
+                .ToQueryString(),
+            repository.CreateTextSourceQuery(["event"], 5, 200, timeRange)
+                .ToQueryString(),
+            repository.CreateVectorSourceQuery(embedding, 5, 200, timeRange)
+                .ToQueryString()
+        };
+
+        Assert.All(
+            queries,
+            sql =>
+            {
+                Assert.Equal(
+                    hasFrom,
+                    sql.Contains("\"PromptStartTimestamp\" >= @")
+                );
+                Assert.Equal(
+                    hasTo,
+                    sql.Contains("\"PromptStartTimestamp\" <= @")
+                );
+            }
+        );
+    }
+
     [Fact]
     public void MemorySearchQueries_translate_to_full_text_and_cosine_search()
     {

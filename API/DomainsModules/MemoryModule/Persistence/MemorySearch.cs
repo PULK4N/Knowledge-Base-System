@@ -24,11 +24,13 @@ public sealed class MemorySearch(
         var textCandidates = await repository.SearchText(
             keywords,
             options.CandidateCount,
+            options.TimeRange,
             cancellationToken
         );
         var vectorCandidates = await repository.SearchVector(
             queryEmbedding,
             options.CandidateCount,
+            options.TimeRange,
             cancellationToken
         );
 
@@ -55,23 +57,27 @@ public sealed class MemorySearch(
         var textCandidates = await repository.SearchText(
             keywords,
             options.CandidateCount,
+            options.TimeRange,
             cancellationToken
         );
         var vectorCandidates = await repository.SearchVector(
             queryEmbedding,
             options.CandidateCount,
+            options.TimeRange,
             cancellationToken
         );
         var textSourceCandidates = await repository.SearchTextBySource(
             keywords,
             options.SourceResultCount,
             options.SourceCandidateCount,
+            options.TimeRange,
             cancellationToken
         );
         var vectorSourceCandidates = await repository.SearchVectorBySource(
             queryEmbedding,
             options.SourceResultCount,
             options.SourceCandidateCount,
+            options.TimeRange,
             cancellationToken
         );
 

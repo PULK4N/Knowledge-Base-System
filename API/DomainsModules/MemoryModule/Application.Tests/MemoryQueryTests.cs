@@ -291,6 +291,50 @@ public sealed class MemoryQueryTests
         );
     }
 
+    [Theory]
+    [InlineData(null, null, true)]
+    [InlineData("2026-10-16T08:00:00", null, true)]
+    [InlineData(null, "2026-10-16T18:00:00", true)]
+    [InlineData("2026-10-16T08:00:00", "2026-10-16T18:00:00", true)]
+    [InlineData("2026-10-16T18:00:00", "2026-10-16T08:00:00", false)]
+    public async Task Memory_search_passes_the_time_range_as_utc(
+        string? from,
+        string? to,
+        bool canExecute
+    )
+    {
+        var search = new FakeMemorySearch([]);
+        var query = new SearchMemoryQuery(
+            CreateStateCalculator(),
+            new FakeEventStore(),
+            search
+        )
+        {
+            SearchText = "event sourcing decision",
+            Keywords = ["event"],
+            From = from is null ? null : DateTime.Parse(from),
+            To = to is null ? null : DateTime.Parse(to)
+        };
+
+        Assert.Equal(canExecute, await query.CanExecute(Executor));
+        if (!canExecute)
+            return;
+
+        await query.Execute(Executor);
+
+        var timeRange = search.LastOptions?.TimeRange;
+        Assert.NotNull(timeRange);
+        Assert.Equal(
+            from is null ? null : DateTime.Parse(from),
+            timeRange.From
+        );
+        Assert.Equal(to is null ? null : DateTime.Parse(to), timeRange.To);
+        Assert.All(
+            new[] { timeRange.From, timeRange.To }.OfType<DateTime>(),
+            value => Assert.Equal(DateTimeKind.Utc, value.Kind)
+        );
+    }
+
     // Both sessions start at the epoch; the first is last active at minute 3
     // and the second at minute 5.
     [Theory]

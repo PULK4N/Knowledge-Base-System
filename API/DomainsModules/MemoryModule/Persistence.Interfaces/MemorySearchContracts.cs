@@ -64,6 +64,16 @@ public interface IMemorySearchProjectionWriter
     );
 }
 
+/// <summary>
+/// Limits a memory search to chunks whose time falls in the range. A prompt
+/// chunk uses the prompt start time and a summary chunk the summary time. Both
+/// bounds are inclusive UTC times; a missing bound leaves that side open.
+/// </summary>
+public sealed record MemorySearchTimeRange(DateTime? From, DateTime? To)
+{
+    public bool IsEmpty => From is null && To is null;
+}
+
 public sealed record HybridMemorySearchOptions
 {
     public const int DefaultSourceResultCount = 10;
@@ -75,6 +85,7 @@ public sealed record HybridMemorySearchOptions
     public int SourceCandidateCount { get; init; } = DefaultSourceCandidateCount;
     public double TextWeight { get; init; } = 1;
     public double VectorWeight { get; init; } = 1;
+    public MemorySearchTimeRange? TimeRange { get; init; }
 }
 
 public interface IMemorySearchRepository
@@ -88,12 +99,14 @@ public interface IMemorySearchRepository
     Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
         List<string> keywords,
         int candidateCount,
+        MemorySearchTimeRange? timeRange = null,
         CancellationToken cancellationToken = default
     );
 
     Task<IReadOnlyList<MemorySearchCandidate>> SearchVector(
         ImmutableArray<float> embedding,
         int candidateCount,
+        MemorySearchTimeRange? timeRange = null,
         CancellationToken cancellationToken = default
     );
 
@@ -106,6 +119,7 @@ public interface IMemorySearchRepository
         List<string> keywords,
         int sourceCount,
         int candidateCount,
+        MemorySearchTimeRange? timeRange = null,
         CancellationToken cancellationToken = default
     );
 
@@ -118,6 +132,7 @@ public interface IMemorySearchRepository
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
+        MemorySearchTimeRange? timeRange = null,
         CancellationToken cancellationToken = default
     );
 }

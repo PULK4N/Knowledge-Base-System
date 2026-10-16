@@ -255,12 +255,14 @@ public sealed class MemorySearchProjectorTests
         public Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
             List<string> keywords,
             int candidateCount,
+            MemorySearchTimeRange? timeRange = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<MemorySearchCandidate>> SearchVector(
             ImmutableArray<float> embedding,
             int candidateCount,
+            MemorySearchTimeRange? timeRange = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
@@ -268,6 +270,7 @@ public sealed class MemorySearchProjectorTests
             List<string> keywords,
             int sourceCount,
             int candidateCount,
+            MemorySearchTimeRange? timeRange = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
@@ -275,6 +278,7 @@ public sealed class MemorySearchProjectorTests
             ImmutableArray<float> embedding,
             int sourceCount,
             int candidateCount,
+            MemorySearchTimeRange? timeRange = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
     }

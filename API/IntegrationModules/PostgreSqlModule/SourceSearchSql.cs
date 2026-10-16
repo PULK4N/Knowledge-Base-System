@@ -29,16 +29,21 @@ internal static class SourceSearchSql
     private const string VectorRelevance =
         $"\"Embedding\" <=> @{EmbeddingParameterName}::vector";
 
+    /// <param name="filter">
+    /// An optional SQL condition on the table's columns that narrows the
+    /// candidates before they are ranked. Its parameters are the caller's.
+    /// </param>
     internal static string Text(
         string table,
         string sourceColumns,
-        string tieBreakers
+        string tieBreakers,
+        string? filter = null
     ) =>
         $"""
         SELECT * FROM (
             SELECT DISTINCT ON ({sourceColumns}) * FROM (
                 SELECT * FROM "{table}"
-                WHERE "SearchVector" @@ {TextQueryExpression}
+                WHERE "SearchVector" @@ {TextQueryExpression}{(filter is null ? string.Empty : $" AND ({filter})")}
                 ORDER BY {TextRelevance}, {tieBreakers}
                 LIMIT @{CandidateCountParameterName}
             ) AS candidates
@@ -48,15 +53,20 @@ internal static class SourceSearchSql
         LIMIT @{SourceCountParameterName}
         """;
 
+    /// <param name="filter">
+    /// An optional SQL condition on the table's columns that narrows the
+    /// candidates before they are ranked. Its parameters are the caller's.
+    /// </param>
     internal static string Vector(
         string table,
         string sourceColumns,
-        string tieBreakers
+        string tieBreakers,
+        string? filter = null
     ) =>
         $"""
         SELECT * FROM (
             SELECT DISTINCT ON ({sourceColumns}) * FROM (
-                SELECT * FROM "{table}"
+                SELECT * FROM "{table}"{(filter is null ? string.Empty : $" WHERE {filter}")}
                 ORDER BY {VectorRelevance}, {tieBreakers}
                 LIMIT @{CandidateCountParameterName}
             ) AS candidates

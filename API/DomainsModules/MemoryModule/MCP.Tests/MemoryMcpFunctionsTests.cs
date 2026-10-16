@@ -53,6 +53,10 @@ public sealed class MemoryMcpFunctionsTests
         Assert.Equal(2000, maxTokens.GetProperty("default").GetInt32());
         Assert.Contains("query", required);
         Assert.DoesNotContain("maxTokens", required);
+        Assert.True(properties.TryGetProperty("from", out _));
+        Assert.True(properties.TryGetProperty("to", out _));
+        Assert.DoesNotContain("from", required);
+        Assert.DoesNotContain("to", required);
     }
 
     [Theory]

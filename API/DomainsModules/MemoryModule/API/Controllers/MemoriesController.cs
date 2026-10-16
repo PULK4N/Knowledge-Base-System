@@ -59,12 +59,16 @@ public sealed class MemoriesController(
             SearchMemoryQuery.MinimumMaximumTokens,
             SearchMemoryQuery.MaximumMaximumTokens
         )]
-            int maxTokens = SearchMemoryQuery.DefaultMaximumTokens
+            int maxTokens = SearchMemoryQuery.DefaultMaximumTokens,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null
     )
     {
         query.SearchText = searchText;
         query.Keywords = keywords;
         query.MaxTokens = maxTokens;
+        query.From = from;
+        query.To = to;
 
         return Ok(await Execute(query));
     }
