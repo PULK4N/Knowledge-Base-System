@@ -27,6 +27,7 @@ using PolicyModule.MCP;
 using PostgreSqlModule;
 using SharedModule.DistributedMessaging.Consuming;
 using SharedModule.DistributedMessaging.Queues;
+using SharedModule.Mcp;
 using SkillsModule.API.Controllers;
 using SkillsModule.Application.Commands;
 using SkillsModule.Domain;
@@ -131,7 +132,8 @@ builder.Services
                         function
                     )
             )
-    );
+    )
+    .WithToolErrorHandling();
 
 var app = builder.Build();
 
