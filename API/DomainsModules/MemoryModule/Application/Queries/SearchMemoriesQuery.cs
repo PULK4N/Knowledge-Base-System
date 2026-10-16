@@ -12,6 +12,8 @@ public sealed class SearchMemoriesQuery(
 {
     public bool? HasSummary { get; set; }
     public int? MinimumPromptCount { get; set; }
+    public DateTime? ActiveFrom { get; set; }
+    public DateTime? ActiveTo { get; set; }
     public MemorySummarySortField SortBy { get; set; } =
         MemorySummarySortField.LastActivity;
     public SortDirection SortDirection { get; set; } =
@@ -20,6 +22,7 @@ public sealed class SearchMemoriesQuery(
     public override async Task<bool> CanExecute(Executor executor) =>
         await base.CanExecute(executor)
         && MinimumPromptCount is null or >= 1
+        && MemoryActivityRange.IsValid(ActiveFrom, ActiveTo)
         && SortBy != MemorySummarySortField.Relevance
         && Enum.IsDefined(SortBy)
         && Enum.IsDefined(SortDirection);
@@ -32,7 +35,9 @@ public sealed class SearchMemoriesQuery(
             CreateEntityQuery(
                 new MemorySummaryFilters(
                     HasSummary,
-                    MinimumPromptCount
+                    MinimumPromptCount,
+                    MemoryActivityRange.ToUtc(ActiveFrom),
+                    MemoryActivityRange.ToUtc(ActiveTo)
                 ),
                 SortBy,
                 SortDirection
@@ -63,6 +68,8 @@ public sealed class HybridSearchMemoriesQuery(
 
     public bool? HasSummary { get; set; }
     public int? MinimumPromptCount { get; set; }
+    public DateTime? ActiveFrom { get; set; }
+    public DateTime? ActiveTo { get; set; }
     public MemorySummarySortField SortBy { get; set; } =
         MemorySummarySortField.Relevance;
     public SortDirection SortDirection { get; set; } =
@@ -72,6 +79,7 @@ public sealed class HybridSearchMemoriesQuery(
         await base.CanExecute(executor)
         && !string.IsNullOrWhiteSpace(Search)
         && MinimumPromptCount is null or >= 1
+        && MemoryActivityRange.IsValid(ActiveFrom, ActiveTo)
         && Enum.IsDefined(SortBy)
         && Enum.IsDefined(SortDirection);
 
@@ -154,7 +162,12 @@ public sealed class HybridSearchMemoriesQuery(
             || (!string.IsNullOrWhiteSpace(match.Summary.Summary)
                 == HasSummary))
         && (MinimumPromptCount is null
-            || match.Summary.PromptCount >= MinimumPromptCount);
+            || match.Summary.PromptCount >= MinimumPromptCount)
+        && (MemoryActivityRange.ToUtc(ActiveFrom) is not { } activeFrom
+            || match.Summary.LastActivityTimestamp >= activeFrom)
+        && (MemoryActivityRange.ToUtc(ActiveTo) is not { } activeTo
+            || (match.Summary.FirstPromptTimestamp
+                ?? match.Summary.LastActivityTimestamp) <= activeTo);
 
     private IOrderedEnumerable<RankedMemorySummary> Sort(
         IEnumerable<RankedMemorySummary> matches

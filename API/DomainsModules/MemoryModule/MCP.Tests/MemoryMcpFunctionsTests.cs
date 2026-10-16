@@ -13,6 +13,8 @@ public sealed class MemoryMcpFunctionsTests
             new List<string>
             {
                 "memory_search",
+                "memory_search_by_time",
+                "memory_conversation_get",
                 "memory_summary_add"
             },
             functions.Select(function => function.Name)
@@ -51,6 +53,38 @@ public sealed class MemoryMcpFunctionsTests
         Assert.Equal(2000, maxTokens.GetProperty("default").GetInt32());
         Assert.Contains("query", required);
         Assert.DoesNotContain("maxTokens", required);
+    }
+
+    [Theory]
+    [InlineData("memory_search_by_time", "pageSize", 10, new string[] { })]
+    [InlineData("memory_conversation_get", "limit", 10, new[] { "memoryId" })]
+    public void Read_tools_expose_a_default_of_ten_items(
+        string functionName,
+        string sizeParameter,
+        int defaultSize,
+        string[] expectedRequired
+    )
+    {
+        var function = MemoryMcpFunctions.Create().Single(
+            function => function.Name == functionName
+        );
+        var properties = function.JsonSchema.GetProperty("properties");
+        var required = function.JsonSchema.TryGetProperty(
+            "required",
+            out var requiredElement
+        )
+            ? requiredElement.EnumerateArray()
+                .Select(element => element.GetString())
+                .ToList()
+            : [];
+
+        Assert.Equal(
+            defaultSize,
+            properties.GetProperty(sizeParameter)
+                .GetProperty("default")
+                .GetInt32()
+        );
+        Assert.Equal(expectedRequired, required);
     }
 
     [Fact]

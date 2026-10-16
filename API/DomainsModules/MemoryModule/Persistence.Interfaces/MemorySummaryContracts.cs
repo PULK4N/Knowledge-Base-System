@@ -21,9 +21,19 @@ public sealed record MemorySummarySearchResult(
     int TotalCount
 );
 
+/// <param name="ActiveFrom">
+/// Keeps sessions whose last activity is at or after this UTC time.
+/// </param>
+/// <param name="ActiveTo">
+/// Keeps sessions whose first prompt is at or before this UTC time. Together
+/// with <paramref name="ActiveFrom"/> it keeps every session that was active at
+/// some point inside the range.
+/// </param>
 public sealed record MemorySummaryFilters(
     bool? HasSummary,
-    int? MinimumPromptCount
+    int? MinimumPromptCount,
+    DateTime? ActiveFrom = null,
+    DateTime? ActiveTo = null
 );
 
 public enum MemorySummarySortField

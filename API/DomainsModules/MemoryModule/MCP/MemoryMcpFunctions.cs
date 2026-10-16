@@ -1,15 +1,19 @@
 using System.ComponentModel;
+using ActionModule.Shared.Models;
 using MemoryModule.Application.Commands;
 using MemoryModule.Application.DTOs;
 using MemoryModule.Application.Models;
 using MemoryModule.Application.Queries;
 using MemoryModule.Domain.Models;
+using MemoryModule.Persistence.Interfaces;
 using Microsoft.Extensions.AI;
 
 namespace MemoryModule.MCP;
 
 public static class MemoryMcpFunctions
 {
+    private const int TimeSearchPageSize = 10;
+
     public static List<AIFunction> Create() =>
         [
             CreateFunction(
@@ -22,6 +26,29 @@ public static class MemoryMcpFunctions
                 >)Search,
                 "memory_search",
                 "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Returns distinct relevant sessions within a bounded token budget."
+            ),
+            CreateFunction(
+                (Func<
+                    IServiceProvider,
+                    DateTime?,
+                    DateTime?,
+                    int,
+                    int,
+                    Task<PagedResult<MemorySummaryDto>>
+                >)SearchByTime,
+                "memory_search_by_time",
+                "Finds chat memories that were active within a time range, newest activity first. A memory matches when its chat overlaps the range: it ended at or after 'from' and started at or before 'to'. Omit either bound to leave that side open. Returns each memory's ID, thread ID, title, summary, prompt count, and timestamps."
+            ),
+            CreateFunction(
+                (Func<
+                    IServiceProvider,
+                    Guid,
+                    int,
+                    int,
+                    Task<MemoryConversationTextResult>
+                >)GetConversationText,
+                "memory_conversation_get",
+                "Gets the chat text of one memory in conversation order, without raw hook payloads. Returns at most 'limit' messages starting at 'offset', plus the total message count and whether more messages follow. Page through a long chat by increasing offset."
             ),
             CreateFunction(
                 (Func<
@@ -68,6 +95,54 @@ public static class MemoryMcpFunctions
                 search.SearchText = query;
                 search.Keywords = keywords;
                 search.MaxTokens = maxTokens;
+            }
+        );
+
+    private static Task<PagedResult<MemorySummaryDto>> SearchByTime(
+        IServiceProvider services,
+        [Description("Start of the range as an ISO 8601 timestamp, for example 2026-10-16T08:00:00Z. A timestamp without a zone is read as UTC.")]
+        DateTime? from = null,
+        [Description("End of the range as an ISO 8601 timestamp, for example 2026-10-16T18:00:00Z. A timestamp without a zone is read as UTC.")]
+        DateTime? to = null,
+        int page = Pagination.DefaultPage,
+        [Description("Memories per page, from 1 to 100.")]
+        int pageSize = TimeSearchPageSize
+    ) =>
+        MemoryMcpActionExecutor.ExecuteQuery<
+            SearchMemoriesQuery,
+            PagedResult<MemorySummaryDto>
+        >(
+            services,
+            search =>
+            {
+                search.ActiveFrom = from;
+                search.ActiveTo = to;
+                search.Page = page;
+                search.PageSize = pageSize;
+                search.SortBy = MemorySummarySortField.LastActivity;
+                search.SortDirection = SortDirection.Descending;
+            }
+        );
+
+    private static Task<MemoryConversationTextResult> GetConversationText(
+        IServiceProvider services,
+        [Description("The memory ID returned by memory_search or memory_search_by_time.")]
+        Guid memoryId,
+        [Description("Maximum number of messages to return, from 1 to 100.")]
+        int limit = GetMemoryConversationTextQuery.DefaultLimit,
+        [Description("Number of messages to skip from the start of the chat.")]
+        int offset = 0
+    ) =>
+        MemoryMcpActionExecutor.ExecuteQuery<
+            GetMemoryConversationTextQuery,
+            MemoryConversationTextResult
+        >(
+            services,
+            query =>
+            {
+                query.MemoryId = memoryId;
+                query.Limit = limit;
+                query.Offset = offset;
             }
         );
 

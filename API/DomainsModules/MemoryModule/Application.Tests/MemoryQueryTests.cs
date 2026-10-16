@@ -81,6 +81,50 @@ public sealed class MemoryQueryTests
         Assert.Equal(SortDirection.Ascending, request.Sort.Direction);
     }
 
+    [Theory]
+    [InlineData(null, null, true)]
+    [InlineData("2026-10-16T08:00:00", null, true)]
+    [InlineData(null, "2026-10-16T18:00:00", true)]
+    [InlineData("2026-10-16T08:00:00", "2026-10-16T18:00:00", true)]
+    [InlineData("2026-10-16T18:00:00", "2026-10-16T08:00:00", false)]
+    public async Task Search_passes_the_activity_range_as_utc(
+        string? from,
+        string? to,
+        bool canExecute
+    )
+    {
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult([], 0)
+        );
+        var query = new SearchMemoriesQuery(repository)
+        {
+            ActiveFrom = from is null ? null : DateTime.Parse(from),
+            ActiveTo = to is null ? null : DateTime.Parse(to)
+        };
+
+        Assert.Equal(canExecute, await query.CanExecute(Executor));
+        if (!canExecute)
+            return;
+
+        await query.Execute(Executor);
+
+        var filters = Assert.IsType<
+            EntityQuery<MemorySummaryFilters, MemorySummarySortField>
+        >(repository.LastSearchRequest).Filters;
+        Assert.Equal(
+            from is null ? null : DateTime.Parse(from),
+            filters.ActiveFrom
+        );
+        Assert.Equal(
+            to is null ? null : DateTime.Parse(to),
+            filters.ActiveTo
+        );
+        Assert.All(
+            new[] { filters.ActiveFrom, filters.ActiveTo }.OfType<DateTime>(),
+            value => Assert.Equal(DateTimeKind.Utc, value.Kind)
+        );
+    }
+
     [Fact]
     public async Task Hybrid_search_returns_ranked_sessions_as_paged_summaries()
     {
@@ -245,6 +289,62 @@ public sealed class MemoryQueryTests
             [first.AggregateId.Value, second.AggregateId.Value],
             result.Items.Select(item => item.MemoryId)
         );
+    }
+
+    // Both sessions start at the epoch; the first is last active at minute 3
+    // and the second at minute 5.
+    [Theory]
+    [InlineData(null, null, 2)]
+    [InlineData(4, null, 1)]
+    [InlineData(6, null, 0)]
+    [InlineData(null, -1, 0)]
+    [InlineData(1, 2, 2)]
+    public async Task Hybrid_search_keeps_sessions_active_in_the_range(
+        int? fromMinute,
+        int? toMinute,
+        int expectedCount
+    )
+    {
+        var first = CreateMemory(
+            "11111111-1111-1111-1111-111111111111",
+            "aaaaaaaa-1111-1111-1111-111111111111",
+            "First summary",
+            2
+        );
+        var second = CreateMemory(
+            "22222222-2222-2222-2222-222222222222",
+            "aaaaaaaa-2222-2222-2222-222222222222",
+            "Second summary",
+            4
+        );
+        var search = new FakeMemorySearch(
+        [
+            CreateSearchResult(second, matchedSummary: true, "summary"),
+            CreateSearchResult(first, matchedSummary: true, "summary")
+        ]);
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult(
+                [
+                    CreateSummary(first, "First summary", 2),
+                    CreateSummary(second, "Second summary", 4)
+                ],
+                2
+            )
+        );
+        var query = new HybridSearchMemoriesQuery(search, repository)
+        {
+            Search = "summary decisions",
+            ActiveFrom = fromMinute is null
+                ? null
+                : DateTime.UnixEpoch.AddMinutes(fromMinute.Value),
+            ActiveTo = toMinute is null
+                ? null
+                : DateTime.UnixEpoch.AddMinutes(toMinute.Value)
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(expectedCount, result.TotalCount);
     }
 
     [Fact]

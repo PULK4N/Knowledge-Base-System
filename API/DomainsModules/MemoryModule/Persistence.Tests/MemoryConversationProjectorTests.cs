@@ -166,6 +166,13 @@ public sealed class MemoryConversationProjectorTests
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
+        public Task<MemoryConversationTextPage> GetText(
+            AggregateId memoryAggregateId,
+            int offset,
+            int limit,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
         public Task Write(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
             IReadOnlyCollection<MemoryConversationMessage> messages,

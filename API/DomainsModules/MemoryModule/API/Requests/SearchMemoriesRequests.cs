@@ -11,6 +11,9 @@ public abstract record MemorySummarySearchRequest : PagedSearchRequest
     [Range(1, int.MaxValue)]
     public int? MinimumPromptCount { get; init; }
 
+    public DateTime? ActiveFrom { get; init; }
+    public DateTime? ActiveTo { get; init; }
+
     [EnumDataType(typeof(MemorySummarySortField))]
     public MemorySummarySortField SortBy { get; init; }
 }

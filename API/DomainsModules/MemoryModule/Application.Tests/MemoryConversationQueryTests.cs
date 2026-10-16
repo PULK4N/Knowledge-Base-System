@@ -109,6 +109,72 @@ public sealed class MemoryConversationQueryTests
         Assert.Equal(canExecute, await query.CanExecute(Executor));
     }
 
+    [Theory]
+    [InlineData(0, 10, 3, false)]
+    [InlineData(0, 2, 2, true)]
+    [InlineData(2, 2, 1, false)]
+    public async Task Text_query_returns_a_page_of_chat_text(
+        int offset,
+        int limit,
+        int expectedCount,
+        bool hasMore
+    )
+    {
+        var query = new GetMemoryConversationTextQuery(
+            new FakeMemoryConversationRepository(
+                [
+                    CreateMessage(PromptHookMessageRoles.User, "First"),
+                    CreateMessage(PromptHookMessageRoles.Hook, string.Empty),
+                    CreateMessage(PromptHookMessageRoles.Assistant, "Second"),
+                    CreateMessage(PromptHookMessageRoles.User, "Third")
+                ]
+            )
+        )
+        {
+            MemoryId = MemoryId,
+            Offset = offset,
+            Limit = limit
+        };
+
+        var result = await query.Execute(Executor);
+
+        Assert.Equal(MemoryId, result.MemoryId);
+        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(hasMore, result.HasMore);
+        Assert.Equal(
+            new List<string> { "First", "Second", "Third" }
+                .Skip(offset)
+                .Take(expectedCount),
+            result.Messages.Select(message => message.Text)
+        );
+    }
+
+    [Theory]
+    [InlineData("22222222-2222-2222-2222-222222222222", 0, 10, true)]
+    [InlineData("22222222-2222-2222-2222-222222222222", 0, 100, true)]
+    [InlineData("00000000-0000-0000-0000-000000000000", 0, 10, false)]
+    [InlineData("22222222-2222-2222-2222-222222222222", -1, 10, false)]
+    [InlineData("22222222-2222-2222-2222-222222222222", 0, 0, false)]
+    [InlineData("22222222-2222-2222-2222-222222222222", 0, 101, false)]
+    public async Task Text_query_validates_memory_id_offset_and_limit(
+        string memoryId,
+        int offset,
+        int limit,
+        bool canExecute
+    )
+    {
+        var query = new GetMemoryConversationTextQuery(
+            new FakeMemoryConversationRepository([])
+        )
+        {
+            MemoryId = Guid.Parse(memoryId),
+            Offset = offset,
+            Limit = limit
+        };
+
+        Assert.Equal(canExecute, await query.CanExecute(Executor));
+    }
+
     private static GetMemoryConversationQuery CreateQuery(
         List<MemoryConversationMessage> messages,
         MemorySummary? summary,
@@ -176,6 +242,37 @@ public sealed class MemoryConversationQueryTests
             AggregateId memoryAggregateId,
             CancellationToken cancellationToken = default
         ) => Task.FromResult(messages);
+
+        public Task<MemoryConversationTextPage> GetText(
+            AggregateId memoryAggregateId,
+            int offset,
+            int limit,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var withText = messages
+                .Where(message => message.Message.Length > 0)
+                .ToList();
+
+            return Task.FromResult(
+                new MemoryConversationTextPage(
+                    withText
+                        .Skip(offset)
+                        .Take(limit)
+                        .Select(
+                            message => new MemoryConversationText(
+                                message.PromptId,
+                                message.HookIndex,
+                                message.Timestamp,
+                                message.Role,
+                                message.Message
+                            )
+                        )
+                        .ToList(),
+                    withText.Count
+                )
+            );
+        }
 
         public Task Write(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,

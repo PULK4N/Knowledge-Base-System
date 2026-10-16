@@ -29,6 +29,41 @@ internal sealed class PostgreSqlMemoryConversationRepository(
         return entries.Select(ToReadModel).ToList();
     }
 
+    public async Task<MemoryConversationTextPage> GetText(
+        AggregateId memoryAggregateId,
+        int offset,
+        int limit,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = dbContext.Set<MemoryConversationEntry>()
+            .AsNoTracking()
+            .Where(
+                message =>
+                    message.MemoryAggregateId == memoryAggregateId.Value
+                    && message.Message != string.Empty
+            );
+        var totalCount = await query.CountAsync(cancellationToken);
+        var messages = await query
+            .OrderBy(message => message.Timestamp)
+            .ThenBy(message => message.PromptId)
+            .ThenBy(message => message.HookIndex)
+            .Skip(offset)
+            .Take(limit)
+            .Select(
+                message => new MemoryConversationText(
+                    new PromptId(message.PromptId),
+                    message.HookIndex,
+                    message.Timestamp,
+                    message.Role,
+                    message.Message
+                )
+            )
+            .ToListAsync(cancellationToken);
+
+        return new MemoryConversationTextPage(messages, totalCount);
+    }
+
     public async Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,
         IReadOnlyCollection<MemoryConversationMessage> messages,

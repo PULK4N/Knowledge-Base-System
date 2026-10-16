@@ -21,10 +21,36 @@ public sealed record MemoryConversationMessage(
     string PayloadJson
 );
 
+/// <summary>
+/// One message that carries chat text, without the raw hook payload.
+/// </summary>
+public sealed record MemoryConversationText(
+    PromptId PromptId,
+    int HookIndex,
+    DateTime Timestamp,
+    string Role,
+    string Message
+);
+
+public sealed record MemoryConversationTextPage(
+    List<MemoryConversationText> Messages,
+    int TotalCount
+);
+
 public interface IMemoryConversationRepository
 {
     Task<List<MemoryConversationMessage>> Get(
         AggregateId memoryAggregateId,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Reads chat text in conversation order, skipping hooks without text.
+    /// </summary>
+    Task<MemoryConversationTextPage> GetText(
+        AggregateId memoryAggregateId,
+        int offset,
+        int limit,
         CancellationToken cancellationToken = default
     );
 

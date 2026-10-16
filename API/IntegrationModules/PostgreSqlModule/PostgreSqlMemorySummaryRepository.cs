@@ -84,6 +84,22 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             );
         }
 
+        if (request.Filters.ActiveFrom is { } activeFrom)
+        {
+            query = query.Where(
+                summary => summary.LastActivityTimestamp >= activeFrom
+            );
+        }
+
+        if (request.Filters.ActiveTo is { } activeTo)
+        {
+            query = query.Where(
+                summary =>
+                    (summary.FirstPromptTimestamp
+                        ?? summary.LastActivityTimestamp) <= activeTo
+            );
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
         var sortedQuery = ApplySort(query, request.Sort);
         var entries = await sortedQuery

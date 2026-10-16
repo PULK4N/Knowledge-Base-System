@@ -118,6 +118,8 @@ public sealed class MemoriesController(
         query.Search = request.Search;
         query.HasSummary = request.HasSummary;
         query.MinimumPromptCount = request.MinimumPromptCount;
+        query.ActiveFrom = request.ActiveFrom;
+        query.ActiveTo = request.ActiveTo;
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }
@@ -145,6 +147,8 @@ public sealed class MemoriesController(
         query.Search = request.Query;
         query.HasSummary = request.HasSummary;
         query.MinimumPromptCount = request.MinimumPromptCount;
+        query.ActiveFrom = request.ActiveFrom;
+        query.ActiveTo = request.ActiveTo;
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }
