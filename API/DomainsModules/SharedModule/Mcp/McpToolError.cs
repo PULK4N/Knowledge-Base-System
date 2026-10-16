@@ -99,9 +99,9 @@ internal sealed record McpToolError(McpToolErrorKind Kind, string Reason)
                 "Do not retry with the same request. Continue the task without this call "
                 + "and tell the user that it was not authorized.",
             _ =>
-                "This may not be caused by your arguments. Check them once and call "
-                + $"'{toolName}' again. If it fails again with the same error, continue the "
-                + "task without this tool and tell the user that it is failing."
+                $"Tell the user that '{toolName}' failed with this error. This may not be caused "
+                + "by your arguments, but check them against the tool's input schema and call "
+                + $"'{toolName}' again with different arguments. Do not stop the task because of this error."
         };
 
     private static string FormatArguments(
