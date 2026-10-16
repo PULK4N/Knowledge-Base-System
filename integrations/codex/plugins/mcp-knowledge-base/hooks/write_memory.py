@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import os
 import subprocess
@@ -27,6 +29,12 @@ DEFAULT_MEMORY_HOOK_URL = (
     "http://localhost:5231/api/memory/codex/prompt-hooks"
 )
 RECORDED_EVENTS = frozenset({"UserPromptSubmit", "Stop"})
+IMAGE_EXTENSIONS = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/gif": "gif",
+    "image/webp": "webp",
+}
 
 
 class MemoryHookError(RuntimeError):
@@ -138,6 +146,12 @@ class MemoryHookQueue:
                                 raise MemoryHookError(
                                     f"Queued hook payload '{claimed.name}' is not an object."
                                 )
+                            prepared = _with_attachments(payload, wait_for_prompt=True)
+                            if prepared is not payload:
+                                # Keep bytes in the retry record even if Codex removes
+                                # the pasted file or transcript before the next drain.
+                                claimed.write_text(json.dumps(prepared), encoding="utf-8")
+                            payload = prepared
                             client.record(payload)
                         except Exception:
                             claimed.replace(path)
@@ -218,6 +232,125 @@ def process_hook(
         start_worker()
 
     return None
+
+
+def _with_attachments(
+    event: dict[str, Any], *, wait_for_prompt: bool = False
+) -> dict[str, Any]:
+    """Read images after submission, scoped by the transcript's turn identity.
+
+    UserPromptSubmit runs before the user message is written to the rollout.
+    The detached worker briefly waits for that record; Stop retries if the
+    rollout was not flushed yet. Never match by prompt text: consecutive turns
+    can repeat it. Only the worker waits, so submission remains unblocked.
+    """
+    if (
+        event.get("hook_event_name") not in RECORDED_EVENTS
+        or not event.get("transcript_path")
+    ):
+        return event
+
+    wait_seconds = (
+        3 if wait_for_prompt and event["hook_event_name"] == "UserPromptSubmit" else 0
+    )
+    deadline = time.monotonic() + wait_seconds
+    while True:
+        attachments, found = _transcript_attachments(event)
+        if found or time.monotonic() >= deadline:
+            break
+        time.sleep(0.1)
+    return {"hook": event, "attachments": attachments} if attachments else event
+
+
+def _transcript_attachments(event: dict[str, Any]) -> tuple[list[dict[str, Any]], bool]:
+    attachments = []
+    current_turn = None
+    found = False
+    image_index = 0
+    try:
+        with Path(event["transcript_path"]).open(encoding="utf-8") as transcript:
+            for line in transcript:
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(record, dict):
+                    continue
+                payload = record.get("payload")
+                if not isinstance(payload, dict):
+                    continue
+                record_type = record.get("type")
+                if record_type == "turn_context" or (
+                    record_type == "event_msg" and payload.get("type") == "task_started"
+                ):
+                    current_turn = payload.get("turn_id")
+                if (
+                    current_turn != event["turn_id"]
+                    or record_type != "event_msg"
+                    or payload.get("type") != "user_message"
+                ):
+                    continue
+                found = True
+                for source in payload.get("images") or []:
+                    image_index += 1
+                    attachment = _inline_image(source, image_index)
+                    if attachment:
+                        attachments.append(attachment)
+                for source in payload.get("local_images") or []:
+                    image_index += 1
+                    attachment = _local_image(source, event, image_index)
+                    if attachment:
+                        attachments.append(attachment)
+    except (OSError, UnicodeError):
+        # Text memory must still be delivered if a rollout is no longer available.
+        return [], False
+
+    return attachments, found
+
+
+def _inline_image(source: Any, index: int) -> dict[str, Any] | None:
+    if not isinstance(source, str) or not source.startswith("data:"):
+        return None
+    header, separator, content = source.partition(",")
+    media_type = header[5:-7].lower() if header.endswith(";base64") else ""
+    if not separator or not header.endswith(";base64") or media_type not in IMAGE_EXTENSIONS:
+        return None
+    try:
+        decoded = base64.b64decode(content, validate=True)
+    except (ValueError, binascii.Error):
+        return None
+    if not decoded:
+        return None
+    return _image_upload(decoded, media_type, index)
+
+
+def _local_image(source: Any, event: dict[str, Any], index: int) -> dict[str, Any] | None:
+    if not isinstance(source, str) or not source:
+        return None
+    path = Path(source)
+    if not path.is_absolute():
+        path = Path(event.get("cwd") or Path.cwd()) / path
+    extension = path.suffix.lower().lstrip(".")
+    media_type = next(
+        (media for media, ext in IMAGE_EXTENSIONS.items() if ext == extension),
+        "image/jpeg" if extension == "jpeg" else None,
+    )
+    if media_type is None:
+        return None
+    try:
+        content = path.read_bytes()
+    except OSError:
+        return None
+    return _image_upload(content, media_type, index) if content else None
+
+
+def _image_upload(content: bytes, media_type: str, index: int) -> dict[str, Any]:
+    return {
+        "name": f"image-{index}.{IMAGE_EXTENSIONS[media_type]}",
+        "media_type": media_type,
+        "content": base64.b64encode(content).decode("ascii"),
+        "placeholder": f"[Image #{index}]",
+    }
 
 
 def drain_queue(

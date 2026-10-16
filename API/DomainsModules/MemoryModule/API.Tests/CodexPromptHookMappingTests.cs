@@ -25,7 +25,7 @@ public sealed class CodexPromptHookMappingTests
                 prompt = "Remember this"
             }
         );
-        var command = new RecordCodexPromptHookCommand(null!)
+        var command = new RecordCodexPromptHookCommand(null!, null!)
         {
             ThreadId = default,
             PromptId = default,

@@ -121,6 +121,32 @@ public sealed class MemoryConversationProjectorTests
         Assert.Equal("Refactored it.", repository.Messages[1].Message);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("Look at this")]
+    public async Task Update_appends_images_without_placeholders_to_the_user_message(string text)
+    {
+        var repository = new FakeMemoryConversationRepository();
+        var memory = CreateMemory();
+        var prompt = memory.ChatPrompts[FirstPromptId];
+        prompt.PromptHookRecords[0] = CreateHook(
+            "UserPromptSubmit",
+            JsonSerializer.Serialize(new { prompt = text })
+        );
+        prompt.Attachments =
+        [CreateAttachment("11111111-0000-0000-0000-000000000001", "image/png", "[Image #1]")];
+
+        await new MemoryConversationProjector(repository).Update([CreateStateInfo(memory)]);
+
+        Assert.Equal(PromptHookMessageRoles.User, repository.Messages[0].Role);
+        Assert.Equal(
+            (text.Length > 0 ? text + "\n\n" : "")
+                + "![Image #1](/api/attachments/11111111-0000-0000-0000-000000000001)",
+            repository.Messages[0].Message
+        );
+        Assert.Equal("Refactored it.", repository.Messages[1].Message);
+    }
+
     private static MemoryStateData CreateMemory()
     {
         var memory = new MemoryStateData(MemoryId)

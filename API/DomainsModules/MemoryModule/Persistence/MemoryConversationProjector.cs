@@ -48,7 +48,11 @@ public sealed class MemoryConversationProjector(
     )
     {
         var messages = prompt.PromptHookRecords
-            .Select(hook => PromptHookPayload.Find(hook.Payload))
+            .Select(hook => PromptHookPayload.Find(hook.Payload)
+                ?? (prompt.Attachments.Count > 0
+                    && hook.HookEventName == "UserPromptSubmit"
+                    ? new PromptHookMessage(PromptHookMessageRoles.User, string.Empty)
+                    : null))
             .ToList();
         var firstUserMessageIndex = messages.FindIndex(
             message => message?.Role == PromptHookMessageRoles.User

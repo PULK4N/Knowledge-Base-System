@@ -10,3 +10,13 @@ public sealed class EventTypeRegistrationCollection
 {
     public const string Name = "Event type registration";
 }
+
+internal static class MemoryAttachmentEventRegistration
+{
+    static MemoryAttachmentEventRegistration() =>
+        EventSourcing.Shared.Containers.EventTypeContainer.AddEventType(
+            typeof(MemoryModule.Domain.Events.MemoryAttachmentAddedV1)
+        );
+
+    public static void EnsureRegistered() { }
+}

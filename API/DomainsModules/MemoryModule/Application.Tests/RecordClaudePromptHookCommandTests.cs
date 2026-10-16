@@ -46,9 +46,7 @@ public sealed class RecordClaudePromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(ClaudeToolCallRecordedV1)
         );
-        EventTypeContainer.AddEventType(
-            typeof(MemoryAttachmentAddedV1)
-        );
+        MemoryAttachmentEventRegistration.EnsureRegistered();
     }
 
     [Fact]

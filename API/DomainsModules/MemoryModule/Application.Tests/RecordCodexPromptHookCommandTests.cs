@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ActionModule.Shared.Models;
+using AttachmentsModule.Application;
 using EventSourcing.Core;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;
@@ -46,12 +47,94 @@ public sealed class RecordCodexPromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(CodexToolCallRecordedV1)
         );
+        MemoryAttachmentEventRegistration.EnsureRegistered();
         EventTypeContainer.AddEventType(
             typeof(CodexMemoryMigratedV1)
         );
         EventTypeContainer.AddEventType(
             typeof(ChatSummaryAddedV2)
         );
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Execute_WithAttachments_SavesContentThenRecordsItOnThePrompt(
+        bool sessionExists
+    )
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var storage = new RecordingAttachmentContentStorage();
+        if (sessionExists)
+            await CreateCommand(eventStore, SecondPromptId).Execute(Executor);
+        var attachment = new MemoryAttachment
+        {
+            Id = new AttachmentId(
+                Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd")
+            ),
+            Name = "image-1.png",
+            Size = 3,
+            FileType = "image/png",
+            Extension = "png",
+            Placeholder = "[Image #1]"
+        };
+        var command = CreateCommand(eventStore, FirstPromptId, storage: storage);
+        command.Attachments = [new MemoryAttachmentUpload(attachment, [1, 2, 3])];
+
+        await command.Execute(Executor);
+
+        var saved = Assert.Single(storage.Saved);
+        Assert.Equal(
+            (attachment.Id.Value, "image-1.png", "image/png"),
+            (saved.FileId, saved.Name, saved.ContentType)
+        );
+        Assert.Equal([1, 2, 3], saved.Content);
+        var memory = eventStore.LastWritten.Values.Single(
+            stateInfo => stateInfo.StateData is MemoryStateData
+        );
+        Assert.Collection(
+            memory.LastExecutedPayloads,
+            payload => Assert.IsType<CodexPromptHookRecordedV1>(payload.EventData),
+            payload => Assert.Equal(
+                new MemoryAttachmentAddedV1(FirstPromptId, attachment),
+                payload.EventData
+            )
+        );
+        Assert.Equal(
+            [attachment],
+            ((MemoryStateData)memory.StateData).ChatPrompts[FirstPromptId].Attachments
+        );
+    }
+
+    [Fact]
+    public async Task Execute_StopFallback_DoesNotSaveAlreadyRecordedImagesAgain()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(Database.SqlServer);
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var storage = new RecordingAttachmentContentStorage();
+        var attachment = new MemoryAttachment
+        {
+            Id = new AttachmentId(Guid.NewGuid()),
+            Name = "image-1.png", Size = 3, FileType = "image/png",
+            Extension = "png", Placeholder = "[Image #1]"
+        };
+        var submit = CreateCommand(eventStore, FirstPromptId, storage);
+        submit.HookEventName = "UserPromptSubmit";
+        submit.Attachments = [new(attachment, [1, 2, 3])];
+        await submit.Execute(Executor);
+        var stop = CreateCommand(eventStore, FirstPromptId, storage);
+        stop.HookEventName = "Stop";
+        stop.Attachments = [new(attachment with { Id = new AttachmentId(Guid.NewGuid()) }, [1, 2, 3])];
+
+        await stop.Execute(Executor);
+
+        Assert.Single(storage.Saved);
+        var state = Assert.Single(eventStore.LastWritten).Value;
+        Assert.IsType<CodexPromptHookRecordedV1>(Assert.Single(state.LastExecutedPayloads).EventData);
+        Assert.Single(((MemoryStateData)state.StateData).ChatPrompts[FirstPromptId].Attachments);
     }
 
     [Fact]
@@ -370,10 +453,11 @@ public sealed class RecordCodexPromptHookCommandTests
 
     private static RecordCodexPromptHookCommand CreateCommand(
         CapturingEventStoreWithOutbox eventStore,
-        PromptId promptId
+        PromptId promptId,
+        IAttachmentContentStorage? storage = null
     )
     {
-        return new RecordCodexPromptHookCommand(CreateHandler(eventStore))
+        return new RecordCodexPromptHookCommand(CreateHandler(eventStore), storage ?? new RecordingAttachmentContentStorage())
         {
             ThreadId = ThreadId,
             PromptId = promptId,
@@ -439,6 +523,24 @@ public sealed class RecordCodexPromptHookCommandTests
                         : []
                 )
             );
+    }
+
+    private sealed class RecordingAttachmentContentStorage
+        : IAttachmentContentStorage
+    {
+        public List<AttachmentContentFile> Saved { get; } = [];
+
+        public Task Save(AttachmentContentFile file)
+        {
+            Saved.Add(file);
+            return Task.CompletedTask;
+        }
+
+        public Task<AttachmentContentFile?> Get(Guid fileId) =>
+            throw new NotSupportedException();
+
+        public Task Delete(Guid fileId) =>
+            throw new NotSupportedException();
     }
 
     private sealed class MemoryStateDataProvider : IStateDataProvider
