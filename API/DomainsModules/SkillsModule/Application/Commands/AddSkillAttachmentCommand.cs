@@ -1,6 +1,6 @@
 using ActionModule.Shared.Models;
+using AttachmentsModule.Application;
 using EventSourcing.Core;
-using SkillsModule.Application.Attachments;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Models;
 
@@ -23,7 +23,14 @@ public sealed class AddSkillAttachmentCommand(
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
-        await attachmentContentStorage.Save(Attachment, Bytes);
+        await attachmentContentStorage.Save(
+            new AttachmentContentFile(
+                Attachment.Id.Value,
+                Attachment.Name,
+                Attachment.FileType,
+                Bytes
+            )
+        );
 
         return await ExecuteEvent(
             executor,

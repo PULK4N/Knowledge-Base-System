@@ -91,6 +91,106 @@ class WriteMemoryTests(unittest.TestCase):
             self.assertEqual(SESSION_ID, payload["session_id"])
             uuid.UUID(payload["turn_id"])
 
+    def test_pasted_images_are_queued_in_the_same_record_as_their_prompt(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, turns = self.storage(data)
+            session = Path(data) / "session"
+            (session / "scratchpad").mkdir(parents=True)
+            (session / "images").mkdir()
+            (session / "images" / "1.png").write_bytes(b"png")
+            transcript = Path(data) / "transcript.jsonl"
+            transcript.write_text(
+                write_memory.json.dumps(
+                    {
+                        "type": "user",
+                        "promptId": "prompt-1",
+                        "imagePasteIds": [2],
+                        "message": {
+                            "content": [
+                                {"type": "text", "text": "Look"},
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": "image/jpeg",
+                                        "data": "anBn",
+                                    },
+                                },
+                            ]
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            event = self.event(
+                "UserPromptSubmit",
+                prompt="Look at [Image #1] and [Image #2]",
+                prompt_id="prompt-1",
+                transcript_path=str(transcript),
+                scratchpad_dir=str(session / "scratchpad"),
+            )
+
+            write_memory.process_hook(
+                event, queue=queue, turns=turns, worker_starter=lambda: None
+            )
+
+            payload = self.queued_payload(data)
+            self.assertEqual(
+                {**event, "turn_id": payload["hook"]["turn_id"]},
+                payload["hook"],
+            )
+            self.assertEqual(
+                [
+                    {
+                        "name": "image-1.png",
+                        "media_type": "image/png",
+                        "content": "cG5n",
+                        "placeholder": "[Image #1]",
+                    },
+                    {
+                        "name": "image-2.jpg",
+                        "media_type": "image/jpeg",
+                        "content": "anBn",
+                        "placeholder": "[Image #2]",
+                    },
+                ],
+                payload["attachments"],
+            )
+
+    def test_a_placeholder_without_an_image_is_queued_as_a_plain_record(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, turns = self.storage(data)
+
+            write_memory.process_hook(
+                self.event("UserPromptSubmit", prompt="Look at [Image #1]"),
+                queue=queue,
+                turns=turns,
+                worker_starter=lambda: None,
+            )
+
+            payload = self.queued_payload(data)
+            self.assertEqual("Look at [Image #1]", payload["prompt"])
+            self.assertNotIn("attachments", payload)
+
+    def test_a_failure_to_read_images_still_queues_the_prompt(self):
+        with tempfile.TemporaryDirectory() as data:
+            queue, turns = self.storage(data)
+
+            with mock.patch.object(
+                write_memory, "prompt_images", side_effect=ValueError("changed")
+            ):
+                write_memory.process_hook(
+                    self.event("UserPromptSubmit", prompt="Look at [Image #1]"),
+                    queue=queue,
+                    turns=turns,
+                    worker_starter=lambda: None,
+                )
+
+            payload = self.queued_payload(data)
+            self.assertEqual("Look at [Image #1]", payload["prompt"])
+            self.assertNotIn("attachments", payload)
+
     def test_stop_reuses_the_turn_id_of_the_preceding_prompt(self):
         with tempfile.TemporaryDirectory() as data:
             queue, turns = self.storage(data)

@@ -1,5 +1,7 @@
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Persistence;
+using AttachmentsModule.Application;
+using AttachmentsModule.Persistence;
 using EmbeddingModule;
 using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
@@ -12,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using MemoryModule.Persistence;
 using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
-using SkillsModule.Application.Attachments;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
 using SharedModule.Persistence;
@@ -70,12 +71,12 @@ public static class InjectionSetup
             )
         );
 
-        services.AddDbContext<SkillsModuleDbContext>(
+        services.AddDbContext<AttachmentsModuleDbContext>(
             options =>
                 PostgreSqlDbContextOptions.Configure(
                     options,
                     connectionString,
-                    PostgreSqlModuleDefaults.SkillsMigrationsHistoryTable
+                    PostgreSqlModuleDefaults.AttachmentsMigrationsHistoryTable
                 )
         );
         services.AddScoped<

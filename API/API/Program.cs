@@ -2,6 +2,8 @@ using ActionModule.API;
 using ActionModule.Shared;
 using AdministrationModule.API.Controllers;
 using AdministrationModule.Application.Commands;
+using AttachmentsModule.API.Controllers;
+using AttachmentsModule.Application.Queries;
 using Api.Settings;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
@@ -58,6 +60,7 @@ builder.Services
 builder.Services
     .AddControllers()
     .AddApplicationPart(typeof(AdministrationController).Assembly)
+    .AddApplicationPart(typeof(AttachmentsController).Assembly)
     .AddApplicationPart(typeof(FeaturesController).Assembly)
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
@@ -94,6 +97,7 @@ builder.Services.RegisterEventSourcingCore(
 );
 builder.Services.RegisterActions(
     typeof(QueueProjectionReplayCommand).Assembly,
+    typeof(GetAttachmentContentQuery).Assembly,
     typeof(AddFeatureCommand).Assembly,
     typeof(AddSkillCommand).Assembly,
     typeof(RecordCodexPromptHookCommand).Assembly,

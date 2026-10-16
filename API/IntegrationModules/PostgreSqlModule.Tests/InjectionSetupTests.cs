@@ -2,6 +2,8 @@ using System.Collections.Immutable;
 using EmbeddingModule;
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Persistence;
+using AttachmentsModule.Application;
+using AttachmentsModule.Persistence;
 using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
@@ -22,7 +24,6 @@ using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Interfaces;
 using PolicyModule.Persistence.Models;
-using SkillsModule.Application.Attachments;
 using SkillsModule.Contracts;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
@@ -136,8 +137,8 @@ public sealed class InjectionSetupTests
         using var scope = serviceProvider.CreateScope();
         var eventSourcingContext =
             scope.ServiceProvider.GetRequiredService<EventSourcingDbContext>();
-        var skillsContext =
-            scope.ServiceProvider.GetRequiredService<SkillsModuleDbContext>();
+        var attachmentsContext =
+            scope.ServiceProvider.GetRequiredService<AttachmentsModuleDbContext>();
         var policyContext =
             scope.ServiceProvider.GetRequiredService<IPolicyModuleDbContext>();
         var skillProjectionContext =
@@ -154,7 +155,7 @@ public sealed class InjectionSetupTests
         );
         Assert.Equal(
             "Npgsql.EntityFrameworkCore.PostgreSQL",
-            skillsContext.Database.ProviderName
+            attachmentsContext.Database.ProviderName
         );
         Assert.Same(
             eventSourcingContext,

@@ -92,6 +92,35 @@ public sealed class MemoryConversationProjectorTests
         Assert.Empty(repository.Messages);
     }
 
+    [Fact]
+    public async Task Update_links_attachments_in_the_prompt_that_carried_them()
+    {
+        var repository = new FakeMemoryConversationRepository();
+        var projector = new MemoryConversationProjector(repository);
+        var memory = CreateMemory();
+        var prompt = memory.ChatPrompts[FirstPromptId];
+        prompt.PromptHookRecords[0] = CreateHook(
+            "UserPromptSubmit",
+            """{"session_id":"019f","prompt":"Compare [Image #1] with the old one"}"""
+        );
+        prompt.Attachments =
+        [
+            CreateAttachment("11111111-0000-0000-0000-000000000001", "image/png", "[Image #1]"),
+            CreateAttachment("11111111-0000-0000-0000-000000000002", "image/png", "[Image #1]"),
+            CreateAttachment("11111111-0000-0000-0000-000000000003", "application/pdf", null)
+        ];
+
+        await projector.Update([CreateStateInfo(memory)]);
+
+        Assert.Equal(
+            "Compare ![Image #1](/api/attachments/11111111-0000-0000-0000-000000000001) "
+                + "with the old one\n\n"
+                + "[spec.pdf](/api/attachments/11111111-0000-0000-0000-000000000003)",
+            repository.Messages[0].Message
+        );
+        Assert.Equal("Refactored it.", repository.Messages[1].Message);
+    }
+
     private static MemoryStateData CreateMemory()
     {
         var memory = new MemoryStateData(MemoryId)
@@ -137,6 +166,21 @@ public sealed class MemoryConversationProjectorTests
 
         return memory;
     }
+
+    private static MemoryAttachment CreateAttachment(
+        string id,
+        string fileType,
+        string? placeholder
+    ) =>
+        new()
+        {
+            Id = new AttachmentId(Guid.Parse(id)),
+            Name = placeholder is null ? "spec.pdf" : "image-1.png",
+            Size = 1,
+            FileType = fileType,
+            Extension = placeholder is null ? "pdf" : "png",
+            Placeholder = placeholder
+        };
 
     private static PromptHookRecord CreateHook(
         string hookEventName,

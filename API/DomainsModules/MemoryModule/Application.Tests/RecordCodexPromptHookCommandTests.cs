@@ -18,6 +18,7 @@ using UUIDNext;
 
 namespace MemoryModule.Application.Tests;
 
+[Collection(EventTypeRegistrationCollection.Name)]
 public sealed class RecordCodexPromptHookCommandTests
 {
     private static readonly ThreadId ThreadId =

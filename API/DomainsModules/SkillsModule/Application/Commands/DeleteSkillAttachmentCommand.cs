@@ -1,6 +1,6 @@
 using ActionModule.Shared.Models;
+using AttachmentsModule.Application;
 using EventSourcing.Core;
-using SkillsModule.Application.Attachments;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Models;
 
@@ -19,7 +19,7 @@ public sealed class DeleteSkillAttachmentCommand(
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
-        await attachmentContentStorage.Delete(AttachmentId);
+        await attachmentContentStorage.Delete(AttachmentId.Value);
 
         return await ExecuteEvent(
             executor,

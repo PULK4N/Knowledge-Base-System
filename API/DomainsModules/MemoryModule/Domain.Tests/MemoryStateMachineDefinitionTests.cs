@@ -22,9 +22,13 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV1));
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV2));
         EventTypeContainer.AddEventType(typeof(MemoryRelationAddedV1));
+        EventTypeContainer.AddEventType(typeof(MemoryAttachmentAddedV1));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
+        );
+        EventValidatorContainer.AddEventValidator(
+            typeof(MemoryPromptMustExistValidator)
         );
         var provider = new YamlStateMachineDefinitionProvider(
             Path.Combine(AppContext.BaseDirectory, "StateMachines")
@@ -35,6 +39,11 @@ public sealed class MemoryStateMachineDefinitionTests
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
         Assert.Contains(nameof(ChatSummaryAddedV1), definition.Events.Keys);
         Assert.Contains(nameof(ChatSummaryAddedV2), definition.Events.Keys);
+        Assert.Equal(
+            [nameof(MemoryPromptMustExistValidator)],
+            definition.Events[nameof(MemoryAttachmentAddedV1)]
+                .PreEventValidators
+        );
         Assert.Equal(
             [
                 nameof(CodexPromptHookRecordedV1),

@@ -32,16 +32,7 @@ public sealed class MemoryConversationProjector(
                 memory => memory.ChatPrompts.Values
                     .OrderBy(prompt => prompt.PromptStartTimestamp)
                     .ThenBy(prompt => prompt.PromptId.Value)
-                    .SelectMany(
-                        prompt => prompt.PromptHookRecords.Select(
-                            (hook, hookIndex) => ToMessage(
-                                memory,
-                                prompt,
-                                hook,
-                                hookIndex
-                            )
-                        )
-                    )
+                    .SelectMany(prompt => ToMessages(memory, prompt))
             )
             .ToList();
 
@@ -51,14 +42,48 @@ public sealed class MemoryConversationProjector(
         );
     }
 
+    private static IEnumerable<MemoryConversationMessage> ToMessages(
+        MemoryStateData memory,
+        ChatPrompt prompt
+    )
+    {
+        var messages = prompt.PromptHookRecords
+            .Select(hook => PromptHookPayload.Find(hook.Payload))
+            .ToList();
+        var firstUserMessageIndex = messages.FindIndex(
+            message => message?.Role == PromptHookMessageRoles.User
+        );
+
+        return prompt.PromptHookRecords.Select(
+            (hook, hookIndex) => ToMessage(
+                memory,
+                prompt,
+                hook,
+                hookIndex,
+                messages[hookIndex],
+                hookIndex == firstUserMessageIndex
+            )
+        );
+    }
+
     private static MemoryConversationMessage ToMessage(
         MemoryStateData memory,
         ChatPrompt prompt,
         PromptHookRecord hook,
-        int hookIndex
+        int hookIndex,
+        PromptHookMessage? message,
+        bool isFirstUserMessage
     )
     {
-        var message = PromptHookPayload.Find(hook.Payload);
+        var text = message?.Text ?? string.Empty;
+        if (message?.Role == PromptHookMessageRoles.User)
+        {
+            text = MemoryAttachmentLinks.Apply(
+                text,
+                prompt.Attachments,
+                isFirstUserMessage
+            );
+        }
 
         return new MemoryConversationMessage(
             memory.Id,
@@ -68,7 +93,7 @@ public sealed class MemoryConversationProjector(
             prompt.PromptStartTimestamp,
             hook.HookEventName,
             message?.Role ?? PromptHookMessageRoles.Hook,
-            message?.Text ?? string.Empty,
+            text,
             JsonSerializer.Serialize(hook.Payload, PayloadOptions)
         );
     }

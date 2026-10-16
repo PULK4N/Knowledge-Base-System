@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -32,6 +34,20 @@ DEFAULT_TOOL_USE_HOOK_URL = (
 )
 TOOL_USE_HOOK_PATH = "/api/memory/claude/tool-calls"
 RECORDED_EVENTS = frozenset({"UserPromptSubmit", "Stop"})
+IMAGE_PLACEHOLDER = re.compile(r"\[Image #(\d+)\]")
+IMAGE_MEDIA_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+IMAGE_EXTENSIONS = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/gif": "gif",
+    "image/webp": "webp",
+}
 
 
 class MemoryHookError(RuntimeError):
@@ -322,7 +338,15 @@ def process_hook(
             else turn_registry.current_turn(session_id)
         )
         previous_failure = memory_queue.last_failure()
-        memory_queue.enqueue({**event, "turn_id": turn_id})
+        record = {**event, "turn_id": turn_id}
+        images = (
+            _prompt_images_or_none(event)
+            if event_name == "UserPromptSubmit"
+            else []
+        )
+        memory_queue.enqueue(
+            {"hook": record, "attachments": images} if images else record
+        )
         start_worker()
         return _backlog_warning(previous_failure)
 
@@ -333,6 +357,143 @@ def process_hook(
         start_worker()
 
     return None
+
+
+def _prompt_images_or_none(event: dict[str, Any]) -> list[dict[str, Any]]:
+    """Read the prompt's images without ever losing the prompt itself.
+
+    Finding images depends on undocumented Claude Code storage that can change.
+    When it fails, the prompt is still recorded without attachments; its hook
+    input keeps the prompt_id and transcript_path, so the images can be added
+    later once the reading logic is fixed.
+    """
+    try:
+        return prompt_images(event)
+    except Exception:
+        return []
+
+
+def prompt_images(event: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return the images pasted into a prompt, in placeholder order.
+
+    Hook input carries only the prompt text, where a pasted image appears as a
+    placeholder such as "[Image #2]". Claude Code saves each pasted image as
+    ``images/<number>.<ext>`` next to the session scratchpad when it is pasted,
+    so it is there before the prompt is submitted. The session transcript holds
+    the same images but is written asynchronously and may not have the prompt
+    yet, so it is only read for numbers whose file is missing.
+    """
+    numbers = list(dict.fromkeys(IMAGE_PLACEHOLDER.findall(str(event.get("prompt", "")))))
+    if not numbers:
+        return []
+
+    images = _pasted_image_files(event, numbers)
+    if any(number not in images for number in numbers):
+        transcript_images = _transcript_images(event)
+        for number in numbers:
+            images.setdefault(number, transcript_images.get(number))
+
+    return [images[number] for number in numbers if images.get(number)]
+
+
+def _pasted_image_files(
+    event: dict[str, Any], numbers: list[str]
+) -> dict[str, dict[str, Any]]:
+    scratchpad = str(event.get("scratchpad_dir", ""))
+    if not scratchpad:
+        return {}
+
+    folder = Path(scratchpad).parent / "images"
+    images: dict[str, dict[str, Any]] = {}
+    for number in numbers:
+        for path in sorted(folder.glob(f"{number}.*")):
+            media_type = IMAGE_MEDIA_TYPES.get(path.suffix.lower())
+            if media_type is None:
+                continue
+            try:
+                content = path.read_bytes()
+            except OSError:
+                continue
+            images[number] = _image(
+                number, media_type, base64.b64encode(content).decode("ascii")
+            )
+            break
+    return images
+
+
+def _transcript_images(event: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Read the pasted images of the prompt from the session transcript.
+
+    Claude Code stores a pasted image as a base64 block in the user entry's
+    message content and numbers it in ``imagePasteIds`` in the same order.
+    Images nested in tool results are not pasted by the user and are left out.
+    """
+    prompt_id = str(event.get("prompt_id", ""))
+    transcript_path = str(event.get("transcript_path", ""))
+    if not prompt_id or not transcript_path:
+        return {}
+
+    images: dict[str, dict[str, Any]] = {}
+    try:
+        with Path(transcript_path).open(
+            encoding="utf-8", errors="replace"
+        ) as transcript:
+            for line in transcript:
+                # Most lines are neither this prompt nor an image; skip them
+                # without parsing, since transcripts can be large.
+                if prompt_id not in line or '"image"' not in line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                images.update(_entry_images(entry, prompt_id))
+    except OSError:
+        return {}
+    return images
+
+
+def _entry_images(entry: Any, prompt_id: str) -> dict[str, dict[str, Any]]:
+    if (
+        not isinstance(entry, dict)
+        or entry.get("type") != "user"
+        or entry.get("promptId") != prompt_id
+    ):
+        return {}
+
+    message = entry.get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    paste_ids = entry.get("imagePasteIds")
+    if not isinstance(content, list) or not isinstance(paste_ids, list):
+        return {}
+
+    sources = [
+        block["source"]
+        for block in content
+        if isinstance(block, dict)
+        and block.get("type") == "image"
+        and isinstance(block.get("source"), dict)
+        and block["source"].get("type") == "base64"
+        and block["source"].get("data")
+    ]
+    return {
+        str(number): _image(
+            str(number),
+            str(source.get("media_type") or "application/octet-stream"),
+            str(source["data"]),
+        )
+        for number, source in zip(paste_ids, sources)
+    }
+
+
+def _image(number: str, media_type: str, content: str) -> dict[str, Any]:
+    extension = IMAGE_EXTENSIONS.get(media_type, "bin")
+    return {
+        "name": f"image-{number}.{extension}",
+        "media_type": media_type,
+        "content": content,
+        "placeholder": f"[Image #{number}]",
+    }
 
 
 def drain_queue(

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ActionModule.Shared.Models;
+using AttachmentsModule.Application;
 using EventSourcing.Core;
 using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;
@@ -8,6 +9,7 @@ using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Containers;
 using EventSourcing.Shared.Models;
 using MemoryModule.Application.Commands;
+using MemoryModule.Application.Models;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -16,6 +18,7 @@ using UUIDNext;
 
 namespace MemoryModule.Application.Tests;
 
+[Collection(EventTypeRegistrationCollection.Name)]
 public sealed class RecordClaudePromptHookCommandTests
 {
     private static readonly ThreadId ThreadId =
@@ -42,6 +45,9 @@ public sealed class RecordClaudePromptHookCommandTests
         );
         EventTypeContainer.AddEventType(
             typeof(ClaudeToolCallRecordedV1)
+        );
+        EventTypeContainer.AddEventType(
+            typeof(MemoryAttachmentAddedV1)
         );
     }
 
@@ -191,6 +197,59 @@ public sealed class RecordClaudePromptHookCommandTests
         );
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Execute_WithAttachments_SavesContentThenRecordsItOnThePrompt(
+        bool sessionExists
+    )
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        var storage = new RecordingAttachmentContentStorage();
+        if (sessionExists)
+            await CreateCommand(eventStore, SecondPromptId).Execute(Executor);
+        var attachment = new MemoryAttachment
+        {
+            Id = new AttachmentId(
+                Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd")
+            ),
+            Name = "image-1.png",
+            Size = 3,
+            FileType = "image/png",
+            Extension = "png",
+            Placeholder = "[Image #1]"
+        };
+        var command = CreateCommand(eventStore, FirstPromptId, storage: storage);
+        command.Attachments = [new MemoryAttachmentUpload(attachment, [1, 2, 3])];
+
+        await command.Execute(Executor);
+
+        var saved = Assert.Single(storage.Saved);
+        Assert.Equal(
+            (attachment.Id.Value, "image-1.png", "image/png"),
+            (saved.FileId, saved.Name, saved.ContentType)
+        );
+        Assert.Equal([1, 2, 3], saved.Content);
+        var memory = eventStore.LastWritten.Values.Single(
+            stateInfo => stateInfo.StateData is MemoryStateData
+        );
+        Assert.Collection(
+            memory.LastExecutedPayloads,
+            payload => Assert.IsType<ClaudePromptHookRecordedV1>(payload.EventData),
+            payload => Assert.Equal(
+                new MemoryAttachmentAddedV1(FirstPromptId, attachment),
+                payload.EventData
+            )
+        );
+        Assert.Equal(
+            [attachment],
+            ((MemoryStateData)memory.StateData).ChatPrompts[FirstPromptId].Attachments
+        );
+    }
+
     [Fact]
     public void PersistenceRoundTrip_PreservesJsonElementPayload()
     {
@@ -237,9 +296,10 @@ public sealed class RecordClaudePromptHookCommandTests
     private static RecordClaudePromptHookCommand CreateCommand(
         CapturingEventStoreWithOutbox eventStore,
         PromptId promptId,
-        string hookEventName = "UserPromptSubmit"
+        string hookEventName = "UserPromptSubmit",
+        IAttachmentContentStorage? storage = null
     ) =>
-        new(CreateHandler(eventStore))
+        new(CreateHandler(eventStore), storage ?? new RecordingAttachmentContentStorage())
         {
             ThreadId = ThreadId,
             PromptId = promptId,
@@ -310,6 +370,24 @@ public sealed class RecordClaudePromptHookCommandTests
                         : []
                 )
             );
+    }
+
+    private sealed class RecordingAttachmentContentStorage
+        : IAttachmentContentStorage
+    {
+        public List<AttachmentContentFile> Saved { get; } = [];
+
+        public Task Save(AttachmentContentFile file)
+        {
+            Saved.Add(file);
+            return Task.CompletedTask;
+        }
+
+        public Task<AttachmentContentFile?> Get(Guid fileId) =>
+            throw new NotSupportedException();
+
+        public Task Delete(Guid fileId) =>
+            throw new NotSupportedException();
     }
 
     private sealed class MemoryStateDataProvider : IStateDataProvider

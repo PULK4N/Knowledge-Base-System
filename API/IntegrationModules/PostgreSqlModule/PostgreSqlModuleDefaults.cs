@@ -9,6 +9,12 @@ public static class PostgreSqlModuleDefaults
         "Host=localhost;Port=5432;Database=skill_memory;Username=skill_memory;Password=skill_memory";
     public const string EventSourcingMigrationsHistoryTable =
         "__EFMigrationsHistory_EventSourcing";
-    public const string SkillsMigrationsHistoryTable =
+
+    /// <summary>
+    /// Attachment content started out owned by the skills module. The history
+    /// table keeps its original name so databases that already applied the
+    /// first attachment migration do not run it again.
+    /// </summary>
+    public const string AttachmentsMigrationsHistoryTable =
         "__EFMigrationsHistory_Skills";
 }

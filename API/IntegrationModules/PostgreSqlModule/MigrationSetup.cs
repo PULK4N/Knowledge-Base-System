@@ -1,7 +1,7 @@
+using AttachmentsModule.Persistence;
 using EventSourcing.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SkillsModule.Persistence;
 
 namespace PostgreSqlModule;
 
@@ -20,7 +20,7 @@ public static class MigrationSetup
             .MigrateAsync();
         await scope
             .ServiceProvider
-            .GetRequiredService<SkillsModuleDbContext>()
+            .GetRequiredService<AttachmentsModuleDbContext>()
             .Database
             .MigrateAsync();
     }

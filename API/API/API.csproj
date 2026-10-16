@@ -21,6 +21,8 @@
     <ProjectReference Include="../ActionModule/Shared/Shared.csproj" />
     <ProjectReference Include="../DomainsModules/AdministrationModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/AdministrationModule/Application/Application.csproj" />
+    <ProjectReference Include="../DomainsModules/AttachmentsModule/API/API.csproj" />
+    <ProjectReference Include="../DomainsModules/AttachmentsModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/FeatureModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/FeatureModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/FeatureModule/Domain/Domain.csproj" />

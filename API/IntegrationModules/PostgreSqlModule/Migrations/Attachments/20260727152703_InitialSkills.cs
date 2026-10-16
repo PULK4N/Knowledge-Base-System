@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace PostgreSqlModule.Migrations.Skills
+namespace PostgreSqlModule.Migrations.Attachments
 {
     /// <inheritdoc />
     public partial class InitialSkills : Migration

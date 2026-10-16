@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Contracts/Contracts.csproj" />
+    <ProjectReference Include="../../AttachmentsModule/Application/Application.csproj" />
     <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
     <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />
