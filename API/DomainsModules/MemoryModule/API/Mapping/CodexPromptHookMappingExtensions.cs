@@ -51,6 +51,7 @@ public static class CodexPromptHookMappingExtensions
                 Size = request.Content.LongLength,
                 FileType = request.MediaType,
                 Extension = Path.GetExtension(request.Name).TrimStart('.'),
+                UserMessageIndex = request.UserMessageIndex,
                 Placeholder = string.IsNullOrWhiteSpace(request.Placeholder)
                     ? null
                     : request.Placeholder

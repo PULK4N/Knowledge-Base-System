@@ -58,16 +58,22 @@ public sealed class MemoryConversationProjector(
             message => message?.Role == PromptHookMessageRoles.User
         );
 
-        return prompt.PromptHookRecords.Select(
-            (hook, hookIndex) => ToMessage(
+        var userMessageIndex = -1;
+        for (var hookIndex = 0; hookIndex < prompt.PromptHookRecords.Count; hookIndex++)
+        {
+            var hook = prompt.PromptHookRecords[hookIndex];
+            if (hook.HookEventName == "UserPromptSubmit")
+                userMessageIndex++;
+            yield return ToMessage(
                 memory,
                 prompt,
                 hook,
                 hookIndex,
                 messages[hookIndex],
-                hookIndex == firstUserMessageIndex
-            )
-        );
+                hookIndex == firstUserMessageIndex,
+                userMessageIndex
+            );
+        }
     }
 
     private static MemoryConversationMessage ToMessage(
@@ -76,7 +82,8 @@ public sealed class MemoryConversationProjector(
         PromptHookRecord hook,
         int hookIndex,
         PromptHookMessage? message,
-        bool isFirstUserMessage
+        bool isFirstUserMessage,
+        int userMessageIndex
     )
     {
         var text = message?.Text ?? string.Empty;
@@ -84,8 +91,13 @@ public sealed class MemoryConversationProjector(
         {
             text = MemoryAttachmentLinks.Apply(
                 text,
-                prompt.Attachments,
+                prompt.Attachments.Where(attachment => attachment.UserMessageIndex is null).ToList(),
                 isFirstUserMessage
+            );
+            text = MemoryAttachmentLinks.Apply(
+                text,
+                prompt.Attachments.Where(attachment => attachment.UserMessageIndex == userMessageIndex).ToList(),
+                true
             );
         }
 

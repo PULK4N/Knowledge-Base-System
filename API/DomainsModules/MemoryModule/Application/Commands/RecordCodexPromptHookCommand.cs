@@ -47,13 +47,13 @@ public sealed class RecordCodexPromptHookCommand(
             var memory = await stateMachineHandler.GetByAggregateId(memoryId);
             var existingPlaceholders = memory?.StateData is MemoryStateData state
                 && state.ChatPrompts.TryGetValue(PromptId, out var prompt)
-                ? prompt.Attachments.Select(attachment => attachment.Placeholder)
-                    .Where(placeholder => placeholder is not null)
-                    .ToHashSet(StringComparer.Ordinal)
+                ? prompt.Attachments.Where(attachment => attachment.Placeholder is not null)
+                    .Select(attachment => (attachment.UserMessageIndex, attachment.Placeholder))
+                    .ToHashSet()
                 : [];
             var uploads = Attachments.Where(upload =>
                 upload.Attachment.Placeholder is null
-                || !existingPlaceholders.Contains(upload.Attachment.Placeholder)).ToList();
+                || !existingPlaceholders.Contains((upload.Attachment.UserMessageIndex, upload.Attachment.Placeholder))).ToList();
             await SaveAttachments(uploads);
 
             await stateMachineHandler.ExecuteEvents(

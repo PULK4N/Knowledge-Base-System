@@ -14,4 +14,10 @@ public sealed record MemoryAttachment
     /// a link to the content; null when the prompt has no marker for it.
     /// </summary>
     public string? Placeholder { get; init; }
+
+    /// <summary>
+    /// Zero-based user submission within a Codex turn. Null preserves the
+    /// legacy placement behavior for attachments recorded before this field.
+    /// </summary>
+    public int? UserMessageIndex { get; init; }
 }

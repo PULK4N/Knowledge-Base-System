@@ -64,7 +64,8 @@ public sealed class CodexPromptAttachmentMappingTests
                         name = "image-1.png",
                         media_type = "image/png",
                         content = Convert.ToBase64String([1, 2, 3]),
-                        placeholder = "[Image #1]"
+                        placeholder = "[Image #1]",
+                        user_message_index = 2
                     }
                 }
             }
@@ -83,7 +84,8 @@ public sealed class CodexPromptAttachmentMappingTests
                 Size = 3,
                 FileType = "image/png",
                 Extension = "png",
-                Placeholder = "[Image #1]"
+                Placeholder = "[Image #1]",
+                UserMessageIndex = 2
             },
             upload.Attachment
         );

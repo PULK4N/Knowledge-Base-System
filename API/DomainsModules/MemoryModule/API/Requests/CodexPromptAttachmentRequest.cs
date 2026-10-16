@@ -16,4 +16,7 @@ public sealed record CodexPromptAttachmentRequest
 
     [JsonPropertyName("placeholder")]
     public string? Placeholder { get; init; }
+
+    [JsonPropertyName("user_message_index")]
+    public int? UserMessageIndex { get; init; }
 }

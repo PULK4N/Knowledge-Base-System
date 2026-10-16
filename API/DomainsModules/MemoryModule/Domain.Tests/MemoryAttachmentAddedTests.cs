@@ -1,3 +1,4 @@
+using System.Text.Json;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -47,6 +48,23 @@ public sealed class MemoryAttachmentAddedTests
             Attachment,
             Assert.Single(state.ChatPrompts[PromptId].Attachments)
         );
+    }
+
+    [Fact]
+    public void Deserialize_OldAttachmentWithoutSubmissionIndex_RemainsReadable()
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            Attachment.Id, Attachment.Name, Attachment.Size,
+            Attachment.FileType, Attachment.Extension, Attachment.Placeholder
+        });
+
+        var restored = JsonSerializer.Deserialize<MemoryAttachment>(json)!;
+
+        Assert.Equal(Attachment, restored);
+        Assert.Null(restored.UserMessageIndex);
+        var scoped = restored with { UserMessageIndex = 2 };
+        Assert.Equal(scoped, JsonSerializer.Deserialize<MemoryAttachment>(JsonSerializer.Serialize(scoped)));
     }
 
     [Theory]

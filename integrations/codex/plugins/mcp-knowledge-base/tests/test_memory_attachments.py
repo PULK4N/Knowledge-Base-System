@@ -3,6 +3,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -16,8 +17,9 @@ TURN = '019fb72e-e3c3-7093-a89d-050d309ca4ac'
 IMAGE = 'data:image/png;base64,' + base64.b64encode(b'image content').decode('ascii')
 
 
-def record(kind, **payload):
-    return json.dumps({'type': kind, 'payload': payload}) + '\n'
+def record(kind, _timestamp=None, **payload):
+    return json.dumps({'type': kind, 'payload': payload,
+                       'timestamp': _timestamp or datetime.now(timezone.utc).isoformat()}) + '\n'
 
 
 def transcript(turn=TURN, **message):
@@ -94,11 +96,38 @@ class AttachmentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             queue = write_memory.MemoryHookQueue(Path(directory) / 'queue')
             event = self.event(Path(directory) / 'missing.jsonl', 'UserPromptSubmit')
-            with mock.patch.object(write_memory.time, 'sleep') as sleep:
+            with mock.patch.object(write_memory.time, 'sleep') as sleep, \
+                    mock.patch.object(write_memory.time, 'time', return_value=100):
                 write_memory.process_hook(event, queue=queue, worker_starter=lambda: None)
             sleep.assert_not_called()
             queued = next((Path(directory) / 'queue').glob('*.json'))
-            self.assertEqual(event, json.loads(queued.read_text(encoding='utf-8')))
+            self.assertEqual(dict(event, memory_submitted_at_ms=100000),
+                             json.loads(queued.read_text(encoding='utf-8')))
+
+    def test_three_submissions_in_one_turn_keep_their_own_images(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'rollout.jsonl'
+            queue_path = Path(directory) / 'queue'
+            queue = write_memory.MemoryHookQueue(queue_path)
+            path.write_text(record('turn_context', turn_id=TURN), encoding='utf-8')
+            for index, (text, images) in enumerate([('First', [IMAGE]), ('Second', []), ('', [IMAGE])]):
+                event = dict(self.event(path, 'UserPromptSubmit'), prompt=text)
+                with mock.patch.object(write_memory.time, 'time', return_value=100 + index):
+                    write_memory.process_hook(event, queue=queue, worker_starter=lambda: None)
+                with path.open('a', encoding='utf-8') as stream:
+                    stream.write(record('event_msg', type='user_message', message=text, images=images,
+                                        _timestamp=datetime.fromtimestamp(100 + index, timezone.utc).isoformat()))
+            client = mock.Mock()
+            queue.drain(client)
+            bodies = [call.args[0] for call in client.record.call_args_list]
+            self.assertEqual('First', bodies[0]['hook']['prompt'])
+            self.assertEqual(0, bodies[0]['attachments'][0]['user_message_index'])
+            self.assertEqual('Second', bodies[1]['prompt'])
+            self.assertNotIn('attachments', bodies[1])
+            self.assertEqual('', bodies[2]['hook']['prompt'])
+            self.assertEqual(2, bodies[2]['attachments'][0]['user_message_index'])
+            fallback = write_memory._with_attachments(self.event(path))
+            self.assertEqual([0, 2], [a['user_message_index'] for a in fallback['attachments']])
 
     def test_failed_delivery_keeps_image_bytes_for_retry(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -109,8 +109,12 @@ public sealed class RecordCodexPromptHookCommandTests
         );
     }
 
-    [Fact]
-    public async Task Execute_StopFallback_DoesNotSaveAlreadyRecordedImagesAgain()
+    [Theory]
+    [InlineData(null, null, 1)]
+    [InlineData(0, 0, 1)]
+    [InlineData(0, 1, 2)]
+    public async Task Execute_StopFallback_DeduplicatesWithinEachSubmission(
+        int? firstIndex, int? nextIndex, int savedCount)
     {
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(Database.SqlServer);
         var eventStore = new CapturingEventStoreWithOutbox();
@@ -119,7 +123,7 @@ public sealed class RecordCodexPromptHookCommandTests
         {
             Id = new AttachmentId(Guid.NewGuid()),
             Name = "image-1.png", Size = 3, FileType = "image/png",
-            Extension = "png", Placeholder = "[Image #1]"
+            Extension = "png", Placeholder = "[Image #1]", UserMessageIndex = firstIndex
         };
         var submit = CreateCommand(eventStore, FirstPromptId, storage);
         submit.HookEventName = "UserPromptSubmit";
@@ -127,14 +131,15 @@ public sealed class RecordCodexPromptHookCommandTests
         await submit.Execute(Executor);
         var stop = CreateCommand(eventStore, FirstPromptId, storage);
         stop.HookEventName = "Stop";
-        stop.Attachments = [new(attachment with { Id = new AttachmentId(Guid.NewGuid()) }, [1, 2, 3])];
+        stop.Attachments = [new(attachment with { Id = new AttachmentId(Guid.NewGuid()), UserMessageIndex = nextIndex }, [1, 2, 3])];
 
         await stop.Execute(Executor);
 
-        Assert.Single(storage.Saved);
+        Assert.Equal(savedCount, storage.Saved.Count);
         var state = Assert.Single(eventStore.LastWritten).Value;
-        Assert.IsType<CodexPromptHookRecordedV1>(Assert.Single(state.LastExecutedPayloads).EventData);
-        Assert.Single(((MemoryStateData)state.StateData).ChatPrompts[FirstPromptId].Attachments);
+        Assert.IsType<CodexPromptHookRecordedV1>(state.LastExecutedPayloads[0].EventData);
+        Assert.Equal(savedCount, state.LastExecutedPayloads.Count);
+        Assert.Equal(savedCount, ((MemoryStateData)state.StateData).ChatPrompts[FirstPromptId].Attachments.Count);
     }
 
     [Fact]

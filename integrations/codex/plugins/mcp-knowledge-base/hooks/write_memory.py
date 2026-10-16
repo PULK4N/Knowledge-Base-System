@@ -15,6 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import IO, Any, Callable
 
@@ -224,6 +225,8 @@ def process_hook(
         _required_guid(event, "session_id")
         _required_guid(event, "turn_id")
         previous_failure = memory_queue.last_failure()
+        if event_name == "UserPromptSubmit" and event.get("transcript_path"):
+            event = dict(event, memory_submitted_at_ms=int(time.time() * 1000))
         memory_queue.enqueue(event)
         start_worker()
         return _backlog_warning(previous_failure)
@@ -264,9 +267,39 @@ def _with_attachments(
 
 def _transcript_attachments(event: dict[str, Any]) -> tuple[list[dict[str, Any]], bool]:
     attachments = []
-    current_turn = None
+    messages = _transcript_messages(event)
+    submitted_at = event.get("memory_submitted_at_ms")
     found = False
-    image_index = 0
+    for message_index, payload in enumerate(messages):
+        if event["hook_event_name"] == "UserPromptSubmit":
+            if submitted_at is not None:
+                recorded_at = payload.get("memory_recorded_at_ms")
+                if recorded_at is None or recorded_at < submitted_at:
+                    continue
+            elif message_index != 0:
+                continue
+        found = True
+        image_index = 0
+        for source in payload.get("images") or []:
+            image_index += 1
+            attachment = _inline_image(source, image_index)
+            if attachment:
+                attachment["user_message_index"] = message_index
+                attachments.append(attachment)
+        for source in payload.get("local_images") or []:
+            image_index += 1
+            attachment = _local_image(source, event, image_index)
+            if attachment:
+                attachment["user_message_index"] = message_index
+                attachments.append(attachment)
+        if event["hook_event_name"] == "UserPromptSubmit":
+            break
+    return attachments, found
+
+
+def _transcript_messages(event: dict[str, Any]) -> list[dict[str, Any]]:
+    messages = []
+    current_turn = None
     try:
         with Path(event["transcript_path"]).open(encoding="utf-8") as transcript:
             for line in transcript:
@@ -285,27 +318,20 @@ def _transcript_attachments(event: dict[str, Any]) -> tuple[list[dict[str, Any]]
                 ):
                     current_turn = payload.get("turn_id")
                 if (
-                    current_turn != event["turn_id"]
-                    or record_type != "event_msg"
-                    or payload.get("type") != "user_message"
+                    current_turn == event["turn_id"]
+                    and record_type == "event_msg"
+                    and payload.get("type") == "user_message"
                 ):
-                    continue
-                found = True
-                for source in payload.get("images") or []:
-                    image_index += 1
-                    attachment = _inline_image(source, image_index)
-                    if attachment:
-                        attachments.append(attachment)
-                for source in payload.get("local_images") or []:
-                    image_index += 1
-                    attachment = _local_image(source, event, image_index)
-                    if attachment:
-                        attachments.append(attachment)
+                    timestamp = record.get("timestamp")
+                    try:
+                        recorded_at = int(datetime.fromisoformat(timestamp.replace("Z", "+00:00")).timestamp() * 1000)
+                    except (AttributeError, ValueError, OverflowError):
+                        recorded_at = None
+                    messages.append(dict(payload, memory_recorded_at_ms=recorded_at))
     except (OSError, UnicodeError):
         # Text memory must still be delivered if a rollout is no longer available.
-        return [], False
-
-    return attachments, found
+        return []
+    return messages
 
 
 def _inline_image(source: Any, index: int) -> dict[str, Any] | None:

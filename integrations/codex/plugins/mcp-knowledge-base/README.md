@@ -2,8 +2,10 @@
 
 The prompt hook queues text immediately. Its detached drain worker reads the
 Codex JSONL transcript and waits up to three seconds for the submitted user
-message to appear. Images are selected by the current turn ID, never by matching
-prompt text or scanning temporary clipboard files. The Stop hook collects the
+message to appear. Images are selected by the current turn ID and submission
+time, never by matching prompt text or scanning temporary clipboard files.
+Each upload carries the user-message index within that turn, because steered
+submissions can share one turn ID. The Stop hook collects the
 turn's images again as a fallback if the transcript was not ready earlier.
 
 Inline PNG, JPEG, GIF, and WebP data and local image paths are uploaded together
@@ -13,9 +15,13 @@ retries. Remote image URLs and opaque file IDs are not downloaded. If a local
 file or transcript is unavailable, text memory still proceeds.
 
 The API stores file content separately from memory events and ignores attachment
-placeholders already saved on that prompt. The conversation projection renders
+placeholders already saved on that individual submission. The conversation projection renders
 image links on the user message, including prompts with no text. Install the
 matching API changes before updating the plugin.
+
+Older saved attachments have no submission index and retain legacy placement.
+If a blocked or interrupted submission never reaches the transcript, its image
+cannot be collected by this plugin; the user must submit it again.
 
 Codex currently writes clipboard PNG files before submission, but does not pass
 their paths to UserPromptSubmit. The hook runs before the user message is recorded,

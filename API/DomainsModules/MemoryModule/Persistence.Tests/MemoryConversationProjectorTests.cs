@@ -147,6 +147,36 @@ public sealed class MemoryConversationProjectorTests
         Assert.Equal("Refactored it.", repository.Messages[1].Message);
     }
 
+    [Fact]
+    public async Task Update_keeps_images_on_their_submission_when_user_messages_share_a_turn()
+    {
+        var repository = new FakeMemoryConversationRepository();
+        var memory = CreateMemory();
+        var prompt = memory.ChatPrompts[FirstPromptId];
+        prompt.PromptHookRecords =
+        [
+            CreateHook("UserPromptSubmit", """{"prompt":"First"}"""),
+            CreateHook("UserPromptSubmit", """{"prompt":"Second"}"""),
+            CreateHook("UserPromptSubmit", """{"prompt":""}"""),
+            CreateHook("Stop", """{"last_assistant_message":"Done"}""")
+        ];
+        prompt.Attachments =
+        [
+            CreateAttachment("11111111-0000-0000-0000-000000000001", "image/png", "[Image #1]")
+                with { UserMessageIndex = 0 },
+            CreateAttachment("11111111-0000-0000-0000-000000000002", "image/png", "[Image #1]")
+                with { UserMessageIndex = 2 }
+        ];
+
+        await new MemoryConversationProjector(repository).Update([CreateStateInfo(memory)]);
+
+        Assert.Equal("First\n\n![Image #1](/api/attachments/11111111-0000-0000-0000-000000000001)", repository.Messages[0].Message);
+        Assert.Equal("Second", repository.Messages[1].Message);
+        Assert.Equal("![Image #1](/api/attachments/11111111-0000-0000-0000-000000000002)", repository.Messages[2].Message);
+        Assert.Equal(PromptHookMessageRoles.User, repository.Messages[2].Role);
+        Assert.Equal("Done", repository.Messages[3].Message);
+    }
+
     private static MemoryStateData CreateMemory()
     {
         var memory = new MemoryStateData(MemoryId)
