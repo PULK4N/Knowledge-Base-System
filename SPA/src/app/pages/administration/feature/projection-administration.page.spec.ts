@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { ProjectionReplayQueuedResult } from '../data-access/projection-administration.models';
 import { ProjectionAdministrationService } from '../data-access/projection-administration.service';
+import { UniqueConstraintAdministrationService } from '../data-access/unique-constraint-administration.service';
 import { ProjectionAdministrationPage } from './projection-administration.page';
 
 describe('ProjectionAdministrationPage', () => {
@@ -39,6 +40,10 @@ describe('ProjectionAdministrationPage', () => {
         {
           provide: ProjectionAdministrationService,
           useValue: administration,
+        },
+        {
+          provide: UniqueConstraintAdministrationService,
+          useValue: { listStateMachines: () => of([]), rebuild: vi.fn() },
         },
       ],
     }).compileComponents();

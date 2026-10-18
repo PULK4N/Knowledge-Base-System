@@ -11,33 +11,21 @@ events:
   ProjectCreatedV1:
     preEventValidators:
       - ProjectMustNotExistValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   ProjectCreatedV2:
     preEventValidators:
       - ProjectMustNotExistValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   ProjectUpdatedV1:
     preEventValidators:
       - ProjectMustBeActiveValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   ProjectUpdatedV2:
     preEventValidators:
       - ProjectMustBeActiveValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   ProjectDeletedV1:
     preEventValidators:
       - ProjectMustBeActiveValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   ProjectDeletedV2:
     preEventValidators:
       - ProjectMustBeActiveValidator
-    uniqueConstraints:
-      - UniqueProjectNameConstraint
   RepositoryAddedToProjectV1:
     preEventValidators:
       - ProjectMustBeActiveValidator

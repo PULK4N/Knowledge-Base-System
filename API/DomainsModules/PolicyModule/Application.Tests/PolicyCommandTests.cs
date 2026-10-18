@@ -11,6 +11,7 @@ using PolicyModule.Application.DTOs;
 using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 using PolicyModule.Domain;
+using PolicyModule.Domain.Constraints;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 using PolicyModule.Persistence.Interfaces;
@@ -504,6 +505,15 @@ public sealed partial class PolicyCommandTests
             })
         );
         var projectId = AggregateId.FromDatabaseGuid(created.ProjectId);
+        Assert.Equal(
+            new UniqueProjectNameConstraint(
+                new ProjectPoliciesStateData(projectId),
+                "MCP KNOWLEDGE BASE"
+            ).Hash,
+            Assert.IsType<UniqueProjectNameConstraint>(
+                Assert.Single(eventStore.LastWritten[projectId].UniqueConstraints)
+            ).Hash
+        );
 
         await ExecuteAsUser(new UpdateProjectCommand(handler)
         {
@@ -551,16 +561,7 @@ public sealed partial class PolicyCommandTests
         var projectEvents = eventStore.GetStoredEvents(projectId);
         Assert.Collection(
             projectEvents,
-            payload =>
-            {
-                Assert.IsType<ProjectCreatedV2>(payload.EventData);
-                Assert.Equal(
-                    "MCP KNOWLEDGE BASE",
-                    Assert.Single(
-                        payload.UniqueEventConstraintsToAdd
-                    ).ValueToHash
-                );
-            },
+            payload => Assert.IsType<ProjectCreatedV2>(payload.EventData),
             payload => Assert.IsType<ProjectUpdatedV2>(payload.EventData),
             payload => Assert.IsType<ProjectPolicyAddedV2>(payload.EventData),
             payload => Assert.IsType<ProjectPolicyUpdatedV2>(payload.EventData),
@@ -591,6 +592,7 @@ public sealed partial class PolicyCommandTests
         Assert.Empty(projectState.Policies);
         Assert.Empty(projectState.RelatedTopics);
         Assert.True(projectState.IsDeleted);
+        Assert.Empty(eventStore.LastWritten[projectId].UniqueConstraints);
         Assert.Empty(
             Assert.IsType<RepositoryToProjectMapStateData>(
                 eventStore.LastWritten[mapAggregateId].StateData
@@ -1015,9 +1017,6 @@ public sealed partial class PolicyCommandTests
             new OrderNumberHelper(),
             new PolicyStateDataProvider(),
             new EventValidatorProvider(definitionProvider),
-            new StateMachineUniqueEventConstraintProvider(
-                definitionProvider
-            ),
             definitionProvider
         );
 
@@ -1088,8 +1087,12 @@ public sealed partial class PolicyCommandTests
             return Task.CompletedTask;
         }
 
-        public Task Write(List<EventPayload> payloads)
+        public Task Write(List<StateInfo> stateInfos)
         {
+            var payloads = stateInfos
+                .SelectMany(stateInfo => stateInfo.LastExecutedPayloads)
+                .ToList();
+
             foreach (
                 var payloadGroup in payloads.GroupBy(
                     payload =>
@@ -1128,11 +1131,11 @@ public sealed partial class PolicyCommandTests
 
     private sealed class PolicyStateDataProvider : IStateDataProvider
     {
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(
+            (
                 stateMachineId switch
                 {
                     PolicyModule.Application.Constants.StateMachineIds.GeneralPolicies =>

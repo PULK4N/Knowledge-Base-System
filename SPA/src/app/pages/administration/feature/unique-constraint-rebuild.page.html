@@ -1,0 +1,88 @@
+@if (vm$ | async; as vm) {
+  <section class="constraint-panel surface-card">
+    <div class="panel-heading">
+      <div>
+        <h2>Unique constraints</h2>
+        <p>
+          Recalculate the unique values of every aggregate in a state machine
+          from its events and replace the stored constraint rows.
+        </p>
+      </div>
+    </div>
+
+    @switch (vm.stateMachines.status) {
+      @case ('loading') {
+        <p class="panel-message">Loading state machines…</p>
+      }
+      @case ('error') {
+        <p class="panel-message error" role="alert">
+          {{ vm.stateMachines.message }}
+        </p>
+      }
+      @case ('success') {
+        <div class="rebuild-form">
+          <label class="form-field">
+            <span>State machine</span>
+            <select [formControl]="stateMachineId">
+              <option value="" disabled>Select a state machine</option>
+              @for (id of vm.stateMachines.data; track id) {
+                <option [value]="id">{{ id }}</option>
+              }
+            </select>
+          </label>
+
+          <button
+            type="button"
+            (click)="rebuild()"
+            [disabled]="
+              !stateMachineId.value || vm.rebuild.status === 'rebuilding'
+            "
+          >
+            @if (vm.rebuild.status === 'rebuilding') {
+              Rebuilding…
+            } @else {
+              Rebuild constraints
+            }
+          </button>
+        </div>
+      }
+    }
+
+    @if (vm.rebuild.status === 'done') {
+      @let result = vm.rebuild.result;
+      @if (result.status === 'Completed') {
+        <section class="rebuild-result success" role="status">
+          <strong>{{ vm.rebuild.stateMachineId }} rebuilt</strong>
+          <span>
+            Stored {{ result.constraintCount }}
+            {{ result.constraintCount === 1 ? 'constraint' : 'constraints' }}
+            for {{ result.processedAggregateCount }}
+            {{ result.processedAggregateCount === 1 ? 'aggregate' : 'aggregates' }}.
+          </span>
+        </section>
+      } @else {
+        <section class="rebuild-result error" role="alert">
+          <strong>Duplicate values found in {{ vm.rebuild.stateMachineId }}</strong>
+          <span>Nothing was written. These aggregates hold the same value:</span>
+          <ul class="conflict-list">
+            @for (conflict of result.conflicts; track $index) {
+              <li>
+                <span class="constraint-name">{{ conflict.constraintName }}</span>
+                @for (aggregateId of conflict.aggregateIds; track aggregateId) {
+                  <code>{{ aggregateId }}</code>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+
+    @if (vm.rebuild.status === 'error') {
+      <section class="rebuild-result error" role="alert">
+        <strong>Constraints could not be rebuilt</strong>
+        <span>{{ vm.rebuild.message }}</span>
+      </section>
+    }
+  </section>
+}

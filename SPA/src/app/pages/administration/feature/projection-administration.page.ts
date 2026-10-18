@@ -15,6 +15,7 @@ import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { ProjectionGroup } from '../data-access/projection-administration.models';
 import { ProjectionAdministrationService } from '../data-access/projection-administration.service';
 import { ProjectionRunnerPage } from './projection-runner.page';
+import { UniqueConstraintRebuildPage } from './unique-constraint-rebuild.page';
 
 type ExecutionState =
   | { readonly status: 'idle' }
@@ -44,7 +45,7 @@ interface ProjectionAdministrationVm {
 
 @Component({
   selector: 'app-projection-administration-page',
-  imports: [AsyncPipe, ProjectionRunnerPage],
+  imports: [AsyncPipe, ProjectionRunnerPage, UniqueConstraintRebuildPage],
   templateUrl: './projection-administration.page.html',
   styleUrl: './projection-administration.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

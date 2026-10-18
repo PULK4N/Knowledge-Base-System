@@ -56,7 +56,7 @@ public sealed class ProjectionDeliveryHandler(
         // Calculating from full history rather than up to the delivered event
         // means a redelivery projects current state, which is what a snapshot
         // projector should hold.
-        var state = await _calculator.Calculate(history, [ ]);
+        var state = _calculator.Calculate(history, [ ]);
         state.LastExecutedPayloads = [ payload ];
 
         foreach (var projector in projectors)

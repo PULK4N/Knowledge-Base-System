@@ -321,7 +321,6 @@ public sealed class RecordClaudePromptHookCommandTests
                 new OrderNumberHelper(),
                 new MemoryStateDataProvider(),
                 new EmptyEventValidatorProvider(),
-                new EmptyUniqueEventConstraintProvider(),
                 new TestStateMachineDefinitionProvider()
             ),
             eventStore
@@ -390,11 +389,11 @@ public sealed class RecordClaudePromptHookCommandTests
 
     private sealed class MemoryStateDataProvider : IStateDataProvider
     {
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(
+            (
                 stateMachineId switch
                 {
                     Constants.StateMachineIds.SessionAggregateMap =>
@@ -409,30 +408,14 @@ public sealed class RecordClaudePromptHookCommandTests
     private sealed class EmptyEventValidatorProvider
         : IEventValidatorProvider
     {
-        public Task<List<IPreEventValidator>> GetPreEventStateValidators(
+        public List<IPreEventValidator> GetPreEventStateValidators(
             EventPayload payload
         ) =>
-            Task.FromResult(new List<IPreEventValidator>());
+            new List<IPreEventValidator>();
 
-        public Task<List<IPostEventValidator>> GetPostEventStateValidators(
+        public List<IPostEventValidator> GetPostEventStateValidators(
             EventPayload payload
         ) =>
-            Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class EmptyUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData> GetConstraintsToAdd(
-            object stateData,
-            EventPayload payload
-        ) =>
-            [];
-
-        public IEnumerable<UniqueEventConstraintData> GetConstraintsToRemove(
-            object stateData,
-            EventPayload payload
-        ) =>
-            [];
+            new List<IPostEventValidator>();
     }
 }

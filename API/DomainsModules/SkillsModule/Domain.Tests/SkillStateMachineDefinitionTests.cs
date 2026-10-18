@@ -1,7 +1,6 @@
 using EventSourcing.Core.Providers;
 using EventSourcing.Shared.Containers;
 using EventSourcing.Shared.Models;
-using SkillsModule.Domain.Constraints;
 using SkillsModule.Domain.Events;
 using SkillsModule.Domain.Validators;
 
@@ -63,54 +62,6 @@ public sealed class SkillStateMachineDefinitionTests
             ],
             definition.Events.Keys
         );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillCreatedV1)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillCreatedV2)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillCreatedV3)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillUpdatedV1)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillDetailsUpdatedV1)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillDetailsUpdatedV2)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillDeletedV1)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueSkillNameConstraint)],
-            definition.Events[nameof(SkillDeletedV2)].UniqueConstraints
-        );
-        Assert.Empty(definition.Events[nameof(SkillReferenceAddedV1)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceAddedV2)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceAddedV3)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV1)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV2)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceUpdatedV3)].UniqueConstraints);
-        Assert.Empty(
-            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV1)]
-                .UniqueConstraints
-        );
-        Assert.Empty(
-            definition.Events[nameof(SkillReferenceAutoLoadUpdatedV2)]
-                .UniqueConstraints
-        );
-        Assert.Empty(definition.Events[nameof(SkillReferenceDeletedV1)].UniqueConstraints);
-        Assert.Empty(definition.Events[nameof(SkillReferenceDeletedV2)].UniqueConstraints);
         Assert.Equal(
             [nameof(SkillReferenceMustNotExistValidator)],
             definition.Events[nameof(SkillReferenceAddedV1)].PreEventValidators
@@ -180,7 +131,7 @@ public sealed class SkillStateMachineDefinitionTests
     }
 
     [Fact]
-    public async Task ResolvesReferenceValidatorsFromYaml()
+    public void ResolvesReferenceValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(CreateDefinitionProvider());
@@ -217,10 +168,10 @@ public sealed class SkillStateMachineDefinitionTests
             )
         );
 
-        var addedValidators = await provider.GetPreEventStateValidators(addedPayload);
-        var updatedValidators = await provider.GetPreEventStateValidators(updatedPayload);
+        var addedValidators = provider.GetPreEventStateValidators(addedPayload);
+        var updatedValidators = provider.GetPreEventStateValidators(updatedPayload);
         var autoLoadUpdatedValidators =
-            await provider.GetPreEventStateValidators(autoLoadUpdatedPayload);
+            provider.GetPreEventStateValidators(autoLoadUpdatedPayload);
 
         Assert.IsType<SkillReferenceMustNotExistValidator>(
             Assert.Single(addedValidators)
@@ -231,11 +182,11 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.IsType<SkillReferenceMustExistValidator>(
             Assert.Single(autoLoadUpdatedValidators)
         );
-        Assert.Empty(await provider.GetPostEventStateValidators(addedPayload));
+        Assert.Empty(provider.GetPostEventStateValidators(addedPayload));
     }
 
     [Fact]
-    public async Task ResolvesAttachmentValidatorsFromYaml()
+    public void ResolvesAttachmentValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(
@@ -252,7 +203,7 @@ public sealed class SkillStateMachineDefinitionTests
             Extension = "pdf"
         };
 
-        var addedValidators = await provider.GetPreEventStateValidators(
+        var addedValidators = provider.GetPreEventStateValidators(
             CreatePayload(
                 new SkillAttachmentAddedV2(
                     attachment,
@@ -263,7 +214,7 @@ public sealed class SkillStateMachineDefinitionTests
                 )
             )
         );
-        var deletedValidators = await provider.GetPreEventStateValidators(
+        var deletedValidators = provider.GetPreEventStateValidators(
             CreatePayload(
                 new SkillAttachmentDeletedV2(
                     attachment.Id,
@@ -338,11 +289,7 @@ public sealed class SkillStateMachineDefinitionTests
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV2));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV1));
-            EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV2));
-            ConstraintCreatorTypeContainer.AddUniqueEventConstraintCreator(
-                typeof(UniqueSkillNameConstraint)
-            );
-            EventValidatorContainer.AddEventValidator(
+            EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV2));            EventValidatorContainer.AddEventValidator(
                 typeof(SkillReferenceMustNotExistValidator)
             );
             EventValidatorContainer.AddEventValidator(

@@ -1,0 +1,148 @@
+:host {
+  display: block;
+  margin-top: 24px;
+}
+
+.constraint-panel {
+  padding: 32px 34px;
+}
+
+.panel-heading {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 23px;
+}
+
+.panel-heading p {
+  max-width: 700px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.panel-message {
+  margin: 24px 0 0;
+  color: var(--muted);
+}
+
+.panel-message.error {
+  color: #9e2f3c;
+}
+
+.rebuild-form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 14px;
+  max-width: 780px;
+  padding-top: 28px;
+}
+
+.form-field {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 8px;
+}
+
+.form-field > span {
+  color: #263550;
+  font-weight: 680;
+}
+
+.form-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: white;
+}
+
+.form-field select:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.rebuild-form button {
+  min-width: 190px;
+  min-height: 46px;
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.rebuild-form button:hover:not(:disabled) {
+  background: #222dce;
+}
+
+.rebuild-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.rebuild-result {
+  display: grid;
+  gap: 5px;
+  max-width: 780px;
+  margin-top: 26px;
+  padding: 15px 17px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+
+.rebuild-result.success {
+  color: #197044;
+  border-color: #b9ddc9;
+  background: #f5fcf8;
+}
+
+.rebuild-result.error {
+  color: #9e2f3c;
+  border-color: #edc5ca;
+  background: #fffafb;
+}
+
+.conflict-list {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conflict-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.constraint-name {
+  font-weight: 680;
+}
+
+.conflict-list code {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .constraint-panel {
+    padding: 24px 20px;
+  }
+
+  .rebuild-form button {
+    width: 100%;
+  }
+}

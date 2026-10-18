@@ -173,6 +173,12 @@ public sealed partial class PolicyCommandTests
             new SessionAggregateMapAddedV1(new ThreadId(SessionId), MemoryId)
         );
         payload.EventExecutionInfo.OrderNumber = 1;
-        return store.Write(new List<EventPayload> { payload });
+        var stateInfo = StateInfo.Create(
+            new object(),
+            payload.EventExecutionInfo.StateMachineId,
+            payload.EventExecutionInfo.AggregateId
+        );
+        stateInfo.LastExecutedPayloads = [payload];
+        return store.Write(new List<StateInfo> { stateInfo });
     }
 }

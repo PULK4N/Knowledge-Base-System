@@ -51,7 +51,7 @@ public sealed class GetFeatureQuery(
         if (eventsToReplay.Count == 0)
             return null;
 
-        var stateInfo = await stateCalculator.Calculate(
+        var stateInfo = stateCalculator.Calculate(
             eventsToReplay,
             []
         );
