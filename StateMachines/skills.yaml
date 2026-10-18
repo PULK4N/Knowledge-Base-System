@@ -9,30 +9,14 @@ projections:
   - SkillListProjector
   - SkillSearchProjector
 events:
-  SkillCreatedV1:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillCreatedV2:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillCreatedV3:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillUpdatedV1:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillDetailsUpdatedV1:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillDetailsUpdatedV2:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillDeletedV1:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
-  SkillDeletedV2:
-    uniqueConstraints:
-      - UniqueSkillNameConstraint
+  SkillCreatedV1: {}
+  SkillCreatedV2: {}
+  SkillCreatedV3: {}
+  SkillUpdatedV1: {}
+  SkillDetailsUpdatedV1: {}
+  SkillDetailsUpdatedV2: {}
+  SkillDeletedV1: {}
+  SkillDeletedV2: {}
   SkillReferenceAddedV1:
     preEventValidators:
       - SkillReferenceMustNotExistValidator

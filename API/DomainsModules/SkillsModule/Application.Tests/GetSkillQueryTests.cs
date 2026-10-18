@@ -102,7 +102,6 @@ public sealed class GetSkillQueryTests
             new OrderNumberHelper(),
             new SkillStateDataProvider(),
             new StubEventValidatorProvider(),
-            new StubUniqueEventConstraintProvider(),
             new TestStateMachineDefinitionProvider()
         );
 
@@ -203,46 +202,28 @@ public sealed class GetSkillQueryTests
                 )
             );
 
-        public Task Write(List<EventPayload> payloads) =>
+        public Task Write(List<StateInfo> stateInfos) =>
             throw new NotSupportedException();
     }
 
     private sealed class StubEventValidatorProvider
         : IEventValidatorProvider
     {
-        public Task<List<IPreEventValidator>>
+        public List<IPreEventValidator>
             GetPreEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPreEventValidator>());
+                new List<IPreEventValidator>();
 
-        public Task<List<IPostEventValidator>>
+        public List<IPostEventValidator>
             GetPostEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class StubUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToAdd(
-                object stateData,
-                EventPayload payload
-            ) =>
-                [];
-
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToRemove(
-                object stateData,
-                EventPayload payload
-            ) =>
-                [];
+                new List<IPostEventValidator>();
     }
 
     private sealed class SkillStateDataProvider : IStateDataProvider
     {
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(new SkillStateData(aggregateId));
+            new SkillStateData(aggregateId);
     }
 }

@@ -85,7 +85,7 @@ public sealed class RunProjectionCommand : Command<ProjectionRunResult?>
                 continue;
 
             stateInfos.Add(
-                await _stateCalculator.Calculate(
+                _stateCalculator.Calculate(
                     aggregateHistory,
                     []
                 )

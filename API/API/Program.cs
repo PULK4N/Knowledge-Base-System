@@ -2,6 +2,7 @@ using ActionModule.API;
 using ActionModule.Shared;
 using AdministrationModule.API.Controllers;
 using AdministrationModule.Application.Commands;
+using AdministrationModule.Application.Services;
 using AttachmentsModule.API.Controllers;
 using AttachmentsModule.Application.Queries;
 using Api.Settings;
@@ -104,6 +105,7 @@ builder.Services.RegisterActions(
     typeof(SearchKnowledgeQuery).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly
 );
+builder.Services.AddScoped<UniqueConstraintRebuildService>();
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
 
 builder.Services.RegisterOutboxProcessing(builder.Configuration);

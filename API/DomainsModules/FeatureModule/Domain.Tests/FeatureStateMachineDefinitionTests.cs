@@ -1,7 +1,6 @@
 using EventSourcing.Core.Providers;
 using EventSourcing.Shared.Containers;
 using EventSourcing.Shared.Models;
-using FeatureModule.Domain.Constraints;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
 using FeatureModule.Domain.Validators;
@@ -108,26 +107,6 @@ public sealed class FeatureStateMachineDefinitionTests
             definition.Events[nameof(CurrentFeaturePlanChangedV1)]
                 .PreEventValidators
         );
-        Assert.Equal(
-            [nameof(UniqueFeatureNameConstraint)],
-            definition.Events[nameof(FeatureAddedV1)].UniqueConstraints
-        );
-        Assert.Equal(
-            [nameof(UniqueFeatureNameConstraint)],
-            definition.Events[nameof(FeatureRemovedV1)].UniqueConstraints
-        );
-        Assert.All(
-            definition.Events
-                .Where(
-                    definition =>
-                        definition.Key is not nameof(FeatureAddedV1)
-                            and not nameof(FeatureRemovedV1)
-                            and not nameof(FeatureAddedV2)
-                            and not nameof(FeatureRemovedV2)
-                )
-                .Select(definition => definition.Value),
-            eventDefinition => Assert.Empty(eventDefinition.UniqueConstraints)
-        );
         Assert.All(
             definition.Events.Values,
             eventDefinition => Assert.Empty(
@@ -137,7 +116,7 @@ public sealed class FeatureStateMachineDefinitionTests
     }
 
     [Fact]
-    public async Task ResolvesFeatureParentValidatorsFromYaml()
+    public void ResolvesFeatureParentValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(
@@ -149,7 +128,7 @@ public sealed class FeatureStateMachineDefinitionTests
             )
         );
 
-        var validators = await provider.GetPreEventStateValidators(payload);
+        var validators = provider.GetPreEventStateValidators(payload);
 
         Assert.Collection(
             validators,
@@ -182,7 +161,7 @@ public sealed class FeatureStateMachineDefinitionTests
     }
 
     [Fact]
-    public async Task ResolvesPlanValidatorsFromYaml()
+    public void ResolvesPlanValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(
@@ -194,7 +173,7 @@ public sealed class FeatureStateMachineDefinitionTests
             )
         );
 
-        var validators = await provider.GetPreEventStateValidators(payload);
+        var validators = provider.GetPreEventStateValidators(payload);
 
         Assert.Collection(
             validators,
@@ -206,7 +185,7 @@ public sealed class FeatureStateMachineDefinitionTests
     }
 
     [Fact]
-    public async Task ResolvesResearchDiscoveryValidatorsFromYaml()
+    public void ResolvesResearchDiscoveryValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(
@@ -222,7 +201,7 @@ public sealed class FeatureStateMachineDefinitionTests
             )
         );
 
-        var validators = await provider.GetPreEventStateValidators(payload);
+        var validators = provider.GetPreEventStateValidators(payload);
 
         Assert.Collection(
             validators,
@@ -236,7 +215,7 @@ public sealed class FeatureStateMachineDefinitionTests
     }
 
     [Fact]
-    public async Task ResolvesReviewNoteValidatorsFromYaml()
+    public void ResolvesReviewNoteValidatorsFromYaml()
     {
         RegisterTypesOnce();
         var provider = new EventValidatorProvider(
@@ -250,7 +229,7 @@ public sealed class FeatureStateMachineDefinitionTests
             )
         );
 
-        var validators = await provider.GetPreEventStateValidators(payload);
+        var validators = provider.GetPreEventStateValidators(payload);
 
         Assert.Collection(
             validators,
@@ -294,10 +273,6 @@ public sealed class FeatureStateMachineDefinitionTests
             );
             foreach (var eventType in EventTypes)
                 EventTypeContainer.AddEventType(eventType);
-
-            ConstraintCreatorTypeContainer.AddUniqueEventConstraintCreator(
-                typeof(UniqueFeatureNameConstraint)
-            );
 
             foreach (var validatorType in ValidatorTypes)
                 EventValidatorContainer.AddEventValidator(validatorType);

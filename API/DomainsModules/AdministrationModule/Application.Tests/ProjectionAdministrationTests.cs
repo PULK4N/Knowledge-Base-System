@@ -326,7 +326,6 @@ public sealed class ProjectionAdministrationTests
             new OrderNumberHelper(),
             new StubStateDataProvider(),
             new StubEventValidatorProvider(),
-            new StubUniqueEventConstraintProvider(),
             definitionProvider
         );
 
@@ -378,7 +377,7 @@ public sealed class ProjectionAdministrationTests
                 )
             );
 
-        public Task Write(List<EventPayload> payloads) =>
+        public Task Write(List<StateInfo> stateInfos) =>
             throw new NotSupportedException();
     }
 
@@ -395,41 +394,23 @@ public sealed class ProjectionAdministrationTests
 
     private sealed class StubStateDataProvider : IStateDataProvider
     {
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult(new object());
+            new object();
     }
 
     private sealed class StubEventValidatorProvider
         : IEventValidatorProvider
     {
-        public Task<List<IPreEventValidator>>
+        public List<IPreEventValidator>
             GetPreEventStateValidators(EventPayload payload) =>
-            Task.FromResult(new List<IPreEventValidator>());
+            new List<IPreEventValidator>();
 
-        public Task<List<IPostEventValidator>>
+        public List<IPostEventValidator>
             GetPostEventStateValidators(EventPayload payload) =>
-            Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class StubUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToAdd(
-                object stateData,
-                EventPayload payload
-            ) =>
-            [];
-
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToRemove(
-                object stateData,
-                EventPayload payload
-            ) =>
-            [];
+            new List<IPostEventValidator>();
     }
 
     private sealed class CapturingOutbox : IOutbox

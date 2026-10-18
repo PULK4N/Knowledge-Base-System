@@ -1,78 +1,47 @@
 using EventSourcing.Shared.Models;
 using FeatureModule.Domain.Constraints;
-using FeatureModule.Domain.Events;
 
 namespace FeatureModule.Domain.Tests;
 
 public sealed class UniqueFeatureNameConstraintTests
 {
-    private readonly UniqueFeatureNameConstraint _constraint = new();
+    private static readonly AggregateId FirstId =
+        AggregateId.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
+    private static readonly AggregateId SecondId =
+        AggregateId.FromDatabaseGuid(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
 
-    [Fact]
-    public void Add_reserves_normalized_feature_name()
+    private readonly FeatureNameConstraintCreator _creator = new();
+
+    [Theory]
+    [InlineData("  My-Name  ", "MY-NAME")]
+    [InlineData("my-name", "MY-NAME")]
+    [InlineData("   ", null)]
+    public void Create_ReturnsNormalizedNameConstraint(string name, string? normalizedName)
     {
-        var payload = CreatePayload(
-            new FeatureAddedV1(
-                Id("22222222-2222-2222-2222-222222222222"),
-                "  Search Page  ",
-                "Summary",
-                "Planning"
-            )
-        );
-        var state = new FeatureStateData(
-            payload.EventExecutionInfo.AggregateId
-        );
+        var state = new FeatureStateData(FirstId) { Name = name };
+        List<byte[]> expectedHashes = normalizedName is null
+            ? []
+            : [new UniqueFeatureNameConstraint(state, normalizedName).Hash];
 
-        payload.EventData.Apply(state, payload.EventExecutionInfo);
-        var constraint = Assert.Single(
-            _constraint.CreateConstraintsToAdd(state, payload)
-        );
+        var constraints = _creator.Create(state);
 
-        Assert.Equal(
-            UniqueFeatureNameConstraint.ConstraintName,
-            constraint.ConstraintName
+        Assert.Equal(expectedHashes, constraints.Select(constraint => constraint.Hash));
+        Assert.All(
+            constraints,
+            constraint =>
+            {
+                Assert.Equal(nameof(UniqueFeatureNameConstraint), constraint.ConstraintName);
+                Assert.Equal(FirstId.Value, constraint.AggregateId);
+            }
         );
-        Assert.Equal("SEARCH PAGE", constraint.ValueToHash);
     }
 
     [Fact]
-    public void Remove_releases_feature_name_without_adding_it_back()
+    public void Create_EquivalentNamesOfDifferentAggregates_ShareHash()
     {
-        var state = new FeatureStateData(
-            Id("11111111-1111-1111-1111-111111111111")
-        )
-        {
-            ProjectId = Id("22222222-2222-2222-2222-222222222222"),
-            Name = "Reusable feature",
-            Summary = "Summary",
-            Status = "Complete"
-        };
-        var payload = CreatePayload(new FeatureRemovedV1());
+        var first = Assert.Single(_creator.Create(new FeatureStateData(FirstId) { Name = "My-Name" }));
+        var second = Assert.Single(_creator.Create(new FeatureStateData(SecondId) { Name = " my-name " }));
 
-        payload.UniqueEventConstraintsToRemove.AddRange(
-            _constraint.CreateConstraintsToRemove(state, payload)
-        );
-        payload.EventData.Apply(state, payload.EventExecutionInfo);
-
-        Assert.Equal(
-            "REUSABLE FEATURE",
-            Assert.Single(payload.UniqueEventConstraintsToRemove).ValueToHash
-        );
-        Assert.Empty(_constraint.CreateConstraintsToAdd(state, payload));
+        Assert.Equal(first.Hash, second.Hash);
     }
-
-    private static EventPayload CreatePayload(
-        EventSourcing.Shared.Interfaces.IEvent eventData
-    ) =>
-        EventPayload.Create(
-            EventExecutor.FromDatabaseGuid(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            ),
-            Id("11111111-1111-1111-1111-111111111111"),
-            "features-state-machine",
-            eventData
-        );
-
-    private static AggregateId Id(string value) =>
-        AggregateId.FromDatabaseGuid(Guid.Parse(value));
 }

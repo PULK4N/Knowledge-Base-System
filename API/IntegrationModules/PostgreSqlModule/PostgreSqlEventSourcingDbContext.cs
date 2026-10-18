@@ -93,11 +93,6 @@ internal sealed class PostgreSqlEventSourcingDbContext(
             .HasColumnName("xmin")
             .IsRowVersion();
 
-        modelBuilder
-            .Entity<UniqueEventConstraint>()
-            .HasKey(constraint => constraint.ConstraintHash)
-            .Metadata.RemoveAnnotation("SqlServer:Clustered");
-
         modelBuilder.Entity<ProjectPolicyText>(
             policyText =>
             {

@@ -115,7 +115,6 @@ public sealed class AddFeatureCommandTests
             new OrderNumberHelper(),
             new FeatureStateDataProvider(),
             new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider(),
             new TestStateMachineDefinitionProvider()
         );
 
@@ -150,30 +149,13 @@ public sealed class AddFeatureCommandTests
     private sealed class EmptyEventValidatorProvider
         : IEventValidatorProvider
     {
-        public Task<List<IPreEventValidator>>
+        public List<IPreEventValidator>
             GetPreEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPreEventValidator>());
+                new List<IPreEventValidator>();
 
-        public Task<List<IPostEventValidator>>
+        public List<IPostEventValidator>
             GetPostEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class EmptyUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData> GetConstraintsToAdd(
-            object stateData,
-            EventPayload payload
-        ) =>
-            [];
-
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToRemove(
-                object stateData,
-                EventPayload payload
-            ) =>
-            [];
+                new List<IPostEventValidator>();
     }
 
     private sealed class StubFeatureSummaryRepository(
@@ -220,10 +202,10 @@ public sealed class AddFeatureCommandTests
 
     private sealed class FeatureStateDataProvider : IStateDataProvider
     {
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(new FeatureStateData(aggregateId));
+            new FeatureStateData(aggregateId);
     }
 }

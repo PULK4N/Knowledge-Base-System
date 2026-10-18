@@ -96,12 +96,13 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("SerializedPayloadMessage");
                 });
 
-            modelBuilder.Entity("EventSourcing.Persistence.Models.UniqueEventConstraint", b =>
+            modelBuilder.Entity("EventSourcing.Shared.Models.UniqueConstraint", b =>
                 {
-                    b.Property<byte[]>("ConstraintHash")
-                        .HasMaxLength(32)
-                        .HasColumnType("bytea")
-                        .IsFixedLength();
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<Guid>("AggregateId")
                         .HasColumnType("uuid");
@@ -110,16 +111,20 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<long>("OrderNumber")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StateMachineId")
+                    b.Property<byte[]>("Hash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(32)
+                        .HasColumnType("bytea")
+                        .IsFixedLength();
 
-                    b.HasKey("ConstraintHash");
+                    b.HasKey("Id");
 
-                    b.ToTable("UniqueEventConstraints", (string)null);
+                    b.HasIndex("AggregateId");
+
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
+                    b.ToTable("UniqueConstraints", (string)null);
                 });
 
             modelBuilder.Entity("FeatureModule.Persistence.Models.FeatureSearchEntry", b =>

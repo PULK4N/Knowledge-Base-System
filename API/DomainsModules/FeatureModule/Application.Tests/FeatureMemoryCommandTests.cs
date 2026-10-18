@@ -34,7 +34,6 @@ public sealed class FeatureMemoryCommandTests
             new OrderNumberHelper(),
             new FeatureStateDataProvider(),
             new EmptyEventValidatorProvider(),
-            new EmptyUniqueEventConstraintProvider(),
             new TestStateMachineDefinitionProvider()
         );
         var handler = new StateMachineHandler(
@@ -125,7 +124,7 @@ public sealed class FeatureMemoryCommandTests
         var handler = new StateMachineHandler(
             new StateCalculator(
                 new OrderNumberHelper(), new FeatureStateDataProvider(),
-                new EmptyEventValidatorProvider(), new EmptyUniqueEventConstraintProvider(),
+                new EmptyEventValidatorProvider(),
                 new TestStateMachineDefinitionProvider()
             ),
             outbox
@@ -199,31 +198,13 @@ public sealed class FeatureMemoryCommandTests
     private sealed class EmptyEventValidatorProvider
         : IEventValidatorProvider
     {
-        public Task<List<IPreEventValidator>>
+        public List<IPreEventValidator>
             GetPreEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPreEventValidator>());
+                new List<IPreEventValidator>();
 
-        public Task<List<IPostEventValidator>>
+        public List<IPostEventValidator>
             GetPostEventStateValidators(EventPayload payload) =>
-                Task.FromResult(new List<IPostEventValidator>());
-    }
-
-    private sealed class EmptyUniqueEventConstraintProvider
-        : IUniqueEventConstraintProvider
-    {
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToAdd(
-                object stateData,
-                EventPayload payload
-            ) =>
-                [];
-
-        public IEnumerable<UniqueEventConstraintData>
-            GetConstraintsToRemove(
-                object stateData,
-                EventPayload payload
-            ) =>
-                [];
+                new List<IPostEventValidator>();
     }
 
     private sealed class FeatureStateDataProvider : IStateDataProvider
@@ -235,11 +216,11 @@ public sealed class FeatureMemoryCommandTests
                 Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
             );
 
-        public Task<object> GetStateDataByStateMachine(
+        public object GetStateDataByStateMachine(
             string stateMachineId,
             AggregateId aggregateId
         ) =>
-            Task.FromResult<object>(
+            (
                 stateMachineId switch
                 {
                     "memory-session-aggregate-map-state-machine" =>

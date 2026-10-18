@@ -30,7 +30,7 @@ public abstract class MemoryQuery<TResult>(
                 continue;
             }
 
-            var stateInfo = await stateCalculator.Calculate(
+            var stateInfo = stateCalculator.Calculate(
                 persistedEvents
                     .OrderBy(
                         payload =>

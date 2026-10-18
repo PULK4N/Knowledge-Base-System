@@ -38,7 +38,7 @@ public sealed class GetSkillQuery(StateCalculator stateCalculator, IEventStore e
         if (eventsToReplay.Count == 0)
             return null;
 
-        var stateInfo = await stateCalculator.Calculate(eventsToReplay, [ ]);
+        var stateInfo = stateCalculator.Calculate(eventsToReplay, [ ]);
 
         return SkillDto.FromStateData(
             (SkillStateData)stateInfo.StateData,

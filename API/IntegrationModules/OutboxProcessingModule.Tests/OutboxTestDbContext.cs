@@ -18,11 +18,6 @@ public sealed class OutboxTestDbContext(DbContextOptions<EventSourcingDbContext>
         base.OnModelCreating(builder);
 
         builder
-            .Entity<UniqueEventConstraint>()
-            .HasKey(constraint => constraint.ConstraintHash)
-            .Metadata.RemoveAnnotation("SqlServer:Clustered");
-
-        builder
             .Entity<SerializedPayloadMessage>()
             .Property(message => message.Version)
             .IsConcurrencyToken()

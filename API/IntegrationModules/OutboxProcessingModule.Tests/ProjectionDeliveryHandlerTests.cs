@@ -281,32 +281,21 @@ public sealed class ProjectionDeliveryHandlerTests
         stateData
             .Setup(provider => provider.GetStateDataByStateMachine(
                 StateMachineId, It.IsAny<AggregateId>()))
-            .ReturnsAsync(
+            .Returns(
                 (string _, AggregateId aggregateId) => new AccountStateData(aggregateId));
 
         var validators = new Mock<IEventValidatorProvider>();
         validators
             .Setup(provider => provider.GetPreEventStateValidators(It.IsAny<EventPayload>()))
-            .ReturnsAsync([ ]);
+            .Returns([ ]);
         validators
             .Setup(provider => provider.GetPostEventStateValidators(It.IsAny<EventPayload>()))
-            .ReturnsAsync([ ]);
-
-        var constraints = new Mock<IUniqueEventConstraintProvider>();
-        constraints
-            .Setup(provider => provider.GetConstraintsToAdd(
-                It.IsAny<object>(), It.IsAny<EventPayload>()))
-            .Returns([ ]);
-        constraints
-            .Setup(provider => provider.GetConstraintsToRemove(
-                It.IsAny<object>(), It.IsAny<EventPayload>()))
             .Returns([ ]);
 
         return new StateCalculator(
             new OrderNumberHelper(),
             stateData.Object,
             validators.Object,
-            constraints.Object,
             definitions
         );
     }
