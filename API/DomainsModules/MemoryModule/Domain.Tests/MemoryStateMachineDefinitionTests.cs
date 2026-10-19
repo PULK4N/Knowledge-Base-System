@@ -23,12 +23,16 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(ChatSummaryAddedV2));
         EventTypeContainer.AddEventType(typeof(MemoryRelationAddedV1));
         EventTypeContainer.AddEventType(typeof(MemoryAttachmentAddedV1));
+        EventTypeContainer.AddEventType(typeof(PromptModelSetV1));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
         );
         EventValidatorContainer.AddEventValidator(
             typeof(MemoryPromptMustExistValidator)
+        );
+        EventValidatorContainer.AddEventValidator(
+            typeof(PromptModelMustNotBeSetValidator)
         );
         var provider = new YamlStateMachineDefinitionProvider(
             Path.Combine(AppContext.BaseDirectory, "StateMachines")
@@ -43,6 +47,13 @@ public sealed class MemoryStateMachineDefinitionTests
             [nameof(MemoryPromptMustExistValidator)],
             definition.Events[nameof(MemoryAttachmentAddedV1)]
                 .PreEventValidators
+        );
+        Assert.Equal(
+            [
+                nameof(MemoryPromptMustExistValidator),
+                nameof(PromptModelMustNotBeSetValidator)
+            ],
+            definition.Events[nameof(PromptModelSetV1)].PreEventValidators
         );
         Assert.Equal(
             [

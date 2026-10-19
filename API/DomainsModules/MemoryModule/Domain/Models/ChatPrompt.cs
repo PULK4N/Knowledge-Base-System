@@ -4,6 +4,7 @@ public sealed class ChatPrompt
 {
     public PromptId PromptId { get; set; }
     public DateTime PromptStartTimestamp { get; set; }
+    public string? Model { get; set; }
     public List<PromptHookRecord> PromptHookRecords { get; set; } = [];
     public List<ToolCallRecord> ToolCalls { get; set; } = [];
     public List<MemoryAttachment> Attachments { get; set; } = [];

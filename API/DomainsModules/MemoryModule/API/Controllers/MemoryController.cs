@@ -5,6 +5,7 @@ using MemoryModule.API.Mapping;
 using MemoryModule.API.Requests;
 using MemoryModule.Application.Commands;
 using MemoryModule.Application.Models;
+using MemoryModule.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MemoryModule.API.Controllers;
@@ -55,6 +56,21 @@ public sealed class MemoryController(
     )
     {
         payload.MapTo(command);
+
+        return Ok(await Execute(command));
+    }
+
+    [HttpPut("sessions/{sessionId:guid}/prompts/{promptId:guid}/model")]
+    public async Task<ActionResult<MemoryCommandResult>> SetPromptModel(
+        Guid sessionId,
+        Guid promptId,
+        [FromBody] SetPromptModelRequest body,
+        [FromServices] SetPromptModelCommand command
+    )
+    {
+        command.ThreadId = new ThreadId(sessionId);
+        command.PromptId = new PromptId(promptId);
+        command.Model = body.Model;
 
         return Ok(await Execute(command));
     }

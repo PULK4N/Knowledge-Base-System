@@ -25,3 +25,7 @@ events:
   MemoryAttachmentAddedV1:
     preEventValidators:
       - MemoryPromptMustExistValidator
+  PromptModelSetV1:
+    preEventValidators:
+      - MemoryPromptMustExistValidator
+      - PromptModelMustNotBeSetValidator

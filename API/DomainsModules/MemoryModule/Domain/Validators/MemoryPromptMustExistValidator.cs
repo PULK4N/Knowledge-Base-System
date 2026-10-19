@@ -1,5 +1,6 @@
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain.Events;
+using MemoryModule.Domain.Models;
 using Shared.Interfaces;
 
 namespace MemoryModule.Domain.Validators;
@@ -11,19 +12,27 @@ public sealed class MemoryPromptMustExistValidator : IPreEventValidator
         EventPayload payload
     )
     {
-        if (payload.EventData is not MemoryAttachmentAddedV1 eventData)
+        PromptId? promptId = payload.EventData switch
+        {
+            MemoryAttachmentAddedV1 eventData => eventData.PromptId,
+            PromptModelSetV1 eventData => eventData.PromptId,
+            _ => null
+        };
+
+        if (promptId is not { } targetPromptId)
         {
             return EventValidationResult.FromPayload(
                 payload,
                 nameof(MemoryPromptMustExistValidator),
                 false,
                 $"{nameof(MemoryPromptMustExistValidator)} can only validate "
-                    + $"{nameof(IMemoryAttachmentAdded)} events."
+                    + $"{nameof(IMemoryAttachmentAdded)} and "
+                    + $"{nameof(IPromptModelSet)} events."
             );
         }
 
         var state = (MemoryStateData)stateData;
-        var promptExists = state.ChatPrompts.ContainsKey(eventData.PromptId);
+        var promptExists = state.ChatPrompts.ContainsKey(targetPromptId);
 
         return EventValidationResult.FromPayload(
             payload,
@@ -32,7 +41,7 @@ public sealed class MemoryPromptMustExistValidator : IPreEventValidator
             promptExists
                 ? null
                 : $"The memory has no prompt with turn ID "
-                    + $"'{eventData.PromptId.Value}'."
+                    + $"'{targetPromptId.Value}'."
         );
     }
 }

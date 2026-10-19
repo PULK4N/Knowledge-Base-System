@@ -54,6 +54,9 @@ public sealed class RecordCodexPromptHookCommandTests
         EventTypeContainer.AddEventType(
             typeof(ChatSummaryAddedV2)
         );
+        EventTypeContainer.AddEventType(
+            typeof(PromptModelSetV1)
+        );
     }
 
     [Theory]
@@ -345,6 +348,79 @@ public sealed class RecordCodexPromptHookCommandTests
         {
             ThreadId = ThreadId,
             Summary = "Summary"
+        };
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => command.Execute(Executor)
+        );
+
+        Assert.Equal(
+            $"No memory exists for thread '{ThreadId.Value}'.",
+            exception.Message
+        );
+    }
+
+    [Fact]
+    public async Task Execute_SetPromptModelWritesEventToMappedMemory()
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
+            Database.SqlServer
+        );
+        var eventStore = new CapturingEventStoreWithOutbox();
+        await CreateCommand(eventStore, FirstPromptId).Execute(Executor);
+        var mapState = Assert.IsType<SessionAggregateMapStateData>(
+            eventStore.LastWritten[MemoryAggregateIds.SessionAggregateMap].StateData
+        );
+        var command = new SetPromptModelCommand(CreateHandler(eventStore))
+        {
+            ThreadId = ThreadId,
+            PromptId = FirstPromptId,
+            Model = "gpt-5.5-codex"
+        };
+
+        var result = await command.Execute(Executor);
+
+        Assert.Equal("OK", result.Status);
+        var writtenAggregate = Assert.Single(eventStore.LastWritten);
+        Assert.Equal(mapState.AggregateIdsBySession[ThreadId], writtenAggregate.Key);
+        Assert.Equal(
+            new PromptModelSetV1(FirstPromptId, "gpt-5.5-codex"),
+            Assert.Single(writtenAggregate.Value.LastExecutedPayloads).EventData
+        );
+        var memoryState = Assert.IsType<MemoryStateData>(
+            writtenAggregate.Value.StateData
+        );
+        Assert.Equal("gpt-5.5-codex", memoryState.ChatPrompts[FirstPromptId].Model);
+    }
+
+    [Theory]
+    [InlineData("gpt-5.5-codex", true)]
+    [InlineData(" ", false)]
+    [InlineData("", false)]
+    public async Task SetPromptModel_RequiresModel(string model, bool expected)
+    {
+        var command = new SetPromptModelCommand(
+            CreateHandler(new CapturingEventStoreWithOutbox())
+        )
+        {
+            ThreadId = ThreadId,
+            PromptId = FirstPromptId,
+            Model = model
+        };
+
+        Assert.Equal(expected, await command.CanExecute(Executor));
+    }
+
+    [Fact]
+    public async Task Execute_SetPromptModelForUnknownThreadFailsClearly()
+    {
+        var command = new SetPromptModelCommand(
+            CreateHandler(new CapturingEventStoreWithOutbox())
+        )
+        {
+            ThreadId = ThreadId,
+            PromptId = FirstPromptId,
+            Model = "gpt-5.5-codex"
         };
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
