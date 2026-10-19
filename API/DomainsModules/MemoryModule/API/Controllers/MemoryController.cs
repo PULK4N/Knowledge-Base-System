@@ -75,6 +75,44 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
+    [HttpPut("claude/sessions/{sessionId:guid}/prompts/{promptId:guid}/usage")]
+    public async Task<ActionResult<MemoryCommandResult>> SetClaudePromptUsage(
+        Guid sessionId,
+        Guid promptId,
+        [FromBody] SetClaudePromptUsageRequest body,
+        [FromServices] SetClaudePromptUsageCommand command
+    )
+    {
+        command.ThreadId = new ThreadId(sessionId);
+        command.PromptId = new PromptId(promptId);
+        command.InputTokens = body.InputTokens;
+        command.CacheReadInputTokens = body.CacheReadInputTokens;
+        command.CacheCreationInputTokens = body.CacheCreationInputTokens;
+        command.OutputTokens = body.OutputTokens;
+        command.ThinkingTokens = body.ThinkingTokens;
+
+        return Ok(await Execute(command));
+    }
+
+    [HttpPut("codex/sessions/{sessionId:guid}/prompts/{promptId:guid}/usage")]
+    public async Task<ActionResult<MemoryCommandResult>> SetCodexPromptUsage(
+        Guid sessionId,
+        Guid promptId,
+        [FromBody] SetCodexPromptUsageRequest body,
+        [FromServices] SetCodexPromptUsageCommand command
+    )
+    {
+        command.ThreadId = new ThreadId(sessionId);
+        command.PromptId = new PromptId(promptId);
+        command.InputTokens = body.InputTokens;
+        command.CachedInputTokens = body.CachedInputTokens;
+        command.CacheWriteInputTokens = body.CacheWriteInputTokens;
+        command.OutputTokens = body.OutputTokens;
+        command.ReasoningOutputTokens = body.ReasoningOutputTokens;
+
+        return Ok(await Execute(command));
+    }
+
     [HttpPost("codex/migrations")]
     public async Task<ActionResult<MemoryCommandResult>> Migrate(
         [FromBody] CodexMemoryMigrationRequest body,

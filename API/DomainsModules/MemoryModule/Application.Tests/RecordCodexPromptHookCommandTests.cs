@@ -48,6 +48,8 @@ public sealed class RecordCodexPromptHookCommandTests
             typeof(CodexToolCallRecordedV1)
         );
         MemoryAttachmentEventRegistration.EnsureRegistered();
+        EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV1));
+        EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV1));
         EventTypeContainer.AddEventType(
             typeof(CodexMemoryMigratedV1)
         );
@@ -358,6 +360,37 @@ public sealed class RecordCodexPromptHookCommandTests
             $"No memory exists for thread '{ThreadId.Value}'.",
             exception.Message
         );
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Execute_SetPromptUsageWritesToMappedMemory(bool claude)
+    {
+        DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(Database.SqlServer);
+        var eventStore = new CapturingEventStoreWithOutbox();
+        await CreateCommand(eventStore, FirstPromptId).Execute(Executor);
+        if (claude)
+            await new SetClaudePromptUsageCommand(CreateHandler(eventStore))
+            {
+                ThreadId = ThreadId, PromptId = FirstPromptId,
+                InputTokens = 10, CacheReadInputTokens = 20, CacheCreationInputTokens = 30,
+                OutputTokens = 40, ThinkingTokens = 5
+            }.Execute(Executor);
+        else
+            await new SetCodexPromptUsageCommand(CreateHandler(eventStore))
+            {
+                ThreadId = ThreadId, PromptId = FirstPromptId,
+                InputTokens = 60, CachedInputTokens = 20, CacheWriteInputTokens = 30,
+                OutputTokens = 40, ReasoningOutputTokens = 5
+            }.Execute(Executor);
+        var written = Assert.Single(eventStore.LastWritten).Value;
+        Assert.Equal(claude ? nameof(ClaudePromptUsageSetV1) : nameof(CodexPromptUsageSetV1),
+            Assert.Single(written.LastExecutedPayloads).EventData.GetType().Name);
+        var prompt = Assert.IsType<MemoryStateData>(written.StateData).ChatPrompts[FirstPromptId];
+        Assert.Equal(60L, prompt.InputTokens);
+        Assert.Equal(40L, prompt.OutputTokens);
+        Assert.Equal(5L, prompt.ReasoningOutputTokens);
     }
 
     [Fact]
