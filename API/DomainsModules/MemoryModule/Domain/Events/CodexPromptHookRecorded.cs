@@ -43,13 +43,22 @@ public sealed record CodexPromptHookRecordedV1(
             return state;
         }
 
+        var gptModel = string.Empty;
+        if (
+            Payload.ValueKind == JsonValueKind.Object
+            && Payload.TryGetProperty("model", out var model)
+            && model.ValueKind == JsonValueKind.String
+        )
+            gptModel = model.GetString()!;
+
         state.ChatPrompts.Add(
             PromptId,
             new ChatPrompt
             {
                 PromptId = PromptId,
                 PromptStartTimestamp = eventExecutionInfo.Timestamp,
-                PromptHookRecords = [hookRecord]
+                PromptHookRecords = [hookRecord],
+                Model = gptModel
             }
         );
 
