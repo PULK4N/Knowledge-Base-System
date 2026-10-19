@@ -7,6 +7,7 @@ import base64
 import binascii
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -292,9 +293,36 @@ def _transcript_attachments(event: dict[str, Any]) -> tuple[list[dict[str, Any]]
             if attachment:
                 attachment["user_message_index"] = message_index
                 attachments.append(attachment)
+        if not payload.get("images") and not payload.get("local_images"):
+            # Desktop submissions can describe attachments only in the generated
+            # prompt preamble. Keep the transcript index for steered submissions.
+            for image_index, source in enumerate(
+                _prompt_image_paths(payload.get("message")), start=1
+            ):
+                attachment = _local_image(source, event, image_index)
+                if attachment:
+                    attachment["user_message_index"] = message_index
+                    attachments.append(attachment)
         if event["hook_event_name"] == "UserPromptSubmit":
             break
     return attachments, found
+
+
+def _prompt_image_paths(message: Any) -> list[str]:
+    """Read only explicitly marked images in the desktop file preamble."""
+    if not isinstance(message, str):
+        return []
+    message = message.replace("\r\n", "\n").lstrip()
+    if not message.startswith("# Files mentioned by the user:\n"):
+        return []
+    preamble, separator, _ = message.partition("\n## My request:\n")
+    if not separator:
+        return []
+    return re.findall(
+        r"^## [^\n]+?: ([^\n]+)\nImage attachment: true[ \t]*$",
+        preamble,
+        flags=re.MULTILINE,
+    )
 
 
 def _transcript_messages(event: dict[str, Any]) -> list[dict[str, Any]]:
