@@ -565,17 +565,32 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.Property<int>("HookIndex")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("CacheWriteInputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CachedInputTokens")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("HookEventName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long?>("InputTokens")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("OutputTokens")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("PayloadJson")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long?>("ReasoningOutputTokens")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -663,8 +678,17 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.Property<Guid>("MemoryAggregateId")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("CacheWriteInputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CachedInputTokens")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime?>("FirstPromptTimestamp")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("InputTokens")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("LastActivityTimestamp")
                         .HasColumnType("timestamp with time zone");
@@ -678,8 +702,14 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .HasColumnType("text[]")
                         .HasDefaultValueSql("ARRAY[]::text[]");
 
+                    b.Property<long?>("OutputTokens")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("PromptCount")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("ReasoningOutputTokens")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("SessionTitle")
                         .IsRequired()

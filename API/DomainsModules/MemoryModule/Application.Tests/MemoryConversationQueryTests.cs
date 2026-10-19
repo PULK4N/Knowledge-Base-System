@@ -1,6 +1,7 @@
 using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using MemoryModule.Application.Queries;
+using MemoryModule.Application.DTOs;
 using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
 
@@ -123,12 +124,13 @@ public sealed class MemoryConversationQueryTests
         var query = new GetMemoryConversationTextQuery(
             new FakeMemoryConversationRepository(
                 [
-                    CreateMessage(PromptHookMessageRoles.User, "First"),
+                    CreateMessage(PromptHookMessageRoles.User, "First") with { InputTokens = 10, OutputTokens = 5 },
                     CreateMessage(PromptHookMessageRoles.Hook, string.Empty),
                     CreateMessage(PromptHookMessageRoles.Assistant, "Second"),
                     CreateMessage(PromptHookMessageRoles.User, "Third")
                 ]
-            )
+            ),
+            new FakeMemorySummaryRepository(CreateSummary() with { InputTokens = 100, OutputTokens = 50 })
         )
         {
             MemoryId = MemoryId,
@@ -140,6 +142,9 @@ public sealed class MemoryConversationQueryTests
 
         Assert.Equal(MemoryId, result.MemoryId);
         Assert.Equal(3, result.TotalCount);
+        Assert.Equal(150L, result.TotalTokens);
+        if (offset == 0)
+            Assert.Equal(15L, result.Messages[0].TotalTokens);
         Assert.Equal(hasMore, result.HasMore);
         Assert.Equal(
             new List<string> { "First", "Second", "Third" }
@@ -164,7 +169,8 @@ public sealed class MemoryConversationQueryTests
     )
     {
         var query = new GetMemoryConversationTextQuery(
-            new FakeMemoryConversationRepository([])
+            new FakeMemoryConversationRepository([]),
+            new FakeMemorySummaryRepository(null)
         )
         {
             MemoryId = Guid.Parse(memoryId),
@@ -173,6 +179,31 @@ public sealed class MemoryConversationQueryTests
         };
 
         Assert.Equal(canExecute, await query.CanExecute(Executor));
+    }
+
+    [Fact]
+    public async Task Conversation_maps_prompt_counts_and_complete_summary_totals()
+    {
+        var message = CreateMessage(PromptHookMessageRoles.User, "Prompt") with
+        {
+            InputTokens = 10, CachedInputTokens = 2, CacheWriteInputTokens = 0,
+            OutputTokens = 5, ReasoningOutputTokens = 1
+        };
+        var summary = CreateSummary() with
+        {
+            InputTokens = 30, CachedInputTokens = 6, CacheWriteInputTokens = 0,
+            OutputTokens = 15, ReasoningOutputTokens = 3
+        };
+        var result = await CreateQuery([message, message with { HookIndex = 1 }], summary).Execute(Executor);
+        Assert.NotNull(result);
+        Assert.Equal(45L, result!.TotalTokens);
+        Assert.Equal(6L, result.CachedInputTokens);
+        Assert.Equal(3L, result.ReasoningOutputTokens);
+        Assert.All(result.Messages, item => Assert.Equal(15L, item.TotalTokens));
+        var dto = MemorySummaryDto.FromReadModel(summary);
+        Assert.Equal(45L, dto.TotalTokens);
+        var partial = await CreateQuery([message], summary with { InputTokens = null }).Execute(Executor);
+        Assert.Null(partial!.TotalTokens);
     }
 
     private static GetMemoryConversationQuery CreateQuery(
@@ -266,7 +297,12 @@ public sealed class MemoryConversationQueryTests
                                 message.HookIndex,
                                 message.Timestamp,
                                 message.Role,
-                                message.Message
+                                message.Message,
+                                message.InputTokens,
+                                message.CachedInputTokens,
+                                message.CacheWriteInputTokens,
+                                message.OutputTokens,
+                                message.ReasoningOutputTokens
                             )
                         )
                         .ToList(),

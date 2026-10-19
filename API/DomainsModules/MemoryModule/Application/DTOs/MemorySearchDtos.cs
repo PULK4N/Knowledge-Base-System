@@ -34,8 +34,16 @@ public sealed record MemoryPromptWindowResult(
 public sealed record MemoryPromptDto(
     Guid PromptId,
     DateTime PromptStartTimestamp,
-    string Text
-);
+    string Text,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
+)
+{
+    public long? TotalTokens => InputTokens + OutputTokens;
+}
 
 public sealed record MemoryConversationDto(
     Guid MemoryId,
@@ -46,8 +54,16 @@ public sealed record MemoryConversationDto(
     DateTime? FirstPromptTimestamp,
     DateTime? LastPromptTimestamp,
     List<MemoryConversationMessageDto> Messages,
-    List<MemoryToolCallDto> ToolCalls
-);
+    List<MemoryToolCallDto> ToolCalls,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
+)
+{
+    public long? TotalTokens => InputTokens + OutputTokens;
+}
 
 public sealed record MemoryConversationMessageDto(
     Guid PromptId,
@@ -56,8 +72,16 @@ public sealed record MemoryConversationMessageDto(
     string HookEventName,
     string Role,
     string Message,
-    string PayloadJson
-);
+    string PayloadJson,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
+)
+{
+    public long? TotalTokens => InputTokens + OutputTokens;
+}
 
 public sealed record MemoryToolCallDto(
     Guid PromptId,

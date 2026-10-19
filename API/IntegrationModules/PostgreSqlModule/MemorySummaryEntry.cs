@@ -12,4 +12,9 @@ internal sealed class MemorySummaryEntry
     public DateTime? SummaryTimestamp { get; set; }
     public DateTime LastActivityTimestamp { get; set; }
     public List<string> Models { get; set; } = [];
+    public long? InputTokens { get; set; }
+    public long? CachedInputTokens { get; set; }
+    public long? CacheWriteInputTokens { get; set; }
+    public long? OutputTokens { get; set; }
+    public long? ReasoningOutputTokens { get; set; }
 }

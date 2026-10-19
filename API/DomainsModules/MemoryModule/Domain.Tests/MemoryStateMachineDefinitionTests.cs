@@ -24,6 +24,9 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(MemoryRelationAddedV1));
         EventTypeContainer.AddEventType(typeof(MemoryAttachmentAddedV1));
         EventTypeContainer.AddEventType(typeof(PromptModelSetV1));
+        EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV1));
+        EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV1));
+        EventValidatorContainer.AddEventValidator(typeof(PromptUsageMustBeValidValidator));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
         EventValidatorContainer.AddEventValidator(
             typeof(SessionAggregateMappingMustNotExistValidator)
@@ -41,6 +44,11 @@ public sealed class MemoryStateMachineDefinitionTests
         var definition = provider.Get("memory-state-machine");
 
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
+        foreach (var eventName in new List<string> { nameof(ClaudePromptUsageSetV1), nameof(CodexPromptUsageSetV1) })
+            Assert.Equal(
+                [nameof(MemoryPromptMustExistValidator), nameof(PromptUsageMustBeValidValidator)],
+                definition.Events[eventName].PreEventValidators
+            );
         Assert.Contains(nameof(ChatSummaryAddedV1), definition.Events.Keys);
         Assert.Contains(nameof(ChatSummaryAddedV2), definition.Events.Keys);
         Assert.Equal(

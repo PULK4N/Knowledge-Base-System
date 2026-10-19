@@ -16,6 +16,8 @@ public sealed class MemoryPromptMustExistValidator : IPreEventValidator
         {
             MemoryAttachmentAddedV1 eventData => eventData.PromptId,
             PromptModelSetV1 eventData => eventData.PromptId,
+            ClaudePromptUsageSetV1 eventData => eventData.PromptId,
+            CodexPromptUsageSetV1 eventData => eventData.PromptId,
             _ => null
         };
 
@@ -27,7 +29,8 @@ public sealed class MemoryPromptMustExistValidator : IPreEventValidator
                 false,
                 $"{nameof(MemoryPromptMustExistValidator)} can only validate "
                     + $"{nameof(IMemoryAttachmentAdded)} and "
-                    + $"{nameof(IPromptModelSet)} events."
+                    + $"{nameof(IPromptModelSet)}, {nameof(IClaudePromptUsageSet)}, "
+                    + $"and {nameof(ICodexPromptUsageSet)} events."
             );
         }
 

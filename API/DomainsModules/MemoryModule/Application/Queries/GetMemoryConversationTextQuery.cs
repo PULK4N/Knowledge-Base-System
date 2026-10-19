@@ -12,7 +12,8 @@ namespace MemoryModule.Application.Queries;
 /// model gets only what was said.
 /// </summary>
 public sealed class GetMemoryConversationTextQuery(
-    IMemoryConversationRepository conversationRepository
+    IMemoryConversationRepository conversationRepository,
+    IMemorySummaryRepository summaryRepository
 ) : Query<MemoryConversationTextResult>
 {
     public const int DefaultLimit = 10;
@@ -39,6 +40,10 @@ public sealed class GetMemoryConversationTextQuery(
             Limit
         );
 
+        var summary = await summaryRepository.Get(
+            AggregateId.FromDatabaseGuid(MemoryId)
+        );
+
         return new MemoryConversationTextResult(
             MemoryId,
             Offset,
@@ -51,10 +56,20 @@ public sealed class GetMemoryConversationTextQuery(
                         message.PromptId.Value,
                         message.Timestamp,
                         message.Role,
-                        message.Message
+                        message.Message,
+                        message.InputTokens,
+                        message.CachedInputTokens,
+                        message.CacheWriteInputTokens,
+                        message.OutputTokens,
+                        message.ReasoningOutputTokens
                     )
                 )
-                .ToList()
+                .ToList(),
+            summary?.InputTokens,
+            summary?.CachedInputTokens,
+            summary?.CacheWriteInputTokens,
+            summary?.OutputTokens,
+            summary?.ReasoningOutputTokens
         );
     }
 }

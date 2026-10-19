@@ -18,7 +18,12 @@ public sealed record MemoryConversationMessage(
     string HookEventName,
     string Role,
     string Message,
-    string PayloadJson
+    string PayloadJson,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
 );
 
 /// <summary>
@@ -29,7 +34,12 @@ public sealed record MemoryConversationText(
     int HookIndex,
     DateTime Timestamp,
     string Role,
-    string Message
+    string Message,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
 );
 
 public sealed record MemoryConversationTextPage(

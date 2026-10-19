@@ -43,6 +43,36 @@ public sealed class MemorySummaryProjectorTests
         Assert.Equal(["claude-opus-5-5", "gpt-5.5-codex"], summary.Models);
     }
 
+    [Theory]
+    [InlineData(0, false, null)]
+    [InlineData(2, false, 20L)]
+    [InlineData(2, true, null)]
+    public async Task Usage_totals_require_counts_on_every_prompt(int count, bool missing, long? expected)
+    {
+        var memory = new MemoryStateData(AggregateId.FromDatabaseGuid(Guid.NewGuid()));
+        for (var index = 0; index < count; index++)
+        {
+            var id = new PromptId(Guid.NewGuid());
+            memory.ChatPrompts.Add(id, new ChatPrompt
+            {
+                PromptId = id,
+                InputTokens = missing && index == 0 ? null : 10,
+                CachedInputTokens = missing && index == 0 ? null : 2,
+                CacheWriteInputTokens = missing && index == 0 ? null : 0,
+                OutputTokens = missing && index == 0 ? null : 5,
+                ReasoningOutputTokens = null
+            });
+        }
+        var repository = new FakeMemorySummaryRepository();
+        await new MemorySummaryProjector(repository).Update([CreateStateInfo(memory)]);
+        var summary = Assert.Single(repository.Summaries);
+        Assert.Equal(expected, summary.InputTokens);
+        Assert.Equal(expected is null ? null : 4L, summary.CachedInputTokens);
+        Assert.Equal(expected is null ? null : 0L, summary.CacheWriteInputTokens);
+        Assert.Equal(expected is null ? null : 10L, summary.OutputTokens);
+        Assert.Null(summary.ReasoningOutputTokens);
+    }
+
     private static MemoryStateData CreateMemory(
         string memoryId,
         string threadId

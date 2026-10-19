@@ -120,7 +120,12 @@ public sealed class GetMemoryPromptWindowQuery(
                         : new MemoryPromptDto(
                             prompt.PromptId.Value,
                             prompt.PromptStartTimestamp,
-                            text
+                            text,
+                            prompt.InputTokens,
+                            prompt.CachedInputTokens,
+                            prompt.CacheWriteInputTokens,
+                            prompt.OutputTokens,
+                            prompt.ReasoningOutputTokens
                         );
                 }
             )

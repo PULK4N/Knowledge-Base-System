@@ -217,7 +217,12 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             LastPromptTimestamp = summary.LastPromptTimestamp,
             SummaryTimestamp = summary.SummaryTimestamp,
             LastActivityTimestamp = summary.LastActivityTimestamp,
-            Models = summary.Models.ToList()
+            Models = summary.Models.ToList(),
+            InputTokens = summary.InputTokens,
+            CachedInputTokens = summary.CachedInputTokens,
+            CacheWriteInputTokens = summary.CacheWriteInputTokens,
+            OutputTokens = summary.OutputTokens,
+            ReasoningOutputTokens = summary.ReasoningOutputTokens
         };
 
     private static MemorySummary ToReadModel(MemorySummaryEntry summary) =>
@@ -231,6 +236,11 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             summary.LastPromptTimestamp,
             summary.SummaryTimestamp,
             summary.LastActivityTimestamp,
-            summary.Models.ToList()
+            summary.Models.ToList(),
+            summary.InputTokens,
+            summary.CachedInputTokens,
+            summary.CacheWriteInputTokens,
+            summary.OutputTokens,
+            summary.ReasoningOutputTokens
         );
 }

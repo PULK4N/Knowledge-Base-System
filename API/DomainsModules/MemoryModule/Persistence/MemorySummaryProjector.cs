@@ -1,6 +1,7 @@
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using MemoryModule.Domain;
+using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
 
 namespace MemoryModule.Persistence;
@@ -25,6 +26,13 @@ public sealed class MemorySummaryProjector(
             summaries
         );
     }
+
+    private static long? SumIfComplete(
+        List<ChatPrompt> prompts,
+        Func<ChatPrompt, long?> select
+    ) => prompts.Count > 0 && prompts.All(prompt => select(prompt).HasValue)
+        ? prompts.Sum(prompt => select(prompt)!.Value)
+        : null;
 
     private static MemorySummary ToReadModel(MemoryStateData memory)
     {
@@ -64,7 +72,12 @@ public sealed class MemorySummaryProjector(
                 .OfType<string>()
                 .Distinct(StringComparer.Ordinal)
                 .Order(StringComparer.Ordinal)
-                .ToList()
+                .ToList(),
+            SumIfComplete(prompts, prompt => prompt.InputTokens),
+            SumIfComplete(prompts, prompt => prompt.CachedInputTokens),
+            SumIfComplete(prompts, prompt => prompt.CacheWriteInputTokens),
+            SumIfComplete(prompts, prompt => prompt.OutputTokens),
+            SumIfComplete(prompts, prompt => prompt.ReasoningOutputTokens)
         );
     }
 }

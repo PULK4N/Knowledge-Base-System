@@ -55,6 +55,31 @@ public sealed class MemoryConversationProjectorTests
     }
 
     [Fact]
+    public async Task Update_carries_prompt_usage_on_hooks_and_preserves_unknown_counts()
+    {
+        var repository = new FakeMemoryConversationRepository();
+        var memory = CreateMemory();
+        var prompt = memory.ChatPrompts[FirstPromptId];
+        prompt.InputTokens = 100;
+        prompt.CachedInputTokens = 60;
+        prompt.CacheWriteInputTokens = 20;
+        prompt.OutputTokens = 15;
+        prompt.ReasoningOutputTokens = 5;
+
+        await new MemoryConversationProjector(repository).Update([CreateStateInfo(memory)]);
+
+        Assert.All(repository.Messages.Where(message => message.PromptId == FirstPromptId), message =>
+        {
+            Assert.Equal(100L, message.InputTokens);
+            Assert.Equal(60L, message.CachedInputTokens);
+            Assert.Equal(20L, message.CacheWriteInputTokens);
+            Assert.Equal(15L, message.OutputTokens);
+            Assert.Equal(5L, message.ReasoningOutputTokens);
+        });
+        Assert.Null(repository.Messages.Single(message => message.PromptId == SecondPromptId).InputTokens);
+    }
+
+    [Fact]
     public async Task Update_keeps_the_whole_payload_for_expanding_a_turn()
     {
         var repository = new FakeMemoryConversationRepository();

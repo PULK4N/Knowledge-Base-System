@@ -29,3 +29,11 @@ events:
     preEventValidators:
       - MemoryPromptMustExistValidator
       - PromptModelMustNotBeSetValidator
+  ClaudePromptUsageSetV1:
+    preEventValidators:
+      - MemoryPromptMustExistValidator
+      - PromptUsageMustBeValidValidator
+  CodexPromptUsageSetV1:
+    preEventValidators:
+      - MemoryPromptMustExistValidator
+      - PromptUsageMustBeValidValidator

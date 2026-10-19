@@ -12,9 +12,16 @@ public sealed record MemorySummaryDto(
     DateTime? LastPromptTimestamp,
     DateTime? SummaryTimestamp,
     DateTime LastActivityTimestamp,
-    List<string> Models
+    List<string> Models,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
 )
 {
+    public long? TotalTokens => InputTokens + OutputTokens;
+
     public static MemorySummaryDto FromReadModel(
         MemorySummary memory
     ) =>
@@ -28,6 +35,11 @@ public sealed record MemorySummaryDto(
             memory.LastPromptTimestamp,
             memory.SummaryTimestamp,
             memory.LastActivityTimestamp,
-            memory.Models.ToList()
+            memory.Models.ToList(),
+            memory.InputTokens,
+            memory.CachedInputTokens,
+            memory.CacheWriteInputTokens,
+            memory.OutputTokens,
+            memory.ReasoningOutputTokens
         );
 }

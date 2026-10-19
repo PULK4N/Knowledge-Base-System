@@ -14,7 +14,12 @@ public sealed record MemorySummary(
     DateTime? LastPromptTimestamp,
     DateTime? SummaryTimestamp,
     DateTime LastActivityTimestamp,
-    List<string> Models
+    List<string> Models,
+    long? InputTokens = null,
+    long? CachedInputTokens = null,
+    long? CacheWriteInputTokens = null,
+    long? OutputTokens = null,
+    long? ReasoningOutputTokens = null
 );
 
 public sealed record MemorySummarySearchResult(

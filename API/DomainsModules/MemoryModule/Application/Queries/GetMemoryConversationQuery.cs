@@ -45,7 +45,12 @@ public sealed class GetMemoryConversationQuery(
             summary?.FirstPromptTimestamp,
             summary?.LastPromptTimestamp,
             messages.Select(ToDto).ToList(),
-            toolCalls.Select(ToDto).ToList()
+            toolCalls.Select(ToDto).ToList(),
+            summary?.InputTokens,
+            summary?.CachedInputTokens,
+            summary?.CacheWriteInputTokens,
+            summary?.OutputTokens,
+            summary?.ReasoningOutputTokens
         );
     }
 
@@ -59,7 +64,12 @@ public sealed class GetMemoryConversationQuery(
             message.HookEventName,
             message.Role,
             message.Message,
-            message.PayloadJson
+            message.PayloadJson,
+            message.InputTokens,
+            message.CachedInputTokens,
+            message.CacheWriteInputTokens,
+            message.OutputTokens,
+            message.ReasoningOutputTokens
         );
 
     private static MemoryToolCallDto ToDto(MemoryToolCall toolCall) =>

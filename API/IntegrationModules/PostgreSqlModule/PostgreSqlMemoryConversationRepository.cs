@@ -56,7 +56,12 @@ internal sealed class PostgreSqlMemoryConversationRepository(
                     message.HookIndex,
                     message.Timestamp,
                     message.Role,
-                    message.Message
+                    message.Message,
+                    message.InputTokens,
+                    message.CachedInputTokens,
+                    message.CacheWriteInputTokens,
+                    message.OutputTokens,
+                    message.ReasoningOutputTokens
                 )
             )
             .ToListAsync(cancellationToken);
@@ -112,7 +117,12 @@ internal sealed class PostgreSqlMemoryConversationRepository(
             HookEventName = message.HookEventName,
             Role = message.Role,
             Message = message.Message,
-            PayloadJson = message.PayloadJson
+            PayloadJson = message.PayloadJson,
+            InputTokens = message.InputTokens,
+            CachedInputTokens = message.CachedInputTokens,
+            CacheWriteInputTokens = message.CacheWriteInputTokens,
+            OutputTokens = message.OutputTokens,
+            ReasoningOutputTokens = message.ReasoningOutputTokens
         };
 
     private static MemoryConversationMessage ToReadModel(
@@ -127,6 +137,11 @@ internal sealed class PostgreSqlMemoryConversationRepository(
             message.HookEventName,
             message.Role,
             message.Message,
-            message.PayloadJson
+            message.PayloadJson,
+            message.InputTokens,
+            message.CachedInputTokens,
+            message.CacheWriteInputTokens,
+            message.OutputTokens,
+            message.ReasoningOutputTokens
         );
 }

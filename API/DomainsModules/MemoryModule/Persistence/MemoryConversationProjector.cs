@@ -110,7 +110,12 @@ public sealed class MemoryConversationProjector(
             hook.HookEventName,
             message?.Role ?? PromptHookMessageRoles.Hook,
             text,
-            JsonSerializer.Serialize(hook.Payload, PayloadOptions)
+            JsonSerializer.Serialize(hook.Payload, PayloadOptions),
+            prompt.InputTokens,
+            prompt.CachedInputTokens,
+            prompt.CacheWriteInputTokens,
+            prompt.OutputTokens,
+            prompt.ReasoningOutputTokens
         );
     }
 }
