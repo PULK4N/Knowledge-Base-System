@@ -48,8 +48,8 @@ public sealed class RecordCodexPromptHookCommandTests
             typeof(CodexToolCallRecordedV1)
         );
         MemoryAttachmentEventRegistration.EnsureRegistered();
-        EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV1));
-        EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV1));
+        EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV2));
+        EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV2));
         EventTypeContainer.AddEventType(
             typeof(CodexMemoryMigratedV1)
         );
@@ -374,6 +374,7 @@ public sealed class RecordCodexPromptHookCommandTests
             await new SetClaudePromptUsageCommand(CreateHandler(eventStore))
             {
                 ThreadId = ThreadId, PromptId = FirstPromptId,
+                Payload = JsonSerializer.SerializeToElement(new { sourceRecords = new[] { new { usage = 1 } } }),
                 InputTokens = 10, CacheReadInputTokens = 20, CacheCreationInputTokens = 30,
                 OutputTokens = 40, ThinkingTokens = 5
             }.Execute(Executor);
@@ -381,11 +382,12 @@ public sealed class RecordCodexPromptHookCommandTests
             await new SetCodexPromptUsageCommand(CreateHandler(eventStore))
             {
                 ThreadId = ThreadId, PromptId = FirstPromptId,
+                Payload = JsonSerializer.SerializeToElement(new { sourceRecords = new[] { new { usage = 1 } } }),
                 InputTokens = 60, CachedInputTokens = 20, CacheWriteInputTokens = 30,
                 OutputTokens = 40, ReasoningOutputTokens = 5
             }.Execute(Executor);
         var written = Assert.Single(eventStore.LastWritten).Value;
-        Assert.Equal(claude ? nameof(ClaudePromptUsageSetV1) : nameof(CodexPromptUsageSetV1),
+        Assert.Equal(claude ? nameof(ClaudePromptUsageSetV2) : nameof(CodexPromptUsageSetV2),
             Assert.Single(written.LastExecutedPayloads).EventData.GetType().Name);
         var prompt = Assert.IsType<MemoryStateData>(written.StateData).ChatPrompts[FirstPromptId];
         Assert.Equal(60L, prompt.InputTokens);

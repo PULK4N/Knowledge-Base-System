@@ -79,17 +79,13 @@ public sealed class MemoryController(
     public async Task<ActionResult<MemoryCommandResult>> SetClaudePromptUsage(
         Guid sessionId,
         Guid promptId,
-        [FromBody] SetClaudePromptUsageRequest body,
+        [FromBody] JsonElement body,
         [FromServices] SetClaudePromptUsageCommand command
     )
     {
         command.ThreadId = new ThreadId(sessionId);
         command.PromptId = new PromptId(promptId);
-        command.InputTokens = body.InputTokens;
-        command.CacheReadInputTokens = body.CacheReadInputTokens;
-        command.CacheCreationInputTokens = body.CacheCreationInputTokens;
-        command.OutputTokens = body.OutputTokens;
-        command.ThinkingTokens = body.ThinkingTokens;
+        body.MapTo(command);
 
         return Ok(await Execute(command));
     }
@@ -98,17 +94,13 @@ public sealed class MemoryController(
     public async Task<ActionResult<MemoryCommandResult>> SetCodexPromptUsage(
         Guid sessionId,
         Guid promptId,
-        [FromBody] SetCodexPromptUsageRequest body,
+        [FromBody] JsonElement body,
         [FromServices] SetCodexPromptUsageCommand command
     )
     {
         command.ThreadId = new ThreadId(sessionId);
         command.PromptId = new PromptId(promptId);
-        command.InputTokens = body.InputTokens;
-        command.CachedInputTokens = body.CachedInputTokens;
-        command.CacheWriteInputTokens = body.CacheWriteInputTokens;
-        command.OutputTokens = body.OutputTokens;
-        command.ReasoningOutputTokens = body.ReasoningOutputTokens;
+        body.MapTo(command);
 
         return Ok(await Execute(command));
     }

@@ -16,8 +16,8 @@ public sealed class MemoryPromptMustExistValidator : IPreEventValidator
         {
             MemoryAttachmentAddedV1 eventData => eventData.PromptId,
             PromptModelSetV1 eventData => eventData.PromptId,
-            ClaudePromptUsageSetV1 eventData => eventData.PromptId,
-            CodexPromptUsageSetV1 eventData => eventData.PromptId,
+            ClaudePromptUsageSetV2 eventData => eventData.PromptId,
+            CodexPromptUsageSetV2 eventData => eventData.PromptId,
             _ => null
         };
 

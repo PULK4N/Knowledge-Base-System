@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
@@ -15,6 +16,7 @@ public sealed class SetCodexPromptUsageCommand(
 {
     public required ThreadId ThreadId { get; set; }
     public required PromptId PromptId { get; set; }
+    public required JsonElement Payload { get; set; }
     public required long InputTokens { get; set; }
     public required long CachedInputTokens { get; set; }
     public required long CacheWriteInputTokens { get; set; }
@@ -48,8 +50,8 @@ public sealed class SetCodexPromptUsageCommand(
                 executor.Id,
                 memoryAggregateId,
                 Constants.StateMachineIds.Memory,
-                new CodexPromptUsageSetV1(
-                    PromptId, InputTokens, CachedInputTokens, CacheWriteInputTokens, OutputTokens, ReasoningOutputTokens
+                new CodexPromptUsageSetV2(
+                    PromptId, InputTokens, CachedInputTokens, CacheWriteInputTokens, OutputTokens, Payload.Clone(), ReasoningOutputTokens
                 )
             )
         );

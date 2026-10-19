@@ -17,6 +17,7 @@ from prompt_usage_common import count, guid, records, run
 @dataclass
 class UsageTurn(SessionTurn):
     replies: dict[str, dict | None] = field(default_factory=dict)
+    source_records: list[dict] = field(default_factory=list)
     complete: bool = False
     invalid: bool = False
 
@@ -53,6 +54,7 @@ def read_session(path: Path):
                 turns[-1].invalid = True
                 continue
             turn = owners.setdefault(message_id, turns[-1])
+            turn.source_records.append(entry)
             for block in message.get("content") or []:
                 if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("id"):
                     turn.tool_use_ids.add(block["id"])
@@ -101,6 +103,7 @@ def read_session(path: Path):
             usages = list(turn.replies.values())
             result[prompt_id] = {key: None if any(usage[key] is None for usage in usages)
                                 else sum(usage[key] for usage in usages) for key in usages[0]}
+            result[prompt_id]["sourceRecords"] = turn.source_records
         return result, len(prompts) - len(result)
 
     return session_id, proposals

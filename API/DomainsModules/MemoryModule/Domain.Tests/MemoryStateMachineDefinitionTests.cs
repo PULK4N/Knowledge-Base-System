@@ -25,7 +25,9 @@ public sealed class MemoryStateMachineDefinitionTests
         EventTypeContainer.AddEventType(typeof(MemoryAttachmentAddedV1));
         EventTypeContainer.AddEventType(typeof(PromptModelSetV1));
         EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV1));
+        EventTypeContainer.AddEventType(typeof(ClaudePromptUsageSetV2));
         EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV1));
+        EventTypeContainer.AddEventType(typeof(CodexPromptUsageSetV2));
         EventValidatorContainer.AddEventValidator(typeof(PromptUsageMustBeValidValidator));
         EventValidatorContainer.AddEventValidator(typeof(PromptUsageMustNotBeSetValidator));
         EventTypeContainer.AddEventType(typeof(SessionAggregateMapAddedV1));
@@ -45,7 +47,7 @@ public sealed class MemoryStateMachineDefinitionTests
         var definition = provider.Get("memory-state-machine");
 
         Assert.Equal(nameof(MemoryStateData), definition.StateData);
-        foreach (var eventName in new List<string> { nameof(ClaudePromptUsageSetV1), nameof(CodexPromptUsageSetV1) })
+        foreach (var eventName in new List<string> { nameof(ClaudePromptUsageSetV2), nameof(CodexPromptUsageSetV2) })
             Assert.Equal(
                 [nameof(MemoryPromptMustExistValidator), nameof(PromptUsageMustNotBeSetValidator), nameof(PromptUsageMustBeValidValidator)],
                 definition.Events[eventName].PreEventValidators

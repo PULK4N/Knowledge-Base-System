@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
@@ -15,6 +16,7 @@ public sealed class SetClaudePromptUsageCommand(
 {
     public required ThreadId ThreadId { get; set; }
     public required PromptId PromptId { get; set; }
+    public required JsonElement Payload { get; set; }
     public required long InputTokens { get; set; }
     public required long CacheReadInputTokens { get; set; }
     public required long CacheCreationInputTokens { get; set; }
@@ -48,8 +50,8 @@ public sealed class SetClaudePromptUsageCommand(
                 executor.Id,
                 memoryAggregateId,
                 Constants.StateMachineIds.Memory,
-                new ClaudePromptUsageSetV1(
-                    PromptId, InputTokens, CacheReadInputTokens, CacheCreationInputTokens, OutputTokens, ThinkingTokens
+                new ClaudePromptUsageSetV2(
+                    PromptId, InputTokens, CacheReadInputTokens, CacheCreationInputTokens, OutputTokens, Payload.Clone(), ThinkingTokens
                 )
             )
         );

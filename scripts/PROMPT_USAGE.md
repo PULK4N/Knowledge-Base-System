@@ -1,12 +1,24 @@
 # Migrate prompt usage from Claude and Codex logs
 
-Requires Python 3.10 or newer and the Knowledge Base API with the usage endpoints
-(commit `208975b`) and prompt-usage database migration. No Python packages are
+Requires Python 3.10 or newer and the Knowledge Base API with V2 usage events
+and the prompt-usage database migration. No Python packages are
 needed. Both scripts run unchanged on Windows and Linux.
 
 The scripts update **existing memory prompts** only. They do not create memories
 or import chat text. The source logs remain unchanged. Dry runs read the API to
 match prompts and compare existing counts; they perform no writes.
+
+## Replacing the original counts-only migration
+
+V1 usage events are retained but do nothing during replay. V2 writes store the
+full request JSON in the event and prompt state, including `sourceRecords` and,
+for Codex, the original `baselineRecord` used to calculate deltas. Claude source
+records include streaming copies even though counts deduplicate their message IDs.
+
+After deploying V2, replay `MemorySummaryProjector` and
+`MemoryConversationProjector` for the affected memories before rerunning these
+scripts. This clears projected V1-only counts; otherwise the scripts will see
+old populated projections and skip them. V2 usage remains write-once.
 
 ## Claude
 

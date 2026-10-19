@@ -68,6 +68,7 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(20, result[FIRST]['outputTokens'])
         self.assertEqual(4, result[FIRST]['inputTokens'])
         self.assertEqual(2, result[FIRST]['thinkingTokens'])
+        self.assertEqual([rows[1], rows[2], rows[4]], result[FIRST]['sourceRecords'])
 
     def test_claude_ambiguous_or_incomplete_turns_are_not_written(self):
         rows = [{'type': 'user', 'message': {'content': 'Question'}}, assistant('one')]
@@ -91,6 +92,8 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(0, skipped)
         self.assertEqual((250, 30), (result[FIRST]['inputTokens'], result[FIRST]['outputTokens']))
         self.assertEqual((50, 10), (result[SECOND]['inputTokens'], result[SECOND]['outputTokens']))
+        self.assertEqual(self.codex_rows()[4], result[SECOND]['baselineRecord'])
+        self.assertEqual([self.codex_rows()[7]], result[SECOND]['sourceRecords'])
 
     def test_codex_active_reset_and_forked_turns_are_skipped(self):
         rows = self.codex_rows()
@@ -135,6 +138,7 @@ class UsageTests(unittest.TestCase):
 
     def test_existing_different_or_partial_usage_is_never_overwritten(self):
         usage = dict(zip(FIELDS, (100, 0, 0, 10, None)))
+        usage['sourceRecords'] = [{'original': {'extra': 42}}]
         class Api:
             def __init__(self, *args): pass
             def find_memory_id(self, session): return SESSION
@@ -151,6 +155,7 @@ class UsageTests(unittest.TestCase):
 
     def test_cli_dry_run_execute_verify_and_unchanged(self):
         usage = dict(zip(FIELDS, (100, 0, 0, 10, None)))
+        usage['sourceRecords'] = [{'original': {'extra': 42}}]
         class Api:
             written = []
             def __init__(self, *args): pass
@@ -169,6 +174,7 @@ class UsageTests(unittest.TestCase):
                         self.assertEqual(expected_writes, len(Api.written))
         self.assertEqual('PUT', Api.written[0][0])
         self.assertIn('/codex/sessions/', Api.written[0][1])
+        self.assertEqual([{'original': {'extra': 42}}], Api.written[0][2]['sourceRecords'])
 
 
 if __name__ == '__main__':

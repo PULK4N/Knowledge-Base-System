@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace MemoryModule.Domain.Models;
 
 public sealed class ChatPrompt
@@ -5,6 +7,7 @@ public sealed class ChatPrompt
     public PromptId PromptId { get; set; }
     public DateTime PromptStartTimestamp { get; set; }
     public string? Model { get; set; }
+    public JsonElement? UsagePayload { get; set; }
     /// <summary>All input tokens, including cache reads and writes.</summary>
     public long? InputTokens { get; set; }
     public long? CachedInputTokens { get; set; }

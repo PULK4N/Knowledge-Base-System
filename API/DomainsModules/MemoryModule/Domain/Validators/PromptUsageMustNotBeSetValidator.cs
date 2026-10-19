@@ -15,8 +15,8 @@ public sealed class PromptUsageMustNotBeSetValidator : IPreEventValidator
     {
         PromptId? promptId = payload.EventData switch
         {
-            ClaudePromptUsageSetV1 usage => usage.PromptId,
-            CodexPromptUsageSetV1 usage => usage.PromptId,
+            ClaudePromptUsageSetV2 usage => usage.PromptId,
+            CodexPromptUsageSetV2 usage => usage.PromptId,
             _ => null
         };
         if (promptId is not { } id)

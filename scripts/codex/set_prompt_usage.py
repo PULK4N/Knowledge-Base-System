@@ -15,6 +15,8 @@ SOURCE_FIELDS = ("input_tokens", "cached_input_tokens", "cache_write_input_token
 @dataclass
 class Turn:
     totals: list[int | None] = field(default_factory=lambda: [0] * 5)
+    source_records: list[dict] = field(default_factory=list)
+    baseline_record: dict | None = None
     seen: bool = False
     complete: bool = False
     invalid: bool = False
@@ -25,6 +27,7 @@ def read_session(path: Path):
     turns: dict[str, Turn] = {}
     active = None
     previous = None
+    previous_record = None
     forked = False
     for entry in records(path):
         payload = entry.get("payload")
@@ -75,6 +78,9 @@ def read_session(path: Path):
             else:
                 baseline = previous
             if turn:
+                if not turn.seen:
+                    turn.baseline_record = previous_record
+                turn.source_records.append(entry)
                 turn.seen = True
                 for i, value in enumerate(current):
                     before = baseline[i]
@@ -85,6 +91,7 @@ def read_session(path: Path):
                     elif turn.totals[i] is not None:
                         turn.totals[i] += value - before
             previous = current
+            previous_record = entry
 
     def proposals(conversation):
         prompt_ids = {message["promptId"] for message in conversation.get("messages", []) if message.get("promptId")}
@@ -95,6 +102,8 @@ def read_session(path: Path):
             if not turn or not turn.complete or not turn.seen or turn.invalid or any(value is None for value in turn.totals[:4]):
                 continue
             result[prompt_id] = dict(zip(FIELDS, turn.totals))
+            result[prompt_id]["sourceRecords"] = turn.source_records
+            result[prompt_id]["baselineRecord"] = turn.baseline_record
         return result, len(prompt_ids) - len(result)
 
     return session_id, proposals
