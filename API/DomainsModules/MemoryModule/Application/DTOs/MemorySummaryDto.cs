@@ -11,7 +11,8 @@ public sealed record MemorySummaryDto(
     DateTime? FirstPromptTimestamp,
     DateTime? LastPromptTimestamp,
     DateTime? SummaryTimestamp,
-    DateTime LastActivityTimestamp
+    DateTime LastActivityTimestamp,
+    List<string> Models
 )
 {
     public static MemorySummaryDto FromReadModel(
@@ -26,6 +27,7 @@ public sealed record MemorySummaryDto(
             memory.FirstPromptTimestamp,
             memory.LastPromptTimestamp,
             memory.SummaryTimestamp,
-            memory.LastActivityTimestamp
+            memory.LastActivityTimestamp,
+            memory.Models.ToList()
         );
 }

@@ -32,6 +32,7 @@ public sealed class MemorySearchProjectorTests
         var document = Assert.Single(repository.Documents);
         Assert.Equal(MemoryId, document.MemoryAggregateId);
         Assert.Equal("after_agent", document.HookEventName);
+        Assert.Equal("claude-opus-5-5", document.Model);
         Assert.Contains("important memory", document.Text);
         Assert.Equal([1f, 2f], document.Embedding.ToArray());
         Assert.Equal([document.Text], embeddingGenerator.LastInputs);
@@ -74,6 +75,7 @@ public sealed class MemorySearchProjectorTests
         );
         Assert.Equal(MemoryId, document.MemoryAggregateId);
         Assert.Equal(Guid.Empty, document.PromptId.Value);
+        Assert.Null(document.Model);
         Assert.Equal(
             state.ChatSummary.SummaryTimestamp,
             document.PromptStartTimestamp
@@ -190,6 +192,7 @@ public sealed class MemorySearchProjectorTests
             new ChatPrompt
             {
                 PromptId = promptId,
+                Model = " claude-opus-5-5 ",
                 PromptStartTimestamp = new DateTime(
                     2026,
                     8,
@@ -255,14 +258,14 @@ public sealed class MemorySearchProjectorTests
         public Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
             List<string> keywords,
             int candidateCount,
-            MemorySearchTimeRange? timeRange = null,
+            MemorySearchFilter? filter = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<MemorySearchCandidate>> SearchVector(
             ImmutableArray<float> embedding,
             int candidateCount,
-            MemorySearchTimeRange? timeRange = null,
+            MemorySearchFilter? filter = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
@@ -270,7 +273,7 @@ public sealed class MemorySearchProjectorTests
             List<string> keywords,
             int sourceCount,
             int candidateCount,
-            MemorySearchTimeRange? timeRange = null,
+            MemorySearchFilter? filter = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
@@ -278,7 +281,7 @@ public sealed class MemorySearchProjectorTests
             ImmutableArray<float> embedding,
             int sourceCount,
             int candidateCount,
-            MemorySearchTimeRange? timeRange = null,
+            MemorySearchFilter? filter = null,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
     }

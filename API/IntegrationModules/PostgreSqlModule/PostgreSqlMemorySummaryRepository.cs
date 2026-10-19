@@ -91,6 +91,11 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             );
         }
 
+        if (request.Filters.Model is { } model)
+        {
+            query = FilterByModel(query, model);
+        }
+
         if (request.Filters.ActiveTo is { } activeTo)
         {
             query = query.Where(
@@ -145,6 +150,29 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             _ => throw new ArgumentOutOfRangeException(nameof(sort))
         };
 
+    public Task<List<string>> GetModels(
+        CancellationToken cancellationToken = default
+    ) =>
+        CreateModelsQuery().ToListAsync(cancellationToken);
+
+    // EF Core cannot translate SelectMany over a text[] column, so the models
+    // are unnested in SQL. SqlQueryRaw reads a scalar from a column named Value.
+    internal IQueryable<string> CreateModelsQuery() =>
+        dbContext.Database.SqlQueryRaw<string>(
+            """
+            SELECT model AS "Value"
+            FROM "MemorySummaryEntries", unnest("Models") AS model
+            GROUP BY model
+            ORDER BY model
+            """
+        );
+
+    internal static IQueryable<MemorySummaryEntry> FilterByModel(
+        IQueryable<MemorySummaryEntry> query,
+        string model
+    ) =>
+        query.Where(summary => summary.Models.Contains(model));
+
     public async Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,
         IReadOnlyCollection<MemorySummary> summaries,
@@ -188,7 +216,8 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             FirstPromptTimestamp = summary.FirstPromptTimestamp,
             LastPromptTimestamp = summary.LastPromptTimestamp,
             SummaryTimestamp = summary.SummaryTimestamp,
-            LastActivityTimestamp = summary.LastActivityTimestamp
+            LastActivityTimestamp = summary.LastActivityTimestamp,
+            Models = summary.Models.ToList()
         };
 
     private static MemorySummary ToReadModel(MemorySummaryEntry summary) =>
@@ -201,6 +230,7 @@ internal sealed class PostgreSqlMemorySummaryRepository(
             summary.FirstPromptTimestamp,
             summary.LastPromptTimestamp,
             summary.SummaryTimestamp,
-            summary.LastActivityTimestamp
+            summary.LastActivityTimestamp,
+            summary.Models.ToList()
         );
 }

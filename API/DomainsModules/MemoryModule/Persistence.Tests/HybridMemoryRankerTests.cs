@@ -123,6 +123,7 @@ public sealed class HybridMemoryRankerTests
             0,
             DateTime.UnixEpoch,
             "hook",
+            null,
             text
         );
 }

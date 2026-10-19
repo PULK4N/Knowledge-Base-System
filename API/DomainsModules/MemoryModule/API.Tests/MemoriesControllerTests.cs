@@ -33,10 +33,21 @@ public sealed class MemoriesControllerTests
         Assert.Equal(SortDirection.Descending, hybrid.SortDirection);
     }
 
-    [Fact]
-    public void Hybrid_request_requires_a_bounded_query()
+    [Theory]
+    [InlineData(0, 0, true)]
+    [InlineData(EntityQueryLimits.MaximumSearchLength + 1, 0, false)]
+    [InlineData(0, 21, false)]
+    public void Hybrid_request_bounds_the_query_and_keyword_count(
+        int queryLength,
+        int keywordCount,
+        bool expected
+    )
     {
-        var request = new HybridSearchMemoriesRequest();
+        var request = new HybridSearchMemoriesRequest
+        {
+            Query = new string('q', queryLength),
+            Keywords = Enumerable.Repeat("word", keywordCount).ToList()
+        };
         var validationResults = new List<ValidationResult>();
 
         var isValid = Validator.TryValidateObject(
@@ -46,11 +57,7 @@ public sealed class MemoriesControllerTests
             validateAllProperties: true
         );
 
-        Assert.False(isValid);
-        Assert.Contains(
-            validationResults,
-            result => result.MemberNames.Contains(nameof(request.Query))
-        );
+        Assert.Equal(expected, isValid);
     }
 
     [Fact]
@@ -66,6 +73,7 @@ public sealed class MemoriesControllerTests
             Search = "outbox",
             HasSummary = true,
             MinimumPromptCount = 3,
+            Model = "claude-opus-5-5",
             SortBy = MemorySummarySortField.PromptCount,
             SortDirection = SortDirection.Ascending
         };
@@ -79,7 +87,10 @@ public sealed class MemoriesControllerTests
         >(repository.LastSearchRequest);
         Assert.Equal(new PageRequest(2, 5), mapped.Page);
         Assert.Equal("outbox", mapped.Search);
-        Assert.Equal(new MemorySummaryFilters(true, 3), mapped.Filters);
+        Assert.Equal(
+            new MemorySummaryFilters(true, 3, Model: "claude-opus-5-5"),
+            mapped.Filters
+        );
         Assert.Equal(MemorySummarySortField.PromptCount, mapped.Sort.Field);
         Assert.Equal(SortDirection.Ascending, mapped.Sort.Direction);
     }
@@ -96,6 +107,8 @@ public sealed class MemoriesControllerTests
             Page = 1,
             PageSize = 10,
             Query = "what did we decide about replay?",
+            Keywords = ["replay", " ", " outbox "],
+            Model = "gpt-5.5-codex",
             HasSummary = false,
             MinimumPromptCount = 2
         };
@@ -106,6 +119,8 @@ public sealed class MemoriesControllerTests
         var result = Assert.IsType<PagedResult<MemorySummaryDto>>(ok.Value);
         Assert.Empty(result.Items);
         Assert.Equal("what did we decide about replay?", memorySearch.LastQuery);
+        Assert.Equal(["replay", "outbox"], memorySearch.LastKeywords);
+        Assert.Equal("gpt-5.5-codex", memorySearch.LastOptions?.Model);
         Assert.False(query.HasSummary);
         Assert.Equal(2, query.MinimumPromptCount);
         Assert.Equal(MemorySummarySortField.Relevance, query.SortBy);
@@ -119,9 +134,11 @@ public sealed class MemoriesControllerTests
     private sealed class CapturingMemorySearch : IMemorySearch
     {
         public string? LastQuery { get; private set; }
+        public List<string>? LastKeywords { get; private set; }
+        public HybridMemorySearchOptions? LastOptions { get; private set; }
 
         public Task<IReadOnlyList<MemorySearchResult>> Search(
-            string query,
+            string? query,
             List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
@@ -132,13 +149,15 @@ public sealed class MemoriesControllerTests
         }
 
         public Task<MemorySearchResults> SearchWithSources(
-            string query,
+            string? query,
             List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
         )
         {
             LastQuery = query;
+            LastKeywords = keywords;
+            LastOptions = options;
             return Task.FromResult(new MemorySearchResults([], []));
         }
     }
@@ -157,6 +176,10 @@ public sealed class MemoriesControllerTests
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
             CancellationToken cancellationToken = default
         ) => Task.FromResult<List<MemorySummary>>([]);
+
+        public Task<List<string>> GetModels(
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
 
         public Task<MemorySummarySearchResult> Search(
             EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,

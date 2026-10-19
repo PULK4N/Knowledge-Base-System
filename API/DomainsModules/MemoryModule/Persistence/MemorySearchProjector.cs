@@ -34,6 +34,7 @@ public sealed class MemorySearchProjector(
                                     chunkIndex,
                                     prompt.PromptStartTimestamp,
                                     hook.HookEventName,
+                                    MemoryModelNames.Normalize(prompt.Model),
                                     text
                                 )
                             )
@@ -61,6 +62,7 @@ public sealed class MemorySearchProjector(
                             chunkIndex,
                             memory.ChatSummary.SummaryTimestamp,
                             MemorySearchDocumentSources.ChatSummary,
+                            null,
                             text
                         )
                     )
@@ -82,6 +84,7 @@ public sealed class MemorySearchProjector(
                     chunk.ChunkIndex,
                     chunk.PromptStartTimestamp,
                     chunk.HookEventName,
+                    chunk.Model,
                     chunk.Text,
                     embeddings[index]
                 )
@@ -145,6 +148,7 @@ public sealed class MemorySearchProjector(
         int ChunkIndex,
         DateTime PromptStartTimestamp,
         string HookEventName,
+        string? Model,
         string Text
     );
 }

@@ -12,6 +12,7 @@ internal sealed class MemorySearchEntry
     public int ChunkIndex { get; set; }
     public DateTime PromptStartTimestamp { get; set; }
     public required string HookEventName { get; set; }
+    public string? Model { get; set; }
     public required string Text { get; set; }
     public required Vector Embedding { get; set; }
     public NpgsqlTsVector SearchVector { get; set; } = null!;

@@ -815,13 +815,44 @@ public sealed class InjectionSetupTests
         Assert.Contains("::vector", vectorSql);
     }
 
+    [Fact]
+    public void MemorySummaryQueries_group_models_and_filter_sessions_by_model()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+        using var context = new PostgreSqlEventSourcingDbContext(
+            options.Options
+        );
+        var repository = new PostgreSqlMemorySummaryRepository(context);
+
+        var modelsSql = repository.CreateModelsQuery().ToQueryString();
+        var filterSql = PostgreSqlMemorySummaryRepository
+            .FilterByModel(
+                context.Set<MemorySummaryEntry>(),
+                "claude-opus-5-5"
+            )
+            .ToQueryString();
+
+        Assert.Contains("unnest(", modelsSql);
+        Assert.Contains("GROUP BY", modelsSql);
+        Assert.Contains("ORDER BY", modelsSql);
+        Assert.Contains("\"Models\"", filterSql);
+        Assert.Contains("claude-opus-5-5", filterSql);
+    }
+
     [Theory]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public void MemorySearchQueries_filter_every_search_by_time(
+    [InlineData(true, false, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, true)]
+    public void MemorySearchQueries_filter_every_search_by_time_and_model(
         bool hasFrom,
-        bool hasTo
+        bool hasTo,
+        bool hasModel
     )
     {
         var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
@@ -834,21 +865,24 @@ public sealed class InjectionSetupTests
             options.Options
         );
         var repository = new PostgreSqlMemorySearchRepository(context);
-        var timeRange = new MemorySearchTimeRange(
-            hasFrom ? DateTime.UnixEpoch : null,
-            hasTo ? DateTime.UnixEpoch.AddDays(1) : null
+        var filter = new MemorySearchFilter(
+            new MemorySearchTimeRange(
+                hasFrom ? DateTime.UnixEpoch : null,
+                hasTo ? DateTime.UnixEpoch.AddDays(1) : null
+            ),
+            hasModel ? "claude-opus-5-5" : null
         );
         var embedding = Enumerable.Repeat(0.1f, 1024).ToImmutableArray();
 
         var queries = new List<string>
         {
-            repository.CreateTextQuery(["event"], 50, timeRange)
+            repository.CreateTextQuery(["event"], 50, filter)
                 .ToQueryString(),
-            repository.CreateVectorQuery(embedding, 50, timeRange)
+            repository.CreateVectorQuery(embedding, 50, filter)
                 .ToQueryString(),
-            repository.CreateTextSourceQuery(["event"], 5, 200, timeRange)
+            repository.CreateTextSourceQuery(["event"], 5, 200, filter)
                 .ToQueryString(),
-            repository.CreateVectorSourceQuery(embedding, 5, 200, timeRange)
+            repository.CreateVectorSourceQuery(embedding, 5, 200, filter)
                 .ToQueryString()
         };
 
@@ -864,6 +898,7 @@ public sealed class InjectionSetupTests
                     hasTo,
                     sql.Contains("\"PromptStartTimestamp\" <= @")
                 );
+                Assert.Equal(hasModel, sql.Contains("\"Model\" = @"));
             }
         );
     }

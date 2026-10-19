@@ -35,6 +35,11 @@ public sealed class SearchMemoryQuery(
     public int MaxTokens { get; set; } = DefaultMaximumTokens;
 
     /// <summary>
+    /// Keeps only prompt chunks recorded with this model.
+    /// </summary>
+    public string? Model { get; set; }
+
+    /// <summary>
     /// Inclusive bounds on when the matched text was written. A time without a
     /// zone is read as UTC.
     /// </summary>
@@ -48,6 +53,7 @@ public sealed class SearchMemoryQuery(
             && MaxTokens is >= MinimumMaximumTokens
                 and <= MaximumMaximumTokens
             && MemoryActivityRange.IsValid(From, To)
+            && MemoryModelFilter.IsValid(Model)
         );
 
     protected override async Task<MemorySearchQueryResult> ExecuteInternal(
@@ -65,7 +71,8 @@ public sealed class SearchMemoryQuery(
                 TimeRange = new MemorySearchTimeRange(
                     MemoryActivityRange.ToUtc(From),
                     MemoryActivityRange.ToUtc(To)
-                )
+                ),
+                Model = MemoryModelFilter.Normalize(Model)
             }
         );
         // The ranked window can be filled by one session, so the

@@ -33,13 +33,14 @@ public sealed class MemorySummaryProjectorTests
         Assert.Equal(active.ThreadId, summary.ThreadId);
         Assert.Equal("Session title", summary.SessionTitle);
         Assert.Equal("Session summary", summary.Summary);
-        Assert.Equal(2, summary.PromptCount);
+        Assert.Equal(4, summary.PromptCount);
         Assert.Equal(DateTime.UnixEpoch, summary.FirstPromptTimestamp);
         Assert.Equal(DateTime.UnixEpoch.AddMinutes(2), summary.LastPromptTimestamp);
         Assert.Equal(
             DateTime.UnixEpoch.AddMinutes(3),
             summary.LastActivityTimestamp
         );
+        Assert.Equal(["claude-opus-5-5", "gpt-5.5-codex"], summary.Models);
     }
 
     private static MemoryStateData CreateMemory(
@@ -66,7 +67,8 @@ public sealed class MemorySummaryProjectorTests
                 PromptId = new PromptId(
                     Guid.Parse("cccccccc-cccc-cccc-cccc-000000000001")
                 ),
-                PromptStartTimestamp = DateTime.UnixEpoch
+                PromptStartTimestamp = DateTime.UnixEpoch,
+                Model = "gpt-5.5-codex"
             }
         );
         memory.ChatPrompts.Add(
@@ -76,7 +78,30 @@ public sealed class MemorySummaryProjectorTests
                 PromptId = new PromptId(
                     Guid.Parse("cccccccc-cccc-cccc-cccc-000000000002")
                 ),
-                PromptStartTimestamp = DateTime.UnixEpoch.AddMinutes(2)
+                PromptStartTimestamp = DateTime.UnixEpoch.AddMinutes(2),
+                Model = "claude-opus-5-5"
+            }
+        );
+        memory.ChatPrompts.Add(
+            new PromptId(Guid.Parse("cccccccc-cccc-cccc-cccc-000000000003")),
+            new ChatPrompt
+            {
+                PromptId = new PromptId(
+                    Guid.Parse("cccccccc-cccc-cccc-cccc-000000000003")
+                ),
+                PromptStartTimestamp = DateTime.UnixEpoch.AddMinutes(1),
+                Model = ""
+            }
+        );
+        memory.ChatPrompts.Add(
+            new PromptId(Guid.Parse("cccccccc-cccc-cccc-cccc-000000000004")),
+            new ChatPrompt
+            {
+                PromptId = new PromptId(
+                    Guid.Parse("cccccccc-cccc-cccc-cccc-000000000004")
+                ),
+                PromptStartTimestamp = DateTime.UnixEpoch.AddMinutes(1),
+                Model = "claude-opus-5-5"
             }
         );
 
@@ -99,6 +124,10 @@ public sealed class MemorySummaryProjectorTests
 
         public Task<List<MemorySummary>> GetMany(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<List<string>> GetModels(
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 

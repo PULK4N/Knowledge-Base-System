@@ -18,6 +18,7 @@ public sealed record MemorySearchDocument(
     int ChunkIndex,
     DateTime PromptStartTimestamp,
     string HookEventName,
+    string? Model,
     string Text,
     ImmutableArray<float> Embedding
 );
@@ -30,6 +31,7 @@ public sealed record MemorySearchCandidate(
     int ChunkIndex,
     DateTime PromptStartTimestamp,
     string HookEventName,
+    string? Model,
     string Text
 );
 
@@ -74,6 +76,21 @@ public sealed record MemorySearchTimeRange(DateTime? From, DateTime? To)
     public bool IsEmpty => From is null && To is null;
 }
 
+/// <summary>
+/// Narrows the searched chunks before they are ranked. A model filter keeps
+/// only prompt chunks recorded with that model, so summary chunks, which have
+/// no model, are left out.
+/// </summary>
+public sealed record MemorySearchFilter(
+    MemorySearchTimeRange? TimeRange = null,
+    string? Model = null
+)
+{
+    public bool IsEmpty =>
+        (TimeRange is null || TimeRange.IsEmpty)
+        && string.IsNullOrWhiteSpace(Model);
+}
+
 public sealed record HybridMemorySearchOptions
 {
     public const int DefaultSourceResultCount = 10;
@@ -86,6 +103,9 @@ public sealed record HybridMemorySearchOptions
     public double TextWeight { get; init; } = 1;
     public double VectorWeight { get; init; } = 1;
     public MemorySearchTimeRange? TimeRange { get; init; }
+    public string? Model { get; init; }
+
+    public MemorySearchFilter Filter => new(TimeRange, Model);
 }
 
 public interface IMemorySearchRepository
@@ -99,14 +119,14 @@ public interface IMemorySearchRepository
     Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
         List<string> keywords,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     );
 
     Task<IReadOnlyList<MemorySearchCandidate>> SearchVector(
         ImmutableArray<float> embedding,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     );
 
@@ -119,7 +139,7 @@ public interface IMemorySearchRepository
         List<string> keywords,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     );
 
@@ -132,7 +152,7 @@ public interface IMemorySearchRepository
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     );
 }
@@ -140,14 +160,16 @@ public interface IMemorySearchRepository
 public interface IMemorySearch
 {
     /// <param name="query">
-    /// A meaningful sentence. Only the semantic vector leg reads it.
+    /// A meaningful sentence. Only the semantic vector leg reads it; when it is
+    /// empty, the vector leg is skipped.
     /// </param>
     /// <param name="keywords">
     /// The words the full-text leg requires; a row matches when it contains
-    /// all of them.
+    /// all of them. When the list is empty, the text leg is skipped. At least
+    /// one of the two inputs is required.
     /// </param>
     Task<IReadOnlyList<MemorySearchResult>> Search(
-        string query,
+        string? query,
         List<string> keywords,
         HybridMemorySearchOptions? options = null,
         CancellationToken cancellationToken = default
@@ -159,7 +181,7 @@ public interface IMemorySearch
     /// instead of repeated chunks of one session.
     /// </summary>
     Task<MemorySearchResults> SearchWithSources(
-        string query,
+        string? query,
         List<string> keywords,
         HybridMemorySearchOptions? options = null,
         CancellationToken cancellationToken = default

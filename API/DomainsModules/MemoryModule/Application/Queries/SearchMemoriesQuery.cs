@@ -14,6 +14,7 @@ public sealed class SearchMemoriesQuery(
     public int? MinimumPromptCount { get; set; }
     public DateTime? ActiveFrom { get; set; }
     public DateTime? ActiveTo { get; set; }
+    public string? Model { get; set; }
     public MemorySummarySortField SortBy { get; set; } =
         MemorySummarySortField.LastActivity;
     public SortDirection SortDirection { get; set; } =
@@ -23,6 +24,7 @@ public sealed class SearchMemoriesQuery(
         await base.CanExecute(executor)
         && MinimumPromptCount is null or >= 1
         && MemoryActivityRange.IsValid(ActiveFrom, ActiveTo)
+        && MemoryModelFilter.IsValid(Model)
         && SortBy != MemorySummarySortField.Relevance
         && Enum.IsDefined(SortBy)
         && Enum.IsDefined(SortDirection);
@@ -37,7 +39,8 @@ public sealed class SearchMemoriesQuery(
                     HasSummary,
                     MinimumPromptCount,
                     MemoryActivityRange.ToUtc(ActiveFrom),
-                    MemoryActivityRange.ToUtc(ActiveTo)
+                    MemoryActivityRange.ToUtc(ActiveTo),
+                    MemoryModelFilter.Normalize(Model)
                 ),
                 SortBy,
                 SortDirection
@@ -70,6 +73,18 @@ public sealed class HybridSearchMemoriesQuery(
     public int? MinimumPromptCount { get; set; }
     public DateTime? ActiveFrom { get; set; }
     public DateTime? ActiveTo { get; set; }
+
+    /// <summary>
+    /// Words the full-text leg requires. Search is the semantic query. Either
+    /// one may be empty, and that leg is then skipped.
+    /// </summary>
+    public List<string> Keywords { get; set; } = [];
+
+    /// <summary>
+    /// Keeps only prompt chunks recorded with this model.
+    /// </summary>
+    public string? Model { get; set; }
+
     public MemorySummarySortField SortBy { get; set; } =
         MemorySummarySortField.Relevance;
     public SortDirection SortDirection { get; set; } =
@@ -77,9 +92,11 @@ public sealed class HybridSearchMemoriesQuery(
 
     public override async Task<bool> CanExecute(Executor executor) =>
         await base.CanExecute(executor)
-        && !string.IsNullOrWhiteSpace(Search)
+        && (!string.IsNullOrWhiteSpace(Search) || Keywords.Count > 0)
+        && (Keywords.Count == 0 || SearchKeywordLimits.AreValid(Keywords))
         && MinimumPromptCount is null or >= 1
         && MemoryActivityRange.IsValid(ActiveFrom, ActiveTo)
+        && MemoryModelFilter.IsValid(Model)
         && Enum.IsDefined(SortBy)
         && Enum.IsDefined(SortDirection);
 
@@ -88,13 +105,14 @@ public sealed class HybridSearchMemoriesQuery(
     )
     {
         var rankedDocuments = await memorySearch.SearchWithSources(
-            Search!,
-            SearchKeywords(),
+            Search,
+            Keywords,
             new HybridMemorySearchOptions
             {
                 ResultCount = RankedChunkCount,
                 CandidateCount = CandidateChunkCount,
-                SourceResultCount = DistinctSessionCount
+                SourceResultCount = DistinctSessionCount,
+                Model = MemoryModelFilter.Normalize(Model)
             }
         );
         // The ranked window can be filled by one session, so the
@@ -137,25 +155,6 @@ public sealed class HybridSearchMemoriesQuery(
             sortedMatches.Count
         );
     }
-
-    // The memory list has one search box, so the words the user typed are the
-    // full-text keywords and the typed line is the semantic query. Callers that
-    // can separate the two, such as the MCP tools, pass their own keywords.
-    private List<string> SearchKeywords() =>
-        Search!
-            .Split(
-                (char[]?)null,
-                SearchKeywordLimits.MaximumCount,
-                StringSplitOptions.RemoveEmptyEntries
-                    | StringSplitOptions.TrimEntries
-            )
-            .Select(
-                keyword => keyword.Length
-                    > SearchKeywordLimits.MaximumKeywordLength
-                    ? keyword[..SearchKeywordLimits.MaximumKeywordLength]
-                    : keyword
-            )
-            .ToList();
 
     private bool MatchesFilters(RankedMemorySummary match) =>
         (HasSummary is null

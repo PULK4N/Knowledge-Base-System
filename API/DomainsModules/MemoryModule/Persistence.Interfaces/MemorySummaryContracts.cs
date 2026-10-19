@@ -13,7 +13,8 @@ public sealed record MemorySummary(
     DateTime? FirstPromptTimestamp,
     DateTime? LastPromptTimestamp,
     DateTime? SummaryTimestamp,
-    DateTime LastActivityTimestamp
+    DateTime LastActivityTimestamp,
+    List<string> Models
 );
 
 public sealed record MemorySummarySearchResult(
@@ -29,11 +30,15 @@ public sealed record MemorySummarySearchResult(
 /// with <paramref name="ActiveFrom"/> it keeps every session that was active at
 /// some point inside the range.
 /// </param>
+/// <param name="Model">
+/// Keeps sessions with at least one prompt recorded with this model.
+/// </param>
 public sealed record MemorySummaryFilters(
     bool? HasSummary,
     int? MinimumPromptCount,
     DateTime? ActiveFrom = null,
-    DateTime? ActiveTo = null
+    DateTime? ActiveTo = null,
+    string? Model = null
 );
 
 public enum MemorySummarySortField
@@ -62,6 +67,11 @@ public interface IMemorySummaryRepository
         EntityQuery<MemorySummaryFilters, MemorySummarySortField> request,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Returns every model recorded on a memory prompt, ordered by name.
+    /// </summary>
+    Task<List<string>> GetModels(CancellationToken cancellationToken = default);
 
     Task Write(
         IReadOnlyCollection<AggregateId> memoryAggregateIds,

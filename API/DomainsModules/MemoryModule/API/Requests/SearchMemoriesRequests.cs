@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using ActionModule.Shared.Models;
+using EmbeddingModule;
+using MemoryModule.Application.Queries;
 using MemoryModule.Persistence.Interfaces;
 
 namespace MemoryModule.API.Requests;
@@ -14,6 +16,9 @@ public abstract record MemorySummarySearchRequest : PagedSearchRequest
     public DateTime? ActiveFrom { get; init; }
     public DateTime? ActiveTo { get; init; }
 
+    [StringLength(MemoryModelFilter.MaximumLength)]
+    public string? Model { get; init; }
+
     [EnumDataType(typeof(MemorySummarySortField))]
     public MemorySummarySortField SortBy { get; init; }
 }
@@ -27,11 +32,18 @@ public sealed record ListMemoriesRequest : MemorySummarySearchRequest
     }
 }
 
+/// <summary>
+/// Query drives the semantic vector leg and Keywords the full-text leg, where
+/// a chunk must contain every keyword. Either may be empty, and that leg is
+/// then skipped; the query is rejected when both are empty.
+/// </summary>
 public sealed record HybridSearchMemoriesRequest : MemorySummarySearchRequest
 {
-    [Required]
     [StringLength(EntityQueryLimits.MaximumSearchLength)]
-    public string Query { get; init; } = string.Empty;
+    public string? Query { get; init; }
+
+    [MaxLength(SearchKeywordLimits.MaximumCount)]
+    public List<string> Keywords { get; init; } = [];
 
     public HybridSearchMemoriesRequest()
     {

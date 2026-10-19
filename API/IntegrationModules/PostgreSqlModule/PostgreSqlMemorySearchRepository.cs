@@ -20,6 +20,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
     private const string TieBreakers = "\"PromptStartTimestamp\" DESC, \"PromptId\", \"HookIndex\", \"ChunkIndex\"";
     private const string FromParameterName = "from";
     private const string ToParameterName = "to";
+    private const string ModelParameterName = "model";
     private const string StrictIterativeScanSql =
         "SET LOCAL hnsw.iterative_scan = strict_order";
 
@@ -58,14 +59,14 @@ internal sealed class PostgreSqlMemorySearchRepository(
     public async Task<IReadOnlyList<MemorySearchCandidate>> SearchText(
         List<string> keywords,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     )
     {
         var entries = await CreateTextQuery(
             keywords,
             candidateCount,
-            timeRange
+            filter
         ).ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
@@ -74,12 +75,12 @@ internal sealed class PostgreSqlMemorySearchRepository(
     internal IQueryable<MemorySearchEntry> CreateTextQuery(
         List<string> keywords,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null
+        MemorySearchFilter? filter = null
     )
     {
-        return FilterByTime(
+        return Filter(
                 dbContext.Set<MemorySearchEntry>().AsNoTracking(),
-                timeRange
+                filter
             )
             .Where(
                 entry => entry.SearchVector.Matches(
@@ -104,13 +105,13 @@ internal sealed class PostgreSqlMemorySearchRepository(
     public async Task<IReadOnlyList<MemorySearchCandidate>> SearchVector(
         ImmutableArray<float> embedding,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     )
     {
         var entries = await ReadVectorEntries(
-            CreateVectorQuery(embedding, candidateCount, timeRange),
-            timeRange,
+            CreateVectorQuery(embedding, candidateCount, filter),
+            filter,
             cancellationToken
         );
 
@@ -120,14 +121,14 @@ internal sealed class PostgreSqlMemorySearchRepository(
     internal IQueryable<MemorySearchEntry> CreateVectorQuery(
         ImmutableArray<float> embedding,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null
+        MemorySearchFilter? filter = null
     )
     {
         var vector = new Vector(embedding.ToArray());
 
-        return FilterByTime(
+        return Filter(
                 dbContext.Set<MemorySearchEntry>().AsNoTracking(),
-                timeRange
+                filter
             )
             .OrderBy(entry => entry.Embedding.CosineDistance(vector))
             .ThenByDescending(entry => entry.PromptStartTimestamp)
@@ -138,7 +139,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
         List<string> keywords,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -146,7 +147,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
             keywords,
             sourceCount,
             candidateCount,
-            timeRange
+            filter
         ).ToListAsync(cancellationToken);
 
         return entries.Select(ToCandidate).ToList();
@@ -156,7 +157,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
         List<string> keywords,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null
+        MemorySearchFilter? filter = null
     ) =>
         dbContext.Set<MemorySearchEntry>()
             .FromSqlRaw(
@@ -164,7 +165,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
                     Table,
                     SourceColumns,
                     TieBreakers,
-                    TimeFilterSql(timeRange)
+                    FilterSql(filter)
                 ),
                 [
                     .. SourceSearchSql.TextParameters(
@@ -172,7 +173,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
                         sourceCount,
                         candidateCount
                     ),
-                    .. TimeFilterParameters(timeRange)
+                    .. FilterParameters(filter)
                 ]
             )
             .AsNoTracking();
@@ -181,7 +182,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null,
+        MemorySearchFilter? filter = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -190,9 +191,9 @@ internal sealed class PostgreSqlMemorySearchRepository(
                 embedding,
                 sourceCount,
                 candidateCount,
-                timeRange
+                filter
             ),
-            timeRange,
+            filter,
             cancellationToken
         );
 
@@ -203,7 +204,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
-        MemorySearchTimeRange? timeRange = null
+        MemorySearchFilter? filter = null
     ) =>
         dbContext.Set<MemorySearchEntry>()
             .FromSqlRaw(
@@ -211,7 +212,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
                     Table,
                     SourceColumns,
                     TieBreakers,
-                    TimeFilterSql(timeRange)
+                    FilterSql(filter)
                 ),
                 [
                     .. SourceSearchSql.VectorParameters(
@@ -219,43 +220,47 @@ internal sealed class PostgreSqlMemorySearchRepository(
                         sourceCount,
                         candidateCount
                     ),
-                    .. TimeFilterParameters(timeRange)
+                    .. FilterParameters(filter)
                 ]
             )
             .AsNoTracking();
 
-    private static IQueryable<MemorySearchEntry> FilterByTime(
+    private static IQueryable<MemorySearchEntry> Filter(
         IQueryable<MemorySearchEntry> query,
-        MemorySearchTimeRange? timeRange
+        MemorySearchFilter? filter
     )
     {
-        if (timeRange?.From is { } from)
+        if (filter?.TimeRange?.From is { } from)
             query = query.Where(entry => entry.PromptStartTimestamp >= from);
-        if (timeRange?.To is { } to)
+        if (filter?.TimeRange?.To is { } to)
             query = query.Where(entry => entry.PromptStartTimestamp <= to);
+        if (ModelOf(filter) is { } model)
+            query = query.Where(entry => entry.Model == model);
 
         return query;
     }
 
-    private static string? TimeFilterSql(MemorySearchTimeRange? timeRange)
+    private static string? FilterSql(MemorySearchFilter? filter)
     {
         var conditions = new List<string>();
-        if (timeRange?.From is not null)
+        if (filter?.TimeRange?.From is not null)
             conditions.Add($"\"PromptStartTimestamp\" >= @{FromParameterName}");
-        if (timeRange?.To is not null)
+        if (filter?.TimeRange?.To is not null)
             conditions.Add($"\"PromptStartTimestamp\" <= @{ToParameterName}");
+        if (ModelOf(filter) is not null)
+            conditions.Add($"\"Model\" = @{ModelParameterName}");
 
         return conditions.Count == 0
             ? null
             : string.Join(" AND ", conditions);
     }
 
-    private static List<NpgsqlParameter> TimeFilterParameters(
-        MemorySearchTimeRange? timeRange
+    private static List<NpgsqlParameter> FilterParameters(
+        MemorySearchFilter? filter
     )
     {
         var parameters = new List<NpgsqlParameter>();
-        if (timeRange?.From is { } from)
+        if (filter?.TimeRange?.From is { } from)
         {
             parameters.Add(
                 new NpgsqlParameter(FromParameterName, NpgsqlDbType.TimestampTz)
@@ -264,7 +269,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
                 }
             );
         }
-        if (timeRange?.To is { } to)
+        if (filter?.TimeRange?.To is { } to)
         {
             parameters.Add(
                 new NpgsqlParameter(ToParameterName, NpgsqlDbType.TimestampTz)
@@ -273,24 +278,37 @@ internal sealed class PostgreSqlMemorySearchRepository(
                 }
             );
         }
+        if (ModelOf(filter) is { } model)
+        {
+            parameters.Add(
+                new NpgsqlParameter(ModelParameterName, NpgsqlDbType.Text)
+                {
+                    Value = model
+                }
+            );
+        }
 
         return parameters;
     }
 
+    private static string? ModelOf(MemorySearchFilter? filter) =>
+        filter?.Model?.Trim() is { Length: > 0 } model ? model : null;
+
     /// <summary>
     /// An HNSW scan filters rows only after it has collected its candidate
-    /// window, so a time filter could leave fewer matches than requested.
+    /// window, so a time or model filter could leave fewer matches than
+    /// requested.
     /// pgvector's strict iterative scan keeps reading the index in exact order
     /// until the filtered window is full. SET LOCAL needs a transaction; inside
     /// a caller's transaction the setting lasts until that transaction ends.
     /// </summary>
     private async Task<List<MemorySearchEntry>> ReadVectorEntries(
         IQueryable<MemorySearchEntry> query,
-        MemorySearchTimeRange? timeRange,
+        MemorySearchFilter? filter,
         CancellationToken cancellationToken
     )
     {
-        if (timeRange is null || timeRange.IsEmpty)
+        if (filter is null || filter.IsEmpty)
             return await query.ToListAsync(cancellationToken);
 
         await using var transaction = dbContext.Database.CurrentTransaction is null
@@ -321,6 +339,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
             ChunkIndex = document.ChunkIndex,
             PromptStartTimestamp = document.PromptStartTimestamp,
             HookEventName = document.HookEventName,
+            Model = document.Model,
             Text = document.Text,
             Embedding = new Vector(document.Embedding.ToArray())
         };
@@ -336,6 +355,7 @@ internal sealed class PostgreSqlMemorySearchRepository(
             entry.ChunkIndex,
             entry.PromptStartTimestamp,
             entry.HookEventName,
+            entry.Model,
             entry.Text
         );
 }

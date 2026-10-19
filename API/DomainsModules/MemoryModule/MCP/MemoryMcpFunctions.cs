@@ -17,6 +17,8 @@ public static class MemoryMcpFunctions
         "Start of the range as an ISO 8601 timestamp, for example 2026-10-16T08:00:00Z. A timestamp without a zone is read as UTC.";
     private const string ToDescription =
         "End of the range as an ISO 8601 timestamp, for example 2026-10-16T18:00:00Z. A timestamp without a zone is read as UTC.";
+    private const string ModelDescription =
+        "Optional exact model name, as returned by memory_models_list. Omit it to search every model.";
 
     public static List<AIFunction> Create() =>
         [
@@ -28,10 +30,11 @@ public static class MemoryMcpFunctions
                     int,
                     DateTime?,
                     DateTime?,
+                    string?,
                     Task<MemorySearchQueryResult>
                 >)Search,
                 "memory_search",
-                "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Optional from and to limit matches to text written in that time range. Returns distinct relevant sessions within a bounded token budget."
+                "Searches chat memories. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a memory must all contain for full-text matching. Optional from and to limit matches to text written in that time range. Optional model limits matches to prompts answered by that model; chat summaries have no model and are then left out. Returns distinct relevant sessions within a bounded token budget."
             ),
             CreateFunction(
                 (Func<
@@ -40,10 +43,16 @@ public static class MemoryMcpFunctions
                     DateTime?,
                     int,
                     int,
+                    string?,
                     Task<PagedResult<MemorySummaryDto>>
                 >)SearchByTime,
                 "memory_search_by_time",
-                "Finds chat memories that were active within a time range, newest activity first. A memory matches when its chat overlaps the range: it ended at or after 'from' and started at or before 'to'. Omit either bound to leave that side open. Returns each memory's ID, thread ID, title, summary, prompt count, and timestamps."
+                "Finds chat memories that were active within a time range, newest activity first. A memory matches when its chat overlaps the range: it ended at or after 'from' and started at or before 'to'. Omit either bound to leave that side open. Optional model keeps memories with at least one prompt answered by that model. Returns each memory's ID, thread ID, title, summary, prompt count, models, and timestamps."
+            ),
+            CreateFunction(
+                (Func<IServiceProvider, Task<List<string>>>)GetModels,
+                "memory_models_list",
+                "Lists the model names recorded on chat memory prompts, for the model filter of memory_search and memory_search_by_time. The list is cached for up to four hours."
             ),
             CreateFunction(
                 (Func<
@@ -93,7 +102,9 @@ public static class MemoryMcpFunctions
         [Description(FromDescription)]
         DateTime? from = null,
         [Description(ToDescription)]
-        DateTime? to = null
+        DateTime? to = null,
+        [Description(ModelDescription)]
+        string? model = null
     ) =>
         MemoryMcpActionExecutor.ExecuteQuery<
             SearchMemoryQuery,
@@ -107,6 +118,7 @@ public static class MemoryMcpFunctions
                 search.MaxTokens = maxTokens;
                 search.From = from;
                 search.To = to;
+                search.Model = model;
             }
         );
 
@@ -118,7 +130,9 @@ public static class MemoryMcpFunctions
         DateTime? to = null,
         int page = Pagination.DefaultPage,
         [Description("Memories per page, from 1 to 100.")]
-        int pageSize = TimeSearchPageSize
+        int pageSize = TimeSearchPageSize,
+        [Description(ModelDescription)]
+        string? model = null
     ) =>
         MemoryMcpActionExecutor.ExecuteQuery<
             SearchMemoriesQuery,
@@ -131,10 +145,17 @@ public static class MemoryMcpFunctions
                 search.ActiveTo = to;
                 search.Page = page;
                 search.PageSize = pageSize;
+                search.Model = model;
                 search.SortBy = MemorySummarySortField.LastActivity;
                 search.SortDirection = SortDirection.Descending;
             }
         );
+
+    private static Task<List<string>> GetModels(IServiceProvider services) =>
+        MemoryMcpActionExecutor.ExecuteQuery<
+            GetMemoryModelsQuery,
+            List<string>
+        >(services, _ => { });
 
     private static Task<MemoryConversationTextResult> GetConversationText(
         IServiceProvider services,

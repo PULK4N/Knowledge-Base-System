@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using EmbeddingModule;
 using MemoryModule.Persistence.Interfaces;
 
@@ -8,31 +9,35 @@ public sealed class MemorySearch(
     IMemorySearchRepository repository
 ) : IMemorySearch
 {
+    private static readonly IReadOnlyList<MemorySearchCandidate> NoCandidates =
+        [];
+
     public async Task<IReadOnlyList<MemorySearchResult>> Search(
-        string query,
+        string? query,
         List<string> keywords,
         HybridMemorySearchOptions? options = null,
         CancellationToken cancellationToken = default
     )
     {
         options = Prepare(query, keywords, options);
+        var filter = options.Filter;
 
-        var queryEmbedding = (await embeddingGenerator.Generate(
-            [query],
-            cancellationToken
-        )).Single();
-        var textCandidates = await repository.SearchText(
-            keywords,
-            options.CandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
-        var vectorCandidates = await repository.SearchVector(
-            queryEmbedding,
-            options.CandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
+        var textCandidates = keywords.Count == 0
+            ? NoCandidates
+            : await repository.SearchText(
+                keywords,
+                options.CandidateCount,
+                filter,
+                cancellationToken
+            );
+        var vectorCandidates = await Embed(query, cancellationToken) is { } embedding
+            ? await repository.SearchVector(
+                embedding,
+                options.CandidateCount,
+                filter,
+                cancellationToken
+            )
+            : NoCandidates;
 
         return HybridMemoryRanker.Fuse(
             textCandidates,
@@ -42,44 +47,52 @@ public sealed class MemorySearch(
     }
 
     public async Task<MemorySearchResults> SearchWithSources(
-        string query,
+        string? query,
         List<string> keywords,
         HybridMemorySearchOptions? options = null,
         CancellationToken cancellationToken = default
     )
     {
         options = Prepare(query, keywords, options);
+        var filter = options.Filter;
 
-        var queryEmbedding = (await embeddingGenerator.Generate(
-            [query],
-            cancellationToken
-        )).Single();
-        var textCandidates = await repository.SearchText(
-            keywords,
-            options.CandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
-        var vectorCandidates = await repository.SearchVector(
-            queryEmbedding,
-            options.CandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
-        var textSourceCandidates = await repository.SearchTextBySource(
-            keywords,
-            options.SourceResultCount,
-            options.SourceCandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
-        var vectorSourceCandidates = await repository.SearchVectorBySource(
-            queryEmbedding,
-            options.SourceResultCount,
-            options.SourceCandidateCount,
-            options.TimeRange,
-            cancellationToken
-        );
+        var textCandidates = NoCandidates;
+        var textSourceCandidates = NoCandidates;
+        if (keywords.Count > 0)
+        {
+            textCandidates = await repository.SearchText(
+                keywords,
+                options.CandidateCount,
+                filter,
+                cancellationToken
+            );
+            textSourceCandidates = await repository.SearchTextBySource(
+                keywords,
+                options.SourceResultCount,
+                options.SourceCandidateCount,
+                filter,
+                cancellationToken
+            );
+        }
+
+        var vectorCandidates = NoCandidates;
+        var vectorSourceCandidates = NoCandidates;
+        if (await Embed(query, cancellationToken) is { } embedding)
+        {
+            vectorCandidates = await repository.SearchVector(
+                embedding,
+                options.CandidateCount,
+                filter,
+                cancellationToken
+            );
+            vectorSourceCandidates = await repository.SearchVectorBySource(
+                embedding,
+                options.SourceResultCount,
+                options.SourceCandidateCount,
+                filter,
+                cancellationToken
+            );
+        }
 
         return new MemorySearchResults(
             HybridMemoryRanker.Fuse(
@@ -95,16 +108,32 @@ public sealed class MemorySearch(
         );
     }
 
+    private async Task<ImmutableArray<float>?> Embed(
+        string? query,
+        CancellationToken cancellationToken
+    ) =>
+        string.IsNullOrWhiteSpace(query)
+            ? null
+            : (await embeddingGenerator.Generate(
+                [query],
+                cancellationToken
+            )).Single();
+
     private static HybridMemorySearchOptions Prepare(
-        string query,
+        string? query,
         List<string> keywords,
         HybridMemorySearchOptions? options
     )
     {
-        if (string.IsNullOrWhiteSpace(query))
-            throw new ArgumentException("Search query is required.", nameof(query));
+        if (string.IsNullOrWhiteSpace(query) && keywords.Count == 0)
+        {
+            throw new ArgumentException(
+                "A search query or search keywords are required.",
+                nameof(query)
+            );
+        }
 
-        if (!SearchKeywordLimits.AreValid(keywords))
+        if (keywords.Count > 0 && !SearchKeywordLimits.AreValid(keywords))
         {
             throw new ArgumentException(
                 $"Search keywords must contain between {SearchKeywordLimits.MinimumCount} and {SearchKeywordLimits.MaximumCount} non-empty words.",

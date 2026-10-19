@@ -14,6 +14,7 @@ public sealed class MemoryMcpFunctionsTests
             {
                 "memory_search",
                 "memory_search_by_time",
+                "memory_models_list",
                 "memory_conversation_get",
                 "memory_summary_add"
             },
@@ -57,6 +58,32 @@ public sealed class MemoryMcpFunctionsTests
         Assert.True(properties.TryGetProperty("to", out _));
         Assert.DoesNotContain("from", required);
         Assert.DoesNotContain("to", required);
+    }
+
+    [Theory]
+    [InlineData("memory_search")]
+    [InlineData("memory_search_by_time")]
+    public void Search_tools_expose_an_optional_model_filter(
+        string functionName
+    )
+    {
+        var function = MemoryMcpFunctions.Create().Single(
+            function => function.Name == functionName
+        );
+        var required = function.JsonSchema.TryGetProperty(
+            "required",
+            out var requiredElement
+        )
+            ? requiredElement.EnumerateArray()
+                .Select(element => element.GetString())
+                .ToList()
+            : [];
+
+        Assert.True(
+            function.JsonSchema.GetProperty("properties")
+                .TryGetProperty("model", out _)
+        );
+        Assert.DoesNotContain("model", required);
     }
 
     [Theory]

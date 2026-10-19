@@ -231,7 +231,8 @@ public sealed class MemoryConversationQueryTests
             DateTime.UnixEpoch,
             DateTime.UnixEpoch.AddMinutes(2),
             DateTime.UnixEpoch.AddMinutes(3),
-            DateTime.UnixEpoch.AddMinutes(3)
+            DateTime.UnixEpoch.AddMinutes(3),
+            []
         );
 
     private sealed class FakeMemoryConversationRepository(
@@ -313,6 +314,10 @@ public sealed class MemoryConversationQueryTests
 
         public Task<List<MemorySummary>> GetMany(
             IReadOnlyCollection<AggregateId> memoryAggregateIds,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<List<string>> GetModels(
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 

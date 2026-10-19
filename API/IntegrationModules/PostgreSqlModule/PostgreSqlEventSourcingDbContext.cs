@@ -388,6 +388,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasOperators("vector_cosine_ops");
                 memory.HasIndex(entry => entry.ThreadId);
                 memory.HasIndex(entry => entry.PromptStartTimestamp);
+                memory.HasIndex(entry => entry.Model);
             }
         );
 
@@ -401,8 +402,13 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .ValueGeneratedNever();
                 memory.Property(summary => summary.SessionTitle).IsRequired();
                 memory.Property(summary => summary.Summary).IsRequired();
+                memory
+                    .Property(summary => summary.Models)
+                    .IsRequired()
+                    .HasDefaultValueSql("ARRAY[]::text[]");
                 memory.HasIndex(summary => summary.ThreadId);
                 memory.HasIndex(summary => summary.LastActivityTimestamp);
+                memory.HasIndex(summary => summary.Models).HasMethod("GIN");
             }
         );
 

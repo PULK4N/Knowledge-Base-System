@@ -11,6 +11,7 @@ using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using Shared.Interfaces;
 
 namespace MemoryModule.Application.Tests;
@@ -46,7 +47,8 @@ public sealed class MemoryQueryTests
                         DateTime.UnixEpoch,
                         DateTime.UnixEpoch.AddMinutes(2),
                         DateTime.UnixEpoch.AddMinutes(3),
-                        DateTime.UnixEpoch.AddMinutes(3)
+                        DateTime.UnixEpoch.AddMinutes(3),
+                        ["claude-opus-5-5"]
                     )
                 ],
                 6
@@ -59,6 +61,7 @@ public sealed class MemoryQueryTests
             Search = "session",
             HasSummary = true,
             MinimumPromptCount = 2,
+            Model = " claude-opus-5-5 ",
             SortBy = MemorySummarySortField.PromptCount,
             SortDirection = SortDirection.Ascending
         };
@@ -71,12 +74,16 @@ public sealed class MemoryQueryTests
         var item = Assert.Single(result.Items);
         Assert.Equal(memoryId.Value, item.MemoryId);
         Assert.Equal("Session title", item.SessionTitle);
+        Assert.Equal(["claude-opus-5-5"], item.Models);
         var request = Assert.IsType<
             EntityQuery<MemorySummaryFilters, MemorySummarySortField>
         >(repository.LastSearchRequest);
         Assert.Equal(new PageRequest(2, 5), request.Page);
         Assert.Equal("session", request.Search);
-        Assert.Equal(new MemorySummaryFilters(true, 2), request.Filters);
+        Assert.Equal(
+            new MemorySummaryFilters(true, 2, Model: "claude-opus-5-5"),
+            request.Filters
+        );
         Assert.Equal(MemorySummarySortField.PromptCount, request.Sort.Field);
         Assert.Equal(SortDirection.Ascending, request.Sort.Direction);
     }
@@ -236,6 +243,60 @@ public sealed class MemoryQueryTests
         Assert.Equal(50, search.LastOptions!.SourceResultCount);
     }
 
+    [Theory]
+    [InlineData(null, new string[0], false)]
+    [InlineData(" ", new string[0], false)]
+    [InlineData("replay decision", new string[0], true)]
+    [InlineData(null, new[] { "replay" }, true)]
+    [InlineData("replay decision", new[] { "replay", "outbox" }, true)]
+    [InlineData(null, new[] { " " }, false)]
+    public async Task Hybrid_search_uses_the_query_and_keywords_it_is_given(
+        string? search,
+        string[] keywords,
+        bool canExecute
+    )
+    {
+        var memorySearch = new FakeMemorySearch([]);
+        var query = new HybridSearchMemoriesQuery(
+            memorySearch,
+            new FakeMemorySummaryRepository(new MemorySummarySearchResult([], 0))
+        )
+        {
+            Search = search,
+            Keywords = keywords.ToList(),
+            Model = "gpt-5.5-codex"
+        };
+
+        Assert.Equal(canExecute, await query.CanExecute(Executor));
+        if (!canExecute)
+            return;
+
+        await query.Execute(Executor);
+
+        Assert.Equal(search, memorySearch.LastQuery);
+        Assert.Equal(keywords, memorySearch.LastKeywords);
+        Assert.Equal("gpt-5.5-codex", memorySearch.LastOptions?.Model);
+    }
+
+    [Fact]
+    public async Task Models_are_read_once_and_then_served_from_the_cache()
+    {
+        var repository = new FakeMemorySummaryRepository(
+            new MemorySummarySearchResult([], 0),
+            ["claude-opus-5-5", "gpt-5.5-codex"]
+        );
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+
+        var first = await new GetMemoryModelsQuery(repository, cache)
+            .Execute(Executor);
+        var second = await new GetMemoryModelsQuery(repository, cache)
+            .Execute(Executor);
+
+        Assert.Equal(["claude-opus-5-5", "gpt-5.5-codex"], first);
+        Assert.Equal(first, second);
+        Assert.Equal(1, repository.GetModelsCallCount);
+    }
+
     [Fact]
     public async Task Hybrid_search_applies_summary_prompt_and_sort_filters()
     {
@@ -313,7 +374,8 @@ public sealed class MemoryQueryTests
             SearchText = "event sourcing decision",
             Keywords = ["event"],
             From = from is null ? null : DateTime.Parse(from),
-            To = to is null ? null : DateTime.Parse(to)
+            To = to is null ? null : DateTime.Parse(to),
+            Model = "claude-opus-5-5"
         };
 
         Assert.Equal(canExecute, await query.CanExecute(Executor));
@@ -322,6 +384,7 @@ public sealed class MemoryQueryTests
 
         await query.Execute(Executor);
 
+        Assert.Equal("claude-opus-5-5", search.LastOptions?.Model);
         var timeRange = search.LastOptions?.TimeRange;
         Assert.NotNull(timeRange);
         Assert.Equal(
@@ -598,6 +661,7 @@ public sealed class MemoryQueryTests
                 matchedSummary
                     ? MemorySearchDocumentSources.ChatSummary
                     : "after_agent",
+                null,
                 text
             ),
             1,
@@ -619,7 +683,8 @@ public sealed class MemoryQueryTests
             DateTime.UnixEpoch,
             DateTime.UnixEpoch.AddMinutes(promptCount),
             DateTime.UnixEpoch.AddMinutes(promptCount + 1),
-            DateTime.UnixEpoch.AddMinutes(promptCount + 1)
+            DateTime.UnixEpoch.AddMinutes(promptCount + 1),
+            []
         );
 
     private static StateCalculator CreateStateCalculator() =>
@@ -644,9 +709,11 @@ public sealed class MemoryQueryTests
     {
         public int CallCount { get; private set; }
         public HybridMemorySearchOptions? LastOptions { get; private set; }
+        public string? LastQuery { get; private set; }
+        public List<string>? LastKeywords { get; private set; }
 
         public Task<IReadOnlyList<MemorySearchResult>> Search(
-            string query,
+            string? query,
             List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
@@ -658,7 +725,7 @@ public sealed class MemoryQueryTests
         }
 
         public Task<MemorySearchResults> SearchWithSources(
-            string query,
+            string? query,
             List<string> keywords,
             HybridMemorySearchOptions? options = null,
             CancellationToken cancellationToken = default
@@ -666,6 +733,8 @@ public sealed class MemoryQueryTests
         {
             CallCount++;
             LastOptions = options;
+            LastQuery = query;
+            LastKeywords = keywords;
             return Task.FromResult(
                 new MemorySearchResults(results, sourceResults ?? [])
             );
@@ -673,10 +742,12 @@ public sealed class MemoryQueryTests
     }
 
     private sealed class FakeMemorySummaryRepository(
-        MemorySummarySearchResult result
+        MemorySummarySearchResult result,
+        List<string>? models = null
     ) : IMemorySummaryRepository
     {
         public object? LastSearchRequest { get; private set; }
+        public int GetModelsCallCount { get; private set; }
         public IReadOnlyCollection<AggregateId>? LastGetManyRequest { get; private set; }
 
         public Task<MemorySummary?> Get(
@@ -702,6 +773,14 @@ public sealed class MemoryQueryTests
                     ))
                     .ToList()
             );
+        }
+
+        public Task<List<string>> GetModels(
+            CancellationToken cancellationToken = default
+        )
+        {
+            GetModelsCallCount++;
+            return Task.FromResult((models ?? []).ToList());
         }
 
         public Task<MemorySummarySearchResult> Search(

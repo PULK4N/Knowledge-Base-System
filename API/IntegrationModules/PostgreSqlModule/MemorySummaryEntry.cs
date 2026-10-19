@@ -11,4 +11,5 @@ internal sealed class MemorySummaryEntry
     public DateTime? LastPromptTimestamp { get; set; }
     public DateTime? SummaryTimestamp { get; set; }
     public DateTime LastActivityTimestamp { get; set; }
+    public List<string> Models { get; set; } = [];
 }

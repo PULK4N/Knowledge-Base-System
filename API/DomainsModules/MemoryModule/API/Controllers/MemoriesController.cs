@@ -37,6 +37,12 @@ public sealed class MemoriesController(
         return Ok(await Execute(query));
     }
 
+    [HttpGet("models")]
+    public async Task<ActionResult<List<string>>> GetModels(
+        [FromServices] GetMemoryModelsQuery query
+    ) =>
+        Ok(await Execute(query));
+
     [HttpGet("tool-calls")]
     public async Task<
         ActionResult<PagedResult<MemoryToolCallSearchItemDto>>
@@ -124,6 +130,7 @@ public sealed class MemoriesController(
         query.MinimumPromptCount = request.MinimumPromptCount;
         query.ActiveFrom = request.ActiveFrom;
         query.ActiveTo = request.ActiveTo;
+        query.Model = request.Model;
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }
@@ -149,6 +156,11 @@ public sealed class MemoriesController(
         query.Page = request.Page;
         query.PageSize = request.PageSize;
         query.Search = request.Query;
+        query.Keywords = request.Keywords
+            .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
+            .Select(keyword => keyword.Trim())
+            .ToList();
+        query.Model = request.Model;
         query.HasSummary = request.HasSummary;
         query.MinimumPromptCount = request.MinimumPromptCount;
         query.ActiveFrom = request.ActiveFrom;

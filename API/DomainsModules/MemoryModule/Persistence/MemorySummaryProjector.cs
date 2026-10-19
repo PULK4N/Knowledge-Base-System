@@ -58,7 +58,13 @@ public sealed class MemorySummaryProjector(
             firstPromptTimestamp,
             lastPromptTimestamp,
             summaryTimestamp,
-            lastActivityTimestamp
+            lastActivityTimestamp,
+            prompts
+                .Select(prompt => MemoryModelNames.Normalize(prompt.Model))
+                .OfType<string>()
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal)
+                .ToList()
         );
     }
 }
