@@ -133,6 +133,22 @@ class UsageTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     module.read_session(path)
 
+    def test_existing_different_or_partial_usage_is_never_overwritten(self):
+        usage = dict(zip(FIELDS, (100, 0, 0, 10, None)))
+        class Api:
+            def __init__(self, *args): pass
+            def find_memory_id(self, session): return SESSION
+            def get_conversation(self, memory):
+                return {'messages': [{'promptId': FIRST, 'outputTokens': 0}]}
+            def _send(self, *args):
+                raise AssertionError('Already-set usage must not be sent')
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'session.jsonl'
+            path.write_text('{}', encoding='utf-8')
+            reader = lambda path: (SESSION, lambda conv: ({FIRST: usage}, 0))
+            with patch('prompt_usage_common.MemoryApi', Api), patch.object(sys, 'argv', ['script', str(path), '--execute']):
+                self.assertEqual(0, run('codex', reader, path))
+
     def test_cli_dry_run_execute_verify_and_unchanged(self):
         usage = dict(zip(FIELDS, (100, 0, 0, 10, None)))
         class Api:

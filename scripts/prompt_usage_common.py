@@ -83,7 +83,7 @@ def run(provider: str, reader, default_folder: Path) -> int:
         parser.error("Session IDs must be UUIDs")
     paths = [source] if source.is_file() else sorted(source.rglob("*.jsonl"))
     api = MemoryApi(args.base_url, args.timeout)
-    totals = dict(set=0, unchanged=0, skipped=0, failed=0, sessions=0)
+    totals = dict(set=0, already_set=0, skipped=0, failed=0, sessions=0)
     seen = set()
     for path in paths:
         try:
@@ -106,13 +106,19 @@ def run(provider: str, reader, default_folder: Path) -> int:
                 if not valid_usage(provider, usage):
                     raise ValueError(f"Invalid usage for prompt {prompt_id}")
                 expected = normalize(provider, usage)
-                if existing.get(prompt_id) == expected:
-                    totals["unchanged"] += 1
+                if any(value is not None for value in existing.get(prompt_id, {}).values()):
+                    totals["already_set"] += 1
                     continue
                 print(f"{session_id} {prompt_id}: {'set' if args.execute else 'would set'} "
                       f"input={expected['inputTokens']} output={expected['outputTokens']}", flush=True)
                 if args.execute:
-                    api._send("PUT", f"/api/memory/{provider}/sessions/{session_id}/prompts/{prompt_id}/usage", usage)
+                    try:
+                        api._send("PUT", f"/api/memory/{provider}/sessions/{session_id}/prompts/{prompt_id}/usage", usage)
+                    except ApiError as error:
+                        if "PromptUsageMustNotBeSetValidator" not in error.body:
+                            raise
+                        totals["already_set"] += 1
+                        continue
                     pending[prompt_id] = expected
                 totals["set"] += 1
             if pending:

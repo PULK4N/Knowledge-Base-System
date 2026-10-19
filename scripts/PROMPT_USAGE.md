@@ -60,9 +60,11 @@ Both scripts accept:
 - A source file or folder, including paths containing spaces.
 - `--execute` to write; `--dry-run` is the default.
 
-Unchanged projected counts are skipped. Writes replace prompt counts rather than
-incrementing them, and each written session is read back until its projected
-counts match. Wait for one execution to finish before rerunning. A projection
+Prompts with any existing usage count are skipped, even if the new values
+differ. The API rejects subsequent usage events through
+`PromptUsageMustNotBeSetValidator`; a concurrent already-set rejection is also
+treated as a skip. Each written session is read back until its projected counts
+match. Wait for one execution to finish before rerunning. A projection
 timeout reports failure even if the API accepted the writes; let projections
 catch up before retrying.
 
@@ -72,7 +74,7 @@ therefore remain null after migration. Claude input is normalized by the API to
 include cache reads and writes. No prices or monetary costs are inferred.
 
 Exit code 0 means no processing/verification failures, not that every prompt had
-usable usage. The final summary reports written/would-write, unchanged, skipped,
+usable usage. The final summary reports written/would-write, already-set, skipped,
 failed, and matched session counts. Close or finish active conversations and
 rerun to migrate their completed turns. Malformed JSON causes that file to fail
 without writing any of its prompts.

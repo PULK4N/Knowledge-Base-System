@@ -32,8 +32,10 @@ events:
   ClaudePromptUsageSetV1:
     preEventValidators:
       - MemoryPromptMustExistValidator
+      - PromptUsageMustNotBeSetValidator
       - PromptUsageMustBeValidValidator
   CodexPromptUsageSetV1:
     preEventValidators:
       - MemoryPromptMustExistValidator
+      - PromptUsageMustNotBeSetValidator
       - PromptUsageMustBeValidValidator

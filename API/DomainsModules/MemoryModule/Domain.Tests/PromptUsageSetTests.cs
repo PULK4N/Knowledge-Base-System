@@ -71,6 +71,37 @@ public sealed class PromptUsageSetTests
         Assert.Equal(expected, new PromptUsageMustBeValidValidator().Validate(new MemoryStateData(id), payload).Succeded);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Usage_is_write_once_even_for_zero_or_partial_counts(bool claude)
+    {
+        var id = AggregateId.FromDatabaseGuid(Guid.NewGuid());
+        var promptId = new PromptId(Guid.NewGuid());
+        var state = new MemoryStateData(id);
+        var prompt = new ChatPrompt { PromptId = promptId };
+        state.ChatPrompts.Add(promptId, prompt);
+        var payload = Payload(id, claude
+            ? new ClaudePromptUsageSetV1(promptId, 10, 0, 0, 5)
+            : new CodexPromptUsageSetV1(promptId, 10, 0, 0, 5));
+        var validator = new PromptUsageMustNotBeSetValidator();
+        Assert.True(validator.Validate(state, payload).Succeded);
+        foreach (var property in new List<string>
+        {
+            nameof(ChatPrompt.InputTokens), nameof(ChatPrompt.CachedInputTokens),
+            nameof(ChatPrompt.CacheWriteInputTokens), nameof(ChatPrompt.OutputTokens),
+            nameof(ChatPrompt.ReasoningOutputTokens)
+        })
+        {
+            var member = typeof(ChatPrompt).GetProperty(property)!;
+            member.SetValue(prompt, 0L);
+            Assert.False(validator.Validate(state, payload).Succeded);
+            member.SetValue(prompt, null);
+        }
+        payload.EventData.Apply(state, new EventExecutionInfo());
+        Assert.False(validator.Validate(state, payload).Succeded);
+    }
+
     private static EventPayload Payload(AggregateId id, IEvent usage) =>
         EventPayload.Create(EventExecutor.FromDatabaseGuid(Guid.NewGuid()), id, "memory-state-machine", usage);
 }

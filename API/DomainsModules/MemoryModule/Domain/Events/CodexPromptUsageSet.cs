@@ -7,7 +7,8 @@ namespace MemoryModule.Domain.Events;
 public interface ICodexPromptUsageSet : IEvent;
 
 /// <summary>
-/// Sets the complete usage for one prompt, replacing any earlier counts.
+/// Sets the complete usage for one prompt. YAML validation rejects new events
+/// once usage is recorded; historical replay applies the persisted values.
 /// Input counts follow Codex's native usage format.
 /// </summary>
 public sealed record CodexPromptUsageSetV1(
