@@ -5,7 +5,7 @@ import {
   Router,
   convertToParamMap,
 } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import {
   MemorySearchRequest,
   MemorySearchResult,
@@ -69,6 +69,7 @@ describe('MemoriesListPage', () => {
                   return () => cancelledRequests.push(currentRequest);
                 }),
             ),
+            models: vi.fn(() => of(['claude-opus-5-5'])),
           },
         },
       ],
@@ -96,48 +97,53 @@ describe('MemoriesListPage', () => {
     subscription.unsubscribe();
   });
 
-  it('clears the other search mode whenever one search receives input', () => {
+  it('keeps the other search input and sorts by relevance once searching', () => {
     const page = fixture.componentInstance as unknown as {
       search(request: MemorySearchRequest, value: string): void;
       semanticSearch(request: MemorySearchRequest, value: string): void;
+    };
+    const queryParams = (changes: Record<string, unknown>) => ({
+      page: null,
+      pageSize: null,
+      search: null,
+      semanticSearch: null,
+      model: null,
+      hasSummary: null,
+      minimumPromptCount: null,
+      sortBy: null,
+      sortDirection: null,
+      ...changes,
+    });
+    const searching: MemorySearchRequest = {
+      ...DEFAULT_MEMORY_SEARCH_REQUEST,
+      semanticSearch: 'the replay decision',
+      sortBy: 'PromptCount',
+      sortDirection: 'Ascending',
     };
 
     page.semanticSearch(DEFAULT_MEMORY_SEARCH_REQUEST, 'the replay decision');
     expect(router.navigate).toHaveBeenLastCalledWith([], {
       relativeTo: TestBed.inject(ActivatedRoute),
-      queryParams: {
-        page: null,
-        pageSize: null,
-        search: null,
-        semanticSearch: 'the replay decision',
-        hasSummary: null,
-        minimumPromptCount: null,
-        sortBy: null,
-        sortDirection: null,
-      },
+      queryParams: queryParams({ semanticSearch: 'the replay decision' }),
       replaceUrl: true,
     });
 
-    page.search(
-      {
-        ...DEFAULT_MEMORY_SEARCH_REQUEST,
-        semanticSearch: 'the replay decision',
-        sortBy: 'Relevance',
-      },
-      'literal summary',
-    );
+    page.search(searching, 'outbox');
     expect(router.navigate).toHaveBeenLastCalledWith([], {
       relativeTo: TestBed.inject(ActivatedRoute),
-      queryParams: {
-        page: null,
-        pageSize: null,
-        search: 'literal summary',
-        semanticSearch: null,
-        hasSummary: null,
-        minimumPromptCount: null,
-        sortBy: null,
-        sortDirection: null,
-      },
+      queryParams: queryParams({
+        search: 'outbox',
+        semanticSearch: 'the replay decision',
+        sortBy: 'PromptCount',
+        sortDirection: 'Ascending',
+      }),
+      replaceUrl: true,
+    });
+
+    page.semanticSearch(searching, '');
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
+      relativeTo: TestBed.inject(ActivatedRoute),
+      queryParams: queryParams({}),
       replaceUrl: true,
     });
   });

@@ -13,6 +13,7 @@ describe('Memory list route state', () => {
           page: '2',
           pageSize: '10',
           search: ' event sourcing ',
+          model: ' claude-opus-5-5 ',
           hasSummary: 'true',
           minimumPromptCount: '4',
           sortBy: 'PromptCount',
@@ -24,6 +25,7 @@ describe('Memory list route state', () => {
       pageSize: 10,
       search: 'event sourcing',
       semanticSearch: '',
+      model: 'claude-opus-5-5',
       hasSummary: true,
       minimumPromptCount: 4,
       sortBy: 'PromptCount',
@@ -31,18 +33,19 @@ describe('Memory list route state', () => {
     });
   });
 
-  it('makes semantic search exclusive and defaults it to relevance', () => {
-    expect(
-      parseMemorySearchRequest(
-        convertToParamMap({
-          search: 'literal text',
-          semanticSearch: 'what did we decide about the outbox?',
-        }),
-      ),
-    ).toEqual({
+  it.each([
+    [{ search: 'outbox retry' }],
+    [{ semanticSearch: 'what did we decide about the outbox?' }],
+    [
+      {
+        search: 'outbox retry',
+        semanticSearch: 'what did we decide about the outbox?',
+      },
+    ],
+  ])('keeps text and vector search together and sorts by relevance: %j', params => {
+    expect(parseMemorySearchRequest(convertToParamMap(params))).toEqual({
       ...DEFAULT_MEMORY_SEARCH_REQUEST,
-      search: '',
-      semanticSearch: 'what did we decide about the outbox?',
+      ...params,
       sortBy: 'Relevance',
     });
   });
@@ -62,13 +65,14 @@ describe('Memory list route state', () => {
     ).toEqual(DEFAULT_MEMORY_SEARCH_REQUEST);
   });
 
-  it('serializes only one search mode into a canonical URL', () => {
+  it('serializes both searches and the model into a canonical URL', () => {
     expect(
       memorySearchQueryParams({
         page: 3,
         pageSize: 25,
         search: 'literal text',
         semanticSearch: 'semantic meaning',
+        model: 'gpt-5.5-codex',
         hasSummary: false,
         minimumPromptCount: 2,
         sortBy: 'PromptCount',
@@ -77,8 +81,9 @@ describe('Memory list route state', () => {
     ).toEqual({
       page: 3,
       pageSize: 25,
-      search: null,
+      search: 'literal text',
       semanticSearch: 'semantic meaning',
+      model: 'gpt-5.5-codex',
       hasSummary: 'false',
       minimumPromptCount: 2,
       sortBy: 'PromptCount',
@@ -92,6 +97,7 @@ describe('Memory list route state', () => {
       pageSize: null,
       search: null,
       semanticSearch: null,
+      model: null,
       hasSummary: null,
       minimumPromptCount: null,
       sortBy: null,

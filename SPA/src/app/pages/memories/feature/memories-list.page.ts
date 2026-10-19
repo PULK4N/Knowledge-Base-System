@@ -35,6 +35,7 @@ import { MemoriesTabsComponent } from '../ui/memories-tabs.component';
 import {
   MEMORY_PAGE_SIZES,
   equalMemorySearchRequest,
+  isMemorySearch,
   memorySearchQueryParams,
   parseMemorySearchRequest,
 } from './memory-list-state';
@@ -51,6 +52,7 @@ const RELEVANCE_SORT_OPTION: ListControlOption = {
   value: 'Relevance',
   label: 'Relevance',
 };
+const ANY_MODEL_OPTION: ListControlOption = { value: '', label: 'Any' };
 const SUMMARY_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: '', label: 'Any' },
   { value: 'true', label: 'Has summary' },
@@ -59,6 +61,7 @@ const SUMMARY_FILTER_OPTIONS: readonly ListControlOption[] = [
 
 interface MemoryListItem extends MemorySummary {
   readonly title: string;
+  readonly modelsLabel: string;
 }
 
 @Component({
@@ -101,6 +104,7 @@ export class MemoriesListPage {
             items: result.items.map(memory => ({
               ...memory,
               title: memoryTitle(memory),
+              modelsLabel: memory.models.join(', ') || '—',
             })),
           },
         }) as const),
@@ -116,21 +120,46 @@ export class MemoriesListPage {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  // The model filter still works without its options, so a failed read only
+  // leaves the list with the selected model.
+  private readonly models$ = this.memories.models().pipe(
+    catchError(() => of([])),
+    startWith([]),
+  );
+
   protected readonly vm$ = combineLatest({
     request: this.request$,
     state: this.state$,
+    models: this.models$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected sortOptions(
     request: MemorySearchRequest,
   ): readonly ListControlOption[] {
-    return request.semanticSearch
+    return isMemorySearch(request)
       ? [RELEVANCE_SORT_OPTION, ...MEMORY_SORT_OPTIONS]
       : MEMORY_SORT_OPTIONS;
   }
 
-  protected filters(request: MemorySearchRequest): readonly ListFilter[] {
+  protected filters(
+    request: MemorySearchRequest,
+    models: readonly string[],
+  ): readonly ListFilter[] {
+    const modelOptions = models.includes(request.model) || !request.model
+      ? models
+      : [request.model, ...models];
+
     return [
+      {
+        kind: 'select',
+        key: 'model',
+        label: 'Model',
+        value: request.model,
+        options: [
+          ANY_MODEL_OPTION,
+          ...modelOptions.map(model => ({ value: model, label: model })),
+        ],
+      },
       {
         kind: 'select',
         key: 'hasSummary',
@@ -152,54 +181,25 @@ export class MemoriesListPage {
   }
 
   protected search(request: MemorySearchRequest, search: string): void {
-    this.navigate(
-      {
-        ...request,
-        page: 1,
-        search,
-        semanticSearch: '',
-        sortBy:
-          request.sortBy === 'Relevance'
-            ? 'LastActivity'
-            : request.sortBy,
-      },
-      true,
-    );
+    this.changeSearch(request, { ...request, search });
   }
 
   protected semanticSearch(
     request: MemorySearchRequest,
     semanticSearch: string,
   ): void {
-    const hasSemanticSearch = semanticSearch.trim().length > 0;
-    const isEnteringSemanticMode =
-      hasSemanticSearch && !request.semanticSearch;
-    const sortBy = !hasSemanticSearch
-      ? 'LastActivity'
-      : isEnteringSemanticMode
-        ? 'Relevance'
-        : request.sortBy;
-    const sortDirection =
-      !hasSemanticSearch || isEnteringSemanticMode
-        ? 'Descending'
-        : request.sortDirection;
-    this.navigate(
-      {
-        ...request,
-        page: 1,
-        search: '',
-        semanticSearch,
-        sortBy,
-        sortDirection,
-      },
-      true,
-    );
+    this.changeSearch(request, { ...request, semanticSearch });
   }
 
   protected filter(
     request: MemorySearchRequest,
     change: ListFilterChange,
   ): void {
+    if (change.key === 'model') {
+      this.navigate({ ...request, page: 1, model: change.value });
+      return;
+    }
+
     if (change.key === 'hasSummary') {
       this.navigate({
         ...request,
@@ -249,6 +249,34 @@ export class MemoriesListPage {
 
   protected goToPage(request: MemorySearchRequest, page: number): void {
     this.navigate({ ...request, page });
+  }
+
+  /**
+   * Sorts by relevance when a search starts and goes back to last activity
+   * when the last search input is cleared; otherwise keeps the chosen sort.
+   */
+  private changeSearch(
+    request: MemorySearchRequest,
+    next: MemorySearchRequest,
+  ): void {
+    const wasSearching = isMemorySearch(request);
+    const isSearching = isMemorySearch(next);
+    const isModeChange = wasSearching !== isSearching;
+    const sortBy = !isModeChange
+      ? request.sortBy
+      : isSearching
+        ? 'Relevance'
+        : 'LastActivity';
+
+    this.navigate(
+      {
+        ...next,
+        page: 1,
+        sortBy,
+        sortDirection: isModeChange ? 'Descending' : request.sortDirection,
+      },
+      true,
+    );
   }
 
   private booleanFilterValue(value: boolean | null): string {

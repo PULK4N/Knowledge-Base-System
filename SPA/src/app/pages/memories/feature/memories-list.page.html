@@ -12,11 +12,11 @@
     <div class="toolbar">
       <app-list-controls
         [search]="vm.request.search"
-        searchLabel="Search memory summaries and identifiers"
-        searchPlaceholder="Search summaries or paste an ID"
+        searchLabel="Text search over prompt text"
+        searchPlaceholder="Words that must all appear"
         [secondarySearch]="vm.request.semanticSearch"
-        secondarySearchLabel="Hybrid semantic memory search"
-        secondarySearchPlaceholder="Search by meaning (vector + text)"
+        secondarySearchLabel="Vector search over prompt text"
+        secondarySearchPlaceholder="Search by meaning"
         [sortBy]="vm.request.sortBy"
         [sortOptions]="sortOptions(vm.request)"
         [sortDirection]="vm.request.sortDirection"
@@ -27,18 +27,22 @@
       />
 
       <app-list-filters
-        [filters]="filters(vm.request)"
+        [filters]="filters(vm.request, vm.models)"
         (textFilterChanged)="filter(vm.request, $event)"
         (selectFilterChanged)="filter(vm.request, $event)"
       />
 
       <div class="toolbar-summary">
         <span class="search-hint">
-          @if (vm.request.semanticSearch) {
-            Hybrid search ranks matching conversation content by meaning and
-            text.
+          @if (vm.request.search && vm.request.semanticSearch) {
+            Ranks prompt text by meaning and by the words it contains.
+          } @else if (vm.request.semanticSearch) {
+            Ranks prompt text by meaning.
+          } @else if (vm.request.search) {
+            Finds prompt text that contains every word.
           } @else {
-            Standard search matches summaries and exact memory or thread IDs.
+            Lists conversations by activity. Search prompt text by words, by
+            meaning, or both.
           }
         </span>
       </div>
@@ -110,6 +114,10 @@
                   <div>
                     <dt>Thread ID</dt>
                     <dd>{{ memory.threadId }}</dd>
+                  </div>
+                  <div>
+                    <dt>Models</dt>
+                    <dd>{{ memory.modelsLabel }}</dd>
                   </div>
                   <div>
                     <dt>First prompt</dt>

@@ -11,13 +11,20 @@ export interface MemorySummary {
   readonly lastPromptTimestamp: string | null;
   readonly summaryTimestamp: string | null;
   readonly lastActivityTimestamp: string;
+  readonly models: readonly string[];
 }
 
+/**
+ * `search` is the text search: its words must all appear in a prompt chunk.
+ * `semanticSearch` is the vector search. Each one is used only when it is not
+ * empty, and both together are ranked as one hybrid search.
+ */
 export interface MemorySearchRequest {
   readonly page: number;
   readonly pageSize: number;
   readonly search: string;
   readonly semanticSearch: string;
+  readonly model: string;
   readonly hasSummary: boolean | null;
   readonly minimumPromptCount: number | null;
   readonly sortBy: MemorySearchSortField;
@@ -44,6 +51,7 @@ export interface MemorySummaryDto {
   readonly lastPromptTimestamp: string | null;
   readonly summaryTimestamp: string | null;
   readonly lastActivityTimestamp: string;
+  readonly models?: readonly string[];
 }
 
 export type MemoryMessageRole = 'user' | 'assistant' | 'hook';

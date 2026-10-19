@@ -17,6 +17,7 @@ export const MEMORY_DEFAULT_PAGE_SIZE = 5;
 export const MEMORY_PAGE_SIZES = [5, 10, 25] as const;
 const MAXIMUM_OFFSET = 100_000;
 const MAXIMUM_SEARCH_LENGTH = 500;
+const MAXIMUM_MODEL_LENGTH = 200;
 
 const MEMORY_SORT_FIELDS: readonly MemorySearchSortField[] = [
   'Relevance',
@@ -36,6 +37,7 @@ export const DEFAULT_MEMORY_SEARCH_REQUEST: MemorySearchRequest = {
   pageSize: MEMORY_DEFAULT_PAGE_SIZE,
   search: '',
   semanticSearch: '',
+  model: '',
   hasSummary: null,
   minimumPromptCount: null,
   sortBy: 'LastActivity',
@@ -53,8 +55,9 @@ export function parseMemorySearchRequest(
   );
   const requestedPage = readPositiveInteger(params, 'page', 1);
   const semanticSearch = boundedValue(params, 'semanticSearch');
-  const search = semanticSearch ? '' : boundedValue(params, 'search');
-  const defaultSort: MemorySearchSortField = semanticSearch
+  const search = boundedValue(params, 'search');
+  const isSearching = Boolean(search || semanticSearch);
+  const defaultSort: MemorySearchSortField = isSearching
     ? 'Relevance'
     : 'LastActivity';
   const parsedSort = readAllowedValue(
@@ -70,13 +73,14 @@ export function parseMemorySearchRequest(
     pageSize,
     search,
     semanticSearch,
+    model: boundedValue(params, 'model', MAXIMUM_MODEL_LENGTH),
     hasSummary: readNullableBoolean(params, 'hasSummary'),
     minimumPromptCount: readNullableNonNegativeInteger(
       params,
       'minimumPromptCount',
     ),
     sortBy:
-      !semanticSearch && parsedSort === 'Relevance'
+      !isSearching && parsedSort === 'Relevance'
         ? 'LastActivity'
         : parsedSort,
     sortDirection: readAllowedValue(
@@ -91,14 +95,14 @@ export function parseMemorySearchRequest(
 export function memorySearchQueryParams(
   request: MemorySearchRequest,
 ): ListQueryParams {
-  const semanticSearch = omitEmpty(request.semanticSearch);
-  const defaultSort = semanticSearch ? 'Relevance' : 'LastActivity';
+  const defaultSort = isMemorySearch(request) ? 'Relevance' : 'LastActivity';
 
   return {
     page: omitDefault(request.page, 1),
     pageSize: omitDefault(request.pageSize, MEMORY_DEFAULT_PAGE_SIZE),
-    search: semanticSearch ? null : omitEmpty(request.search),
-    semanticSearch,
+    search: omitEmpty(request.search),
+    semanticSearch: omitEmpty(request.semanticSearch),
+    model: omitEmpty(request.model),
     hasSummary: serializeNullableBoolean(request.hasSummary),
     minimumPromptCount: request.minimumPromptCount,
     sortBy: omitDefault(request.sortBy, defaultSort),
@@ -115,6 +119,7 @@ export function equalMemorySearchRequest(
     left.pageSize === right.pageSize &&
     left.search === right.search &&
     left.semanticSearch === right.semanticSearch &&
+    left.model === right.model &&
     left.hasSummary === right.hasSummary &&
     left.minimumPromptCount === right.minimumPromptCount &&
     left.sortBy === right.sortBy &&
@@ -122,8 +127,20 @@ export function equalMemorySearchRequest(
   );
 }
 
-function boundedValue(params: ParamMap, key: string): string {
-  return (params.get(key)?.trim() ?? '').slice(0, MAXIMUM_SEARCH_LENGTH);
+/** True when the text search or the vector search has input. */
+export function isMemorySearch(request: MemorySearchRequest): boolean {
+  return (
+    request.search.trim().length > 0 ||
+    request.semanticSearch.trim().length > 0
+  );
+}
+
+function boundedValue(
+  params: ParamMap,
+  key: string,
+  maximumLength = MAXIMUM_SEARCH_LENGTH,
+): string {
+  return (params.get(key)?.trim() ?? '').slice(0, maximumLength);
 }
 
 function readNullableBoolean(params: ParamMap, key: string): boolean | null {

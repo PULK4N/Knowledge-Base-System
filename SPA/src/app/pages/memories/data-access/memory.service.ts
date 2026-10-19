@@ -1,6 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, filter, ignoreElements, map, merge, tap } from 'rxjs';
+import {
+  Observable,
+  filter,
+  ignoreElements,
+  map,
+  merge,
+  shareReplay,
+  tap,
+} from 'rxjs';
 import {
   EntityStore,
   PagedResult,
@@ -70,6 +78,19 @@ function toToolCall(toolCall: MemoryToolCallDto): MemoryToolCall {
   };
 }
 
+// Matches the API's keyword limits for the full-text search.
+const MAXIMUM_SEARCH_KEYWORDS = 20;
+const MAXIMUM_SEARCH_KEYWORD_LENGTH = 100;
+
+/** Splits the text search into the words a prompt chunk must all contain. */
+export function memorySearchKeywords(search: string): string[] {
+  return search
+    .split(/\s+/)
+    .filter(keyword => keyword.length > 0)
+    .slice(0, MAXIMUM_SEARCH_KEYWORDS)
+    .map(keyword => keyword.slice(0, MAXIMUM_SEARCH_KEYWORD_LENGTH));
+}
+
 const MEMORY_ENTITY_TYPE = 'memory';
 const MEMORY_TOOL_CALL_ENTITY_TYPE = 'memoryToolCall';
 
@@ -78,6 +99,16 @@ export class MemoryService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(EntityStore);
   private readonly controllerPath = '/api/memories';
+
+  // The API caches the model list for hours, so one read per app session is
+  // enough. An error is not replayed, so the next subscriber retries.
+  private readonly models$ = this.http
+    .get<string[]>(`${this.controllerPath}/models`)
+    .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+
+  models(): Observable<readonly string[]> {
+    return this.models$;
+  }
 
   getConversation(memoryId: string): Observable<MemoryConversation> {
     return this.http
@@ -94,14 +125,17 @@ export class MemoryService {
   }
 
   search(request: MemorySearchRequest): Observable<MemorySearchResult> {
-    const normalizedSearch = request.search.trim();
+    const keywords = memorySearchKeywords(request.search);
     const normalizedSemanticSearch = request.semanticSearch.trim();
+    const model = request.model.trim();
+    const isSearching = keywords.length > 0 || normalizedSemanticSearch !== '';
     const queryKey = JSON.stringify({
       entityType: MEMORY_ENTITY_TYPE,
       page: request.page,
       pageSize: request.pageSize,
-      search: normalizedSearch.toLowerCase(),
+      keywords: keywords.map(keyword => keyword.toLowerCase()),
       semanticSearch: normalizedSemanticSearch.toLowerCase(),
+      model,
       hasSummary: request.hasSummary,
       minimumPromptCount: request.minimumPromptCount,
       sortBy: request.sortBy,
@@ -113,12 +147,16 @@ export class MemoryService {
       .set('sortBy', request.sortBy)
       .set('sortDirection', request.sortDirection);
 
-    const activeSearch = normalizedSemanticSearch || normalizedSearch;
-    if (activeSearch) {
-      params = params.set(
-        normalizedSemanticSearch ? 'query' : 'search',
-        activeSearch,
-      );
+    if (normalizedSemanticSearch) {
+      params = params.set('query', normalizedSemanticSearch);
+    }
+
+    for (const keyword of keywords) {
+      params = params.append('keywords', keyword);
+    }
+
+    if (model) {
+      params = params.set('model', model);
     }
 
     if (request.hasSummary !== null) {
@@ -129,7 +167,7 @@ export class MemoryService {
       params = params.set('minimumPromptCount', request.minimumPromptCount);
     }
 
-    const path = normalizedSemanticSearch
+    const path = isSearching
       ? `${this.controllerPath}/hybrid-search`
       : this.controllerPath;
     const refresh$ = this.http
@@ -148,6 +186,7 @@ export class MemoryService {
               lastPromptTimestamp: memory.lastPromptTimestamp,
               summaryTimestamp: memory.summaryTimestamp,
               lastActivityTimestamp: memory.lastActivityTimestamp,
+              models: memory.models ?? [],
             }),
           ),
         })),

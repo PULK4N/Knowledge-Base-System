@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { MemoryService } from './memory.service';
+import { MemoryService, memorySearchKeywords } from './memory.service';
 
 describe('MemoryService', () => {
   let service: MemoryService;
@@ -21,13 +21,14 @@ describe('MemoryService', () => {
 
   afterEach(() => http.verify());
 
-  it('searches memories and maps the API identity', async () => {
+  it('lists memories with the model filter and maps the API identity', async () => {
     const resultPromise = firstValueFrom(
       service.search({
         page: 2,
         pageSize: 5,
-        search: 'event sourcing',
+        search: '',
         semanticSearch: '',
+        model: 'claude-opus-5-5',
         hasSummary: true,
         minimumPromptCount: 3,
         sortBy: 'PromptCount',
@@ -39,7 +40,8 @@ describe('MemoryService', () => {
         candidate.url === '/api/memories' &&
         candidate.params.get('page') === '2' &&
         candidate.params.get('pageSize') === '5' &&
-        candidate.params.get('search') === 'event sourcing' &&
+        !candidate.params.has('search') &&
+        candidate.params.get('model') === 'claude-opus-5-5' &&
         candidate.params.get('hasSummary') === 'true' &&
         candidate.params.get('minimumPromptCount') === '3' &&
         candidate.params.get('sortBy') === 'PromptCount' &&
@@ -58,6 +60,7 @@ describe('MemoryService', () => {
           lastPromptTimestamp: '2026-08-01T09:00:00Z',
           summaryTimestamp: '2026-08-01T09:05:00Z',
           lastActivityTimestamp: '2026-08-01T09:05:00Z',
+          models: ['claude-opus-5-5'],
         },
       ],
       page: 2,
@@ -79,41 +82,74 @@ describe('MemoryService', () => {
       lastPromptTimestamp: '2026-08-01T09:00:00Z',
       summaryTimestamp: '2026-08-01T09:05:00Z',
       lastActivityTimestamp: '2026-08-01T09:05:00Z',
+      models: ['claude-opus-5-5'],
     });
   });
 
-  it('uses the paged hybrid endpoint for semantic search', async () => {
-    const resultPromise = firstValueFrom(
-      service.search({
+  it.each([
+    ['  outbox   retry ', '', null, ['outbox', 'retry']],
+    ['', ' what did we decide? ', 'what did we decide?', []],
+    ['outbox', 'what did we decide?', 'what did we decide?', ['outbox']],
+  ])(
+    'sends text search %j and vector search %j to the hybrid endpoint',
+    async (search, semanticSearch, expectedQuery, expectedKeywords) => {
+      const resultPromise = firstValueFrom(
+        service.search({
+          page: 1,
+          pageSize: 10,
+          search,
+          semanticSearch,
+          model: '',
+          hasSummary: null,
+          minimumPromptCount: null,
+          sortBy: 'Relevance',
+          sortDirection: 'Descending',
+        }),
+      );
+      const request = http.expectOne(
+        candidate => candidate.url === '/api/memories/hybrid-search',
+      );
+
+      expect(request.request.params.get('query')).toBe(expectedQuery);
+      expect(request.request.params.getAll('keywords') ?? []).toEqual(
+        expectedKeywords,
+      );
+      expect(request.request.params.has('model')).toBe(false);
+      expect(request.request.params.get('sortBy')).toBe('Relevance');
+      request.flush({
+        items: [],
         page: 1,
         pageSize: 10,
-        search: '',
-        semanticSearch: 'what did we decide about event replay?',
-        hasSummary: null,
-        minimumPromptCount: null,
-        sortBy: 'Relevance',
-        sortDirection: 'Descending',
-      }),
-    );
-    const request = http.expectOne(
-      candidate =>
-        candidate.url === '/api/memories/hybrid-search' &&
-        candidate.params.get('query') ===
-          'what did we decide about event replay?' &&
-        candidate.params.get('sortBy') === 'Relevance',
+        totalCount: 0,
+        totalPages: 0,
+        hasPreviousPage: false,
+        hasNextPage: false,
+      });
+
+      expect((await resultPromise).items).toEqual([]);
+    },
+  );
+
+  it('limits the text search to the API keyword limits', () => {
+    const keywords = memorySearchKeywords(
+      [...Array.from({ length: 25 }, (_, index) => `w${index}`), 'x'.repeat(150)]
+        .join(' '),
     );
 
-    request.flush({
-      items: [],
-      page: 1,
-      pageSize: 10,
-      totalCount: 0,
-      totalPages: 0,
-      hasPreviousPage: false,
-      hasNextPage: false,
-    });
+    expect(keywords).toHaveLength(20);
+    expect(keywords[0]).toBe('w0');
+    expect(memorySearchKeywords('x'.repeat(150))).toEqual(['x'.repeat(100)]);
+  });
 
-    expect((await resultPromise).items).toEqual([]);
+  it('reads the model list once per session', async () => {
+    const first = firstValueFrom(service.models());
+    http.expectOne('/api/memories/models').flush(['claude-opus-5-5']);
+
+    expect(await first).toEqual(['claude-opus-5-5']);
+    expect(await firstValueFrom(service.models())).toEqual([
+      'claude-opus-5-5',
+    ]);
+    http.expectNone('/api/memories/models');
   });
 
   it('loads a conversation and normalizes message roles and payloads', async () => {
