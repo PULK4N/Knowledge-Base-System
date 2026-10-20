@@ -20,6 +20,8 @@ public sealed class AddFeatureCommand(
 
     public required string Status { get; set; }
 
+    public string? CompositeBranchName { get; set; }
+
     public override async Task<bool> CanExecute(Executor executor)
     {
         if (
@@ -39,7 +41,7 @@ public sealed class AddFeatureCommand(
         var memoryAggregateId = await ResolveMemoryAggregateId();
         var featureId = AggregateId.New();
 
-        await ExecuteEvent(
+        await ExecuteEvents(
             executor,
             featureId,
             new FeatureAddedV2(
@@ -50,6 +52,7 @@ public sealed class AddFeatureCommand(
                 SessionId,
                 memoryAggregateId
             ),
+            _ => FeatureCompositeBranchEvents.CreateOptional(CompositeBranchName, SessionId, memoryAggregateId),
             memoryAggregateId
         );
 
@@ -82,6 +85,11 @@ public sealed class UpdateFeatureStatusCommand(
 {
     public required string Status { get; set; }
 
+    /// <summary>
+    /// Null keeps the branch; empty clears it.
+    /// </summary>
+    public string? CompositeBranchName { get; set; }
+
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             FeatureId != Guid.Empty
@@ -92,13 +100,14 @@ public sealed class UpdateFeatureStatusCommand(
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
 
-        return await ExecuteEvent(
+        return await ExecuteEvents(
             executor,
             new FeatureStatusUpdatedV2(
                 Status,
                 SessionId,
                 memoryAggregateId
             ),
+            _ => FeatureCompositeBranchEvents.CreateOptional(CompositeBranchName, SessionId, memoryAggregateId),
             memoryAggregateId
         );
     }
@@ -110,17 +119,23 @@ public sealed class UpdateFeatureSummaryCommand(
 {
     public required string Summary { get; set; }
 
+    /// <summary>
+    /// Null keeps the branch; empty clears it.
+    /// </summary>
+    public string? CompositeBranchName { get; set; }
+
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
 
-        return await ExecuteEvent(
+        return await ExecuteEvents(
             executor,
             new FeatureSummaryUpdatedV2(
                 Summary,
                 SessionId,
                 memoryAggregateId
             ),
+            _ => FeatureCompositeBranchEvents.CreateOptional(CompositeBranchName, SessionId, memoryAggregateId),
             memoryAggregateId
         );
     }

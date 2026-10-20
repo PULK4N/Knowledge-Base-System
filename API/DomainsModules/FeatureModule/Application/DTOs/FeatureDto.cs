@@ -29,6 +29,11 @@ public sealed record FeatureDto
     public FeatureBranchDto? Branch { get; init; }
 
     /// <summary>
+    /// Branch for Analyst checking all functionalities together.
+    /// </summary>
+    public string? CompositeBranchName { get; init; }
+
+    /// <summary>
     /// The feature branch followed by the branches of plans not yet completed,
     /// each after the branches it came from.
     /// </summary>
@@ -62,6 +67,7 @@ public sealed record FeatureDto
                 ? null
                 : FeatureBranchDto.FromModel(state.Branch),
             BranchGraph = FeatureBranchGraphBuilder.Build(state),
+            CompositeBranchName = state.CompositeBranchName,
             MemoryHistory = state.MemoryHistory
                 .Select(FeatureMemoryHistoryDto.FromModel)
                 .ToList()

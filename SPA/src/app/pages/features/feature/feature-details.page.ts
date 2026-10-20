@@ -43,10 +43,12 @@ import {
   FeatureRecord,
   FeatureRecordSourceType,
   SetFeatureBranchRequest,
+  SetFeatureCompositeBranchRequest,
   UpdateFeatureRecordRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { FeatureBranchOverviewComponent } from '../ui/feature-branch-overview.component';
+import { FeatureBranchSettingsComponent } from '../ui/feature-branch-settings.component';
 import {
   branchSourceOptions,
   sourceFromOptionId,
@@ -141,6 +143,11 @@ type FeatureAction =
       readonly featureId: string;
       readonly request: SetFeatureBranchRequest;
     }
+  | {
+      readonly kind: 'set-composite-branch';
+      readonly featureId: string;
+      readonly request: SetFeatureCompositeBranchRequest;
+    }
   | { readonly kind: 'remove-feature'; readonly featureId: string };
 
 type MutationState =
@@ -155,6 +162,7 @@ type MutationState =
     ClampOverflowDirective,
     DatePipe,
     FeatureBranchOverviewComponent,
+    FeatureBranchSettingsComponent,
     FeatureLinkPickerComponent,
     FeaturePlanStatusPipe,
     FormsModule,
@@ -546,6 +554,10 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'set-branch', featureId, request });
   }
 
+  protected setCompositeBranch(featureId: string, request: SetFeatureCompositeBranchRequest): void {
+    this.actions.next({ kind: 'set-composite-branch', featureId, request });
+  }
+
   protected removeFeature(featureId: string): void {
     this.actions.next({ kind: 'remove-feature', featureId });
   }
@@ -597,6 +609,8 @@ export class FeatureDetailsPage {
         return this.features.removePlan(action.featureId, action.planId);
       case 'set-branch':
         return this.features.setBranch(action.featureId, action.request);
+      case 'set-composite-branch':
+        return this.features.setCompositeBranch(action.featureId, action.request);
       case 'remove-feature':
         return this.features.remove(action.featureId);
     }

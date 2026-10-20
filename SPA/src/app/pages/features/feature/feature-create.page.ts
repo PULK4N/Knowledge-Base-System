@@ -93,12 +93,14 @@ export class FeatureCreatePage {
     name: string,
     summary: string,
     status: string,
+    compositeBranchName: string,
   ): void {
     this.createRequests.next({
       projectId,
       name: name.trim(),
       summary: summary.trim(),
       status: status.trim(),
+      compositeBranchName: compositeBranchName.trim(),
     });
   }
 }

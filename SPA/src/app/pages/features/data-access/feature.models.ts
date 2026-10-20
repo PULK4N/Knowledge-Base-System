@@ -113,6 +113,8 @@ export interface Feature extends FeatureSummary {
   readonly plans: readonly FeaturePlan[];
   /** Null until the feature branch is set; features are often written before it exists. */
   readonly branch: FeatureBranch | null;
+  /** Branch for Analyst checking all functionalities together before review finishes. */
+  readonly compositeBranchName?: string | null;
   /**
    * The feature branch first, then the branches of plans not yet completed,
    * each after the branches it came from.
@@ -160,6 +162,7 @@ export interface FeatureDto {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly plans: readonly FeaturePlan[];
   readonly branch: FeatureBranch | null;
+  readonly compositeBranchName?: string | null;
   readonly branchGraph: readonly FeatureBranchGraphNode[];
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
@@ -169,6 +172,12 @@ export interface AddFeatureRequest {
   readonly name: string;
   readonly summary: string;
   readonly status: string;
+  readonly compositeBranchName?: string;
+}
+
+export interface SetFeatureCompositeBranchRequest {
+  /** Empty clears the composite testing branch. */
+  readonly branchName: string;
 }
 
 export interface FeatureCreatedCommandResult {

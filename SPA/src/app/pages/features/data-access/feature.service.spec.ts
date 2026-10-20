@@ -63,6 +63,7 @@ const feature: FeatureDto = {
     },
   ],
   branch: null,
+  compositeBranchName: 'feature/testing',
   branchGraph: [],
   memoryHistory: [],
 };
@@ -200,6 +201,30 @@ describe('FeatureService', () => {
         api.updateSummary(feature.id, 'Updated feature summary.'),
     },
     {
+      name: 'sets the composite testing branch',
+      path: 'composite-branch',
+      body: { branchName: 'feature/testing' },
+      action: (api: FeatureService) => api.setCompositeBranch(feature.id, { branchName: 'feature/testing' }),
+    },
+    {
+      name: 'clears the composite testing branch',
+      path: 'composite-branch',
+      body: { branchName: '' },
+      action: (api: FeatureService) => api.setCompositeBranch(feature.id, { branchName: '' }),
+    },
+    {
+      name: 'sets the composite branch with a status update',
+      path: 'status',
+      body: { status: 'Testing', compositeBranchName: 'feature/testing' },
+      action: (api: FeatureService) => api.updateStatus(feature.id, 'Testing', 'feature/testing'),
+    },
+    {
+      name: 'clears the composite branch with a summary update',
+      path: 'summary',
+      body: { summary: 'Overview', compositeBranchName: '' },
+      action: (api: FeatureService) => api.updateSummary(feature.id, 'Overview', ''),
+    },
+    {
       name: 'adds a skill',
       path: 'skills',
       body: { skillId: 'skill-2' },
@@ -249,7 +274,7 @@ describe('FeatureService', () => {
     {
       name: 'changes a plan status',
       path: 'plans/plan-1/status',
-      body: { status: 'Delayed' },
+      body: { status: 'Delayed', mergedInto: [] },
       action: (api: FeatureService) =>
         api.changePlanStatus(feature.id, 'plan-1', 'Delayed'),
     },

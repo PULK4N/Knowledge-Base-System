@@ -25,7 +25,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its overview, a branch graph listing the feature branch and each branch of plans not yet completed with the branches it came from (a branch can come from several; branches of completed plans are left out because they are merged), plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, the composite testing branch for Analyst checking all functionalities together before review finishes, a branch graph listing the feature branch and each branch of plans not yet completed with the branches it came from (a branch can come from several; branches of completed plans are left out because they are merged), plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
@@ -53,9 +53,9 @@ public static class FeatureMcpFunctions
             "Gets all review notes for a feature. Each note records a reviewed decision that intended behaviour is not a defect; read them before reporting review findings so a settled decision is not raised again."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, string, Guid?, Guid?, Task<FeatureCreatedCommandResult>>)Add,
+            (Func<IServiceProvider, Guid, string, string, string, string?, Guid?, Guid?, Task<FeatureCreatedCommandResult>>)Add,
             "feature_add",
-            "Creates a feature for an existing project with a name, an overview summary of what the feature is and does, and a free-form progress status."
+            "Creates a feature for an existing project with a name, an overview summary of what the feature is and does, and a free-form progress status. Optional compositeBranchName is the branch where functionality is merged and deployed for Analyst checking before review finishes."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)Remove,
@@ -63,14 +63,14 @@ public static class FeatureMcpFunctions
             "Marks a feature as deleted while retaining its event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateStatus,
+            (Func<IServiceProvider, Guid, string, string?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateStatus,
             "feature_status_update",
-            "Replaces a feature's free-form progress description."
+            "Replaces a feature's free-form progress description. Optional compositeBranchName also sets the branch for Analyst checking all functionality together; omit it to keep the branch or pass an empty string to clear it."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateSummary,
+            (Func<IServiceProvider, Guid, string, string?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateSummary,
             "feature_summary_update",
-            "Replaces a feature's overview summary of what the feature is and does."
+            "Replaces a feature's overview summary of what the feature is and does. Optional compositeBranchName also sets the branch for Analyst checking all functionality together; omit it to keep the branch or pass an empty string to clear it."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)AddSkill,
@@ -136,6 +136,11 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureCommandResult>>)SetBranch,
             "feature_branch_set",
             "Sets or replaces the feature's source-control branch. Plans without a previous plan check out their base branch from it."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, Guid?, Guid?, Task<FeatureCommandResult>>)SetCompositeBranch,
+            "feature_composite_branch_set",
+            "Sets or replaces the branch where feature functionality is merged and deployed for Analyst checking all functionalities together before review finishes. Pass an empty branchName to clear it."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, string, string, string?, List<FeaturePlanBranchSourceDto>?, Guid?, Guid?, Task<FeatureCommandResult>>)AddPlanBranch,
@@ -321,6 +326,8 @@ public static class FeatureMcpFunctions
         string name,
         string summary,
         string status,
+        [Description("Branch for Analyst checking all functionalities together before review finishes.")]
+        string? compositeBranchName = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -335,6 +342,7 @@ public static class FeatureMcpFunctions
                 command.Name = name;
                 command.Summary = summary;
                 command.Status = status;
+                command.CompositeBranchName = compositeBranchName;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -363,6 +371,8 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         string status,
+        [Description("Composite testing branch: omit to keep it, or pass an empty string to clear it.")]
+        string? compositeBranchName = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -375,6 +385,7 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.Status = status;
+                command.CompositeBranchName = compositeBranchName;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -384,6 +395,8 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         string summary,
+        [Description("Composite testing branch: omit to keep it, or pass an empty string to clear it.")]
+        string? compositeBranchName = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -396,6 +409,7 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.Summary = summary;
+                command.CompositeBranchName = compositeBranchName;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -751,6 +765,23 @@ public static class FeatureMcpFunctions
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
         );
+
+    private static Task<FeatureCommandResult> SetCompositeBranch(
+        IServiceProvider services,
+        Guid featureId,
+        string branchName,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) => FeatureMcpActionExecutor.ExecuteCommand<SetFeatureCompositeBranchCommand, FeatureCommandResult>(
+        services,
+        command =>
+        {
+            command.FeatureId = featureId;
+            command.BranchName = branchName;
+            command.SessionId = sessionId.GetValueOrDefault();
+            command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+        }
+    );
 
     private static Task<FeatureCommandResult> AddPlanBranch(
         IServiceProvider services,

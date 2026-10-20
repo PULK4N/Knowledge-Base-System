@@ -221,3 +221,6 @@ events:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
       - FeaturePlanBranchSourcesValidator
+  FeatureCompositeBranchSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator

@@ -49,6 +49,11 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     public FeatureBranch? Branch { get; set; }
 
     /// <summary>
+    /// Branch where functionality is combined and deployed for Analyst checking before review finishes.
+    /// </summary>
+    public string? CompositeBranchName { get; set; }
+
+    /// <summary>
     /// Legacy current-plan selection kept only so released current-plan events replay.
     /// New plan events do not read or change it.
     /// </summary>

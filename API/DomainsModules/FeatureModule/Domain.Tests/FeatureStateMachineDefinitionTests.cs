@@ -91,7 +91,8 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeaturePlanAddedV4),
                 nameof(FeaturePlanPreviousPlanSetV1),
                 nameof(FeaturePlanRecordsSetV1),
-                nameof(FeaturePlanBaseBranchSourcesSetV1)
+                nameof(FeaturePlanBaseBranchSourcesSetV1),
+                nameof(FeatureCompositeBranchSetV1)
             ],
             definition.Events.Keys
         );
@@ -152,6 +153,22 @@ public sealed class FeatureStateMachineDefinitionTests
                     validator
                 )
         );
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Composite_branch_changes_require_an_active_feature(bool isDeleted)
+    {
+        RegisterTypesOnce();
+        var provider = new EventValidatorProvider(CreateDefinitionProvider());
+        var payload = CreatePayload(new FeatureCompositeBranchSetV1(
+            "feature/composite", Guid.NewGuid(), AggregateId.FromDatabaseGuid(Guid.NewGuid())));
+        var validator = Assert.IsType<FeatureMustBeActiveValidator>(
+            Assert.Single(provider.GetPreEventStateValidators(payload)));
+        var state = new FeatureStateData(payload.EventExecutionInfo.AggregateId) { IsDeleted = isDeleted };
+
+        Assert.Equal(!isDeleted, validator.Validate(state, payload).Succeded);
     }
 
     [Fact]
@@ -349,7 +366,8 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureRecordAddedV3),
         typeof(FeatureRecordUpdatedV3),
         typeof(FeaturePlanRecordsSetV1),
-        typeof(FeaturePlanBaseBranchSourcesSetV1)
+        typeof(FeaturePlanBaseBranchSourcesSetV1),
+        typeof(FeatureCompositeBranchSetV1)
     ];
 
     private static List<Type> ValidatorTypes { get; } =

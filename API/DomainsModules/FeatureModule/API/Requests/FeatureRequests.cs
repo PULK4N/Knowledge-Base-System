@@ -16,11 +16,15 @@ public sealed record SearchFeaturesRequest : PagedSearchRequest
 public sealed record UpdateFeatureStatusRequest
 {
     public required string Status { get; init; }
+
+    public string? CompositeBranchName { get; init; }
 }
 
 public sealed record UpdateFeatureSummaryRequest
 {
     public required string Summary { get; init; }
+
+    public string? CompositeBranchName { get; init; }
 }
 
 public sealed record FeatureSkillRequest
@@ -58,4 +62,6 @@ public sealed record AddFeatureRequest
     public required string Summary { get; init; }
 
     public required string Status { get; init; }
+
+    public string? CompositeBranchName { get; init; }
 }

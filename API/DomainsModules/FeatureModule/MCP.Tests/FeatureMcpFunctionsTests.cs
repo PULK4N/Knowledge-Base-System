@@ -37,6 +37,7 @@ public sealed class FeatureMcpFunctionsTests
         "feature_plan_status_update",
         "feature_plan_previous_set",
         "feature_branch_set",
+        "feature_composite_branch_set",
         "feature_plan_branch_add",
         "feature_plan_branch_sources_set",
         "feature_plan_branch_update",
@@ -66,6 +67,7 @@ public sealed class FeatureMcpFunctionsTests
             Services = services,
             ["featureId"] = JsonSerializer.SerializeToElement(featureId),
             ["status"] = "Implementing",
+            ["compositeBranchName"] = "feature/testing",
             ["sessionId"] = JsonSerializer.SerializeToElement(sessionId)
         };
         if (supplyMemoryId)
@@ -80,6 +82,7 @@ public sealed class FeatureMcpFunctionsTests
 
         Assert.Equal(featureId, command.FeatureId);
         Assert.Equal("Implementing", command.Status);
+        Assert.Equal("feature/testing", command.CompositeBranchName);
         Assert.Equal(sessionId, command.SessionId);
         Assert.Equal(supplyMemoryId ? memoryId : Guid.Empty, command.MemoryAggregateId);
     }
@@ -289,6 +292,17 @@ public sealed class FeatureMcpFunctionsTests
             "mergedInto",
             schema.GetProperty("required").EnumerateArray().Select(element => element.GetString())
         );
+    }
+
+    [Theory]
+    [InlineData("feature_add")]
+    [InlineData("feature_status_update")]
+    [InlineData("feature_summary_update")]
+    public void Feature_writes_accept_an_optional_composite_testing_branch(string functionName)
+    {
+        var schema = FeatureMcpFunctions.Create().Single(item => item.Name == functionName).JsonSchema;
+        Assert.True(schema.GetProperty("properties").TryGetProperty("compositeBranchName", out _));
+        Assert.DoesNotContain("compositeBranchName", schema.GetProperty("required").EnumerateArray().Select(item => item.GetString()));
     }
 
     [Fact]

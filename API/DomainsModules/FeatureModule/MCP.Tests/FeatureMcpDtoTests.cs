@@ -5,6 +5,16 @@ namespace FeatureModule.MCP.Tests;
 
 public sealed class FeatureMcpDtoTests
 {
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("feature/composite", "Branch for Analyst checking all functionalities together:\nfeature/composite")]
+    public void Composite_branch_is_explained_for_Analyst(string? branchName, string? expected)
+    {
+        var feature = Feature([], [], DateTime.UnixEpoch) with { CompositeBranchName = branchName };
+
+        Assert.Equal(expected, FeatureMcpDto.FromFeature(feature).CompositeBranch);
+    }
+
     [Fact]
     public void FromFeature_ReturnsPlanSummariesAndRecordReferencesWithoutContent()
     {

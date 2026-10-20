@@ -2,7 +2,7 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideKnowledgeMarkdown } from '../../../shared/markdown/markdown.providers';
 import { SkillService } from '../../skills/data-access/skill.service';
 import { Feature } from '../data-access/feature.models';
@@ -124,6 +124,7 @@ describe('FeatureDetailsPage', () => {
     removeReviewNote: ReturnType<typeof vi.fn>;
     addPlan: ReturnType<typeof vi.fn>;
     removePlan: ReturnType<typeof vi.fn>;
+    setCompositeBranch: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -144,6 +145,7 @@ describe('FeatureDetailsPage', () => {
       removeReviewNote: vi.fn(() => of(feature)),
       addPlan: vi.fn(() => of(feature)),
       removePlan: vi.fn(() => of(feature)),
+      setCompositeBranch: vi.fn(() => of(feature)),
     };
 
     await TestBed.configureTestingModule({
@@ -179,6 +181,44 @@ describe('FeatureDetailsPage', () => {
     harness = await RouterTestingHarness.create(
       '/features/feature-1?tab=records',
     );
+  });
+
+  it('shows the main branch above the composite branch only on the overview and retains failed edits', async () => {
+    const shown: Feature = {
+      ...feature,
+      branch: { name: 'feature/main', description: '' },
+      compositeBranchName: 'feature/testing',
+    };
+    features.watch.mockReturnValue(of(shown));
+    features.setCompositeBranch.mockReturnValueOnce(throwError(() => new Error('Save failed')));
+    await harness.navigateByUrl('/features/feature-branches?tab=overview', FeatureDetailsPage);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    const element = harness.routeNativeElement as HTMLElement;
+    const settings = element.querySelector('app-feature-branch-settings')!;
+    expect(settings.classList.contains('compact')).toBe(true);
+    expect(settings.compareDocumentPosition(element.querySelector('.feature-overview')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect([...settings.querySelectorAll('code')].map(item => item.textContent)).toEqual([
+      'feature/main', 'feature/testing',
+    ]);
+    const composite = settings.querySelector('[data-branch-role="composite"]')!;
+    composite.querySelector<HTMLButtonElement>('button')!.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    setControlValue(element, '[name="compositeBranchName"]', ' feature/all-testing ');
+    composite.querySelector('form')!.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(features.setCompositeBranch).toHaveBeenCalledWith(feature.id, { branchName: 'feature/all-testing' });
+    expect(element.querySelector<HTMLInputElement>('[name="compositeBranchName"]')?.value).toBe(' feature/all-testing ');
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
+
+    await harness.navigateByUrl('/features/feature-branches?tab=plans', FeatureDetailsPage);
+    harness.detectChanges();
+    expect(element.querySelector('app-feature-branch-settings')).toBeNull();
+    expect(element.textContent).not.toContain('feature/testing');
   });
 
   it('updates the feature summary from the overview', async () => {

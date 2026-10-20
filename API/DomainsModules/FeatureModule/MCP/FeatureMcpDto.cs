@@ -23,6 +23,11 @@ public sealed record FeatureMcpDto
     public string? BranchGraph { get; init; }
 
     /// <summary>
+    /// Names the deployed branch where Analyst can check all functionality together before review finishes.
+    /// </summary>
+    public string? CompositeBranch { get; init; }
+
+    /// <summary>
     /// Plan summaries without content; load a plan with feature_plan_get when needed.
     /// </summary>
     public required IReadOnlyCollection<FeatureMcpPlanSummaryDto>
@@ -44,6 +49,9 @@ public sealed record FeatureMcpDto
             Status = feature.Status,
             RelatedSkillIds = feature.RelatedSkillIds,
             BranchGraph = FeatureBranchGraphFormatter.Format(feature),
+            CompositeBranch = feature.CompositeBranchName is { } compositeBranchName
+                ? $"Branch for Analyst checking all functionalities together:\n{compositeBranchName}"
+                : null,
             Plans = feature.Plans
                 .OrderByDescending(plan => plan.UpdatedAt)
                 .ThenBy(plan => plan.Id)

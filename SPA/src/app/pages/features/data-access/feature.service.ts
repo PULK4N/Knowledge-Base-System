@@ -29,6 +29,7 @@ import {
   FeaturePlanCreatedCommandResult,
   FeaturePlanStatus,
   SetFeatureBranchRequest,
+  SetFeatureCompositeBranchRequest,
   SetFeaturePlanBranchSourcesRequest,
   FeaturePlanBranchMerge,
   AddFeatureRecordRequest,
@@ -137,12 +138,22 @@ export class FeatureService {
       .pipe(tap(() => this.store.remove(FEATURE_ENTITY_TYPE, id)));
   }
 
-  updateStatus(id: string, status: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'status', { status });
+  updateStatus(id: string, status: string, compositeBranchName?: string): Observable<Feature> {
+    return this.postAndRefresh(id, 'status', {
+      status,
+      ...(compositeBranchName === undefined ? {} : { compositeBranchName }),
+    });
   }
 
-  updateSummary(id: string, summary: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'summary', { summary });
+  updateSummary(id: string, summary: string, compositeBranchName?: string): Observable<Feature> {
+    return this.postAndRefresh(id, 'summary', {
+      summary,
+      ...(compositeBranchName === undefined ? {} : { compositeBranchName }),
+    });
+  }
+
+  setCompositeBranch(id: string, request: SetFeatureCompositeBranchRequest): Observable<Feature> {
+    return this.postAndRefresh(id, 'composite-branch', request);
   }
 
   addSkill(id: string, skillId: string): Observable<Feature> {

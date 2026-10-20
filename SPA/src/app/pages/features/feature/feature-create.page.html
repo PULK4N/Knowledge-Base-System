@@ -28,7 +28,7 @@
         <form
           #featureForm="ngForm"
           class="editor-card surface-card"
-          (ngSubmit)="create(project.value, name.value, summary.value, status.value)"
+          (ngSubmit)="create(project.value, name.value, summary.value, status.value, compositeBranchName.value)"
         >
           <div class="project-field">
             <label for="feature-project">Project</label>
@@ -73,6 +73,12 @@
               ngModel
             ></textarea>
             <small>This is free-form progress context, not a workflow state.</small>
+          </label>
+
+          <label>
+            <span>Composite testing branch (optional)</span>
+            <input #compositeBranchName="ngModel" name="compositeBranchName" type="text" placeholder="feature/all-for-testing" ngModel />
+            <small>Branch for Analyst checking all functionalities together before review finishes.</small>
           </label>
 
           @if (vm.createState.status === 'error') {

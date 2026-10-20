@@ -16,8 +16,11 @@ namespace FeatureModule.Application.Tests;
 
 public sealed class AddFeatureCommandTests
 {
-    [Fact]
-    public async Task Execute_ReturnsGeneratedFeatureIdWrittenToStream()
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData(" feature/composite ", "feature/composite")]
+    [InlineData(" ", null)]
+    public async Task Execute_ReturnsGeneratedFeatureIdWrittenToStream(string? compositeBranchName, string? expectedBranchName)
     {
         DatabaseFriendlyGuidGenerator.SetDefaultGuidGenerationDatabase(
             Database.SqlServer
@@ -38,7 +41,8 @@ public sealed class AddFeatureCommandTests
             ProjectId = projectId,
             Name = "Feature journal",
             Summary = "Trace implementation decisions.",
-            Status = "Starting backend implementation."
+            Status = "Starting backend implementation.",
+            CompositeBranchName = compositeBranchName
         };
         command.UseUserOrigin();
         var executor = new Executor
@@ -52,7 +56,8 @@ public sealed class AddFeatureCommandTests
             await command.Execute(executor)
         );
 
-        var payload = Assert.Single(outbox.Written);
+        Assert.Equal(compositeBranchName is null ? 1 : 2, outbox.Written.Count);
+        var payload = outbox.Written[0];
         var created = Assert.IsType<FeatureAddedV2>(payload.EventData);
         Assert.Equal("OK", result.Status);
         Assert.NotEqual(Guid.Empty, result.FeatureId);
@@ -62,6 +67,12 @@ public sealed class AddFeatureCommandTests
         );
         Assert.Equal(projectId, created.ProjectId.Value);
         Assert.Equal("Starting backend implementation.", created.Status);
+        if (compositeBranchName is not null)
+        {
+            var branch = Assert.IsType<FeatureCompositeBranchSetV1>(outbox.Written[1].EventData);
+            Assert.Equal(expectedBranchName, branch.BranchName);
+            Assert.Equal(payload.EventExecutionInfo.AggregateId, outbox.Written[1].EventExecutionInfo.AggregateId);
+        }
     }
 
     [Fact]

@@ -76,6 +76,13 @@
       </nav>
 
       @if (vm.listState.activeTab === 'overview') {
+        <app-feature-branch-settings
+          [feature]="vm.state.data"
+          [saving]="vm.mutation.status === 'saving'"
+          [compact]="true"
+          (branchSet)="setBranch(vm.state.data.id, $event)"
+          (compositeBranchSet)="setCompositeBranch(vm.state.data.id, $event)"
+        />
         <section class="feature-overview surface-card">
         <div class="overview-identity">
           <span class="feature-icon large" aria-hidden="true">◇</span>

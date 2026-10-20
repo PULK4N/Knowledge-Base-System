@@ -1,0 +1,59 @@
+<div class="branch-tree-heading">
+  <div>
+    <span class="eyebrow">Source control</span>
+    <h2>Feature branches</h2>
+  </div>
+</div>
+
+<div class="branch-setting" data-branch-role="main">
+  <div class="setting-heading">
+    <h3>Main feature branch</h3>
+    <button type="button" [disabled]="saving()" (click)="editingBranch.set(!editingBranch())">
+      {{ editingBranch() ? 'Cancel' : feature().branch ? 'Change main branch' : 'Set main branch' }}
+    </button>
+  </div>
+  @if (editingBranch()) {
+    <form class="branch-form" #mainForm="ngForm" (ngSubmit)="setBranch(mainName.value, description.value)">
+      <label>
+        <span>Main feature branch</span>
+        <input #mainName="ngModel" name="mainBranchName" required [disabled]="saving()" [ngModel]="feature().branch?.name ?? ''" />
+      </label>
+      <label>
+        <span>Description</span>
+        <input #description="ngModel" name="mainBranchDescription" [disabled]="saving()" [ngModel]="feature().branch?.description ?? ''" />
+      </label>
+      <div class="branch-form-actions">
+        <button class="primary-action" type="submit" [disabled]="mainForm.invalid || saving()">Save main branch</button>
+      </div>
+    </form>
+  } @else {
+    <code>{{ feature().branch?.name ?? 'Not set' }}</code>
+    @if (feature().branch?.description; as description) {
+      <p>{{ description }}</p>
+    }
+  }
+</div>
+
+<div class="branch-setting" data-branch-role="composite">
+  <div class="setting-heading">
+    <h3 title="Branch for Analyst checking all functionalities together before review finishes">Composite testing branch</h3>
+    <button type="button" [disabled]="saving()" (click)="editingCompositeBranch.set(!editingCompositeBranch())">
+      {{ editingCompositeBranch() ? 'Cancel' : feature().compositeBranchName ? 'Change composite branch' : 'Set composite branch' }}
+    </button>
+  </div>
+  <p>Branch for Analyst checking all functionalities together, deployed before review finishes.</p>
+  @if (editingCompositeBranch()) {
+    <form class="branch-form" #compositeForm="ngForm" (ngSubmit)="setCompositeBranch(compositeName.value)">
+      <label>
+        <span>Composite testing branch</span>
+        <input #compositeName="ngModel" name="compositeBranchName" placeholder="feature/all-for-testing" [disabled]="saving()" [ngModel]="feature().compositeBranchName ?? ''" />
+      </label>
+      <small>Leave empty to clear the composite branch.</small>
+      <div class="branch-form-actions">
+        <button class="primary-action" type="submit" [disabled]="compositeForm.invalid || saving()">Save composite branch</button>
+      </div>
+    </form>
+  } @else {
+    <code>{{ feature().compositeBranchName ?? 'Not set' }}</code>
+  }
+</div>

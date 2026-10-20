@@ -64,6 +64,7 @@ public sealed class FeaturesController(
         command.Name = request.Name;
         command.Summary = request.Summary;
         command.Status = request.Status;
+        command.CompositeBranchName = request.CompositeBranchName;
         command.UseUserOrigin();
         var result = (FeatureCreatedCommandResult)await Execute(command);
 
@@ -109,6 +110,7 @@ public sealed class FeaturesController(
         command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Status = request.Status;
+        command.CompositeBranchName = request.CompositeBranchName;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
@@ -122,6 +124,7 @@ public sealed class FeaturesController(
         command.UseUserOrigin();
         command.FeatureId = featureId;
         command.Summary = request.Summary;
+        command.CompositeBranchName = request.CompositeBranchName;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
@@ -316,6 +319,19 @@ public sealed class FeaturesController(
         command.FeatureId = featureId;
         command.BranchName = request.BranchName;
         command.Description = request.Description;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/composite-branch")]
+    public async Task<ActionResult<FeatureCommandResult>> SetCompositeBranch(
+        Guid featureId,
+        [FromBody] SetFeatureCompositeBranchRequest request,
+        [FromServices] SetFeatureCompositeBranchCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.BranchName = request.BranchName;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
