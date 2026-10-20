@@ -16,7 +16,9 @@ export interface FeatureBranchTreeNode {
 /**
  * Builds one tree for a feature: the feature branch at the root, each plan's base
  * branch under the base branch of the plan done before it (or under the feature
- * branch), and each plan's own sub-branches beneath its base branch.
+ * branch), and each plan's own sub-branches beneath its base branch. Branches of
+ * completed plans are already merged, so they are left out and the plans after
+ * them move up: main <- x1 <- x2 shows as main <- x2 once x1 is completed.
  */
 export function buildFeatureBranchTree(feature: Feature): FeatureBranchTreeNode {
   const planIds = new Set(feature.plans.map(plan => plan.id));
@@ -31,11 +33,12 @@ export function buildFeatureBranchTree(feature: Feature): FeatureBranchTreeNode 
           : null;
       return previous === previousPlanId;
     });
-  // A plan without a base branch is left out; its followers move up to where it would be.
+  // A plan without a base branch, or a completed plan, is left out; its
+  // followers move up to where it would be.
   const planNodes = (plan: FeaturePlan): FeatureBranchTreeNode[] => {
     const followers = followersOf(plan.id).flatMap(planNodes);
 
-    return plan.branch
+    return plan.branch && plan.status !== 'Completed'
       ? [
           {
             key: `plan:${plan.id}`,

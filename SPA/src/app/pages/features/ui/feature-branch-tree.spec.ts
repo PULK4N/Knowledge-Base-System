@@ -63,6 +63,23 @@ describe('buildFeatureBranchTree', () => {
       '    feature/after-legacy-api',
     ]);
   });
+
+  it('leaves out completed plans and moves the plans after them up', () => {
+    const tree = buildFeatureBranchTree({
+      branch: { name: 'main', description: '' },
+      plans: plans.map(item =>
+        item.id === 'research' ? { ...item, status: 'Completed' } : item,
+      ),
+    } as unknown as Feature);
+
+    expect(outline(tree)).toEqual([
+      'main',
+      '  feature/impl [impl]',
+      '    feature/impl-api',
+      '    feature/retry [retry]',
+      '      feature/retry-api',
+    ]);
+  });
 });
 
 describe('previousPlanOptions', () => {

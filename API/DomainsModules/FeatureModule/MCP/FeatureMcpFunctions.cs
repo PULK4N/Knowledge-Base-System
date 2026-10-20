@@ -25,7 +25,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its overview, a branch tree that nests each plan's branches under the feature branch or the plan done before it, plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, a branch tree that nests each plan's branches under the feature branch or the plan done before it (branches of completed plans are left out because they are merged), plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,

@@ -17,7 +17,7 @@ public sealed record FeatureMcpDto
     public required IReadOnlyCollection<Guid> RelatedSkillIds { get; init; }
 
     /// <summary>
-    /// Feature branch with every plan's branches, nested in the order plans were done.
+    /// Feature branch with the branches of plans not yet completed, nested in the order plans were done.
     /// </summary>
     public string? BranchTree { get; init; }
 

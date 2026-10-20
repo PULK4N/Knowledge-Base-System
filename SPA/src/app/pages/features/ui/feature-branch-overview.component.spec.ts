@@ -9,7 +9,7 @@ const research: FeaturePlan = {
   content: '',
   contentType: 'Markdown',
   additionalInfo: '',
-  status: 'Completed',
+  status: 'Delayed',
   branch: { name: 'feature/research', description: '', subBranches: [] },
   previousPlanId: null,
   recordIds: [],
@@ -51,7 +51,7 @@ describe('FeatureBranchOverviewComponent', () => {
     const link = element.querySelector<HTMLAnchorElement>('.plan-link');
     expect(link?.getAttribute('href')).toBe('/features/feature-1/plans/research');
     expect(element.querySelector('.plan-status')?.textContent?.trim()).toBe(
-      'Completed',
+      'Delayed',
     );
   });
 

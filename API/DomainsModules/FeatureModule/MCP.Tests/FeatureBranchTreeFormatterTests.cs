@@ -8,7 +8,7 @@ public sealed class FeatureBranchTreeFormatterTests
     private static readonly DateTime Start = new(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc);
 
     [Fact]
-    public void Format_NestsPlanBranchesUnderTheirPreviousPlan()
+    public void Format_NestsPlanBranchesUnderTheirPreviousPlanAndLeavesOutCompletedPlans()
     {
         var research = Plan("RabbitMQ design", FeaturePlanStatus.Completed, 0, null,
             new FeaturePlanBranchDto("feature/outbox-research", "", []));
@@ -26,10 +26,9 @@ public sealed class FeatureBranchTreeFormatterTests
         Assert.Equal(
             """
             develop - Main line
-            ├── feature/outbox-research  [RabbitMQ design · Completed]
-            │   └── feature/outbox - Dispatch  [Outbox processing · In progress]
-            │       ├── feature/outbox-api
-            │       └── feature/outbox-retry  [Retry policy · Not started]
+            ├── feature/outbox - Dispatch  [Outbox processing · In progress]
+            │   ├── feature/outbox-api
+            │   └── feature/outbox-retry  [Retry policy · Not started]
             └── (no base branch)  [Old notes · Delayed]
             """,
             tree
