@@ -27,27 +27,14 @@ public sealed record FeatureMcpDto
     public required IReadOnlyCollection<FeatureMcpPlanSummaryDto>
         Plans { get; init; }
 
-    public required IReadOnlyCollection<FeatureResearchDiscoveryDto>
-        LatestResearchDiscoveries { get; init; }
+    /// <summary>
+    /// Every record without content, newest first; load records with feature_record_get.
+    /// </summary>
+    public required IReadOnlyCollection<FeatureRecordReferenceDto>
+        Records { get; init; }
 
-    public required IReadOnlyCollection<FeatureRecordDto>
-        LatestConversationRecords { get; init; }
-
-    public required IReadOnlyCollection<FeatureMcpReferenceDto>
-        OtherResearchDiscoveries { get; init; }
-
-    public static FeatureMcpDto FromFeature(FeatureDto feature)
-    {
-        var latestDiscoveries = feature.ResearchDiscoveries
-            .OrderByDescending(discovery => discovery.UpdatedAt)
-            .ThenBy(discovery => discovery.Id)
-            .Take(5)
-            .ToList();
-        var latestDiscoveryIds = latestDiscoveries
-            .Select(discovery => discovery.Id)
-            .ToHashSet();
-
-        return new FeatureMcpDto
+    public static FeatureMcpDto FromFeature(FeatureDto feature) =>
+        new()
         {
             Id = feature.Id,
             ProjectId = feature.ProjectId,
@@ -61,23 +48,10 @@ public sealed record FeatureMcpDto
                 .ThenBy(plan => plan.Id)
                 .Select(FeatureMcpPlanSummaryDto.FromPlan)
                 .ToList(),
-            LatestResearchDiscoveries = latestDiscoveries,
-            LatestConversationRecords = feature.Records
+            Records = feature.Records
                 .OrderByDescending(record => record.UpdatedAt)
                 .ThenBy(record => record.Id)
-                .Take(5)
-                .ToList(),
-            OtherResearchDiscoveries = feature.ResearchDiscoveries
-                .Where(discovery => !latestDiscoveryIds.Contains(discovery.Id))
-                .OrderByDescending(discovery => discovery.UpdatedAt)
-                .ThenBy(discovery => discovery.Id)
-                .Select(discovery => new FeatureMcpReferenceDto(
-                    discovery.Id,
-                    discovery.Title
-                ))
+                .Select(FeatureRecordReferenceDto.FromDto)
                 .ToList()
         };
-    }
 }
-
-public sealed record FeatureMcpReferenceDto(Guid Id, string Title);

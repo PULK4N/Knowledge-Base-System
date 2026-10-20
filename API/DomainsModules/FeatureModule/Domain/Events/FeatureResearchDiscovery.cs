@@ -4,12 +4,67 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Domain.Events;
 
+// Research discoveries were merged into records. These events are kept so
+// released history replays, and each one now applies to a research record.
+
+/// <summary>
+/// Applies released research discovery events to records of type research.
+/// </summary>
+internal static class FeatureResearchDiscoveryReplay
+{
+    internal const string UntitledTitle = "Untitled discovery";
+
+    internal static void Add(
+        FeatureStateData state,
+        FeatureResearchDiscoveryId discoveryId,
+        string title,
+        string content,
+        FeatureRecordSourceType sourceType,
+        string sourceReference,
+        DateTime timestamp
+    ) =>
+        state.Records.Add(
+            new Models.FeatureRecord
+            {
+                Id = discoveryId.ToRecordId(),
+                Type = FeatureRecordTypes.Research,
+                Title = title,
+                Content = content,
+                SourceType = sourceType,
+                SourceReference = sourceReference,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp
+            }
+        );
+
+    /// <param name="title">Null for V1 updates, which kept the title.</param>
+    internal static void Update(
+        FeatureStateData state,
+        FeatureResearchDiscoveryId discoveryId,
+        string? title,
+        string content,
+        FeatureRecordSourceType sourceType,
+        string sourceReference,
+        DateTime timestamp
+    )
+    {
+        var recordId = discoveryId.ToRecordId();
+        var record = state.Records.Single(item => item.Id == recordId);
+        if (title is not null)
+            record.Title = title;
+        record.Content = content;
+        record.SourceType = sourceType;
+        record.SourceReference = sourceReference;
+        record.UpdatedAt = timestamp;
+    }
+}
+
 public interface IFeatureResearchDiscoveryAdded : IEvent;
 
 public readonly record struct FeatureResearchDiscoveryAddedV1(
     FeatureResearchDiscoveryId DiscoveryId,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference
 ) : IFeatureResearchDiscoveryAdded
 {
@@ -19,16 +74,14 @@ public readonly record struct FeatureResearchDiscoveryAddedV1(
     )
     {
         var state = (FeatureStateData)stateData;
-        state.ResearchDiscoveries.Add(
-            new Models.FeatureResearchDiscovery
-            {
-                Id = DiscoveryId,
-                Content = Content,
-                SourceType = SourceType,
-                SourceReference = SourceReference,
-                CreatedAt = eventExecutionInfo.Timestamp,
-                UpdatedAt = eventExecutionInfo.Timestamp
-            }
+        FeatureResearchDiscoveryReplay.Add(
+            state,
+            DiscoveryId,
+            FeatureResearchDiscoveryReplay.UntitledTitle,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
         return state;
     }
@@ -38,7 +91,7 @@ public readonly record struct FeatureResearchDiscoveryAddedV2(
     FeatureResearchDiscoveryId DiscoveryId,
     string Title,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference
 ) : IFeatureResearchDiscoveryAdded
 {
@@ -48,17 +101,14 @@ public readonly record struct FeatureResearchDiscoveryAddedV2(
     )
     {
         var state = (FeatureStateData)stateData;
-        state.ResearchDiscoveries.Add(
-            new Models.FeatureResearchDiscovery
-            {
-                Id = DiscoveryId,
-                Title = Title,
-                Content = Content,
-                SourceType = SourceType,
-                SourceReference = SourceReference,
-                CreatedAt = eventExecutionInfo.Timestamp,
-                UpdatedAt = eventExecutionInfo.Timestamp
-            }
+        FeatureResearchDiscoveryReplay.Add(
+            state,
+            DiscoveryId,
+            Title,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
         return state;
     }
@@ -69,7 +119,7 @@ public interface IFeatureResearchDiscoveryUpdated : IEvent;
 public readonly record struct FeatureResearchDiscoveryUpdatedV1(
     FeatureResearchDiscoveryId DiscoveryId,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference
 ) : IFeatureResearchDiscoveryUpdated
 {
@@ -79,14 +129,15 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV1(
     )
     {
         var state = (FeatureStateData)stateData;
-        var discoveryId = DiscoveryId;
-        var discovery = state.ResearchDiscoveries.Single(
-            item => item.Id == discoveryId
+        FeatureResearchDiscoveryReplay.Update(
+            state,
+            DiscoveryId,
+            null,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
-        discovery.Content = Content;
-        discovery.SourceType = SourceType;
-        discovery.SourceReference = SourceReference;
-        discovery.UpdatedAt = eventExecutionInfo.Timestamp;
         return state;
     }
 }
@@ -95,7 +146,7 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV2(
     FeatureResearchDiscoveryId DiscoveryId,
     string Title,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference
 ) : IFeatureResearchDiscoveryUpdated
 {
@@ -105,15 +156,15 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV2(
     )
     {
         var state = (FeatureStateData)stateData;
-        var discoveryId = DiscoveryId;
-        var discovery = state.ResearchDiscoveries.Single(
-            item => item.Id == discoveryId
+        FeatureResearchDiscoveryReplay.Update(
+            state,
+            DiscoveryId,
+            Title,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
-        discovery.Title = Title;
-        discovery.Content = Content;
-        discovery.SourceType = SourceType;
-        discovery.SourceReference = SourceReference;
-        discovery.UpdatedAt = eventExecutionInfo.Timestamp;
         return state;
     }
 }
@@ -130,11 +181,7 @@ public readonly record struct FeatureResearchDiscoveryRemovedV1(
     )
     {
         var state = (FeatureStateData)stateData;
-        var discoveryId = DiscoveryId;
-        var discovery = state.ResearchDiscoveries.Single(
-            item => item.Id == discoveryId
-        );
-        state.ResearchDiscoveries.Remove(discovery);
+        FeatureRecordRemoval.Remove(state, DiscoveryId.ToRecordId());
         return state;
     }
 }
@@ -143,7 +190,7 @@ public readonly record struct FeatureResearchDiscoveryAddedV3(
     FeatureResearchDiscoveryId DiscoveryId,
     string Title,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference,
     Guid SessionId,
     AggregateId MemoryAggregateId
@@ -155,17 +202,14 @@ public readonly record struct FeatureResearchDiscoveryAddedV3(
     )
     {
         var state = (FeatureStateData)stateData;
-        state.ResearchDiscoveries.Add(
-            new Models.FeatureResearchDiscovery
-            {
-                Id = DiscoveryId,
-                Title = Title,
-                Content = Content,
-                SourceType = SourceType,
-                SourceReference = SourceReference,
-                CreatedAt = eventExecutionInfo.Timestamp,
-                UpdatedAt = eventExecutionInfo.Timestamp
-            }
+        FeatureResearchDiscoveryReplay.Add(
+            state,
+            DiscoveryId,
+            Title,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
         state.MemoryHistory.Add(
             new MemoryHistoryRecord(
@@ -182,7 +226,7 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV3(
     FeatureResearchDiscoveryId DiscoveryId,
     string Title,
     string Content,
-    FeatureResearchDiscoverySourceType SourceType,
+    FeatureRecordSourceType SourceType,
     string SourceReference,
     Guid SessionId,
     AggregateId MemoryAggregateId
@@ -194,15 +238,15 @@ public readonly record struct FeatureResearchDiscoveryUpdatedV3(
     )
     {
         var state = (FeatureStateData)stateData;
-        var discoveryId = DiscoveryId;
-        var discovery = state.ResearchDiscoveries.Single(
-            item => item.Id == discoveryId
+        FeatureResearchDiscoveryReplay.Update(
+            state,
+            DiscoveryId,
+            Title,
+            Content,
+            SourceType,
+            SourceReference,
+            eventExecutionInfo.Timestamp
         );
-        discovery.Title = Title;
-        discovery.Content = Content;
-        discovery.SourceType = SourceType;
-        discovery.SourceReference = SourceReference;
-        discovery.UpdatedAt = eventExecutionInfo.Timestamp;
         state.MemoryHistory.Add(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,
@@ -226,11 +270,7 @@ public readonly record struct FeatureResearchDiscoveryRemovedV2(
     )
     {
         var state = (FeatureStateData)stateData;
-        var discoveryId = DiscoveryId;
-        var discovery = state.ResearchDiscoveries.Single(
-            item => item.Id == discoveryId
-        );
-        state.ResearchDiscoveries.Remove(discovery);
+        FeatureRecordRemoval.Remove(state, DiscoveryId.ToRecordId());
         state.MemoryHistory.Add(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,

@@ -129,7 +129,7 @@ class WriteToolUseTests(unittest.TestCase):
             SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs"
         ).read_text(encoding="utf-8")
         mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
-        self.assertEqual(24, len(mutations))
+        self.assertEqual(21, len(mutations))
         self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):
@@ -148,7 +148,8 @@ class WriteToolUseTests(unittest.TestCase):
             "feature_list",
             "feature_plan_get",
             "feature_record_list",
-            "feature_research_discovery_search",
+            "feature_record_search",
+            "feature_record_get",
         ):
             with self.subTest(read=tool):
                 name = f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}"

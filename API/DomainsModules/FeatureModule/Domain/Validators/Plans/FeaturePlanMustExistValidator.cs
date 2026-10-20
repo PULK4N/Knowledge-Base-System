@@ -27,6 +27,7 @@ public sealed class FeaturePlanMustExistValidator : IPreEventValidator
             FeaturePlanBranchUpdatedV1 eventData => eventData.PlanId,
             FeaturePlanBranchRemovedV1 eventData => eventData.PlanId,
             FeaturePlanPreviousPlanSetV1 eventData => eventData.PlanId,
+            FeaturePlanRecordsSetV1 eventData => eventData.PlanId,
             _ => (FeaturePlanId?)null
         };
 

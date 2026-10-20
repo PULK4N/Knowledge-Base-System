@@ -120,6 +120,47 @@
         />
       </section>
 
+      <section class="plan-records surface-card">
+        <div class="plan-records-heading">
+          <span class="eyebrow">Linked records</span>
+          @if (editingRecords()) {
+            <button type="button" (click)="editingRecords.set(false)">Cancel</button>
+          } @else {
+            <button type="button" [disabled]="saving" (click)="startEditingRecords(plan)">
+              Edit links
+            </button>
+          }
+        </div>
+        @if (editingRecords()) {
+          <app-feature-link-picker
+            legend="Records of this feature"
+            emptyMessage="This feature has no records yet."
+            [options]="vm.state.data.recordOptions"
+            [selectedIds]="pickedRecordIds()"
+            (selectedIdsChange)="pickedRecordIds.set($event)"
+          />
+          <button type="button" [disabled]="saving" (click)="saveRecordLinks(target, plan)">
+            Save links
+          </button>
+        } @else {
+          <ul class="plan-record-list">
+            @for (record of vm.state.data.linkedRecords; track record.id) {
+              <li>
+                <a
+                  [routerLink]="['/features', feature.id]"
+                  [queryParams]="{ tab: 'records', recordSearch: record.title }"
+                >
+                  {{ record.title }}
+                </a>
+                <span class="plan-record-type">{{ record.type }}</span>
+              </li>
+            } @empty {
+              <li class="plan-record-empty">No records are linked to this plan.</li>
+            }
+          </ul>
+        }
+      </section>
+
       @if (editing()) {
         <form
           class="plan-editor surface-card"

@@ -425,12 +425,12 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("EmbeddingCacheEntries", (string)null);
                 });
 
-            modelBuilder.Entity("PostgreSqlModule.FeatureResearchSearchEntry", b =>
+            modelBuilder.Entity("PostgreSqlModule.FeatureRecordSearchEntry", b =>
                 {
                     b.Property<Guid>("FeatureAggregateId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ResearchDiscoveryId")
+                    b.Property<Guid>("RecordId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("ChunkIndex")
@@ -444,12 +444,16 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("RecordType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("tsvector")
                         .HasAnnotation("Npgsql:TsVectorConfig", "simple")
-                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "FeatureName", "Title", "SourceType", "SourceReference", "Text" });
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "FeatureName", "RecordType", "Title", "SourceType", "SourceReference", "Text" });
 
                     b.Property<string>("SourceReference")
                         .IsRequired()
@@ -470,7 +474,7 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("FeatureAggregateId", "ResearchDiscoveryId", "ChunkIndex");
+                    b.HasKey("FeatureAggregateId", "RecordId", "ChunkIndex");
 
                     b.HasIndex("Embedding");
 
@@ -481,7 +485,7 @@ namespace PostgreSqlModule.Migrations.EventSourcing
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
-                    b.ToTable("FeatureResearchSearchEntries", (string)null);
+                    b.ToTable("FeatureRecordSearchEntries", (string)null);
                 });
 
             modelBuilder.Entity("PostgreSqlModule.KnowledgeSearchEntry", b =>

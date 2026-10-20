@@ -3,7 +3,7 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Persistence.Tests;
 
-public sealed class HybridFeatureResearchRankerTests
+public sealed class HybridFeatureRecordRankerTests
 {
     [Fact]
     public void Fuse_rewards_a_chunk_found_by_both_searches()
@@ -12,17 +12,17 @@ public sealed class HybridFeatureResearchRankerTests
         var textOnly = CreateCandidate("text", Guid.NewGuid(), 0);
         var vectorOnly = CreateCandidate("vector", Guid.NewGuid(), 0);
 
-        var results = HybridFeatureResearchRanker.Fuse(
+        var results = HybridFeatureRecordRanker.Fuse(
             [textOnly, shared],
             [vectorOnly, shared],
-            new HybridFeatureResearchSearchOptions
+            new HybridFeatureRecordSearchOptions
             {
                 ResultCount = 3,
                 CandidateCount = 3
             }
         );
 
-        Assert.Equal("shared", results[0].ResearchDiscovery.Text);
+        Assert.Equal("shared", results[0].Record.Text);
         Assert.Equal(2, results[0].TextRank);
         Assert.Equal(2, results[0].VectorRank);
     }
@@ -35,10 +35,10 @@ public sealed class HybridFeatureResearchRankerTests
         var lower = CreateCandidate("lower", discoveryId, 0);
         var other = CreateCandidate("other", Guid.NewGuid(), 0);
 
-        var results = HybridFeatureResearchRanker.Fuse(
+        var results = HybridFeatureRecordRanker.Fuse(
             [best, other, lower],
             [],
-            new HybridFeatureResearchSearchOptions
+            new HybridFeatureRecordSearchOptions
             {
                 ResultCount = 3,
                 CandidateCount = 3
@@ -46,10 +46,10 @@ public sealed class HybridFeatureResearchRankerTests
         );
 
         Assert.Equal(2, results.Count);
-        Assert.Equal("best", results[0].ResearchDiscovery.Text);
+        Assert.Equal("best", results[0].Record.Text);
         Assert.DoesNotContain(
             results,
-            result => result.ResearchDiscovery.Text == "lower"
+            result => result.Record.Text == "lower"
         );
     }
 
@@ -71,10 +71,10 @@ public sealed class HybridFeatureResearchRankerTests
             FeatureName = "Other feature"
         };
 
-        var results = HybridFeatureResearchRanker.FuseSources(
+        var results = HybridFeatureRecordRanker.FuseSources(
             [first, repeatedFeature, otherFeature],
             [],
-            new HybridFeatureResearchSearchOptions
+            new HybridFeatureRecordSearchOptions
             {
                 ResultCount = 5,
                 CandidateCount = 5,
@@ -84,15 +84,15 @@ public sealed class HybridFeatureResearchRankerTests
         );
 
         Assert.Equal(2, results.Count);
-        Assert.Equal("first", results[0].ResearchDiscovery.Text);
+        Assert.Equal("first", results[0].Record.Text);
         Assert.Equal(1, results[0].TextRank);
         Assert.Equal(
             otherFeatureId,
-            results[1].ResearchDiscovery.FeatureAggregateId
+            results[1].Record.FeatureAggregateId
         );
     }
 
-    private static FeatureResearchSearchCandidate CreateCandidate(
+    private static FeatureRecordSearchCandidate CreateCandidate(
         string text,
         Guid discoveryId,
         int chunkIndex
@@ -103,6 +103,7 @@ public sealed class HybridFeatureResearchRankerTests
             ),
             "Feature",
             discoveryId,
+            "research",
             "Discovery",
             "Code",
             "API/file.cs",

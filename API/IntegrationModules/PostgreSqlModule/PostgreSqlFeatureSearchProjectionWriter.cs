@@ -6,7 +6,7 @@ namespace PostgreSqlModule;
 
 internal sealed class PostgreSqlFeatureSearchProjectionWriter(
     EventSourcingDbContext dbContext,
-    IFeatureResearchSearchRepository researchRepository,
+    IFeatureRecordSearchRepository recordRepository,
     IKnowledgeSearchRepository knowledgeRepository
 ) : IFeatureSearchProjectionWriter
 {
@@ -19,9 +19,9 @@ internal sealed class PostgreSqlFeatureSearchProjectionWriter(
             ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
             : null;
 
-        await researchRepository.Write(
+        await recordRepository.Write(
             batch.FeatureAggregateIds,
-            batch.ResearchDocuments,
+            batch.RecordDocuments,
             cancellationToken
         );
         await knowledgeRepository.Write(

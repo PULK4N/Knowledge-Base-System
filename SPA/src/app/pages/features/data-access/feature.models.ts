@@ -7,11 +7,13 @@ export type FeaturePlanStatus =
   | 'InProgress'
   | 'Delayed'
   | 'Completed';
-export type FeatureResearchDiscoverySourceType =
-  | 'Other'
-  | 'Code'
-  | 'Web'
-  | 'Mcp';
+export type FeatureRecordSourceType = 'Other' | 'Code' | 'Web' | 'Mcp';
+
+/** Suggested record types; a type is free text stored in lower case. */
+export const FEATURE_RECORD_TYPE_SUGGESTIONS: readonly string[] = [
+  'conversation',
+  'research',
+];
 
 export interface FeatureSummary {
   readonly id: string;
@@ -25,8 +27,13 @@ export interface FeatureSummary {
 
 export interface FeatureRecord {
   readonly id: string;
-  readonly userMessage: string;
-  readonly aiAnswer: string;
+  /** Free text in lower case, such as conversation or research. */
+  readonly type: string;
+  readonly title: string;
+  readonly content: string;
+  /** Null when the record has no source. */
+  readonly sourceType: FeatureRecordSourceType | null;
+  readonly sourceReference: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -35,16 +42,6 @@ export interface FeatureReviewNote {
   readonly id: string;
   readonly title: string;
   readonly content: string;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-}
-
-export interface FeatureResearchDiscovery {
-  readonly id: string;
-  readonly title: string;
-  readonly content: string;
-  readonly sourceType: FeatureResearchDiscoverySourceType;
-  readonly sourceReference: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -71,6 +68,8 @@ export interface FeaturePlan {
   readonly branch: FeaturePlanBranch | null;
   /** Plan done before this one; its base branch is where this plan's base branch came from. */
   readonly previousPlanId: string | null;
+  /** Records of the feature this plan links, in link order. */
+  readonly recordIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -87,7 +86,6 @@ export interface Feature extends FeatureSummary {
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
-  readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
   /** Null until the feature branch is set; features are often written before it exists. */
   readonly branch: FeatureBranch | null;
@@ -131,7 +129,6 @@ export interface FeatureDto {
   readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
-  readonly researchDiscoveries: readonly FeatureResearchDiscovery[];
   readonly plans: readonly FeaturePlan[];
   readonly branch: FeatureBranch | null;
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
@@ -162,18 +159,21 @@ export interface FeatureReviewNoteCreatedCommandResult
   readonly reviewNoteId: string;
 }
 
-export interface FeatureResearchDiscoveryCreatedCommandResult
-  extends FeatureCommandResult {
-  readonly discoveryId: string;
-}
-
 export interface FeaturePlanCreatedCommandResult extends FeatureCommandResult {
   readonly planId: string;
 }
 
 export interface FeatureRecordContentRequest {
-  readonly userMessage: string;
-  readonly aiAnswer: string;
+  readonly type: string;
+  readonly title: string;
+  readonly content: string;
+  readonly sourceType: FeatureRecordSourceType | null;
+  readonly sourceReference: string;
+}
+
+export interface AddFeatureRecordRequest extends FeatureRecordContentRequest {
+  /** Plans that should link the new record; the link is stored on each plan. */
+  readonly planIds: readonly string[];
 }
 
 export interface UpdateFeatureRecordRequest extends FeatureRecordContentRequest {
@@ -190,24 +190,14 @@ export interface UpdateFeatureReviewNoteRequest
   readonly reviewNoteId: string;
 }
 
-export interface FeatureResearchDiscoveryContentRequest {
-  readonly title: string;
-  readonly content: string;
-  readonly sourceType: FeatureResearchDiscoverySourceType;
-  readonly sourceReference: string;
-}
-
-export interface UpdateFeatureResearchDiscoveryRequest
-  extends FeatureResearchDiscoveryContentRequest {
-  readonly discoveryId: string;
-}
-
 export interface FeaturePlanContentRequest {
   readonly title: string;
   readonly content: string;
   readonly contentType: FeaturePlanContentType;
   readonly additionalInfo: string;
   readonly status: FeaturePlanStatus;
+  /** Records to link. Null keeps the current links; an empty list removes them. */
+  readonly recordIds?: readonly string[] | null;
 }
 
 export interface AddFeaturePlanRequest extends FeaturePlanContentRequest {

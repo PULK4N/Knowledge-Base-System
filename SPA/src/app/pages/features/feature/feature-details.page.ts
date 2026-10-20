@@ -36,21 +36,31 @@ import { MarkdownContentComponent } from '../../skills/ui/markdown-content.compo
 import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import {
   AddFeaturePlanRequest,
+  AddFeatureRecordRequest,
+  FEATURE_RECORD_TYPE_SUGGESTIONS,
   Feature,
+  FeaturePlan,
+  FeatureRecord,
+  FeatureRecordSourceType,
   SetFeatureBranchRequest,
-  FeatureResearchDiscoverySourceType,
+  UpdateFeatureRecordRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { FeatureBranchOverviewComponent } from '../ui/feature-branch-overview.component';
+import { toRecordOptions } from '../ui/feature-link-options';
+import {
+  FeatureLinkOption,
+  FeatureLinkPickerComponent,
+} from '../ui/feature-link-picker.component';
 import {
   FEATURE_PLAN_STATUS_OPTIONS,
   FeaturePlanStatusPipe,
 } from '../ui/feature-plan-status';
 import {
+  featureRecordTypes,
   parseFeatureDetailListState,
   selectFeaturePlans,
   selectFeatureRecords,
-  selectFeatureResearch,
   selectFeatureReviewNotes,
 } from './feature-detail-list-state';
 import { toFeatureHistory } from './feature-history';
@@ -65,23 +75,11 @@ const PLAN_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'createdAt', label: 'Created date' },
   { value: 'title', label: 'Title' },
 ];
-const RESEARCH_FILTER_OPTIONS: readonly ListControlOption[] = [
-  { value: 'All', label: 'All sources' },
-  { value: 'Code', label: 'Code' },
-  { value: 'Web', label: 'Web' },
-  { value: 'Mcp', label: 'MCP' },
-  { value: 'Other', label: 'Other' },
-];
-const RESEARCH_SORT_OPTIONS: readonly ListControlOption[] = [
+const RECORD_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'updatedAt', label: 'Last updated' },
   { value: 'createdAt', label: 'Created date' },
   { value: 'title', label: 'Title' },
-  { value: 'sourceType', label: 'Source type' },
-];
-const CONVERSATION_FILTER_OPTIONS: readonly ListControlOption[] = [
-  { value: 'All', label: 'All records' },
-  { value: 'Edited', label: 'Edited records' },
-  { value: 'Original', label: 'Original records' },
+  { value: 'type', label: 'Type' },
 ];
 const REVIEW_NOTE_FILTER_OPTIONS: readonly ListControlOption[] = [
   { value: 'All', label: 'All review notes' },
@@ -94,12 +92,6 @@ const REVIEW_NOTE_SORT_OPTIONS: readonly ListControlOption[] = [
   { value: 'title', label: 'Title' },
 ];
 
-const CONVERSATION_SORT_OPTIONS: readonly ListControlOption[] = [
-  { value: 'updatedAt', label: 'Last updated' },
-  { value: 'createdAt', label: 'Created date' },
-  { value: 'userMessage', label: 'User message' },
-];
-
 type FeatureAction =
   | { readonly kind: 'status'; readonly featureId: string; readonly status: string }
   | { readonly kind: 'summary'; readonly featureId: string; readonly summary: string }
@@ -108,15 +100,12 @@ type FeatureAction =
   | {
       readonly kind: 'add-record';
       readonly featureId: string;
-      readonly userMessage: string;
-      readonly aiAnswer: string;
+      readonly request: AddFeatureRecordRequest;
     }
   | {
       readonly kind: 'update-record';
       readonly featureId: string;
-      readonly recordId: string;
-      readonly userMessage: string;
-      readonly aiAnswer: string;
+      readonly request: UpdateFeatureRecordRequest;
     }
   | { readonly kind: 'remove-record'; readonly featureId: string; readonly recordId: string }
   | {
@@ -136,28 +125,6 @@ type FeatureAction =
       readonly kind: 'remove-review-note';
       readonly featureId: string;
       readonly reviewNoteId: string;
-    }
-  | {
-      readonly kind: 'add-research-discovery';
-      readonly featureId: string;
-      readonly title: string;
-      readonly content: string;
-      readonly sourceType: FeatureResearchDiscoverySourceType;
-      readonly sourceReference: string;
-    }
-  | {
-      readonly kind: 'update-research-discovery';
-      readonly featureId: string;
-      readonly discoveryId: string;
-      readonly title: string;
-      readonly content: string;
-      readonly sourceType: FeatureResearchDiscoverySourceType;
-      readonly sourceReference: string;
-    }
-  | {
-      readonly kind: 'remove-research-discovery';
-      readonly featureId: string;
-      readonly discoveryId: string;
     }
   | {
       readonly kind: 'add-plan';
@@ -184,6 +151,7 @@ type MutationState =
     ClampOverflowDirective,
     DatePipe,
     FeatureBranchOverviewComponent,
+    FeatureLinkPickerComponent,
     FeaturePlanStatusPipe,
     FormsModule,
     ListControlsComponent,
@@ -214,10 +182,12 @@ export class FeatureDetailsPage {
   protected readonly editingRecordId = signal<string | null>(null);
   protected readonly editingReviewNoteId = signal<string | null>(null);
   protected readonly addingReviewNote = signal(false);
-  protected readonly editingResearchDiscoveryId = signal<string | null>(null);
   protected readonly addingPlan = signal(false);
-  protected readonly addingResearchDiscovery = signal(false);
+  /** Records picked in the add-plan form. */
+  protected readonly newPlanRecordIds = signal<readonly string[]>([]);
   protected readonly addingRecord = signal(false);
+  /** Plans picked in the add-record form; only plans store the link. */
+  protected readonly newRecordPlanIds = signal<readonly string[]>([]);
   protected readonly confirmingPlanRemoval = signal<string | null>(null);
   protected readonly confirmingFeatureRemoval = signal(false);
 
@@ -225,10 +195,8 @@ export class FeatureDetailsPage {
   protected readonly planFilterOptions = PLAN_FILTER_OPTIONS;
   protected readonly planSortOptions = PLAN_SORT_OPTIONS;
   protected readonly planStatusOptions = FEATURE_PLAN_STATUS_OPTIONS;
-  protected readonly researchFilterOptions = RESEARCH_FILTER_OPTIONS;
-  protected readonly researchSortOptions = RESEARCH_SORT_OPTIONS;
-  protected readonly conversationFilterOptions = CONVERSATION_FILTER_OPTIONS;
-  protected readonly conversationSortOptions = CONVERSATION_SORT_OPTIONS;
+  protected readonly recordSortOptions = RECORD_SORT_OPTIONS;
+  protected readonly recordTypeSuggestions = FEATURE_RECORD_TYPE_SUGGESTIONS;
   protected readonly reviewNoteFilterOptions = REVIEW_NOTE_FILTER_OPTIONS;
   protected readonly reviewNoteSortOptions = REVIEW_NOTE_SORT_OPTIONS;
 
@@ -297,17 +265,13 @@ export class FeatureDetailsPage {
           if (action.kind === 'add-review-note') {
             this.addingReviewNote.set(false);
           }
-          if (action.kind === 'update-research-discovery') {
-            this.editingResearchDiscoveryId.set(null);
-          }
-          if (action.kind === 'add-research-discovery') {
-            this.addingResearchDiscovery.set(false);
-          }
           if (action.kind === 'add-record') {
             this.addingRecord.set(false);
+            this.newRecordPlanIds.set([]);
           }
           if (action.kind === 'add-plan') {
             this.addingPlan.set(false);
+            this.newPlanRecordIds.set([]);
           }
           if (action.kind === 'remove-plan') {
             this.confirmingPlanRemoval.set(null);
@@ -346,13 +310,25 @@ export class FeatureDetailsPage {
                 vm.state.data.plans,
                 vm.listState.plans,
               ),
-              research: selectFeatureResearch(
-                vm.state.data.researchDiscoveries,
-                vm.listState.research,
-              ),
-              conversations: selectFeatureRecords(
+              records: selectFeatureRecords(
                 vm.state.data.records,
-                vm.listState.conversations,
+                vm.listState.records,
+              ),
+              recordTypeOptions: toRecordTypeOptions(
+                vm.state.data.records,
+                vm.listState.records.filter,
+              ),
+              recordsById: new Map(
+                vm.state.data.records.map(record => [record.id, record] as const),
+              ),
+              plansByRecordId: toPlansByRecordId(vm.state.data.plans),
+              recordOptions: toRecordOptions(vm.state.data.records),
+              planOptions: vm.state.data.plans.map(
+                (plan): FeatureLinkOption => ({
+                  id: plan.id,
+                  label: plan.title,
+                  detail: plan.branch?.name ?? '',
+                }),
               ),
               reviewNotes: selectFeatureReviewNotes(
                 vm.state.data.reviewNotes,
@@ -362,8 +338,12 @@ export class FeatureDetailsPage {
             }
           : {
               plans: [],
-              research: [],
-              conversations: [],
+              records: [],
+              recordTypeOptions: [],
+              recordsById: new Map<string, FeatureRecord>(),
+              plansByRecordId: new Map<string, readonly FeaturePlan[]>(),
+              recordOptions: [],
+              planOptions: [],
               reviewNotes: [],
               history: [],
             },
@@ -391,53 +371,22 @@ export class FeatureDetailsPage {
     });
   }
 
-  protected updateResearchSearch(search: string): void {
-    this.updateListQuery({ researchSearch: omitEmpty(search) }, true);
+  protected updateRecordSearch(search: string): void {
+    this.updateListQuery({ recordSearch: omitEmpty(search) }, true);
   }
 
-  protected updateResearchFilter(filter: string): void {
-    if (!RESEARCH_FILTER_OPTIONS.some(option => option.value === filter)) return;
-    this.updateListQuery({ researchSource: omitDefault(filter, 'All') });
+  protected updateRecordFilter(type: string): void {
+    this.updateListQuery({ recordType: omitDefault(type, 'All') });
   }
 
-  protected updateResearchSort(sortBy: string): void {
-    if (!RESEARCH_SORT_OPTIONS.some(option => option.value === sortBy)) return;
+  protected updateRecordSort(sortBy: string): void {
+    if (!RECORD_SORT_OPTIONS.some(option => option.value === sortBy)) return;
+    this.updateListQuery({ recordSort: omitDefault(sortBy, 'updatedAt') });
+  }
+
+  protected updateRecordDirection(direction: ListSortDirection): void {
     this.updateListQuery({
-      researchSort: omitDefault(sortBy, 'updatedAt'),
-    });
-  }
-
-  protected updateResearchDirection(direction: ListSortDirection): void {
-    this.updateListQuery({
-      researchDirection: omitDefault(direction, 'Descending'),
-    });
-  }
-
-  protected updateConversationSearch(search: string): void {
-    this.updateListQuery({ conversationSearch: omitEmpty(search) }, true);
-  }
-
-  protected updateConversationFilter(filter: string): void {
-    if (!CONVERSATION_FILTER_OPTIONS.some(option => option.value === filter)) {
-      return;
-    }
-    this.updateListQuery({
-      conversationFilter: omitDefault(filter, 'All'),
-    });
-  }
-
-  protected updateConversationSort(sortBy: string): void {
-    if (!CONVERSATION_SORT_OPTIONS.some(option => option.value === sortBy)) {
-      return;
-    }
-    this.updateListQuery({
-      conversationSort: omitDefault(sortBy, 'updatedAt'),
-    });
-  }
-
-  protected updateConversationDirection(direction: ListSortDirection): void {
-    this.updateListQuery({
-      conversationDirection: omitDefault(direction, 'Descending'),
+      recordDirection: omitDefault(direction, 'Descending'),
     });
   }
 
@@ -489,29 +438,38 @@ export class FeatureDetailsPage {
 
   protected addRecord(
     featureId: string,
-    userMessage: string,
-    aiAnswer: string,
+    type: string,
+    title: string,
+    content: string,
+    sourceType: string,
+    sourceReference: string,
   ): void {
     this.actions.next({
       kind: 'add-record',
       featureId,
-      userMessage: userMessage.trim(),
-      aiAnswer: aiAnswer.trim(),
+      request: {
+        ...toRecordContent(type, title, content, sourceType, sourceReference),
+        planIds: this.newRecordPlanIds(),
+      },
     });
   }
 
   protected updateRecord(
     featureId: string,
     recordId: string,
-    userMessage: string,
-    aiAnswer: string,
+    type: string,
+    title: string,
+    content: string,
+    sourceType: string,
+    sourceReference: string,
   ): void {
     this.actions.next({
       kind: 'update-record',
       featureId,
-      recordId,
-      userMessage: userMessage.trim(),
-      aiAnswer: aiAnswer.trim(),
+      request: {
+        ...toRecordContent(type, title, content, sourceType, sourceReference),
+        recordId,
+      },
     });
   }
 
@@ -555,53 +513,6 @@ export class FeatureDetailsPage {
     });
   }
 
-  protected addResearchDiscovery(
-    featureId: string,
-    title: string,
-    content: string,
-    sourceType: FeatureResearchDiscoverySourceType,
-    sourceReference: string,
-  ): void {
-    this.actions.next({
-      kind: 'add-research-discovery',
-      featureId,
-      title: title.trim(),
-      content: content.trim(),
-      sourceType,
-      sourceReference: sourceReference.trim(),
-    });
-  }
-
-  protected updateResearchDiscovery(
-    featureId: string,
-    discoveryId: string,
-    title: string,
-    content: string,
-    sourceType: FeatureResearchDiscoverySourceType,
-    sourceReference: string,
-  ): void {
-    this.actions.next({
-      kind: 'update-research-discovery',
-      featureId,
-      discoveryId,
-      title: title.trim(),
-      content: content.trim(),
-      sourceType,
-      sourceReference: sourceReference.trim(),
-    });
-  }
-
-  protected removeResearchDiscovery(
-    featureId: string,
-    discoveryId: string,
-  ): void {
-    this.actions.next({
-      kind: 'remove-research-discovery',
-      featureId,
-      discoveryId,
-    });
-  }
-
   protected addPlan(featureId: string, request: AddFeaturePlanRequest): void {
     this.actions.next({
       kind: 'add-plan',
@@ -612,6 +523,7 @@ export class FeatureDetailsPage {
         branchName: request.branchName.trim(),
         branchDescription: request.branchDescription.trim(),
         additionalInfo: request.additionalInfo.trim(),
+        recordIds: this.newPlanRecordIds(),
       },
     });
   }
@@ -648,16 +560,9 @@ export class FeatureDetailsPage {
       case 'remove-skill':
         return this.features.removeSkill(action.featureId, action.skillId);
       case 'add-record':
-        return this.features.addRecord(action.featureId, {
-          userMessage: action.userMessage,
-          aiAnswer: action.aiAnswer,
-        });
+        return this.features.addRecord(action.featureId, action.request);
       case 'update-record':
-        return this.features.updateRecord(action.featureId, {
-          recordId: action.recordId,
-          userMessage: action.userMessage,
-          aiAnswer: action.aiAnswer,
-        });
+        return this.features.updateRecord(action.featureId, action.request);
       case 'remove-record':
         return this.features.removeRecord(action.featureId, action.recordId);
       case 'add-review-note':
@@ -676,26 +581,6 @@ export class FeatureDetailsPage {
           action.featureId,
           action.reviewNoteId,
         );
-      case 'add-research-discovery':
-        return this.features.addResearchDiscovery(action.featureId, {
-          title: action.title,
-          content: action.content,
-          sourceType: action.sourceType,
-          sourceReference: action.sourceReference,
-        });
-      case 'update-research-discovery':
-        return this.features.updateResearchDiscovery(action.featureId, {
-          discoveryId: action.discoveryId,
-          title: action.title,
-          content: action.content,
-          sourceType: action.sourceType,
-          sourceReference: action.sourceReference,
-        });
-      case 'remove-research-discovery':
-        return this.features.removeResearchDiscovery(
-          action.featureId,
-          action.discoveryId,
-        );
       case 'add-plan':
         return this.features.addPlan(action.featureId, action.request);
       case 'remove-plan':
@@ -706,4 +591,61 @@ export class FeatureDetailsPage {
         return this.features.remove(action.featureId);
     }
   }
+}
+
+const SOURCE_TYPES: readonly FeatureRecordSourceType[] = [
+  'Other',
+  'Code',
+  'Web',
+  'Mcp',
+];
+
+function toRecordContent(
+  type: string,
+  title: string,
+  content: string,
+  sourceType: string,
+  sourceReference: string,
+) {
+  const source = SOURCE_TYPES.find(value => value === sourceType) ?? null;
+
+  return {
+    type: type.trim().toLowerCase(),
+    title: title.trim(),
+    content: content.trim(),
+    sourceType: source,
+    sourceReference: source === null ? '' : sourceReference.trim(),
+  };
+}
+
+/** The type filter lists every type in use, plus the selected one if no record has it. */
+function toRecordTypeOptions(
+  records: readonly FeatureRecord[],
+  selected: string,
+): readonly ListControlOption[] {
+  const types = featureRecordTypes(records);
+  const shown =
+    selected === 'All' || types.includes(selected) ? types : [...types, selected];
+
+  return [
+    { value: 'All', label: 'All types' },
+    ...shown.map(type => ({ value: type, label: type })),
+  ];
+}
+
+function toPlansByRecordId(
+  plans: readonly FeaturePlan[],
+): ReadonlyMap<string, readonly FeaturePlan[]> {
+  const plansByRecordId = new Map<string, FeaturePlan[]>();
+
+  for (const plan of plans) {
+    for (const recordId of plan.recordIds) {
+      plansByRecordId.set(recordId, [
+        ...(plansByRecordId.get(recordId) ?? []),
+        plan,
+      ]);
+    }
+  }
+
+  return plansByRecordId;
 }

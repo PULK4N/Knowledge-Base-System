@@ -46,22 +46,12 @@
         <a
           role="tab"
           [routerLink]="[]"
-          [queryParams]="{ tab: 'research' }"
+          [queryParams]="{ tab: 'records' }"
           queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'research'"
-          [class.active]="vm.listState.activeTab === 'research'"
+          [attr.aria-selected]="vm.listState.activeTab === 'records'"
+          [class.active]="vm.listState.activeTab === 'records'"
         >
-          Research <span>{{ vm.state.data.researchDiscoveries.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'conversations' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'conversations'"
-          [class.active]="vm.listState.activeTab === 'conversations'"
-        >
-          Conversations <span>{{ vm.state.data.records.length }}</span>
+          Records <span>{{ vm.state.data.records.length }}</span>
         </a>
         <a
           role="tab"
@@ -362,6 +352,13 @@
                   ngModel
                 ></textarea>
               </label>
+              <app-feature-link-picker
+                legend="Linked records"
+                emptyMessage="This feature has no records yet."
+                [options]="vm.collections.recordOptions"
+                [selectedIds]="newPlanRecordIds()"
+                (selectedIdsChange)="newPlanRecordIds.set($event)"
+              />
               <small class="editor-note">
                 Add sub-branches from the plan page after it is created.
               </small>
@@ -413,6 +410,14 @@
                   @if (plan.additionalInfo) {
                     <span class="plan-row-info">{{ plan.additionalInfo }}</span>
                   }
+                  @if (plan.recordIds.length > 0) {
+                    <span class="plan-row-records">
+                      Records:
+                      @for (recordId of plan.recordIds; track recordId; let last = $last) {
+                        {{ vm.collections.recordsById.get(recordId)?.title ?? (recordId | shortId) }}{{ last ? '' : ', ' }}
+                      }
+                    </span>
+                  }
                 </a>
                 <span [class]="'plan-status status-' + plan.status">
                   {{ plan.status | featurePlanStatus }}
@@ -463,271 +468,12 @@
         </section>
       }
 
-      @if (vm.listState.activeTab === 'research') {
+      @if (vm.listState.activeTab === 'records') {
         <section class="section-card surface-card research-discoveries tab-section">
         <div class="section-heading">
           <div>
-            <span class="eyebrow">Research trail</span>
-            <h2>Research discoveries</h2>
-          </div>
-          <div class="section-actions">
-            <span class="count-badge">
-              {{ vm.state.data.researchDiscoveries.length }}
-            </span>
-            <button
-              type="button"
-              class="add-toggle"
-              [attr.aria-expanded]="addingResearchDiscovery()"
-              (click)="addingResearchDiscovery.set(!addingResearchDiscovery())"
-            >
-              {{ addingResearchDiscovery() ? 'Cancel' : 'Add discovery' }}
-            </button>
-          </div>
-        </div>
-
-        <p class="section-description">
-          Keep useful facts from code inspection, web research, MCP tools, and
-          other sources as README-style Markdown documents attached to this feature.
-        </p>
-
-        @if (addingResearchDiscovery()) {
-          <form
-            class="inline-editor research-discovery-editor"
-            #newDiscoveryForm="ngForm"
-            (ngSubmit)="addResearchDiscovery(
-              vm.state.data.id,
-              newDiscoveryTitle.value,
-              newDiscoveryContent.value,
-              newDiscoverySourceType.value,
-              newDiscoverySourceReference.value
-            )"
-          >
-            <label class="discovery-title-field">
-              <span>Title</span>
-              <input
-                #newDiscoveryTitle="ngModel"
-                name="researchDiscoveryTitle"
-                type="text"
-                required
-                ngModel
-              />
-            </label>
-            <label class="discovery-content-field">
-              <span>Research Discovery Findings</span>
-              <textarea
-                #newDiscoveryContent="ngModel"
-                name="researchDiscoveryContent"
-                rows="10"
-                required
-                placeholder="Write the discovery using README-style Markdown."
-                ngModel
-              ></textarea>
-            </label>
-            <label>
-              <span>Source type</span>
-              <select
-                #newDiscoverySourceType="ngModel"
-                name="researchDiscoverySourceType"
-                required
-                ngModel="Other"
-              >
-                <option value="Other">Other</option>
-                <option value="Code">Code</option>
-                <option value="Web">Web</option>
-                <option value="Mcp">MCP</option>
-              </select>
-            </label>
-            <label>
-              <span>Source reference</span>
-              <input
-                #newDiscoverySourceReference="ngModel"
-                name="researchDiscoverySourceReference"
-                type="text"
-                placeholder="File path, URL, MCP tool, or other reference"
-                ngModel
-              />
-            </label>
-            <button
-              type="submit"
-              [disabled]="newDiscoveryForm.invalid || vm.mutation.status === 'saving'"
-            >
-              Add discovery
-            </button>
-          </form>
-        }
-
-        <app-list-controls
-          class="tab-list-controls"
-          [search]="vm.listState.research.search"
-          searchLabel="Search research discoveries"
-          searchPlaceholder="Search titles, discoveries, and sources"
-          [filter]="vm.listState.research.filter"
-          filterLabel="Source"
-          [filterOptions]="researchFilterOptions"
-          [sortBy]="vm.listState.research.sortBy"
-          [sortOptions]="researchSortOptions"
-          [sortDirection]="vm.listState.research.sortDirection"
-          (searchChanged)="updateResearchSearch($event)"
-          (filterChanged)="updateResearchFilter($event)"
-          (sortByChanged)="updateResearchSort($event)"
-          (sortDirectionChanged)="updateResearchDirection($event)"
-        />
-        <p class="visible-count">
-          Showing {{ vm.collections.research.length }} of
-          {{ vm.state.data.researchDiscoveries.length }} discoveries
-        </p>
-
-        <div class="research-discovery-list">
-          @for (
-            discovery of vm.collections.research;
-            track discovery.id
-          ) {
-            <article class="research-discovery-item">
-              <header>
-                <div class="discovery-meta">
-                  <span class="source-type" [attr.data-source]="discovery.sourceType">
-                    {{ discovery.sourceType === 'Mcp' ? 'MCP' : discovery.sourceType }}
-                  </span>
-                  <span>Updated {{ discovery.updatedAt | date: 'medium' }}</span>
-                </div>
-                <div class="record-actions">
-                  <button
-                    type="button"
-                    (click)="editingResearchDiscoveryId.set(discovery.id)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="danger-text"
-                    [disabled]="vm.mutation.status === 'saving'"
-                    (click)="removeResearchDiscovery(vm.state.data.id, discovery.id)"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </header>
-
-              @if (editingResearchDiscoveryId() === discovery.id) {
-                <form
-                  class="record-editor research-discovery-editor"
-                  #editDiscoveryForm="ngForm"
-                  (ngSubmit)="updateResearchDiscovery(
-                    vm.state.data.id,
-                    discovery.id,
-                    editDiscoveryTitle.value,
-                    editDiscoveryContent.value,
-                    editDiscoverySourceType.value,
-                    editDiscoverySourceReference.value
-                  )"
-                >
-                  <label class="discovery-title-field">
-                    <span>Title</span>
-                    <input
-                      #editDiscoveryTitle="ngModel"
-                      name="editResearchDiscoveryTitle"
-                      type="text"
-                      required
-                      [ngModel]="discovery.title"
-                    />
-                  </label>
-                  <label class="discovery-content-field">
-                    <span>Discovery (Markdown)</span>
-                    <textarea
-                      #editDiscoveryContent="ngModel"
-                      name="editResearchDiscoveryContent"
-                      rows="10"
-                      required
-                      [ngModel]="discovery.content"
-                    ></textarea>
-                  </label>
-                  <label>
-                    <span>Source type</span>
-                    <select
-                      #editDiscoverySourceType="ngModel"
-                      name="editResearchDiscoverySourceType"
-                      required
-                      [ngModel]="discovery.sourceType"
-                    >
-                      <option value="Other">Other</option>
-                      <option value="Code">Code</option>
-                      <option value="Web">Web</option>
-                      <option value="Mcp">MCP</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>Source reference</span>
-                    <input
-                      #editDiscoverySourceReference="ngModel"
-                      name="editResearchDiscoverySourceReference"
-                      type="text"
-                      [ngModel]="discovery.sourceReference"
-                    />
-                  </label>
-                  <div class="editor-actions discovery-editor-actions">
-                    <button
-                      type="submit"
-                      [disabled]="editDiscoveryForm.invalid || vm.mutation.status === 'saving'"
-                    >
-                      Save discovery
-                    </button>
-                    <button
-                      type="button"
-                      class="secondary-button"
-                      (click)="editingResearchDiscoveryId.set(null)"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              } @else {
-                <details class="research-discovery-document">
-                  <summary class="research-discovery-toggle">
-                    <h3>{{ discovery.title }}</h3>
-                    <svg
-                      class="discovery-chevron"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="m7 9 5 5 5-5" />
-                    </svg>
-                  </summary>
-                  <div class="research-discovery-body">
-                    <app-markdown-content
-                      class="readme-document"
-                      [blocks]="emptyBlocks"
-                      [markdown]="discovery.content"
-                      emptyMessage="This discovery has no content."
-                    />
-                    @if (discovery.sourceReference) {
-                      <div class="discovery-source">
-                        <span>Source</span>
-                        <code>{{ discovery.sourceReference }}</code>
-                      </div>
-                    }
-                  </div>
-                </details>
-              }
-            </article>
-          } @empty {
-            <div class="empty-section">
-              @if (vm.state.data.researchDiscoveries.length === 0) {
-                No research discoveries have been saved.
-              } @else {
-                No discoveries match the current search and filter.
-              }
-            </div>
-          }
-        </div>
-        </section>
-      }
-
-      @if (vm.listState.activeTab === 'conversations') {
-        <section class="section-card surface-card tab-section">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">Decision trail</span>
-            <h2>Conversation records</h2>
+            <span class="eyebrow">Feature journal</span>
+            <h2>Records</h2>
           </div>
           <div class="section-actions">
             <span class="count-badge">{{ vm.state.data.records.length }}</span>
@@ -743,38 +489,101 @@
         </div>
 
         <p class="section-description">
-          User messages and AI answers are stored and rendered as README-style
-          Markdown. Short plain-text records remain valid Markdown documents.
+          Conversations, research findings, and other notes kept with this
+          feature as README-style Markdown. Plans link the records they use.
         </p>
+
+        <datalist id="feature-record-types">
+          @for (type of recordTypeSuggestions; track type) {
+            <option [value]="type"></option>
+          }
+          @for (option of vm.collections.recordTypeOptions; track option.value) {
+            @if (option.value !== 'All') {
+              <option [value]="option.value"></option>
+            }
+          }
+        </datalist>
 
         @if (addingRecord()) {
           <form
-            class="inline-editor"
+            class="inline-editor research-discovery-editor"
             #newRecordForm="ngForm"
-            (ngSubmit)="addRecord(vm.state.data.id, newUserMessage.value, newAiAnswer.value)"
+            (ngSubmit)="addRecord(
+              vm.state.data.id,
+              newRecordType.value,
+              newRecordTitle.value,
+              newRecordContent.value,
+              newRecordSourceType.value,
+              newRecordSourceReference.value
+            )"
           >
             <label>
-              <span>User message (Markdown)</span>
-              <textarea
-                #newUserMessage="ngModel"
-                name="userMessage"
-                rows="8"
+              <span>Type</span>
+              <input
+                #newRecordType="ngModel"
+                name="recordType"
+                type="text"
+                list="feature-record-types"
                 required
-                placeholder="Write the user message using README-style Markdown."
+                maxlength="50"
+                placeholder="conversation, research, or another type"
+                ngModel="research"
+              />
+            </label>
+            <label class="discovery-title-field">
+              <span>Title</span>
+              <input
+                #newRecordTitle="ngModel"
+                name="recordTitle"
+                type="text"
+                required
+                ngModel
+              />
+            </label>
+            <label class="discovery-content-field">
+              <span>Content (Markdown)</span>
+              <textarea
+                #newRecordContent="ngModel"
+                name="recordContent"
+                rows="10"
+                required
+                placeholder="Write the record using README-style Markdown."
                 ngModel
               ></textarea>
             </label>
             <label>
-              <span>AI answer (Markdown)</span>
-              <textarea
-                #newAiAnswer="ngModel"
-                name="aiAnswer"
-                rows="10"
-                required
-                placeholder="Write the AI answer using README-style Markdown."
-                ngModel
-              ></textarea>
+              <span>Source type</span>
+              <select
+                #newRecordSourceType="ngModel"
+                name="recordSourceType"
+                ngModel=""
+              >
+                <option value="">No source</option>
+                <option value="Other">Other</option>
+                <option value="Code">Code</option>
+                <option value="Web">Web</option>
+                <option value="Mcp">MCP</option>
+              </select>
             </label>
+            <label>
+              <span>Source reference</span>
+              <input
+                #newRecordSourceReference="ngModel"
+                name="recordSourceReference"
+                type="text"
+                placeholder="File path, URL, MCP tool, or other reference"
+                [disabled]="!newRecordSourceType.value"
+                ngModel
+              />
+            </label>
+            <app-feature-link-picker
+              class="discovery-content-field"
+              legend="Link to plans"
+              emptyMessage="This feature has no plans yet."
+              [options]="vm.collections.planOptions"
+              [selectedIds]="newRecordPlanIds()"
+              (selectedIdsChange)="newRecordPlanIds.set($event)"
+            />
             <button
               type="submit"
               [disabled]="newRecordForm.invalid || vm.mutation.status === 'saving'"
@@ -786,32 +595,42 @@
 
         <app-list-controls
           class="tab-list-controls"
-          [search]="vm.listState.conversations.search"
-          searchLabel="Search conversation records"
-          searchPlaceholder="Search user messages and AI answers"
-          [filter]="vm.listState.conversations.filter"
-          filterLabel="Record type"
-          [filterOptions]="conversationFilterOptions"
-          [sortBy]="vm.listState.conversations.sortBy"
-          [sortOptions]="conversationSortOptions"
-          [sortDirection]="vm.listState.conversations.sortDirection"
-          (searchChanged)="updateConversationSearch($event)"
-          (filterChanged)="updateConversationFilter($event)"
-          (sortByChanged)="updateConversationSort($event)"
-          (sortDirectionChanged)="updateConversationDirection($event)"
+          [search]="vm.listState.records.search"
+          searchLabel="Search records"
+          searchPlaceholder="Search titles, types, content, and sources"
+          [filter]="vm.listState.records.filter"
+          filterLabel="Type"
+          [filterOptions]="vm.collections.recordTypeOptions"
+          [sortBy]="vm.listState.records.sortBy"
+          [sortOptions]="recordSortOptions"
+          [sortDirection]="vm.listState.records.sortDirection"
+          (searchChanged)="updateRecordSearch($event)"
+          (filterChanged)="updateRecordFilter($event)"
+          (sortByChanged)="updateRecordSort($event)"
+          (sortDirectionChanged)="updateRecordDirection($event)"
         />
         <p class="visible-count">
-          Showing {{ vm.collections.conversations.length }} of
+          Showing {{ vm.collections.records.length }} of
           {{ vm.state.data.records.length }} records
         </p>
 
-        <div class="record-list">
-          @for (record of vm.collections.conversations; track record.id) {
-            <article class="record-item">
+        <div class="research-discovery-list">
+          @for (record of vm.collections.records; track record.id) {
+            <article class="research-discovery-item">
               <header>
-                <span>Recorded {{ record.updatedAt | date: 'medium' }}</span>
+                <div class="discovery-meta">
+                  <span class="record-type">{{ record.type }}</span>
+                  @if (record.sourceType) {
+                    <span class="source-type" [attr.data-source]="record.sourceType">
+                      {{ record.sourceType === 'Mcp' ? 'MCP' : record.sourceType }}
+                    </span>
+                  }
+                  <span>Updated {{ record.updatedAt | date: 'medium' }}</span>
+                </div>
                 <div class="record-actions">
-                  <button type="button" (click)="editingRecordId.set(record.id)">Edit</button>
+                  <button type="button" (click)="editingRecordId.set(record.id)">
+                    Edit
+                  </button>
                   <button
                     type="button"
                     class="danger-text"
@@ -822,69 +641,136 @@
                   </button>
                 </div>
               </header>
+
               @if (editingRecordId() === record.id) {
                 <form
-                  class="record-editor"
+                  class="record-editor research-discovery-editor"
                   #editRecordForm="ngForm"
-                  (ngSubmit)="updateRecord(vm.state.data.id, record.id, editUser.value, editAi.value)"
+                  (ngSubmit)="updateRecord(
+                    vm.state.data.id,
+                    record.id,
+                    editRecordType.value,
+                    editRecordTitle.value,
+                    editRecordContent.value,
+                    editRecordSourceType.value,
+                    editRecordSourceReference.value
+                  )"
                 >
                   <label>
-                    <span>User message (Markdown)</span>
-                    <textarea
-                      #editUser="ngModel"
-                      name="editUser"
-                      rows="8"
+                    <span>Type</span>
+                    <input
+                      #editRecordType="ngModel"
+                      name="editRecordType"
+                      type="text"
+                      list="feature-record-types"
                       required
-                      [ngModel]="record.userMessage"
+                      maxlength="50"
+                      [ngModel]="record.type"
+                    />
+                  </label>
+                  <label class="discovery-title-field">
+                    <span>Title</span>
+                    <input
+                      #editRecordTitle="ngModel"
+                      name="editRecordTitle"
+                      type="text"
+                      required
+                      [ngModel]="record.title"
+                    />
+                  </label>
+                  <label class="discovery-content-field">
+                    <span>Content (Markdown)</span>
+                    <textarea
+                      #editRecordContent="ngModel"
+                      name="editRecordContent"
+                      rows="10"
+                      required
+                      [ngModel]="record.content"
                     ></textarea>
                   </label>
                   <label>
-                    <span>AI answer (Markdown)</span>
-                    <textarea
-                      #editAi="ngModel"
-                      name="editAi"
-                      rows="10"
-                      required
-                      [ngModel]="record.aiAnswer"
-                    ></textarea>
+                    <span>Source type</span>
+                    <select
+                      #editRecordSourceType="ngModel"
+                      name="editRecordSourceType"
+                      [ngModel]="record.sourceType ?? ''"
+                    >
+                      <option value="">No source</option>
+                      <option value="Other">Other</option>
+                      <option value="Code">Code</option>
+                      <option value="Web">Web</option>
+                      <option value="Mcp">MCP</option>
+                    </select>
                   </label>
-                  <div class="editor-actions">
+                  <label>
+                    <span>Source reference</span>
+                    <input
+                      #editRecordSourceReference="ngModel"
+                      name="editRecordSourceReference"
+                      type="text"
+                      [disabled]="!editRecordSourceType.value"
+                      [ngModel]="record.sourceReference"
+                    />
+                  </label>
+                  <div class="editor-actions discovery-editor-actions">
                     <button
                       type="submit"
                       [disabled]="editRecordForm.invalid || vm.mutation.status === 'saving'"
                     >
                       Save record
                     </button>
-                    <button type="button" class="secondary-button" (click)="editingRecordId.set(null)">
+                    <button
+                      type="button"
+                      class="secondary-button"
+                      (click)="editingRecordId.set(null)"
+                    >
                       Cancel
                     </button>
                   </div>
                 </form>
               } @else {
-                <div class="message user-message">
-                  <span>User</span>
-                  <app-markdown-content
-                    class="readme-document"
-                    [blocks]="emptyBlocks"
-                    [markdown]="record.userMessage"
-                    emptyMessage="This user message has no content."
-                  />
-                </div>
-                <div class="message ai-message">
-                  <span>AI</span>
-                  <app-markdown-content
-                    class="readme-document"
-                    [blocks]="emptyBlocks"
-                    [markdown]="record.aiAnswer"
-                    emptyMessage="This AI answer has no content."
-                  />
-                </div>
+                <details class="research-discovery-document">
+                  <summary class="research-discovery-toggle">
+                    <h3>{{ record.title }}</h3>
+                    <svg
+                      class="discovery-chevron"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="m7 9 5 5 5-5" />
+                    </svg>
+                  </summary>
+                  <div class="research-discovery-body">
+                    <app-markdown-content
+                      class="readme-document"
+                      [blocks]="emptyBlocks"
+                      [markdown]="record.content"
+                      emptyMessage="This record has no content."
+                    />
+                    @if (record.sourceReference) {
+                      <div class="discovery-source">
+                        <span>Source</span>
+                        <code>{{ record.sourceReference }}</code>
+                      </div>
+                    }
+                  </div>
+                </details>
+                @if (vm.collections.plansByRecordId.get(record.id); as linkedPlans) {
+                  <div class="record-plans">
+                    <span>Used by</span>
+                    @for (plan of linkedPlans; track plan.id) {
+                      <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
+                        {{ plan.title }}
+                      </a>
+                    }
+                  </div>
+                }
               }
             </article>
           } @empty {
             <div class="empty-section">
               @if (vm.state.data.records.length === 0) {
-                No conversation records have been saved.
+                No records have been saved.
               } @else {
                 No records match the current search and filter.
               }

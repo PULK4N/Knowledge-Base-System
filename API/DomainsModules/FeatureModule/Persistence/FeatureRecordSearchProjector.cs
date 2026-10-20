@@ -7,7 +7,7 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Persistence;
 
-public sealed class FeatureResearchSearchProjector(
+public sealed class FeatureRecordSearchProjector(
     IProjectionEmbeddingGenerator embeddingGenerator,
     IFeatureSearchProjectionWriter projectionWriter
 ) : IProjector
@@ -28,22 +28,23 @@ public sealed class FeatureResearchSearchProjector(
         var chunks = features
             .Where(feature => !feature.IsDeleted)
             .SelectMany(
-                feature => FeatureResearchDiscoveryMarkdownCompiler
+                feature => FeatureRecordMarkdownCompiler
                     .Compile(feature)
                     .SelectMany(
-                        discovery => EmbeddingTextChunker
-                            .Split(discovery.Markdown)
+                        record => EmbeddingTextChunker
+                            .Split(record.Markdown)
                             .Select(
                                 (text, chunkIndex) => new PendingDocument(
                                     feature.Id,
                                     feature.ProjectId,
                                     feature.Name,
-                                    discovery.ResearchDiscoveryId,
-                                    discovery.Title,
-                                    discovery.SourceType,
-                                    discovery.SourceReference,
-                                    discovery.CreatedAt,
-                                    discovery.UpdatedAt,
+                                    record.RecordId,
+                                    record.RecordType,
+                                    record.Title,
+                                    record.SourceType,
+                                    record.SourceReference,
+                                    record.CreatedAt,
+                                    record.UpdatedAt,
                                     chunkIndex,
                                     text
                                 )
@@ -69,10 +70,11 @@ public sealed class FeatureResearchSearchProjector(
         );
         var documents = chunks
             .Select(
-                (chunk, index) => new FeatureResearchSearchDocument(
+                (chunk, index) => new FeatureRecordSearchDocument(
                     chunk.FeatureAggregateId,
                     chunk.FeatureName,
-                    chunk.ResearchDiscoveryId,
+                    chunk.RecordId,
+                    chunk.RecordType,
                     chunk.Title,
                     chunk.SourceType,
                     chunk.SourceReference,
@@ -128,8 +130,8 @@ public sealed class FeatureResearchSearchProjector(
         new(
             KnowledgeSearchOwnerTypes.Feature,
             chunk.FeatureAggregateId,
-            KnowledgeSearchSourceTypes.FeatureResearchDiscovery,
-            chunk.ResearchDiscoveryId.ToString("N"),
+            KnowledgeSearchSourceTypes.FeatureRecord,
+            chunk.RecordId.ToString("N"),
             chunk.ChunkIndex,
             chunk.UpdatedAt,
             KnowledgeSearchMetadata.Create(new Dictionary<string, object?>
@@ -137,14 +139,15 @@ public sealed class FeatureResearchSearchProjector(
                 ["featureId"] = chunk.FeatureAggregateId.Value.ToString(),
                 ["projectId"] = chunk.ProjectId.Value.ToString(),
                 ["featureName"] = chunk.FeatureName,
-                ["researchDiscoveryId"] = chunk.ResearchDiscoveryId.ToString(),
+                ["recordId"] = chunk.RecordId.ToString(),
+                ["recordType"] = chunk.RecordType,
                 ["title"] = chunk.Title,
                 ["sourceType"] = chunk.SourceType,
                 ["sourceReference"] = chunk.SourceReference,
                 ["createdAt"] = chunk.CreatedAt,
                 ["updatedAt"] = chunk.UpdatedAt
             }),
-            $"{chunk.FeatureName} {chunk.Title} {chunk.SourceType} {chunk.SourceReference}",
+            $"{chunk.FeatureName} {chunk.RecordType} {chunk.Title} {chunk.SourceType} {chunk.SourceReference}",
             chunk.Text,
             embedding
         );
@@ -203,28 +206,6 @@ public sealed class FeatureResearchSearchProjector(
             );
         }
 
-        foreach (var record in feature.Records)
-        {
-            AddChunks(
-                chunks,
-                feature,
-                KnowledgeSearchSourceTypes.FeatureRecord,
-                record.Id.Value.ToString("N"),
-                record.UpdatedAt,
-                KnowledgeSearchMetadata.Create(new Dictionary<string, object?>
-                {
-                    ["featureId"] = feature.Id.Value.ToString(),
-                    ["projectId"] = feature.ProjectId.Value.ToString(),
-                    ["featureName"] = feature.Name,
-                    ["recordId"] = record.Id.Value.ToString(),
-                    ["createdAt"] = record.CreatedAt,
-                    ["updatedAt"] = record.UpdatedAt
-                }),
-                $"# Feature conversation record\n\n## User\n\n{record.UserMessage}"
-                    + $"\n\n## AI\n\n{record.AiAnswer}"
-            );
-        }
-
         return chunks;
     }
 
@@ -259,7 +240,8 @@ public sealed class FeatureResearchSearchProjector(
         AggregateId FeatureAggregateId,
         AggregateId ProjectId,
         string FeatureName,
-        Guid ResearchDiscoveryId,
+        Guid RecordId,
+        string RecordType,
         string Title,
         string SourceType,
         string SourceReference,
@@ -270,8 +252,9 @@ public sealed class FeatureResearchSearchProjector(
     )
     {
         public string EmbeddingText =>
-            $"Feature: {FeatureName}\nResearch discovery: {Title}\n"
-            + $"Source type: {SourceType}\nSource: {SourceReference}\n\n{Text}";
+            $"Feature: {FeatureName}\nRecord type: {RecordType}\n"
+            + $"Record: {Title}\nSource type: {SourceType}\n"
+            + $"Source: {SourceReference}\n\n{Text}";
     }
 
     private sealed record PendingGlobalDocument(

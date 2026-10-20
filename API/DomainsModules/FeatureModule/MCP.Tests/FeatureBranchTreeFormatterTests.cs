@@ -60,7 +60,6 @@ public sealed class FeatureBranchTreeFormatterTests
             RelatedSkillIds = [],
             Records = [],
             ReviewNotes = [],
-            ResearchDiscoveries = [],
             Plans = plans,
             Branch = branch,
             MemoryHistory = []
@@ -83,6 +82,7 @@ public sealed class FeatureBranchTreeFormatterTests
             Status = status,
             Branch = branch,
             PreviousPlanId = previousPlanId,
+            RecordIds = [],
             CreatedAt = Start.AddDays(order),
             UpdatedAt = Start.AddDays(order)
         };

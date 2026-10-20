@@ -24,9 +24,6 @@ public sealed record FeatureDto
     public required IReadOnlyCollection<FeatureReviewNoteDto>
         ReviewNotes { get; init; }
 
-    public required IReadOnlyCollection<FeatureResearchDiscoveryDto>
-        ResearchDiscoveries { get; init; }
-
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
     public FeatureBranchDto? Branch { get; init; }
@@ -52,9 +49,6 @@ public sealed record FeatureDto
             ReviewNotes = state.ReviewNotes
                 .Select(FeatureReviewNoteDto.FromModel)
                 .ToList(),
-            ResearchDiscoveries = state.ResearchDiscoveries
-                .Select(FeatureResearchDiscoveryDto.FromModel)
-                .ToList(),
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),
@@ -71,9 +65,15 @@ public sealed record FeatureRecordDto
 {
     public required Guid Id { get; init; }
 
-    public required string UserMessage { get; init; }
+    public required string Type { get; init; }
 
-    public required string AiAnswer { get; init; }
+    public required string Title { get; init; }
+
+    public required string Content { get; init; }
+
+    public FeatureRecordSourceType? SourceType { get; init; }
+
+    public required string SourceReference { get; init; }
 
     public required DateTime CreatedAt { get; init; }
 
@@ -85,11 +85,27 @@ public sealed record FeatureRecordDto
         new()
         {
             Id = record.Id.Value,
-            UserMessage = record.UserMessage,
-            AiAnswer = record.AiAnswer,
+            Type = record.Type,
+            Title = record.Title,
+            Content = record.Content,
+            SourceType = record.SourceType,
+            SourceReference = record.SourceReference,
             CreatedAt = record.CreatedAt,
             UpdatedAt = record.UpdatedAt
         };
+}
+
+/// <summary>
+/// A record without its content, so a caller can decide which records to load.
+/// </summary>
+public sealed record FeatureRecordReferenceDto(
+    Guid Id,
+    string Title,
+    string Type
+)
+{
+    public static FeatureRecordReferenceDto FromDto(FeatureRecordDto record) =>
+        new(record.Id, record.Title, record.Type);
 }
 
 public sealed record FeatureReviewNoteDto
@@ -114,37 +130,6 @@ public sealed record FeatureReviewNoteDto
             Content = reviewNote.Content,
             CreatedAt = reviewNote.CreatedAt,
             UpdatedAt = reviewNote.UpdatedAt
-        };
-}
-
-public sealed record FeatureResearchDiscoveryDto
-{
-    public required Guid Id { get; init; }
-
-    public required string Title { get; init; }
-
-    public required string Content { get; init; }
-
-    public required FeatureResearchDiscoverySourceType SourceType { get; init; }
-
-    public required string SourceReference { get; init; }
-
-    public required DateTime CreatedAt { get; init; }
-
-    public required DateTime UpdatedAt { get; init; }
-
-    public static FeatureResearchDiscoveryDto FromModel(
-        FeatureResearchDiscovery discovery
-    ) =>
-        new()
-        {
-            Id = discovery.Id.Value,
-            Title = discovery.Title,
-            Content = discovery.Content,
-            SourceType = discovery.SourceType,
-            SourceReference = discovery.SourceReference,
-            CreatedAt = discovery.CreatedAt,
-            UpdatedAt = discovery.UpdatedAt
         };
 }
 

@@ -17,13 +17,26 @@ const feature: Feature = {
   summary: 'Trace implementation decisions.',
   status: 'Frontend implementation is in progress.',
   planCount: 0,
-  recordCount: 1,
+  recordCount: 2,
   relatedSkillIds: [],
   records: [
     {
       id: 'record-1',
-      userMessage: 'Can this be **Markdown**?',
-      aiAnswer: 'Yes.',
+      type: 'conversation',
+      title: 'Can this be Markdown?',
+      content: '## User\n\nCan this be **Markdown**?\n\n## AI\n\nYes.',
+      sourceType: null,
+      sourceReference: '',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T10:30:00Z',
+    },
+    {
+      id: 'discovery-1',
+      type: 'research',
+      title: 'YAML configuration',
+      content: '## Finding\n\nFeature transitions are configured in **YAML**.',
+      sourceType: 'Code',
+      sourceReference: 'StateMachines/features.yaml',
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
@@ -33,17 +46,6 @@ const feature: Feature = {
       id: 'review-note-1',
       title: 'Replay reloads state',
       content: '## Decision\n\nState replay is **intentional**.',
-      createdAt: '2026-08-22T10:00:00Z',
-      updatedAt: '2026-08-22T11:00:00Z',
-    },
-  ],
-  researchDiscoveries: [
-    {
-      id: 'discovery-1',
-      title: 'YAML configuration',
-      content: '## Finding\n\nFeature transitions are configured in **YAML**.',
-      sourceType: 'Code',
-      sourceReference: 'StateMachines/features.yaml',
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
@@ -85,6 +87,7 @@ const featureWithPlans: Feature = {
         ],
       },
       previousPlanId: null,
+      recordIds: ['discovery-1'],
       createdAt: '2026-08-20T10:00:00Z',
       updatedAt: '2026-08-22T10:00:00Z',
     },
@@ -97,20 +100,21 @@ const featureWithPlans: Feature = {
       status: 'Completed',
       branch: null,
       previousPlanId: null,
+      recordIds: [],
       createdAt: '2026-08-18T10:00:00Z',
       updatedAt: '2026-08-19T10:00:00Z',
     },
   ],
 };
 
-describe('FeatureDetailsPage research discoveries', () => {
+describe('FeatureDetailsPage', () => {
   let harness: RouterTestingHarness;
   let features: {
     watch: ReturnType<typeof vi.fn>;
     updateSummary: ReturnType<typeof vi.fn>;
-    addResearchDiscovery: ReturnType<typeof vi.fn>;
-    updateResearchDiscovery: ReturnType<typeof vi.fn>;
-    removeResearchDiscovery: ReturnType<typeof vi.fn>;
+    addRecord: ReturnType<typeof vi.fn>;
+    updateRecord: ReturnType<typeof vi.fn>;
+    removeRecord: ReturnType<typeof vi.fn>;
     addReviewNote: ReturnType<typeof vi.fn>;
     updateReviewNote: ReturnType<typeof vi.fn>;
     removeReviewNote: ReturnType<typeof vi.fn>;
@@ -128,9 +132,9 @@ describe('FeatureDetailsPage research discoveries', () => {
     features = {
       watch: vi.fn(() => of(feature)),
       updateSummary: vi.fn(() => of(feature)),
-      addResearchDiscovery: vi.fn(() => of(feature)),
-      updateResearchDiscovery: vi.fn(() => of(feature)),
-      removeResearchDiscovery: vi.fn(() => of(feature)),
+      addRecord: vi.fn(() => of(feature)),
+      updateRecord: vi.fn(() => of(feature)),
+      removeRecord: vi.fn(() => of(feature)),
       addReviewNote: vi.fn(() => of(feature)),
       updateReviewNote: vi.fn(() => of(feature)),
       removeReviewNote: vi.fn(() => of(feature)),
@@ -169,7 +173,7 @@ describe('FeatureDetailsPage research discoveries', () => {
     }).compileComponents();
 
     harness = await RouterTestingHarness.create(
-      '/features/feature-1?tab=research',
+      '/features/feature-1?tab=records',
     );
   });
 
@@ -338,10 +342,27 @@ describe('FeatureDetailsPage research discoveries', () => {
     ).toBe('Show less');
   });
 
-  it('renders provenance and submits a new research discovery', async () => {
+  it('renders records as Markdown with their type and source', async () => {
     const element = harness.routeNativeElement as HTMLElement;
-    expect(element.textContent).toContain('Research discoveries');
+    expect(element.querySelector('.section-heading h2')?.textContent).toBe('Records');
     expect(element.querySelector('form.research-discovery-editor')).toBeNull();
+
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      const items = element.querySelectorAll<HTMLElement>('.research-discovery-item');
+
+      expect(items).toHaveLength(2);
+      expect(items[0].querySelector('.record-type')?.textContent?.trim()).toBe('research');
+      expect(items[0].querySelector('.markdown-document h2')?.textContent).toBe('Finding');
+      expect(items[0].textContent).toContain('StateMachines/features.yaml');
+      expect(items[1].querySelector('.record-type')?.textContent?.trim()).toBe('conversation');
+      expect(items[1].querySelector('.source-type')).toBeNull();
+      expect(items[1].querySelector('.markdown-document strong')?.textContent).toBe('Markdown');
+    });
+  });
+
+  it('submits a new record with a lowercase type and linked plans', async () => {
+    const element = await openRecordsTab(harness, features, featureWithPlans);
 
     element
       .querySelector<HTMLButtonElement>('.section-actions .add-toggle')
@@ -350,110 +371,71 @@ describe('FeatureDetailsPage research discoveries', () => {
     await harness.fixture.whenStable();
     harness.detectChanges();
 
-    expect(element.textContent).toContain('YAML configuration');
-    expect(element.textContent).toContain(
-      'Feature transitions are configured in YAML.',
-    );
-    expect(
-      element.querySelector('.research-discovery-body .markdown-document h2')
-        ?.textContent,
-    ).toBe('Finding');
-    expect(
-      element.querySelector('.research-discovery-body .markdown-document strong')
-        ?.textContent,
-    ).toBe('YAML');
-    expect(element.textContent).toContain('StateMachines/features.yaml');
+    setControlValue(element, '[name="recordType"]', ' Decision ');
+    setControlValue(element, '[name="recordTitle"]', 'Documentation behavior ');
+    setControlValue(element, '[name="recordContent"]', 'Documentation confirms the behavior. ');
+    setControlValue(element, '[name="recordSourceType"]', 'Web', 'change');
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    setControlValue(element, '[name="recordSourceReference"]', ' https://example.com/docs ');
+    linkOption(element, 'Current plan')?.click();
+    harness.detectChanges();
 
-    setControlValue(
-      element,
-      '[name="researchDiscoveryTitle"]',
-      'Documentation behavior ',
-    );
-    setControlValue(
-      element,
-      '[name="researchDiscoveryContent"]',
-      'Documentation confirms the behavior. ',
-    );
-    setControlValue(
-      element,
-      '[name="researchDiscoverySourceType"]',
-      'Web',
-      'change',
-    );
-    setControlValue(
-      element,
-      '[name="researchDiscoverySourceReference"]',
-      ' https://example.com/docs ',
-    );
-
-    const form = element.querySelector(
-      'form.research-discovery-editor',
-    ) as HTMLFormElement;
+    const form = element.querySelector('form.research-discovery-editor') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
     harness.detectChanges();
 
-    expect(features.addResearchDiscovery).toHaveBeenCalledWith(feature.id, {
+    expect(features.addRecord).toHaveBeenCalledWith(featureWithPlans.id, {
+      type: 'decision',
       title: 'Documentation behavior',
       content: 'Documentation confirms the behavior.',
       sourceType: 'Web',
       sourceReference: 'https://example.com/docs',
+      planIds: ['plan-current'],
     });
   });
 
-  it('updates and removes an existing research discovery', async () => {
+  it('updates and removes an existing record', async () => {
     const element = harness.routeNativeElement as HTMLElement;
-    const item = element.querySelector(
-      '.research-discovery-item',
-    ) as HTMLElement;
-    const buttons = Array.from(
-      item.querySelectorAll<HTMLButtonElement>('header button'),
-    );
+    const item = element.querySelector('.research-discovery-item') as HTMLElement;
+    const buttons = Array.from(item.querySelectorAll<HTMLButtonElement>('header button'));
 
     buttons.find(button => button.textContent?.trim() === 'Edit')?.click();
     harness.detectChanges();
     await harness.fixture.whenStable();
     harness.detectChanges();
 
-    setControlValue(
-      element,
-      '[name="editResearchDiscoveryTitle"]',
-      'YAML behavior',
-    );
-    setControlValue(
-      element,
-      '[name="editResearchDiscoveryContent"]',
-      'YAML selects transitions and validators.',
-    );
+    setControlValue(element, '[name="editRecordTitle"]', 'YAML behavior');
+    setControlValue(element, '[name="editRecordContent"]', 'YAML selects transitions and validators.');
     await harness.fixture.whenStable();
-    const editForm = element.querySelector(
-      '.research-discovery-item form',
-    ) as HTMLFormElement;
+    const editForm = element.querySelector('.research-discovery-item form') as HTMLFormElement;
     editForm.dispatchEvent(new Event('submit'));
     harness.detectChanges();
 
-    expect(features.updateResearchDiscovery).toHaveBeenCalledWith(
-      feature.id,
-      {
-        discoveryId: 'discovery-1',
-        title: 'YAML behavior',
-        content: 'YAML selects transitions and validators.',
-        sourceType: 'Code',
-        sourceReference: 'StateMachines/features.yaml',
-      },
-    );
+    expect(features.updateRecord).toHaveBeenCalledWith(feature.id, {
+      recordId: 'discovery-1',
+      type: 'research',
+      title: 'YAML behavior',
+      content: 'YAML selects transitions and validators.',
+      sourceType: 'Code',
+      sourceReference: 'StateMachines/features.yaml',
+    });
 
     const removeButton = Array.from(
-      element.querySelectorAll<HTMLButtonElement>(
-        '.research-discovery-item header button',
-      ),
+      element.querySelectorAll<HTMLButtonElement>('.research-discovery-item header button'),
     ).find(button => button.textContent?.trim() === 'Remove');
     removeButton?.click();
     harness.detectChanges();
 
-    expect(features.removeResearchDiscovery).toHaveBeenCalledWith(
-      feature.id,
-      'discovery-1',
-    );
+    expect(features.removeRecord).toHaveBeenCalledWith(feature.id, 'discovery-1');
+  });
+
+  it('shows which plans use a record', async () => {
+    const element = await openRecordsTab(harness, features, featureWithPlans);
+    const items = element.querySelectorAll<HTMLElement>('.research-discovery-item');
+
+    expect(items[0].querySelector('.record-plans')?.textContent).toContain('Current plan');
+    expect(items[1].querySelector('.record-plans')).toBeNull();
   });
 
   it('collapses research content by default and toggles it from the title row', () => {
@@ -574,6 +556,10 @@ describe('FeatureDetailsPage research discoveries', () => {
     expect(rows[0].querySelector('.plan-row-info')?.textContent).toBe(
       'Production implementation.',
     );
+    expect(rows[0].querySelector('.plan-row-records')?.textContent).toContain(
+      'YAML configuration',
+    );
+    expect(rows[1].querySelector('.plan-row-records')).toBeNull();
     expect(rows[1].querySelector('.plan-status')?.textContent?.trim()).toBe(
       'Completed',
     );
@@ -627,6 +613,8 @@ describe('FeatureDetailsPage research discoveries', () => {
     setControlValue(element, '[name="planBranchName"]', ' feature/follow-up ');
     setControlValue(element, '[name="planAdditionalInfo"]', ' Research only. ');
     setControlValue(element, '[name="planContent"]', '# Follow-up');
+    linkOption(element, 'YAML configuration')?.click();
+    harness.detectChanges();
 
     const form = element.querySelector('form.plan-editor') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
@@ -641,71 +629,64 @@ describe('FeatureDetailsPage research discoveries', () => {
       additionalInfo: 'Research only.',
       contentType: 'Markdown',
       content: '# Follow-up',
+      recordIds: ['discovery-1'],
     });
   });
 
-  it('keeps the conversation record editor collapsed until Add record', async () => {
-    await harness.navigateByUrl(
-      '/features/feature-1?tab=conversations',
-      FeatureDetailsPage,
-    );
-    harness.detectChanges();
-
+  it('keeps the record editor collapsed until Add record', async () => {
     const element = harness.routeNativeElement as HTMLElement;
-    const toggle = element.querySelector(
-      '.section-actions .add-toggle',
-    ) as HTMLButtonElement;
+    const toggle = element.querySelector('.section-actions .add-toggle') as HTMLButtonElement;
 
-    expect(element.querySelector('[name="userMessage"]')).toBeNull();
+    expect(element.querySelector('[name="recordTitle"]')).toBeNull();
     expect(toggle.textContent?.trim()).toBe('Add record');
 
     toggle.click();
     harness.detectChanges();
 
-    expect(element.querySelector('[name="userMessage"]')).not.toBeNull();
+    expect(element.querySelector('[name="recordTitle"]')).not.toBeNull();
     expect(
-      element
-        .querySelector('.section-actions .add-toggle')
-        ?.textContent?.trim(),
+      element.querySelector('.section-actions .add-toggle')?.textContent?.trim(),
     ).toBe('Cancel');
   });
 
   it('keeps tab-only list state on the client without reloading the feature', async () => {
     await harness.navigateByUrl(
-      '/features/feature-1?tab=research&researchSource=Web',
+      '/features/feature-1?tab=records&recordType=decision',
       FeatureDetailsPage,
     );
     harness.detectChanges();
 
     const element = harness.routeNativeElement as HTMLElement;
-    expect(element.textContent).toContain('No discoveries match');
+    expect(element.textContent).toContain('No records match');
     expect(features.watch).toHaveBeenCalledTimes(1);
   });
-
-  it('renders long and short conversation record fields as Markdown documents', async () => {
-    await harness.navigateByUrl(
-      '/features/feature-1?tab=conversations',
-      FeatureDetailsPage,
-    );
-    harness.detectChanges();
-    await harness.fixture.whenStable();
-    harness.detectChanges();
-
-    const element = harness.routeNativeElement as HTMLElement;
-    await vi.waitFor(() => {
-      harness.detectChanges();
-      const documents = element.querySelectorAll(
-        '.record-item app-markdown-content.readme-document',
-      );
-
-      expect(documents).toHaveLength(2);
-      expect(documents[0].querySelector('strong')?.textContent).toBe(
-        'Markdown',
-      );
-      expect(documents[1].querySelector('p')?.textContent).toBe('Yes.');
-    });
-  });
 });
+
+async function openRecordsTab(
+  harness: RouterTestingHarness,
+  features: { watch: ReturnType<typeof vi.fn> },
+  shown: Feature,
+): Promise<HTMLElement> {
+  features.watch.mockReturnValue(of(shown));
+  await harness.navigateByUrl(
+    `/features/${shown.id}-records?tab=records`,
+    FeatureDetailsPage,
+  );
+  harness.detectChanges();
+  await harness.fixture.whenStable();
+  harness.detectChanges();
+
+  return harness.routeNativeElement as HTMLElement;
+}
+
+function linkOption(
+  element: HTMLElement,
+  label: string,
+): HTMLInputElement | undefined {
+  return Array.from(element.querySelectorAll<HTMLElement>('.link-option'))
+    .find(option => option.textContent?.includes(label))
+    ?.querySelector<HTMLInputElement>('input[type="checkbox"]') ?? undefined;
+}
 
 async function openReviewNotesTab(
   harness: RouterTestingHarness,

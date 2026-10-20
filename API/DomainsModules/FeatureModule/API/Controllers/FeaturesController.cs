@@ -35,16 +35,16 @@ public sealed class FeaturesController(
 
     [HttpGet("research-discoveries/search")]
     public async Task<
-        ActionResult<FeatureResearchSearchResultsDto>
+        ActionResult<FeatureRecordSearchResultsDto>
     > SearchResearchDiscoveries(
-        [FromServices] SearchFeatureResearchQuery searchQuery,
+        [FromServices] SearchFeatureRecordsQuery searchQuery,
         [FromQuery, Required] string query,
         [FromQuery, Required] List<string> keywords,
         [FromQuery, Range(
-            SearchFeatureResearchQuery.MinimumResultCount,
-            SearchFeatureResearchQuery.MaximumResultCount
+            SearchFeatureRecordsQuery.MinimumResultCount,
+            SearchFeatureRecordsQuery.MaximumResultCount
         )]
-            int resultCount = SearchFeatureResearchQuery.DefaultResultCount
+            int resultCount = SearchFeatureRecordsQuery.DefaultResultCount
     )
     {
         searchQuery.SearchText = query;
@@ -156,14 +156,14 @@ public sealed class FeaturesController(
         ActionResult<FeatureRecordCreatedCommandResult>
     > AddRecord(
         Guid featureId,
-        [FromBody] FeatureRecordContentRequest request,
+        [FromBody] AddFeatureRecordRequest request,
         [FromServices] AddFeatureRecordCommand command
     )
     {
         command.UseUserOrigin();
         command.FeatureId = featureId;
-        command.UserMessage = request.UserMessage;
-        command.AiAnswer = request.AiAnswer;
+        MapRecordContent(request, command);
+        command.PlanIds = request.PlanIds;
         return Ok(
             (FeatureRecordCreatedCommandResult)await Execute(command)
         );
@@ -179,8 +179,7 @@ public sealed class FeaturesController(
         command.UseUserOrigin();
         command.FeatureId = featureId;
         command.RecordId = request.RecordId;
-        command.UserMessage = request.UserMessage;
-        command.AiAnswer = request.AiAnswer;
+        MapRecordContent(request, command);
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
@@ -240,62 +239,6 @@ public sealed class FeaturesController(
         command.UseUserOrigin();
         command.FeatureId = featureId;
         command.ReviewNoteId = request.ReviewNoteId;
-        return Ok((FeatureCommandResult)await Execute(command));
-    }
-
-    [HttpPost("{featureId:guid}/research-discoveries")]
-    public async Task<
-        ActionResult<FeatureResearchDiscoveryCreatedCommandResult>
-    > AddResearchDiscovery(
-        Guid featureId,
-        [FromBody] FeatureResearchDiscoveryContentRequest request,
-        [FromServices] AddFeatureResearchDiscoveryCommand command
-    )
-    {
-        command.UseUserOrigin();
-        command.FeatureId = featureId;
-        command.Title = request.Title;
-        command.Content = request.Content;
-        command.SourceType = request.SourceType;
-        command.SourceReference = request.SourceReference;
-        return Ok(
-            (FeatureResearchDiscoveryCreatedCommandResult)await Execute(
-                command
-            )
-        );
-    }
-
-    [HttpPost("{featureId:guid}/research-discoveries/update")]
-    public async Task<
-        ActionResult<FeatureCommandResult>
-    > UpdateResearchDiscovery(
-        Guid featureId,
-        [FromBody] UpdateFeatureResearchDiscoveryRequest request,
-        [FromServices] UpdateFeatureResearchDiscoveryCommand command
-    )
-    {
-        command.UseUserOrigin();
-        command.FeatureId = featureId;
-        command.DiscoveryId = request.DiscoveryId;
-        command.Title = request.Title;
-        command.Content = request.Content;
-        command.SourceType = request.SourceType;
-        command.SourceReference = request.SourceReference;
-        return Ok((FeatureCommandResult)await Execute(command));
-    }
-
-    [HttpPost("{featureId:guid}/research-discoveries/remove")]
-    public async Task<
-        ActionResult<FeatureCommandResult>
-    > RemoveResearchDiscovery(
-        Guid featureId,
-        [FromBody] RemoveFeatureResearchDiscoveryRequest request,
-        [FromServices] RemoveFeatureResearchDiscoveryCommand command
-    )
-    {
-        command.UseUserOrigin();
-        command.FeatureId = featureId;
-        command.DiscoveryId = request.DiscoveryId;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
@@ -438,6 +381,18 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
+    private static void MapRecordContent(
+        FeatureRecordContentRequest request,
+        FeatureRecordContentCommand command
+    )
+    {
+        command.Type = request.Type;
+        command.Title = request.Title;
+        command.Content = request.Content;
+        command.SourceType = request.SourceType;
+        command.SourceReference = request.SourceReference;
+    }
+
     private static void MapPlanContent(
         FeaturePlanContentRequest request,
         FeaturePlanContentCommand command
@@ -448,5 +403,6 @@ public sealed class FeaturesController(
         command.ContentType = request.ContentType;
         command.AdditionalInfo = request.AdditionalInfo;
         command.Status = request.Status;
+        command.RecordIds = request.RecordIds;
     }
 }

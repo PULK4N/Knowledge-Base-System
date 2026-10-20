@@ -3,11 +3,12 @@ using Pgvector;
 
 namespace PostgreSqlModule;
 
-internal sealed class FeatureResearchSearchEntry
+internal sealed class FeatureRecordSearchEntry
 {
     public Guid FeatureAggregateId { get; set; }
     public required string FeatureName { get; set; }
-    public Guid ResearchDiscoveryId { get; set; }
+    public Guid RecordId { get; set; }
+    public required string RecordType { get; set; }
     public required string Title { get; set; }
     public required string SourceType { get; set; }
     public required string SourceReference { get; set; }

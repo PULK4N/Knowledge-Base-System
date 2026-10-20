@@ -32,17 +32,6 @@ public sealed record FeatureReviewNoteCreatedCommandResult(
         new("OK", reviewNoteId);
 }
 
-public sealed record FeatureResearchDiscoveryCreatedCommandResult(
-    string Status,
-    Guid DiscoveryId
-)
-{
-    public static FeatureResearchDiscoveryCreatedCommandResult Ok(
-        Guid discoveryId
-    ) =>
-        new("OK", discoveryId);
-}
-
 public sealed record FeaturePlanCreatedCommandResult(
     string Status,
     Guid PlanId

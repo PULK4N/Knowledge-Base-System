@@ -282,8 +282,8 @@ public sealed class FeatureSearchProjectorTests
                         Id = FeatureRecordId.FromDatabaseGuid(
                             Guid.Parse($"cccccccc-cccc-cccc-cccc-{index:D12}")
                         ),
-                        UserMessage = $"Question {index}",
-                        AiAnswer = $"Answer {index}"
+                        Title = $"Question {index}",
+                        Content = $"Answer {index}"
                     }
                 )
         );

@@ -6,12 +6,12 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Application.Queries;
 
-public sealed class SearchFeatureResearchQuery(
-    IFeatureResearchSearch featureResearchSearch
-) : Query<FeatureResearchSearchResultsDto>
+public sealed class SearchFeatureRecordsQuery(
+    IFeatureRecordSearch featureRecordSearch
+) : Query<FeatureRecordSearchResultsDto>
 {
     public const int DefaultResultCount =
-        HybridFeatureResearchSearchOptions.DefaultResultCount;
+        HybridFeatureRecordSearchOptions.DefaultResultCount;
     public const int MinimumResultCount = 1;
     public const int MaximumResultCount = 20;
 
@@ -35,13 +35,13 @@ public sealed class SearchFeatureResearchQuery(
         );
 
     protected override async Task<
-        FeatureResearchSearchResultsDto
+        FeatureRecordSearchResultsDto
     > ExecuteInternal(Executor executor) =>
-        FeatureResearchSearchResultsDto.FromSearchResults(
-            await featureResearchSearch.SearchWithSources(
+        FeatureRecordSearchResultsDto.FromSearchResults(
+            await featureRecordSearch.SearchWithSources(
                 SearchText,
                 Keywords,
-                new HybridFeatureResearchSearchOptions
+                new HybridFeatureRecordSearchOptions
                 {
                     ResultCount = ResultCount,
                     CandidateCount = CandidateCount,

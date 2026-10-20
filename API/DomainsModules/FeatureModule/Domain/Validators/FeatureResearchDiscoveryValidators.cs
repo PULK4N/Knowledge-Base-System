@@ -5,6 +5,9 @@ using Shared.Interfaces;
 
 namespace FeatureModule.Domain.Validators;
 
+// Research discoveries replay into records; these validators stay registered
+// for the released research events and check the record with the same ID.
+
 public sealed class FeatureResearchDiscoveryMustNotExistValidator
     : IPreEventValidator
 {
@@ -35,9 +38,8 @@ public sealed class FeatureResearchDiscoveryMustNotExistValidator
         }
 
         var state = (FeatureStateData)stateData;
-        var exists = state.ResearchDiscoveries.Any(
-            discovery => discovery.Id == discoveryId.Value
-        );
+        var recordId = discoveryId.Value.ToRecordId();
+        var exists = state.Records.Any(record => record.Id == recordId);
 
         return EventValidationResult.FromPayload(
             payload,
@@ -82,9 +84,8 @@ public sealed class FeatureResearchDiscoveryMustExistValidator
         }
 
         var state = (FeatureStateData)stateData;
-        var exists = state.ResearchDiscoveries.Any(
-            discovery => discovery.Id == discoveryId.Value
-        );
+        var recordId = discoveryId.Value.ToRecordId();
+        var exists = state.Records.Any(record => record.Id == recordId);
 
         return EventValidationResult.FromPayload(
             payload,

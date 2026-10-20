@@ -78,7 +78,7 @@ public sealed class InjectionSetupTests
     }
 
     [Fact]
-    public void FeatureResearchSearchMigration_is_schema_only()
+    public void FeatureRecordSearchMigration_is_schema_only()
     {
         var migration = new PostgreSqlModule.Migrations.EventSourcing
             .AddFeatureResearchSearchProjection();
@@ -244,14 +244,14 @@ public sealed class InjectionSetupTests
                 IFeatureSearchRepository
             >()
         );
-        Assert.IsType<PostgreSqlFeatureResearchSearchRepository>(
+        Assert.IsType<PostgreSqlFeatureRecordSearchRepository>(
             scope.ServiceProvider.GetRequiredService<
-                IFeatureResearchSearchRepository
+                IFeatureRecordSearchRepository
             >()
         );
-        Assert.IsType<FeatureResearchSearch>(
+        Assert.IsType<FeatureRecordSearch>(
             scope.ServiceProvider.GetRequiredService<
-                IFeatureResearchSearch
+                IFeatureRecordSearch
             >()
         );
         Assert.IsType<PostgreSqlMemorySearchRepository>(
@@ -325,7 +325,7 @@ public sealed class InjectionSetupTests
         Assert.Contains(typeof(SkillSearchProjector), projectorTypes);
         Assert.Contains(typeof(FeatureSearchProjector), projectorTypes);
         Assert.Contains(
-            typeof(FeatureResearchSearchProjector),
+            typeof(FeatureRecordSearchProjector),
             projectorTypes
         );
     }
@@ -680,26 +680,26 @@ public sealed class InjectionSetupTests
                 StringComparison.OrdinalIgnoreCase
             )
         );
-        var featureResearchSearch = context.GetService<IDesignTimeModel>()
+        var featureRecordSearch = context.GetService<IDesignTimeModel>()
             .Model
-            .FindEntityType(typeof(FeatureResearchSearchEntry));
-        Assert.NotNull(featureResearchSearch);
+            .FindEntityType(typeof(FeatureRecordSearchEntry));
+        Assert.NotNull(featureRecordSearch);
         Assert.Equal(
             "vector(1024)",
-            featureResearchSearch!
-                .FindProperty(nameof(FeatureResearchSearchEntry.Embedding))!
+            featureRecordSearch!
+                .FindProperty(nameof(FeatureRecordSearchEntry.Embedding))!
                 .GetColumnType()
         );
         Assert.Equal(
             "tsvector",
-            featureResearchSearch
+            featureRecordSearch
                 .FindProperty(
-                    nameof(FeatureResearchSearchEntry.SearchVector)
+                    nameof(FeatureRecordSearchEntry.SearchVector)
                 )!
                 .GetColumnType()
         );
         Assert.Contains(
-            featureResearchSearch.GetIndexes(),
+            featureRecordSearch.GetIndexes(),
             index => string.Equals(
                 index.GetMethod(),
                 "gin",
@@ -707,7 +707,7 @@ public sealed class InjectionSetupTests
             )
         );
         Assert.Contains(
-            featureResearchSearch.GetIndexes(),
+            featureRecordSearch.GetIndexes(),
             index => string.Equals(
                 index.GetMethod(),
                 "hnsw",
@@ -1095,7 +1095,7 @@ public sealed class InjectionSetupTests
     }
 
     [Fact]
-    public void FeatureResearchSearchQueries_translate_to_full_text_and_cosine_search()
+    public void FeatureRecordSearchQueries_translate_to_full_text_and_cosine_search()
     {
         var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
         PostgreSqlDbContextOptions.Configure(
@@ -1106,7 +1106,7 @@ public sealed class InjectionSetupTests
         using var context = new PostgreSqlEventSourcingDbContext(
             options.Options
         );
-        var repository = new PostgreSqlFeatureResearchSearchRepository(
+        var repository = new PostgreSqlFeatureRecordSearchRepository(
             context
         );
 

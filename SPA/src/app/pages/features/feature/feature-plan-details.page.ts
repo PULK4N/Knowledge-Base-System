@@ -29,21 +29,30 @@ import {
   FeaturePlan,
   FeaturePlanContentRequest,
   FeaturePlanStatus,
+  FeatureRecord,
   UpdateFeaturePlanBranchRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { previousPlanOptions } from '../ui/feature-branch-tree';
+import {
+  FeatureLinkOption,
+  FeatureLinkPickerComponent,
+} from '../ui/feature-link-picker.component';
 import { FeaturePlanBranchTreeComponent } from '../ui/feature-plan-branch-tree.component';
 import { FeaturePlanContentComponent } from '../ui/feature-plan-content.component';
 import {
   FEATURE_PLAN_STATUS_OPTIONS,
   FeaturePlanStatusPipe,
 } from '../ui/feature-plan-status';
+import { toRecordOptions } from '../ui/feature-link-options';
 
 interface FeaturePlanDetailsView {
   readonly feature: Feature;
   readonly plan: FeaturePlan;
   readonly previousPlanOptions: readonly FeaturePlan[];
+  /** Linked records in link order; IDs of removed records are left out. */
+  readonly linkedRecords: readonly FeatureRecord[];
+  readonly recordOptions: readonly FeatureLinkOption[];
 }
 
 interface PlanTarget {
@@ -53,6 +62,7 @@ interface PlanTarget {
 
 type PlanAction =
   | ({ readonly kind: 'update'; readonly request: FeaturePlanContentRequest } & PlanTarget)
+  | ({ readonly kind: 'records'; readonly request: FeaturePlanContentRequest } & PlanTarget)
   | ({ readonly kind: 'status'; readonly status: FeaturePlanStatus } & PlanTarget)
   | ({ readonly kind: 'remove' } & PlanTarget)
   | ({ readonly kind: 'previous-plan'; readonly previousPlanId: string | null } & PlanTarget)
@@ -70,6 +80,7 @@ type MutationState =
   imports: [
     AsyncPipe,
     DatePipe,
+    FeatureLinkPickerComponent,
     FeaturePlanBranchTreeComponent,
     FeaturePlanContentComponent,
     FeaturePlanStatusPipe,
@@ -87,6 +98,9 @@ export class FeaturePlanDetailsPage {
   private readonly actions = new Subject<PlanAction>();
 
   protected readonly editing = signal(false);
+  protected readonly editingRecords = signal(false);
+  /** Records picked while editing the plan's links. */
+  protected readonly pickedRecordIds = signal<readonly string[]>([]);
   protected readonly confirmingRemoval = signal(false);
   protected readonly statusOptions = FEATURE_PLAN_STATUS_OPTIONS;
 
@@ -117,6 +131,12 @@ export class FeaturePlanDetailsPage {
                     feature,
                     plan,
                     previousPlanOptions: previousPlanOptions(feature.plans, plan.id),
+                    linkedRecords: plan.recordIds
+                      .map(recordId =>
+                        feature.records.find(record => record.id === recordId),
+                      )
+                      .filter((record): record is FeatureRecord => !!record),
+                    recordOptions: toRecordOptions(feature.records),
                   },
                 } as const)
               : ({
@@ -141,6 +161,7 @@ export class FeaturePlanDetailsPage {
       this.execute(action).pipe(
         tap(() => {
           if (action.kind === 'update') this.editing.set(false);
+          if (action.kind === 'records') this.editingRecords.set(false);
           if (action.kind === 'remove') {
             void this.router.navigate(['/features', action.featureId], {
               queryParams: { tab: 'plans' },
@@ -183,6 +204,27 @@ export class FeaturePlanDetailsPage {
     });
   }
 
+  protected startEditingRecords(plan: FeaturePlan): void {
+    this.pickedRecordIds.set(plan.recordIds);
+    this.editingRecords.set(true);
+  }
+
+  /** Saves the picked links through a plan update that keeps the plan's content. */
+  protected saveRecordLinks(target: PlanTarget, plan: FeaturePlan): void {
+    this.actions.next({
+      kind: 'records',
+      ...target,
+      request: {
+        title: plan.title,
+        status: plan.status,
+        additionalInfo: plan.additionalInfo,
+        contentType: plan.contentType,
+        content: plan.content,
+        recordIds: this.pickedRecordIds(),
+      },
+    });
+  }
+
   protected changeStatus(target: PlanTarget, status: FeaturePlanStatus): void {
     this.actions.next({ kind: 'status', ...target, status });
   }
@@ -220,6 +262,7 @@ export class FeaturePlanDetailsPage {
   private execute(action: PlanAction): Observable<Feature> {
     switch (action.kind) {
       case 'update':
+      case 'records':
         return this.features.updatePlan(
           action.featureId,
           action.planId,

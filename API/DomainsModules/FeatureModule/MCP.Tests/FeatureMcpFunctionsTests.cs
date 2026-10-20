@@ -16,8 +16,8 @@ public sealed class FeatureMcpFunctionsTests
         "feature_get_by_name",
         "feature_get",
         "feature_plan_get",
-        "feature_research_discovery_get",
-        "feature_research_discovery_search",
+        "feature_record_search",
+        "feature_record_get",
         "feature_record_list",
         "feature_review_note_list",
         "feature_add",
@@ -32,9 +32,6 @@ public sealed class FeatureMcpFunctionsTests
         "feature_review_note_add",
         "feature_review_note_update",
         "feature_review_note_remove",
-        "feature_research_discovery_add",
-        "feature_research_discovery_update",
-        "feature_research_discovery_remove",
         "feature_plan_add",
         "feature_plan_update",
         "feature_plan_status_update",
@@ -187,42 +184,61 @@ public sealed class FeatureMcpFunctionsTests
     }
 
     [Theory]
-    [InlineData("feature_research_discovery_add")]
-    [InlineData("feature_research_discovery_update")]
-    public void ResearchDiscoveryWrite_ExposesOptionalProvenance(
+    [InlineData("feature_record_add")]
+    [InlineData("feature_record_update")]
+    public void RecordWrite_RequiresTypeTitleAndContentWithOptionalSource(
         string functionName
     )
     {
-        var function = FeatureMcpFunctions.Create().Single(
-            item => item.Name == functionName
-        );
-        var schema = function.JsonSchema;
+        var schema = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == functionName)
+            .JsonSchema;
         var properties = schema.GetProperty("properties");
-        var sourceType = properties.GetProperty("sourceType");
-        var sourceReference = properties.GetProperty("sourceReference");
         var required = schema
             .GetProperty("required")
             .EnumerateArray()
             .Select(element => element.GetString())
             .ToList();
 
-        Assert.Equal("Other", sourceType.GetProperty("default").GetString());
         Assert.Equal(
             ["Other", "Code", "Web", "Mcp"],
-            sourceType
+            properties.GetProperty("sourceType")
                 .GetProperty("enum")
                 .EnumerateArray()
+                .Where(element => element.ValueKind == JsonValueKind.String)
                 .Select(element => element.GetString())
         );
         Assert.Equal(
-            string.Empty,
-            sourceReference.GetProperty("default").GetString()
+            functionName == "feature_record_add",
+            properties.TryGetProperty("planIds", out _)
         );
         Assert.Contains("featureId", required);
+        Assert.Contains("type", required);
         Assert.Contains("title", required);
         Assert.Contains("content", required);
         Assert.DoesNotContain("sourceType", required);
         Assert.DoesNotContain("sourceReference", required);
+        Assert.DoesNotContain("planIds", required);
+    }
+
+    [Theory]
+    [InlineData("feature_plan_add")]
+    [InlineData("feature_plan_update")]
+    public void PlanWrite_ExposesOptionalRecordIds(string functionName)
+    {
+        var schema = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == functionName)
+            .JsonSchema;
+        var required = schema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.True(
+            schema.GetProperty("properties").TryGetProperty("recordIds", out _)
+        );
+        Assert.DoesNotContain("recordIds", required);
     }
 
     [Fact]
@@ -257,17 +273,17 @@ public sealed class FeatureMcpFunctionsTests
     }
 
     [Fact]
-    public void ResearchDiscoveryGet_RequiresFeatureAndDiscoveryIds()
+    public void RecordGet_RequiresFeatureAndRecordIds()
     {
         var required = FeatureMcpFunctions.Create()
-            .Single(item => item.Name == "feature_research_discovery_get")
+            .Single(item => item.Name == "feature_record_get")
             .JsonSchema.GetProperty("required")
             .EnumerateArray()
             .Select(element => element.GetString())
             .ToList();
 
         Assert.Contains("featureId", required);
-        Assert.Contains("discoveryIds", required);
+        Assert.Contains("recordIds", required);
         Assert.DoesNotContain("orderNumber", required);
     }
 

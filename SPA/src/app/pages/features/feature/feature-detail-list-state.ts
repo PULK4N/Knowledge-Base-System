@@ -12,8 +12,6 @@ import {
 import {
   FeaturePlan,
   FeatureRecord,
-  FeatureResearchDiscovery,
-  FeatureResearchDiscoverySourceType,
   FeatureReviewNote,
 } from '../data-access/feature.models';
 import { flattenBranches } from '../ui/feature-plan-branches';
@@ -21,36 +19,21 @@ import { flattenBranches } from '../ui/feature-plan-branches';
 export type FeatureTab =
   | 'overview'
   | 'plans'
-  | 'research'
-  | 'conversations'
+  | 'records'
   | 'review-notes'
   | 'history';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
-export type FeatureResearchSort =
-  | 'updatedAt'
-  | 'createdAt'
-  | 'title'
-  | 'sourceType';
-export type FeatureResearchFilter =
-  | 'All'
-  | FeatureResearchDiscoverySourceType;
-export type FeatureRecordSort = 'updatedAt' | 'createdAt' | 'userMessage';
-export type FeatureRecordFilter = 'All' | 'Edited' | 'Original';
+export type FeatureRecordSort = 'updatedAt' | 'createdAt' | 'title' | 'type';
+/** 'All' or a record type; types are free text, so any value is allowed. */
+export type FeatureRecordFilter = string;
 export type FeatureReviewNoteSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeatureReviewNoteFilter = 'All' | 'Edited' | 'Original';
 
 export interface FeatureDetailListState {
   readonly activeTab: FeatureTab;
   readonly plans: ClientListState<FeaturePlanSort, FeaturePlanFilter>;
-  readonly research: ClientListState<
-    FeatureResearchSort,
-    FeatureResearchFilter
-  >;
-  readonly conversations: ClientListState<
-    FeatureRecordSort,
-    FeatureRecordFilter
-  >;
+  readonly records: ClientListState<FeatureRecordSort, FeatureRecordFilter>;
   readonly reviewNotes: ClientListState<
     FeatureReviewNoteSort,
     FeatureReviewNoteFilter
@@ -60,8 +43,7 @@ export interface FeatureDetailListState {
 const FEATURE_TABS: readonly FeatureTab[] = [
   'overview',
   'plans',
-  'research',
-  'conversations',
+  'records',
   'review-notes',
   'history',
 ];
@@ -79,28 +61,11 @@ const PLAN_FILTERS: readonly FeaturePlanFilter[] = [
   'Markdown',
   'Html',
 ];
-const RESEARCH_SORTS: readonly FeatureResearchSort[] = [
-  'updatedAt',
-  'createdAt',
-  'title',
-  'sourceType',
-];
-const RESEARCH_FILTERS: readonly FeatureResearchFilter[] = [
-  'All',
-  'Other',
-  'Code',
-  'Web',
-  'Mcp',
-];
 const RECORD_SORTS: readonly FeatureRecordSort[] = [
   'updatedAt',
   'createdAt',
-  'userMessage',
-];
-const RECORD_FILTERS: readonly FeatureRecordFilter[] = [
-  'All',
-  'Edited',
-  'Original',
+  'title',
+  'type',
 ];
 const REVIEW_NOTE_SORTS: readonly FeatureReviewNoteSort[] = [
   'updatedAt',
@@ -129,44 +94,13 @@ export function parseFeatureDetailListState(
         'Descending',
       ),
     },
-    research: {
-      search: params.get('researchSearch')?.trim() ?? '',
-      filter: readAllowedValue(
-        params,
-        'researchSource',
-        RESEARCH_FILTERS,
-        'All',
-      ),
-      sortBy: readAllowedValue(
-        params,
-        'researchSort',
-        RESEARCH_SORTS,
-        'updatedAt',
-      ),
+    records: {
+      search: params.get('recordSearch')?.trim() ?? '',
+      filter: params.get('recordType')?.trim().toLowerCase() || 'All',
+      sortBy: readAllowedValue(params, 'recordSort', RECORD_SORTS, 'updatedAt'),
       sortDirection: readAllowedValue(
         params,
-        'researchDirection',
-        SORT_DIRECTIONS,
-        'Descending',
-      ),
-    },
-    conversations: {
-      search: params.get('conversationSearch')?.trim() ?? '',
-      filter: readAllowedValue(
-        params,
-        'conversationFilter',
-        RECORD_FILTERS,
-        'All',
-      ),
-      sortBy: readAllowedValue(
-        params,
-        'conversationSort',
-        RECORD_SORTS,
-        'updatedAt',
-      ),
-      sortDirection: readAllowedValue(
-        params,
-        'conversationDirection',
+        'recordDirection',
         SORT_DIRECTIONS,
         'Descending',
       ),
@@ -247,21 +181,27 @@ export function selectFeaturePlans(
   });
 }
 
-export function selectFeatureResearch(
-  discoveries: readonly FeatureResearchDiscovery[],
-  state: FeatureDetailListState['research'],
-): readonly FeatureResearchDiscovery[] {
-  return selectClientList(discoveries, state, {
-    searchText: discovery =>
-      `${discovery.title}\n${discovery.content}\n${discovery.sourceReference}\n${discovery.sourceType}`,
-    matchesFilter: (discovery, filter) =>
-      filter === 'All' || discovery.sourceType === filter,
+export function selectFeatureRecords(
+  records: readonly FeatureRecord[],
+  state: FeatureDetailListState['records'],
+): readonly FeatureRecord[] {
+  return selectClientList(records, state, {
+    searchText: record =>
+      [
+        record.title,
+        record.type,
+        record.content,
+        record.sourceReference,
+        record.sourceType ?? '',
+      ].join('\n'),
+    matchesFilter: (record, filter) =>
+      filter === 'All' || record.type === filter,
     compare: (left, right, sortBy) => {
       switch (sortBy) {
         case 'title':
           return compareText(left.title, right.title);
-        case 'sourceType':
-          return compareText(left.sourceType, right.sourceType);
+        case 'type':
+          return compareText(left.type, right.type);
         case 'createdAt':
           return compareIsoDate(left.createdAt, right.createdAt);
         case 'updatedAt':
@@ -271,27 +211,9 @@ export function selectFeatureResearch(
   });
 }
 
-export function selectFeatureRecords(
+/** Distinct record types, sorted, for the type filter. */
+export function featureRecordTypes(
   records: readonly FeatureRecord[],
-  state: FeatureDetailListState['conversations'],
-): readonly FeatureRecord[] {
-  return selectClientList(records, state, {
-    searchText: record => `${record.userMessage}\n${record.aiAnswer}`,
-    matchesFilter: (record, filter) => {
-      if (filter === 'All') return true;
-
-      const edited = record.createdAt !== record.updatedAt;
-      return filter === 'Edited' ? edited : !edited;
-    },
-    compare: (left, right, sortBy) => {
-      switch (sortBy) {
-        case 'userMessage':
-          return compareText(left.userMessage, right.userMessage);
-        case 'createdAt':
-          return compareIsoDate(left.createdAt, right.createdAt);
-        case 'updatedAt':
-          return compareIsoDate(left.updatedAt, right.updatedAt);
-      }
-    },
-  });
+): readonly string[] {
+  return [...new Set(records.map(record => record.type))].sort(compareText);
 }

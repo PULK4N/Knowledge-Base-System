@@ -3,15 +3,15 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Persistence;
 
-public sealed class FeatureResearchSearch(
+public sealed class FeatureRecordSearch(
     ITextEmbeddingGenerator embeddingGenerator,
-    IFeatureResearchSearchRepository repository
-) : IFeatureResearchSearch
+    IFeatureRecordSearchRepository repository
+) : IFeatureRecordSearch
 {
-    public async Task<List<FeatureResearchSearchResult>> Search(
+    public async Task<List<FeatureRecordSearchResult>> Search(
         string query,
         List<string> keywords,
-        HybridFeatureResearchSearchOptions? options = null,
+        HybridFeatureRecordSearchOptions? options = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -32,17 +32,17 @@ public sealed class FeatureResearchSearch(
             cancellationToken
         );
 
-        return HybridFeatureResearchRanker.Fuse(
+        return HybridFeatureRecordRanker.Fuse(
             textCandidates,
             vectorCandidates,
             options
         );
     }
 
-    public async Task<FeatureResearchSearchResults> SearchWithSources(
+    public async Task<FeatureRecordSearchResults> SearchWithSources(
         string query,
         List<string> keywords,
-        HybridFeatureResearchSearchOptions? options = null,
+        HybridFeatureRecordSearchOptions? options = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -75,13 +75,13 @@ public sealed class FeatureResearchSearch(
             cancellationToken
         );
 
-        return new FeatureResearchSearchResults(
-            HybridFeatureResearchRanker.Fuse(
+        return new FeatureRecordSearchResults(
+            HybridFeatureRecordRanker.Fuse(
                 textCandidates,
                 vectorCandidates,
                 options
             ),
-            HybridFeatureResearchRanker.FuseSources(
+            HybridFeatureRecordRanker.FuseSources(
                 textSourceCandidates,
                 vectorSourceCandidates,
                 options
@@ -89,10 +89,10 @@ public sealed class FeatureResearchSearch(
         );
     }
 
-    private static HybridFeatureResearchSearchOptions Prepare(
+    private static HybridFeatureRecordSearchOptions Prepare(
         string query,
         List<string> keywords,
-        HybridFeatureResearchSearchOptions? options
+        HybridFeatureRecordSearchOptions? options
     )
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -106,8 +106,8 @@ public sealed class FeatureResearchSearch(
             );
         }
 
-        options ??= new HybridFeatureResearchSearchOptions();
-        HybridFeatureResearchRanker.Validate(options);
+        options ??= new HybridFeatureRecordSearchOptions();
+        HybridFeatureRecordRanker.Validate(options);
 
         return options;
     }

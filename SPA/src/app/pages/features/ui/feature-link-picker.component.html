@@ -1,0 +1,18 @@
+<fieldset class="link-picker">
+  <legend>{{ legend() }}</legend>
+  @for (option of options(); track option.id) {
+    <label class="link-option">
+      <input
+        type="checkbox"
+        [checked]="selectedIds().includes(option.id)"
+        (change)="toggle(option.id, $any($event.target).checked)"
+      />
+      <span class="link-label">{{ option.label }}</span>
+      @if (option.detail) {
+        <span class="link-detail">{{ option.detail }}</span>
+      }
+    </label>
+  } @empty {
+    <span class="link-empty">{{ emptyMessage() }}</span>
+  }
+</fieldset>

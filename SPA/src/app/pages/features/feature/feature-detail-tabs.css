@@ -161,6 +161,14 @@
   -webkit-line-clamp: 2;
 }
 
+.plan-row-records {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .open-plan {
   color: var(--indigo);
   font-size: 20px;

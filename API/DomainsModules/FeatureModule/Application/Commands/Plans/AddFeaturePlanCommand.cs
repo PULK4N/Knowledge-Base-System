@@ -29,7 +29,7 @@ public sealed class AddFeaturePlanCommand(
         var memoryAggregateId = await ResolveMemoryAggregateId();
         var planId = FeaturePlanId.New();
 
-        await ExecuteEvent(
+        await ExecuteEvents(
             executor,
             new FeaturePlanAddedV4(
                 planId,
@@ -46,6 +46,9 @@ public sealed class AddFeaturePlanCommand(
                 SessionId,
                 memoryAggregateId
             ),
+            _ => RecordIds is { Count: > 0 }
+                ? CreateRecordLinkEvents(planId, memoryAggregateId)
+                : [],
             memoryAggregateId
         );
 

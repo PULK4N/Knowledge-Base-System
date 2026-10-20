@@ -49,8 +49,6 @@ public static class KnowledgeSearchSourceTypes
     public const string Skill = "skill";
     public const string Feature = "feature";
     public const string FeaturePlan = "feature_plan";
-    public const string FeatureResearchDiscovery =
-        "feature_research_discovery";
     public const string FeatureRecord = "feature_record";
 }
 

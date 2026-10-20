@@ -209,8 +209,8 @@ public sealed class FeatureSummaryProjectorTests
                 Id = FeatureRecordId.FromDatabaseGuid(
                     Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
                 ),
-                UserMessage = "Why?",
-                AiAnswer = "Because."
+                Title = "Why?",
+                Content = "Because."
             }
         );
 

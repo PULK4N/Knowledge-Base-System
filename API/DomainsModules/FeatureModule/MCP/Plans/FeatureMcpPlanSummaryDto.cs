@@ -18,6 +18,11 @@ public sealed record FeatureMcpPlanSummaryDto
     /// </summary>
     public Guid? PreviousPlanId { get; init; }
 
+    /// <summary>
+    /// Linked records; their titles and types are in the feature's record list.
+    /// </summary>
+    public required IReadOnlyCollection<Guid> RecordIds { get; init; }
+
     public static FeatureMcpPlanSummaryDto FromPlan(FeaturePlanDto plan) =>
         new()
         {
@@ -25,6 +30,7 @@ public sealed record FeatureMcpPlanSummaryDto
             Title = plan.Title,
             Status = plan.Status,
             AdditionalInfo = plan.AdditionalInfo,
-            PreviousPlanId = plan.PreviousPlanId
+            PreviousPlanId = plan.PreviousPlanId,
+            RecordIds = plan.RecordIds
         };
 }

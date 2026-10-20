@@ -26,6 +26,7 @@ function plan(
         }
       : null,
     previousPlanId,
+    recordIds: [],
     createdAt: `2026-10-0${day}T00:00:00Z`,
     updatedAt: `2026-10-0${day}T00:00:00Z`,
   };

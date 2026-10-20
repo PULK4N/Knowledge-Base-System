@@ -12,6 +12,7 @@ const research: FeaturePlan = {
   status: 'Completed',
   branch: { name: 'feature/research', description: '', subBranches: [] },
   previousPlanId: null,
+  recordIds: [],
   createdAt: '2026-10-01T00:00:00Z',
   updatedAt: '2026-10-01T00:00:00Z',
 };
@@ -22,6 +23,7 @@ const implementation: FeaturePlan = {
   status: 'InProgress',
   branch: { name: 'feature/outbox', description: 'Dispatch', subBranches: [] },
   previousPlanId: 'research',
+  recordIds: [],
   createdAt: '2026-10-02T00:00:00Z',
 };
 

@@ -1,6 +1,6 @@
 {
   "name": "mcp-knowledge-base",
-  "version": "0.3.9+df459fb1189f",
+  "version": "0.3.10+0fc53a978ee2",
   "description": "Overrides CLAUDE.md with authoritative repository policies before Claude works and exposes MCP-managed skills and policies.",
   "author": {
     "name": "Nikola",

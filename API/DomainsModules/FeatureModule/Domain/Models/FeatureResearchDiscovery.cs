@@ -1,45 +1,16 @@
-using System.Text.Json.Serialization;
 using EventSourcing.Shared.Models;
 
 namespace FeatureModule.Domain.Models;
 
+/// <summary>
+/// ID of a research discovery event. Discoveries replay into records of type
+/// research, and the record keeps the same GUID.
+/// </summary>
 public readonly record struct FeatureResearchDiscoveryId(Guid Value)
 {
-    public static FeatureResearchDiscoveryId New() =>
-        new(DatabaseFriendlyGuidGenerator.NewGuid());
-
     public static FeatureResearchDiscoveryId FromDatabaseGuid(Guid value) =>
         new(value);
-}
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum FeatureResearchDiscoverySourceType
-{
-    Other,
-    Code,
-    Web,
-    Mcp
-}
-
-public sealed class FeatureResearchDiscovery
-{
-    public FeatureResearchDiscoveryId Id { get; init; }
-
-    /// <summary>
-    /// Uses a deterministic fallback when replaying V1 events that predate discovery titles.
-    /// </summary>
-    public string Title { get; set; } = "Untitled discovery";
-
-    public string Content { get; set; } = string.Empty;
-
-    public FeatureResearchDiscoverySourceType SourceType { get; set; }
-
-    /// <summary>
-    /// Identifies where the discovery came from, such as a file path, URL, or MCP tool name.
-    /// </summary>
-    public string SourceReference { get; set; } = string.Empty;
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
+    public FeatureRecordId ToRecordId() =>
+        FeatureRecordId.FromDatabaseGuid(Value);
 }

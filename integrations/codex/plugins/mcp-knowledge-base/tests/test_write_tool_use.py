@@ -58,7 +58,7 @@ class WriteToolUseTests(unittest.TestCase):
         matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
         source = (SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs").read_text(encoding="utf-8")
         mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
-        self.assertEqual(24, len(mutations))
+        self.assertEqual(21, len(mutations))
         self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):
@@ -73,7 +73,7 @@ class WriteToolUseTests(unittest.TestCase):
                 self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
                 self.assertEqual("feature-id", result["updatedInput"]["featureId"])
                 self.assertEqual("stale", event["tool_input"]["sessionId"])
-        for tool in ("feature_get", "feature_list", "feature_plan_get", "feature_record_list", "feature_research_discovery_search"):
+        for tool in ("feature_get", "feature_list", "feature_plan_get", "feature_record_list", "feature_record_search", "feature_record_get"):
             with self.subTest(read=tool):
                 name = "mcp__mcp_knowledge_base__" + tool
                 self.assertIsNone(re.search(matcher, name))

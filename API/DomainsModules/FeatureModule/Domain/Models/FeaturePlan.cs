@@ -80,6 +80,12 @@ public sealed class FeaturePlan
     /// </summary>
     public FeaturePlanId? PreviousPlanId { get; set; }
 
+    /// <summary>
+    /// Records of the same feature that this plan uses. Only the plan keeps the
+    /// link; removing a record removes it from here.
+    /// </summary>
+    public List<FeatureRecordId> RecordIds { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ActionModule.Shared.Models;
 using FeatureModule.Contracts;
-using FeatureModule.Domain.Models;
 
 namespace FeatureModule.API.Requests;
 
@@ -29,27 +28,6 @@ public sealed record FeatureSkillRequest
     public required Guid SkillId { get; init; }
 }
 
-public sealed record FeatureRecordContentRequest
-{
-    public required string UserMessage { get; init; }
-
-    public required string AiAnswer { get; init; }
-}
-
-public sealed record UpdateFeatureRecordRequest
-{
-    public required Guid RecordId { get; init; }
-
-    public required string UserMessage { get; init; }
-
-    public required string AiAnswer { get; init; }
-}
-
-public sealed record RemoveFeatureRecordRequest
-{
-    public required Guid RecordId { get; init; }
-}
-
 public sealed record FeatureReviewNoteContentRequest
 {
     public required string Title { get; init; }
@@ -69,35 +47,6 @@ public sealed record UpdateFeatureReviewNoteRequest
 public sealed record RemoveFeatureReviewNoteRequest
 {
     public required Guid ReviewNoteId { get; init; }
-}
-
-public sealed record FeatureResearchDiscoveryContentRequest
-{
-    public required string Title { get; init; }
-
-    public required string Content { get; init; }
-
-    public FeatureResearchDiscoverySourceType SourceType { get; init; }
-
-    public string SourceReference { get; init; } = string.Empty;
-}
-
-public sealed record UpdateFeatureResearchDiscoveryRequest
-{
-    public required Guid DiscoveryId { get; init; }
-
-    public required string Title { get; init; }
-
-    public required string Content { get; init; }
-
-    public FeatureResearchDiscoverySourceType SourceType { get; init; }
-
-    public string SourceReference { get; init; } = string.Empty;
-}
-
-public sealed record RemoveFeatureResearchDiscoveryRequest
-{
-    public required Guid DiscoveryId { get; init; }
 }
 
 public sealed record AddFeatureRequest

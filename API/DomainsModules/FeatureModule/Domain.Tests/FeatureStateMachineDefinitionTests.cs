@@ -32,7 +32,7 @@ public sealed class FeatureStateMachineDefinitionTests
             [
                 "FeatureSummaryProjector",
                 "FeatureSearchProjector",
-                "FeatureResearchSearchProjector"
+                "FeatureRecordSearchProjector"
             ],
             definition.Projections
         );
@@ -55,6 +55,8 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureRecordAddedV2),
                 nameof(FeatureRecordUpdatedV1),
                 nameof(FeatureRecordUpdatedV2),
+                nameof(FeatureRecordAddedV3),
+                nameof(FeatureRecordUpdatedV3),
                 nameof(FeatureRecordRemovedV1),
                 nameof(FeatureRecordRemovedV2),
                 nameof(FeatureReviewNoteAddedV1),
@@ -87,7 +89,8 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeaturePlanBranchRemovedV1),
                 nameof(FeatureBranchSetV1),
                 nameof(FeaturePlanAddedV4),
-                nameof(FeaturePlanPreviousPlanSetV1)
+                nameof(FeaturePlanPreviousPlanSetV1),
+                nameof(FeaturePlanRecordsSetV1)
             ],
             definition.Events.Keys
         );
@@ -105,6 +108,15 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeaturePlanMustExistValidator)
             ],
             definition.Events[nameof(CurrentFeaturePlanChangedV1)]
+                .PreEventValidators
+        );
+        Assert.Equal(
+            [
+                nameof(FeatureMustBeActiveValidator),
+                nameof(FeaturePlanMustExistValidator),
+                nameof(FeaturePlanRecordsMustExistValidator)
+            ],
+            definition.Events[nameof(FeaturePlanRecordsSetV1)]
                 .PreEventValidators
         );
         Assert.All(
@@ -196,7 +208,7 @@ public sealed class FeatureStateMachineDefinitionTests
                 FeatureResearchDiscoveryId.FromDatabaseGuid(Guid.NewGuid()),
                 "Discovery title",
                 "A research discovery",
-                FeatureResearchDiscoverySourceType.Web,
+                FeatureRecordSourceType.Web,
                 "https://example.com"
             )
         );
@@ -332,7 +344,10 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeaturePlanBranchRemovedV1),
         typeof(FeatureBranchSetV1),
         typeof(FeaturePlanAddedV4),
-        typeof(FeaturePlanPreviousPlanSetV1)
+        typeof(FeaturePlanPreviousPlanSetV1),
+        typeof(FeatureRecordAddedV3),
+        typeof(FeatureRecordUpdatedV3),
+        typeof(FeaturePlanRecordsSetV1)
     ];
 
     private static List<Type> ValidatorTypes { get; } =
@@ -354,6 +369,7 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeaturePlanBranchNameMustBeAvailableValidator),
         typeof(FeaturePlanBranchMustExistValidator),
         typeof(FeaturePlanBaseBranchCannotBeRemovedValidator),
-        typeof(FeaturePreviousPlanValidator)
+        typeof(FeaturePreviousPlanValidator),
+        typeof(FeaturePlanRecordsMustExistValidator)
     ];
 }

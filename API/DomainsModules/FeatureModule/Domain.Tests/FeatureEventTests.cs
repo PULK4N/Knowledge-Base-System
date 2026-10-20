@@ -98,14 +98,14 @@ public sealed class FeatureEventTests
             DiscoveryId,
             "YAML event selection",
             "Feature events are selected by YAML.",
-            FeatureResearchDiscoverySourceType.Code,
+            FeatureRecordSourceType.Code,
             "StateMachines/features.yaml"
         ).Apply(state, executionInfo);
         new FeatureResearchDiscoveryUpdatedV2(
             DiscoveryId,
             "YAML events and validators",
             "Feature events and validators are selected by YAML.",
-            FeatureResearchDiscoverySourceType.Code,
+            FeatureRecordSourceType.Code,
             "StateMachines/features.yaml"
         ).Apply(state, executionInfo);
         new FeaturePlanAddedV1(
@@ -138,22 +138,30 @@ public sealed class FeatureEventTests
         );
         Assert.Equal("Domain implementation is complete.", state.Status);
         Assert.Equal(SkillId, Assert.Single(state.RelatedSkillIds));
-        var record = Assert.Single(state.Records);
-        Assert.Equal("Why keep and switch previous plans?", record.UserMessage);
+        var record = state.Records.Single(item => item.Id == RecordId);
+        Assert.Equal(FeatureRecordTypes.Conversation, record.Type);
+        Assert.Equal("Why keep and switch previous plans?", record.Title);
+        Assert.StartsWith(
+            "## User\n\nWhy keep and switch previous plans?",
+            record.Content
+        );
         var reviewNote = Assert.Single(state.ReviewNotes);
         Assert.Equal("Replay reloads state by design", reviewNote.Title);
         Assert.Equal(
             "State replay is intentional and is not a defect.",
             reviewNote.Content
         );
-        var discovery = Assert.Single(state.ResearchDiscoveries);
+        var discovery = state.Records.Single(
+            item => item.Id == DiscoveryId.ToRecordId()
+        );
+        Assert.Equal(FeatureRecordTypes.Research, discovery.Type);
         Assert.Equal("YAML events and validators", discovery.Title);
         Assert.Equal(
             "Feature events and validators are selected by YAML.",
             discovery.Content
         );
         Assert.Equal(
-            FeatureResearchDiscoverySourceType.Code,
+            FeatureRecordSourceType.Code,
             discovery.SourceType
         );
         Assert.Equal(
@@ -182,7 +190,6 @@ public sealed class FeatureEventTests
 
         Assert.Null(state.CurrentPlanId);
         Assert.Equal(SecondPlanId, Assert.Single(state.Plans).Id);
-        Assert.Empty(state.ResearchDiscoveries);
         Assert.Empty(state.ReviewNotes);
         Assert.Empty(state.Records);
         Assert.Empty(state.RelatedSkillIds);
@@ -224,30 +231,30 @@ public sealed class FeatureEventTests
         new FeatureResearchDiscoveryAddedV1(
             DiscoveryId,
             "A discovery stored before titles existed.",
-            FeatureResearchDiscoverySourceType.Other,
+            FeatureRecordSourceType.Other,
             string.Empty
         ).Apply(state, executionInfo);
 
         Assert.Equal(
             "Untitled discovery",
-            Assert.Single(state.ResearchDiscoveries).Title
+            Assert.Single(state.Records).Title
         );
     }
 
     [Theory]
-    [InlineData(FeatureResearchDiscoverySourceType.Other, "\"Other\"")]
-    [InlineData(FeatureResearchDiscoverySourceType.Code, "\"Code\"")]
-    [InlineData(FeatureResearchDiscoverySourceType.Web, "\"Web\"")]
-    [InlineData(FeatureResearchDiscoverySourceType.Mcp, "\"Mcp\"")]
+    [InlineData(FeatureRecordSourceType.Other, "\"Other\"")]
+    [InlineData(FeatureRecordSourceType.Code, "\"Code\"")]
+    [InlineData(FeatureRecordSourceType.Web, "\"Web\"")]
+    [InlineData(FeatureRecordSourceType.Mcp, "\"Mcp\"")]
     public void ResearchDiscoverySourceType_SerializesAsApiName(
-        FeatureResearchDiscoverySourceType sourceType,
+        FeatureRecordSourceType sourceType,
         string expectedJson
     )
     {
         Assert.Equal(expectedJson, JsonSerializer.Serialize(sourceType));
         Assert.Equal(
             sourceType,
-            JsonSerializer.Deserialize<FeatureResearchDiscoverySourceType>(
+            JsonSerializer.Deserialize<FeatureRecordSourceType>(
                 expectedJson
             )
         );

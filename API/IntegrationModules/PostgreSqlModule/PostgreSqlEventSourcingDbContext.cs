@@ -539,35 +539,37 @@ internal sealed class PostgreSqlEventSourcingDbContext(
             }
         );
 
-        modelBuilder.Entity<FeatureResearchSearchEntry>(
-            research =>
+        modelBuilder.Entity<FeatureRecordSearchEntry>(
+            record =>
             {
-                research.ToTable("FeatureResearchSearchEntries");
-                research.HasKey(
+                record.ToTable("FeatureRecordSearchEntries");
+                record.HasKey(
                     entry =>
                         new
                         {
                             entry.FeatureAggregateId,
-                            entry.ResearchDiscoveryId,
+                            entry.RecordId,
                             entry.ChunkIndex
                         }
                 );
-                research.Property(entry => entry.FeatureName).IsRequired();
-                research.Property(entry => entry.Title).IsRequired();
-                research.Property(entry => entry.SourceType).IsRequired();
-                research.Property(entry => entry.SourceReference).IsRequired();
-                research.Property(entry => entry.Text).IsRequired();
-                research
+                record.Property(entry => entry.FeatureName).IsRequired();
+                record.Property(entry => entry.RecordType).IsRequired();
+                record.Property(entry => entry.Title).IsRequired();
+                record.Property(entry => entry.SourceType).IsRequired();
+                record.Property(entry => entry.SourceReference).IsRequired();
+                record.Property(entry => entry.Text).IsRequired();
+                record
                     .Property(entry => entry.Embedding)
                     .HasColumnType("vector(1024)")
                     .IsRequired();
-                research
+                record
                     .HasGeneratedTsVectorColumn(
                         entry => entry.SearchVector,
                         "simple",
                         entry => new
                         {
                             entry.FeatureName,
+                            entry.RecordType,
                             entry.Title,
                             entry.SourceType,
                             entry.SourceReference,
@@ -576,7 +578,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     )
                     .HasIndex(entry => entry.SearchVector)
                     .HasMethod("GIN");
-                research
+                record
                     .HasIndex(entry => entry.Embedding)
                     .HasMethod("hnsw")
                     .HasOperators("vector_cosine_ops");

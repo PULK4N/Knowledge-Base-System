@@ -52,14 +52,15 @@ public sealed class GetFeatureQueryTests
         );
         Assert.Equal(
             expectedDiscoveryCount,
-            feature.ResearchDiscoveries.Count
+            feature.Records.Count
         );
         if (expectedDiscoveryCount > 0)
         {
-            var discovery = Assert.Single(feature.ResearchDiscoveries);
+            var discovery = Assert.Single(feature.Records);
+            Assert.Equal(FeatureRecordTypes.Research, discovery.Type);
             Assert.Equal("Untitled discovery", discovery.Title);
             Assert.Equal(
-                FeatureResearchDiscoverySourceType.Code,
+                FeatureRecordSourceType.Code,
                 discovery.SourceType
             );
             Assert.Equal(
@@ -138,7 +139,7 @@ public sealed class GetFeatureQueryTests
                     Guid.Parse("44444444-4444-4444-4444-444444444444")
                 ),
                 "Feature transitions are configured in YAML.",
-                FeatureResearchDiscoverySourceType.Code,
+                FeatureRecordSourceType.Code,
                 "StateMachines/features.yaml"
             )
         )

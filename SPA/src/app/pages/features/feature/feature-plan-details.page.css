@@ -41,12 +41,14 @@
 }
 
 .plan-info,
-.plan-branches {
+.plan-branches,
+.plan-records {
   margin-top: 24px;
   padding: clamp(20px, 3vw, 32px);
 }
 
-.plan-info .eyebrow {
+.plan-info .eyebrow,
+.plan-records .eyebrow {
   color: var(--indigo);
   font-size: 12px;
   font-weight: 720;
@@ -246,4 +248,41 @@ button:disabled {
   .plan-controls {
     justify-content: flex-start;
   }
+}
+
+.plan-records {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-records-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plan-record-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-record-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.plan-record-list a {
+  color: var(--indigo);
+  overflow-wrap: anywhere;
+}
+
+.plan-record-type,
+.plan-record-empty {
+  color: var(--muted);
+  font-size: 13px;
 }

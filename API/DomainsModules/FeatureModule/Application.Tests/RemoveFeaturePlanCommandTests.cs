@@ -1,16 +1,9 @@
 using ActionModule.Shared.Models;
-using EventSourcing.Core;
-using EventSourcing.Core.Interfaces;
-using EventSourcing.Core.Models;
-using EventSourcing.Core.Providers;
-using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using FeatureModule.Application.Commands;
-using FeatureModule.Domain;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
-using Shared.Interfaces;
 
 namespace FeatureModule.Application.Tests;
 
@@ -30,13 +23,14 @@ public sealed class RemoveFeaturePlanCommandTests
         Guid[] expectedClearedPlanIds
     )
     {
-        var store = new FeatureEventStore(
+        var store = new FeatureCommandEventStore(
+            FeatureId,
             Added(Research, null),
             Added(Implementation, Research),
             Added(Retry, Implementation),
             Added(Docs, Implementation)
         );
-        var command = new RemoveFeaturePlanCommand(CreateHandler(store))
+        var command = new RemoveFeaturePlanCommand(store.CreateHandler())
         {
             FeatureId = FeatureId.Value,
             PlanId = removedPlanId
@@ -70,63 +64,4 @@ public sealed class RemoveFeaturePlanCommandTests
 
     private static IEvent Added(FeaturePlanId planId, FeaturePlanId? previousPlanId) =>
         new FeaturePlanAddedV4(planId, "Plan", "content", FeaturePlanContentType.Markdown, "", FeaturePlanStatus.NotStarted, $"branch-{planId.Value}", "", previousPlanId, Guid.Empty, MemoryId);
-
-    private static StateMachineHandler CreateHandler(FeatureEventStore store) =>
-        new(
-            new StateCalculator(
-                new OrderNumberHelper(),
-                new FeatureStateProvider(),
-                new NoValidators(),
-                new TestStateMachineDefinitionProvider()
-            ),
-            store
-        );
-
-    private sealed class FeatureEventStore(params IEvent[] planEvents) : IEventStoreWithOutbox
-    {
-        public List<EventPayload> Written { get; private set; } = [];
-        public int WriteCount { get; private set; }
-
-        public Task Write(Dictionary<AggregateId, StateInfo> stateInfos)
-        {
-            WriteCount++;
-            Written = stateInfos.Values.SelectMany(stateInfo => stateInfo.LastExecutedPayloads).ToList();
-            return Task.CompletedTask;
-        }
-
-        public Task<Dictionary<AggregateId, List<EventPayload>>> GetEvents(List<AggregateId> aggregateIds)
-        {
-            var events = new List<IEvent> { new FeatureAddedV1(AggregateId.FromDatabaseGuid(Guid.NewGuid()), "feature", "", "") }
-                .Concat(planEvents)
-                .Select((eventData, index) =>
-                {
-                    var payload = EventPayload.Create(
-                        EventExecutor.FromDatabaseGuid(Guid.NewGuid()), FeatureId, "features-state-machine", eventData
-                    );
-                    payload.EventExecutionInfo.OrderNumber = (uint)index + 1;
-                    return payload;
-                })
-                .ToList();
-
-            return Task.FromResult(aggregateIds.ToDictionary(
-                aggregateId => aggregateId,
-                aggregateId => aggregateId == FeatureId ? events : []
-            ));
-        }
-    }
-
-    private sealed class FeatureStateProvider : IStateDataProvider
-    {
-        public object GetStateDataByStateMachine(string stateMachineId, AggregateId aggregateId) =>
-            new FeatureStateData(aggregateId);
-    }
-
-    private sealed class NoValidators : IEventValidatorProvider
-    {
-        public List<IPreEventValidator> GetPreEventStateValidators(EventPayload payload) =>
-            new List<IPreEventValidator>();
-
-        public List<IPostEventValidator> GetPostEventStateValidators(EventPayload payload) =>
-            new List<IPostEventValidator>();
-    }
 }

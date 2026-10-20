@@ -7,7 +7,7 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Persistence.Tests;
 
-public sealed class FeatureResearchSearchProjectorTests
+public sealed class FeatureRecordSearchProjectorTests
 {
     private static readonly AggregateId FeatureId =
         AggregateId.FromDatabaseGuid(
@@ -37,15 +37,14 @@ public sealed class FeatureResearchSearchProjectorTests
             )
         };
         var createdAt = updatedAt.AddDays(-1);
-        state.ResearchDiscoveries.Add(
-            new FeatureResearchDiscovery
+        state.Records.Add(
+            new FeatureRecord
             {
-                Id = FeatureResearchDiscoveryId.FromDatabaseGuid(
-                    discoveryId
-                ),
+                Id = FeatureRecordId.FromDatabaseGuid(discoveryId),
+                Type = FeatureRecordTypes.Research,
                 Title = "PostgreSQL ranking",
                 Content = "# Finding\nUse reciprocal-rank fusion.",
-                SourceType = FeatureResearchDiscoverySourceType.Code,
+                SourceType = FeatureRecordSourceType.Code,
                 SourceReference = "API/PostgreSqlModule",
                 CreatedAt = createdAt,
                 UpdatedAt = updatedAt
@@ -65,12 +64,14 @@ public sealed class FeatureResearchSearchProjectorTests
                 UpdatedAt = updatedAt
             }
         );
+        var conversationId = Guid.NewGuid();
         state.Records.Add(
             new FeatureRecord
             {
-                Id = FeatureRecordId.FromDatabaseGuid(Guid.NewGuid()),
-                UserMessage = "DO-NOT-EMBED-RECORD",
-                AiAnswer = "Included only in global search",
+                Id = FeatureRecordId.FromDatabaseGuid(conversationId),
+                Type = FeatureRecordTypes.Conversation,
+                Title = "Why rank by fusion?",
+                Content = "## User\n\nWhy?\n\n## AI\n\nIt mixes both legs.",
                 CreatedAt = createdAt,
                 UpdatedAt = updatedAt
             }
@@ -78,7 +79,7 @@ public sealed class FeatureResearchSearchProjectorTests
         var generator = new FakeEmbeddingGenerator();
         var repository = new FakeRepository();
         var knowledgeRepository = new FakeKnowledgeRepository();
-        var projector = new FeatureResearchSearchProjector(
+        var projector = new FeatureRecordSearchProjector(
             generator,
             new FakeProjectionWriter(repository, knowledgeRepository)
         );
@@ -88,32 +89,38 @@ public sealed class FeatureResearchSearchProjectorTests
         );
 
         Assert.Equal([FeatureId], repository.FeatureIds);
-        Assert.NotEmpty(repository.Documents);
-        Assert.All(
-            repository.Documents,
-            document =>
-            {
-                Assert.Equal(discoveryId, document.ResearchDiscoveryId);
-                Assert.Equal("Hybrid feature search", document.FeatureName);
-                Assert.Equal("PostgreSQL ranking", document.Title);
-                Assert.Equal("Code", document.SourceType);
-                Assert.Equal("API/PostgreSqlModule", document.SourceReference);
-                Assert.Equal(updatedAt, document.UpdatedAt);
-                Assert.Equal([1f, 2f], document.Embedding.ToArray());
-                Assert.DoesNotContain("DO-NOT-EMBED-RECORD", document.Text);
-            }
+        Assert.Equal(
+            [discoveryId, conversationId],
+            repository.Documents
+                .Select(document => document.RecordId)
+                .Distinct()
+                .ToList()
         );
+        var research = repository.Documents.First(
+            document => document.RecordId == discoveryId
+        );
+        Assert.Equal(FeatureRecordTypes.Research, research.RecordType);
+        Assert.Equal("Hybrid feature search", research.FeatureName);
+        Assert.Equal("PostgreSQL ranking", research.Title);
+        Assert.Equal("Code", research.SourceType);
+        Assert.Equal("API/PostgreSqlModule", research.SourceReference);
+        Assert.Equal(updatedAt, research.UpdatedAt);
+        Assert.Equal([1f, 2f], research.Embedding.ToArray());
+        var conversation = repository.Documents.First(
+            document => document.RecordId == conversationId
+        );
+        Assert.Equal(FeatureRecordTypes.Conversation, conversation.RecordType);
+        Assert.Equal(string.Empty, conversation.SourceType);
         Assert.Equal(1, generator.CallCount);
         Assert.Contains(
             generator.LastInputs,
-            input => input.Contains("Research discovery: PostgreSQL ranking")
+            input => input.Contains("Record type: research\nRecord: PostgreSQL ranking")
         );
         Assert.Equal(
             [
                 KnowledgeSearchSourceTypes.Feature,
                 KnowledgeSearchSourceTypes.FeaturePlan,
-                KnowledgeSearchSourceTypes.FeatureRecord,
-                KnowledgeSearchSourceTypes.FeatureResearchDiscovery
+                KnowledgeSearchSourceTypes.FeatureRecord
             ],
             knowledgeRepository.Documents
                 .Select(document => document.SourceType)
@@ -137,7 +144,12 @@ public sealed class FeatureResearchSearchProjectorTests
         Assert.Contains("Production implementation.", globalPlan.Text);
         var globalResearch = knowledgeRepository.Documents.First(
             document => document.SourceType
-                == KnowledgeSearchSourceTypes.FeatureResearchDiscovery
+                == KnowledgeSearchSourceTypes.FeatureRecord
+                && document.SourceKey == discoveryId.ToString("N")
+        );
+        Assert.Equal(
+            FeatureRecordTypes.Research,
+            globalResearch.Metadata.GetProperty("recordType").GetString()
         );
         Assert.Equal(
             createdAt,
@@ -151,21 +163,7 @@ public sealed class FeatureResearchSearchProjectorTests
             state.ProjectId.Value.ToString(),
             globalResearch.Metadata.GetProperty("projectId").GetString()
         );
-        Assert.Contains(
-            generator.LastInputs,
-            input => input.Contains("DO-NOT-EMBED-RECORD")
-        );
-        Assert.Contains(
-            knowledgeRepository.Documents,
-            document => document.SourceType
-                == KnowledgeSearchSourceTypes.FeatureResearchDiscovery
-                && document.Embedding == repository.Documents[0].Embedding
-        );
-        Assert.Contains(
-            knowledgeRepository.Documents,
-            document => document.SourceType
-                == KnowledgeSearchSourceTypes.FeatureRecord
-        );
+        Assert.Equal(research.Embedding, globalResearch.Embedding);
     }
 
     [Fact]
@@ -178,7 +176,7 @@ public sealed class FeatureResearchSearchProjectorTests
         };
         var repository = new FakeRepository();
         var knowledgeRepository = new FakeKnowledgeRepository();
-        var projector = new FeatureResearchSearchProjector(
+        var projector = new FeatureRecordSearchProjector(
             new FakeEmbeddingGenerator(),
             new FakeProjectionWriter(repository, knowledgeRepository)
         );
@@ -211,14 +209,14 @@ public sealed class FeatureResearchSearchProjectorTests
         }
     }
 
-    private sealed class FakeRepository : IFeatureResearchSearchRepository
+    private sealed class FakeRepository : IFeatureRecordSearchRepository
     {
         public List<AggregateId> FeatureIds { get; private set; } = [];
-        public List<FeatureResearchSearchDocument> Documents { get; private set; } = [];
+        public List<FeatureRecordSearchDocument> Documents { get; private set; } = [];
 
         public Task Write(
             List<AggregateId> featureAggregateIds,
-            List<FeatureResearchSearchDocument> documents,
+            List<FeatureRecordSearchDocument> documents,
             CancellationToken cancellationToken = default
         )
         {
@@ -227,26 +225,26 @@ public sealed class FeatureResearchSearchProjectorTests
             return Task.CompletedTask;
         }
 
-        public Task<List<FeatureResearchSearchCandidate>> SearchText(
+        public Task<List<FeatureRecordSearchCandidate>> SearchText(
             List<string> keywords,
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
-        public Task<List<FeatureResearchSearchCandidate>> SearchVector(
+        public Task<List<FeatureRecordSearchCandidate>> SearchVector(
             ImmutableArray<float> embedding,
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
-        public Task<List<FeatureResearchSearchCandidate>> SearchTextBySource(
+        public Task<List<FeatureRecordSearchCandidate>> SearchTextBySource(
             List<string> keywords,
             int sourceCount,
             int candidateCount,
             CancellationToken cancellationToken = default
         ) => throw new NotSupportedException();
 
-        public Task<List<FeatureResearchSearchCandidate>> SearchVectorBySource(
+        public Task<List<FeatureRecordSearchCandidate>> SearchVectorBySource(
             ImmutableArray<float> embedding,
             int sourceCount,
             int candidateCount,
@@ -284,7 +282,7 @@ public sealed class FeatureResearchSearchProjectorTests
         {
             await repository.Write(
                 batch.FeatureAggregateIds,
-                batch.ResearchDocuments,
+                batch.RecordDocuments,
                 cancellationToken
             );
             await knowledgeRepository.Write(

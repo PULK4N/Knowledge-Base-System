@@ -36,8 +36,8 @@ public sealed class FeatureMutationHistoryTests
         yield return [new FeatureReviewNoteAddedV2(ReviewNoteId, "title", "content", SessionId, MemoryId), new FeatureReviewNoteAddedV1(ReviewNoteId, "title", "content")];
         yield return [new FeatureReviewNoteUpdatedV2(ReviewNoteId, "new title", "new content", SessionId, MemoryId), new FeatureReviewNoteUpdatedV1(ReviewNoteId, "new title", "new content")];
         yield return [new FeatureReviewNoteRemovedV2(ReviewNoteId, SessionId, MemoryId), new FeatureReviewNoteRemovedV1(ReviewNoteId)];
-        yield return [new FeatureResearchDiscoveryAddedV3(DiscoveryId, "title", "content", FeatureResearchDiscoverySourceType.Code, "path", SessionId, MemoryId), new FeatureResearchDiscoveryAddedV2(DiscoveryId, "title", "content", FeatureResearchDiscoverySourceType.Code, "path")];
-        yield return [new FeatureResearchDiscoveryUpdatedV3(DiscoveryId, "new title", "new content", FeatureResearchDiscoverySourceType.Web, "url", SessionId, MemoryId), new FeatureResearchDiscoveryUpdatedV2(DiscoveryId, "new title", "new content", FeatureResearchDiscoverySourceType.Web, "url")];
+        yield return [new FeatureResearchDiscoveryAddedV3(DiscoveryId, "title", "content", FeatureRecordSourceType.Code, "path", SessionId, MemoryId), new FeatureResearchDiscoveryAddedV2(DiscoveryId, "title", "content", FeatureRecordSourceType.Code, "path")];
+        yield return [new FeatureResearchDiscoveryUpdatedV3(DiscoveryId, "new title", "new content", FeatureRecordSourceType.Web, "url", SessionId, MemoryId), new FeatureResearchDiscoveryUpdatedV2(DiscoveryId, "new title", "new content", FeatureRecordSourceType.Web, "url")];
         yield return [new FeatureResearchDiscoveryRemovedV2(DiscoveryId, SessionId, MemoryId), new FeatureResearchDiscoveryRemovedV1(DiscoveryId)];
         yield return [new FeaturePlanAddedV2(PlanId, "title", "content", FeaturePlanContentType.Markdown, SessionId, MemoryId), new FeaturePlanAddedV1(PlanId, "title", "content", FeaturePlanContentType.Markdown)];
         yield return [new CurrentFeaturePlanUpdatedV2("new title", "new content", FeaturePlanContentType.Html, SessionId, MemoryId), new CurrentFeaturePlanUpdatedV1("new title", "new content", FeaturePlanContentType.Html)];
@@ -112,9 +112,12 @@ public sealed class FeatureMutationHistoryTests
         ProjectId = ProjectId,
         Name = "existing",
         RelatedSkillIds = [SkillId],
-        Records = [new FeatureRecord { Id = RecordId }],
+        Records =
+        [
+            new FeatureRecord { Id = RecordId },
+            new FeatureRecord { Id = DiscoveryId.ToRecordId() }
+        ],
         ReviewNotes = [new FeatureReviewNote { Id = ReviewNoteId }],
-        ResearchDiscoveries = [new FeatureResearchDiscovery { Id = DiscoveryId }],
         Plans = [new FeaturePlan { Id = PlanId }],
         CurrentPlanId = PlanId
     };

@@ -46,8 +46,8 @@ public static class InjectionSetup
         services.RegisterAdministrationModulePersistence();
         services.RegisterFeatureModulePersistence();
         services.AddScoped<
-            IFeatureResearchSearchRepository,
-            PostgreSqlFeatureResearchSearchRepository
+            IFeatureRecordSearchRepository,
+            PostgreSqlFeatureRecordSearchRepository
         >();
 
         services.AddDbContext<EventSourcingDbContext>(

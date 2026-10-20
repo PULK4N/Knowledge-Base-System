@@ -6,7 +6,7 @@ initializationEvents:
 projections:
   - FeatureSummaryProjector
   - FeatureSearchProjector
-  - FeatureResearchSearchProjector
+  - FeatureRecordSearchProjector
 events:
   FeatureAddedV1: {}
   FeatureAddedV2: {}
@@ -61,6 +61,14 @@ events:
       - FeatureMustBeActiveValidator
       - FeatureRecordMustExistValidator
   FeatureRecordUpdatedV2:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRecordMustExistValidator
+  FeatureRecordAddedV3:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRecordMustNotExistValidator
+  FeatureRecordUpdatedV3:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeatureRecordMustExistValidator
@@ -203,3 +211,8 @@ events:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
       - FeaturePreviousPlanValidator
+  FeaturePlanRecordsSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePlanRecordsMustExistValidator

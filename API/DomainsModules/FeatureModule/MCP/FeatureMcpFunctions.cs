@@ -25,27 +25,27 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its overview, a branch tree that nests each plan's branches under the feature branch or the plan done before it, plan summaries (ID, title, status, additional info, previous plan ID) without plan content, five latest research discoveries, five latest conversation records, and title/ID references for other discoveries. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, a branch tree that nests each plan's branches under the feature branch or the plan done before it, plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
             "feature_plan_get",
-            "Gets one feature plan with its content by feature ID and plan ID."
+            "Gets one feature plan with its content by feature ID and plan ID, plus the ID, title, and type of each record it links; load those records with feature_record_get when needed."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, List<Guid>, uint, Task<List<FeatureResearchDiscoveryDto>>>)GetResearchDiscoveries,
-            "feature_research_discovery_get",
-            "Gets multiple research discoveries in one call by feature ID and discovery IDs."
+            (Func<IServiceProvider, string, List<string>, int, Task<FeatureRecordSearchResultsDto>>)SearchRecords,
+            "feature_record_search",
+            "Searches feature records of every type across active features. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a record must all contain for full-text matching. Returns topMatches with the highest-ranked chunk per record, which may repeat one feature, and distinctSources with the best record of each different feature; use feature_record_get with the returned feature and record IDs to load complete records."
         ),
         CreateFunction(
-            (Func<IServiceProvider, string, List<string>, int, Task<FeatureResearchSearchResultsDto>>)SearchResearchDiscoveries,
-            "feature_research_discovery_search",
-            "Searches research discoveries across active features. Two separate inputs: query is a meaningful sentence and drives semantic vector matching, while keywords are the words a discovery must all contain for full-text matching. Returns topMatches with the highest-ranked chunk per discovery, which may repeat one feature, and distinctSources with the best discovery of each different feature; use feature_research_discovery_get with the returned feature and discovery IDs to load complete discoveries."
+            (Func<IServiceProvider, Guid, List<Guid>, uint, Task<List<FeatureRecordDto>>>)GetRecords,
+            "feature_record_get",
+            "Gets multiple feature records with their content in one call by feature ID and record IDs."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, uint, Task<List<FeatureRecordDto>>>)ListRecords,
+            (Func<IServiceProvider, Guid, string?, uint, Task<List<FeatureRecordDto>>>)ListRecords,
             "feature_record_list",
-            "Gets all conversation records for a feature."
+            "Gets every record of a feature with its content, newest first. Optional type keeps only records of that type, such as conversation or research. Prefer feature_record_get for a few records."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<List<FeatureReviewNoteDto>>>)ListReviewNotes,
@@ -83,19 +83,19 @@ public static class FeatureMcpFunctions
             "Removes a related skill ID from the feature."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureRecordCreatedCommandResult>>)AddRecord,
+            (Func<IServiceProvider, Guid, string, string, string, FeatureRecordSourceType?, string, List<Guid>?, Guid?, Guid?, Task<FeatureRecordCreatedCommandResult>>)AddRecord,
             "feature_record_add",
-            "Adds a curated user message and AI answer that affected the feature or its implementation plan."
+            "Adds a titled Markdown record to a feature. type is free text stored in lower case: use conversation for a curated user and AI exchange, research for a research finding, or another short type. Optional sourceType and sourceReference give provenance, such as a code path, URL, or MCP tool name. Optional planIds link the new record to those plans of the same feature."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateRecord,
+            (Func<IServiceProvider, Guid, Guid, string, string, string, FeatureRecordSourceType?, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateRecord,
             "feature_record_update",
-            "Updates the user message and AI answer of an existing feature record."
+            "Replaces the type, title, Markdown content, and source of an existing feature record. Plan links are kept."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveRecord,
             "feature_record_remove",
-            "Removes a feature record from the current feature state."
+            "Removes a feature record from the current feature state and from every plan that links it."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, Guid?, Guid?, Task<FeatureReviewNoteCreatedCommandResult>>)AddReviewNote,
@@ -113,29 +113,14 @@ public static class FeatureMcpFunctions
             "Removes a review note from the current feature state while retaining event history."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, FeatureResearchDiscoverySourceType, string, Guid?, Guid?, Task<FeatureResearchDiscoveryCreatedCommandResult>>)AddResearchDiscovery,
-            "feature_research_discovery_add",
-            "Stores a research discovery for a feature. The optional source reference can be a code path, URL, MCP tool name, or other provenance."
-        ),
-        CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, FeatureResearchDiscoverySourceType, string, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateResearchDiscovery,
-            "feature_research_discovery_update",
-            "Updates a stored feature research discovery and its provenance."
-        ),
-        CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveResearchDiscovery,
-            "feature_research_discovery_remove",
-            "Removes a research discovery from the current feature state while retaining event history."
-        ),
-        CreateFunction(
-            (Func<IServiceProvider, Guid, string, string, string, FeaturePlanContentType, string, FeaturePlanStatus, string, Guid?, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
+            (Func<IServiceProvider, Guid, string, string, string, FeaturePlanContentType, string, FeaturePlanStatus, string, Guid?, List<Guid>?, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
             "feature_plan_add",
-            "Adds a Markdown or HTML plan with its required base branch (branchName, optional branchDescription). additionalInfo is short text returned with feature_get so an AI can tell what the plan is for, for example research only or production implementation, without loading its content. previousPlanId is the plan done before this one, whose base branch this plan's base branch was checked out from; omit it when the branch comes from the feature branch. Add sub-branches with feature_plan_branch_add."
+            "Adds a Markdown or HTML plan with its required base branch (branchName, optional branchDescription). additionalInfo is short text returned with feature_get so an AI can tell what the plan is for, for example research only or production implementation, without loading its content. previousPlanId is the plan done before this one, whose base branch this plan's base branch was checked out from; omit it when the branch comes from the feature branch. Optional recordIds link records of the same feature. Add sub-branches with feature_plan_branch_add."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, FeaturePlanContentType, string, FeaturePlanStatus, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlan,
+            (Func<IServiceProvider, Guid, Guid, string, string, FeaturePlanContentType, string, FeaturePlanStatus, List<Guid>?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlan,
             "feature_plan_update",
-            "Replaces a plan's title, content, content type, additional info, and status by plan ID. Branches are kept; change them with the feature_plan_branch tools."
+            "Replaces a plan's title, content, content type, additional info, and status by plan ID. recordIds replaces the linked records: omit it to keep the current links, or pass an empty list to remove them. Branches are kept; change them with the feature_plan_branch tools."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, FeaturePlanStatus, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlanStatus,
@@ -233,48 +218,25 @@ public static class FeatureMcpFunctions
         uint orderNumber = 0
     )
     {
-        var plan = (await GetFullFeature(services, featureId, orderNumber))?.Plans
-            .SingleOrDefault(plan => plan.Id == planId);
-
-        return plan is null ? null : FeatureMcpPlanDto.FromPlan(plan);
-    }
-
-    private static async Task<List<FeatureResearchDiscoveryDto>> GetResearchDiscoveries(
-        IServiceProvider services,
-        Guid featureId,
-        List<Guid> discoveryIds,
-        uint orderNumber = 0
-    )
-    {
         var feature = await GetFullFeature(services, featureId, orderNumber);
+        var plan = feature?.Plans.SingleOrDefault(plan => plan.Id == planId);
 
-        if (feature is null || discoveryIds.Count == 0)
-        {
-            return [];
-        }
-
-        var discoveriesById = feature.ResearchDiscoveries.ToDictionary(
-            discovery => discovery.Id
-        );
-
-        return discoveryIds
-            .Distinct()
-            .Where(discoveriesById.ContainsKey)
-            .Select(discoveryId => discoveriesById[discoveryId])
-            .ToList();
+        return plan is null
+            ? null
+            : FeatureMcpPlanDto.FromPlan(plan, feature!.Records);
     }
 
-    private static Task<FeatureResearchSearchResultsDto> SearchResearchDiscoveries(
+    private static Task<FeatureRecordSearchResultsDto> SearchRecords(
         IServiceProvider services,
         [Description("A meaningful sentence describing what you need. Only the semantic vector match reads it.")]
         string query,
         [Description("Words that must all appear in a matching record. Every word is required, so pass only the distinctive terms, and include common words only when the exact wording matters.")]
         List<string> keywords,
-        int resultCount = SearchFeatureResearchQuery.DefaultResultCount
+        int resultCount = SearchFeatureRecordsQuery.DefaultResultCount
     ) =>
         FeatureMcpActionExecutor.ExecuteQuery<
-            SearchFeatureResearchQuery,
-            FeatureResearchSearchResultsDto
+            SearchFeatureRecordsQuery,
+            FeatureRecordSearchResultsDto
         >(
             services,
             search =>
@@ -285,12 +247,41 @@ public static class FeatureMcpFunctions
             }
         );
 
+    private static async Task<List<FeatureRecordDto>> GetRecords(
+        IServiceProvider services,
+        Guid featureId,
+        List<Guid> recordIds,
+        uint orderNumber = 0
+    )
+    {
+        var feature = await GetFullFeature(services, featureId, orderNumber);
+
+        if (feature is null || recordIds.Count == 0)
+        {
+            return [];
+        }
+
+        var recordsById = feature.Records.ToDictionary(record => record.Id);
+
+        return recordIds
+            .Distinct()
+            .Where(recordsById.ContainsKey)
+            .Select(recordId => recordsById[recordId])
+            .ToList();
+    }
+
     private static async Task<List<FeatureRecordDto>> ListRecords(
         IServiceProvider services,
         Guid featureId,
+        [Description("Optional record type, such as conversation or research. Omit it for every record.")]
+        string? type = null,
         uint orderNumber = 0
     ) =>
         (await GetFullFeature(services, featureId, orderNumber))?.Records
+            .Where(
+                record => string.IsNullOrWhiteSpace(type)
+                    || record.Type == FeatureRecordTypes.Normalize(type)
+            )
             .OrderByDescending(record => record.UpdatedAt)
             .ThenBy(record => record.Id)
             .ToList() ?? [];
@@ -450,8 +441,15 @@ public static class FeatureMcpFunctions
     private static Task<FeatureRecordCreatedCommandResult> AddRecord(
         IServiceProvider services,
         Guid featureId,
-        string userMessage,
-        string aiAnswer,
+        [Description("Free-text record type stored in lower case, for example conversation or research.")]
+        string type,
+        string title,
+        [Description("README-style Markdown content.")]
+        string content,
+        FeatureRecordSourceType? sourceType = null,
+        string sourceReference = "",
+        [Description("Optional plans of the same feature that should link the new record.")]
+        List<Guid>? planIds = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -463,8 +461,12 @@ public static class FeatureMcpFunctions
             command =>
             {
                 command.FeatureId = featureId;
-                command.UserMessage = userMessage;
-                command.AiAnswer = aiAnswer;
+                command.Type = type;
+                command.Title = title;
+                command.Content = content;
+                command.SourceType = sourceType;
+                command.SourceReference = sourceReference;
+                command.PlanIds = planIds ?? [];
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -474,8 +476,13 @@ public static class FeatureMcpFunctions
         IServiceProvider services,
         Guid featureId,
         Guid recordId,
-        string userMessage,
-        string aiAnswer,
+        [Description("Free-text record type stored in lower case, for example conversation or research.")]
+        string type,
+        string title,
+        [Description("README-style Markdown content.")]
+        string content,
+        FeatureRecordSourceType? sourceType = null,
+        string sourceReference = "",
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -488,8 +495,11 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.RecordId = recordId;
-                command.UserMessage = userMessage;
-                command.AiAnswer = aiAnswer;
+                command.Type = type;
+                command.Title = title;
+                command.Content = content;
+                command.SourceType = sourceType;
+                command.SourceReference = sourceReference;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -585,87 +595,6 @@ public static class FeatureMcpFunctions
             }
         );
 
-    private static Task<
-        FeatureResearchDiscoveryCreatedCommandResult
-    > AddResearchDiscovery(
-        IServiceProvider services,
-        Guid featureId,
-        string title,
-        string content,
-        FeatureResearchDiscoverySourceType sourceType =
-            FeatureResearchDiscoverySourceType.Other,
-        string sourceReference = "",
-        Guid? sessionId = null,
-        Guid? memoryAggregateId = null
-    ) =>
-        FeatureMcpActionExecutor.ExecuteCommand<
-            AddFeatureResearchDiscoveryCommand,
-            FeatureResearchDiscoveryCreatedCommandResult
-        >(
-            services,
-            command =>
-            {
-                command.FeatureId = featureId;
-                command.Title = title;
-                command.Content = content;
-                command.SourceType = sourceType;
-                command.SourceReference = sourceReference;
-                command.SessionId = sessionId.GetValueOrDefault();
-                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
-            }
-        );
-
-    private static Task<FeatureCommandResult> UpdateResearchDiscovery(
-        IServiceProvider services,
-        Guid featureId,
-        Guid discoveryId,
-        string title,
-        string content,
-        FeatureResearchDiscoverySourceType sourceType =
-            FeatureResearchDiscoverySourceType.Other,
-        string sourceReference = "",
-        Guid? sessionId = null,
-        Guid? memoryAggregateId = null
-    ) =>
-        FeatureMcpActionExecutor.ExecuteCommand<
-            UpdateFeatureResearchDiscoveryCommand,
-            FeatureCommandResult
-        >(
-            services,
-            command =>
-            {
-                command.FeatureId = featureId;
-                command.DiscoveryId = discoveryId;
-                command.Title = title;
-                command.Content = content;
-                command.SourceType = sourceType;
-                command.SourceReference = sourceReference;
-                command.SessionId = sessionId.GetValueOrDefault();
-                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
-            }
-        );
-
-    private static Task<FeatureCommandResult> RemoveResearchDiscovery(
-        IServiceProvider services,
-        Guid featureId,
-        Guid discoveryId,
-        Guid? sessionId = null,
-        Guid? memoryAggregateId = null
-    ) =>
-        FeatureMcpActionExecutor.ExecuteCommand<
-            RemoveFeatureResearchDiscoveryCommand,
-            FeatureCommandResult
-        >(
-            services,
-            command =>
-            {
-                command.FeatureId = featureId;
-                command.DiscoveryId = discoveryId;
-                command.SessionId = sessionId.GetValueOrDefault();
-                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
-            }
-        );
-
     private static Task<FeaturePlanCreatedCommandResult> AddPlan(
         IServiceProvider services,
         Guid featureId,
@@ -678,6 +607,8 @@ public static class FeatureMcpFunctions
         FeaturePlanStatus status = FeaturePlanStatus.NotStarted,
         string branchDescription = "",
         Guid? previousPlanId = null,
+        [Description("Optional records of the same feature to link to the plan.")]
+        List<Guid>? recordIds = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -697,6 +628,7 @@ public static class FeatureMcpFunctions
                 command.BranchName = branchName;
                 command.BranchDescription = branchDescription;
                 command.PreviousPlanId = previousPlanId;
+                command.RecordIds = recordIds;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -712,6 +644,8 @@ public static class FeatureMcpFunctions
             FeaturePlanContentType.Markdown,
         string additionalInfo = "",
         FeaturePlanStatus status = FeaturePlanStatus.NotStarted,
+        [Description("Records to link, replacing the current links. Omit it to keep them; pass an empty list to remove them.")]
+        List<Guid>? recordIds = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -729,6 +663,7 @@ public static class FeatureMcpFunctions
                 command.ContentType = contentType;
                 command.AdditionalInfo = additionalInfo;
                 command.Status = status;
+                command.RecordIds = recordIds;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

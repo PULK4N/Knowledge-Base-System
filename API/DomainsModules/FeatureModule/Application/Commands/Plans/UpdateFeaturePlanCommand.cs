@@ -18,11 +18,12 @@ public sealed class UpdateFeaturePlanCommand(
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
+        var planId = FeaturePlanId.FromDatabaseGuid(PlanId);
 
-        return await ExecuteEvent(
+        return await ExecuteEvents(
             executor,
             new FeaturePlanUpdatedV1(
-                FeaturePlanId.FromDatabaseGuid(PlanId),
+                planId,
                 Title,
                 Content,
                 ContentType,
@@ -31,6 +32,7 @@ public sealed class UpdateFeaturePlanCommand(
                 SessionId,
                 memoryAggregateId
             ),
+            _ => CreateRecordLinkEvents(planId, memoryAggregateId),
             memoryAggregateId
         );
     }

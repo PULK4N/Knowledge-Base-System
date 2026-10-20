@@ -422,6 +422,32 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.record-type {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--indigo);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.record-plans {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.record-plans > span {
+  color: var(--muted);
+}
+
+.record-plans a {
+  color: var(--indigo);
+}
+
 .source-type[data-source='Code'] {
   color: #315c62;
   background: #dff4f3;

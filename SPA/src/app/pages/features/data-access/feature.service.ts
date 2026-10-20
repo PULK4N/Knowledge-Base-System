@@ -29,15 +29,12 @@ import {
   FeaturePlanCreatedCommandResult,
   FeaturePlanStatus,
   SetFeatureBranchRequest,
-  FeatureRecordContentRequest,
+  AddFeatureRecordRequest,
   FeatureRecordCreatedCommandResult,
-  FeatureResearchDiscoveryContentRequest,
-  FeatureResearchDiscoveryCreatedCommandResult,
   FeatureReviewNoteContentRequest,
   FeatureReviewNoteCreatedCommandResult,
   UpdateFeaturePlanBranchRequest,
   UpdateFeatureRecordRequest,
-  UpdateFeatureResearchDiscoveryRequest,
   UpdateFeatureReviewNoteRequest,
 } from './feature.models';
 
@@ -48,7 +45,6 @@ function isFeature(entity: FeatureSummary | undefined): entity is Feature {
     !!entity &&
     'records' in entity &&
     'reviewNotes' in entity &&
-    'researchDiscoveries' in entity &&
     'plans' in entity
   );
 }
@@ -157,7 +153,7 @@ export class FeatureService {
 
   addRecord(
     id: string,
-    request: FeatureRecordContentRequest,
+    request: AddFeatureRecordRequest,
   ): Observable<Feature> {
     return this.http
       .post<FeatureRecordCreatedCommandResult>(
@@ -199,38 +195,6 @@ export class FeatureService {
 
   removeReviewNote(id: string, reviewNoteId: string): Observable<Feature> {
     return this.postAndRefresh(id, 'review-notes/remove', { reviewNoteId });
-  }
-
-  addResearchDiscovery(
-    id: string,
-    request: FeatureResearchDiscoveryContentRequest,
-  ): Observable<Feature> {
-    return this.http
-      .post<FeatureResearchDiscoveryCreatedCommandResult>(
-        `${this.featurePath(id)}/research-discoveries`,
-        request,
-      )
-      .pipe(switchMap(() => this.refresh(id)));
-  }
-
-  updateResearchDiscovery(
-    id: string,
-    request: UpdateFeatureResearchDiscoveryRequest,
-  ): Observable<Feature> {
-    return this.postAndRefresh(
-      id,
-      'research-discoveries/update',
-      request,
-    );
-  }
-
-  removeResearchDiscovery(
-    id: string,
-    discoveryId: string,
-  ): Observable<Feature> {
-    return this.postAndRefresh(id, 'research-discoveries/remove', {
-      discoveryId,
-    });
   }
 
   addPlan(

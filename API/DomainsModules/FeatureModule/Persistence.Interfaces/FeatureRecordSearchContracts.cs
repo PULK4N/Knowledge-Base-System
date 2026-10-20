@@ -4,10 +4,11 @@ using EventSourcing.Shared.Models;
 
 namespace FeatureModule.Persistence.Interfaces;
 
-public sealed record FeatureResearchSearchDocument(
+public sealed record FeatureRecordSearchDocument(
     AggregateId FeatureAggregateId,
     string FeatureName,
-    Guid ResearchDiscoveryId,
+    Guid RecordId,
+    string RecordType,
     string Title,
     string SourceType,
     string SourceReference,
@@ -17,10 +18,11 @@ public sealed record FeatureResearchSearchDocument(
     ImmutableArray<float> Embedding
 );
 
-public sealed record FeatureResearchSearchCandidate(
+public sealed record FeatureRecordSearchCandidate(
     AggregateId FeatureAggregateId,
     string FeatureName,
-    Guid ResearchDiscoveryId,
+    Guid RecordId,
+    string RecordType,
     string Title,
     string SourceType,
     string SourceReference,
@@ -29,8 +31,8 @@ public sealed record FeatureResearchSearchCandidate(
     string Text
 );
 
-public sealed record FeatureResearchSearchResult(
-    FeatureResearchSearchCandidate ResearchDiscovery,
+public sealed record FeatureRecordSearchResult(
+    FeatureRecordSearchCandidate Record,
     double Score,
     int? TextRank,
     int? VectorRank
@@ -39,16 +41,16 @@ public sealed record FeatureResearchSearchResult(
 /// <summary>
 /// Hybrid search results split into the plain top matches and one best match
 /// per feature, so a single feature cannot fill the whole result set with its
-/// own research discoveries.
+/// own records.
 /// </summary>
-public sealed record FeatureResearchSearchResults(
-    List<FeatureResearchSearchResult> TopMatches,
-    List<FeatureResearchSearchResult> DistinctSources
+public sealed record FeatureRecordSearchResults(
+    List<FeatureRecordSearchResult> TopMatches,
+    List<FeatureRecordSearchResult> DistinctSources
 );
 
 public sealed record FeatureSearchProjectionBatch(
     List<AggregateId> FeatureAggregateIds,
-    List<FeatureResearchSearchDocument> ResearchDocuments,
+    List<FeatureRecordSearchDocument> RecordDocuments,
     List<KnowledgeSearchDocument> KnowledgeDocuments
 );
 
@@ -60,7 +62,7 @@ public interface IFeatureSearchProjectionWriter
     );
 }
 
-public sealed record HybridFeatureResearchSearchOptions
+public sealed record HybridFeatureRecordSearchOptions
 {
     public const int DefaultResultCount = 5;
     public const int DefaultSourceCandidateCount = 200;
@@ -73,21 +75,21 @@ public sealed record HybridFeatureResearchSearchOptions
     public double VectorWeight { get; init; } = 1;
 }
 
-public interface IFeatureResearchSearchRepository
+public interface IFeatureRecordSearchRepository
 {
     Task Write(
         List<AggregateId> featureAggregateIds,
-        List<FeatureResearchSearchDocument> documents,
+        List<FeatureRecordSearchDocument> documents,
         CancellationToken cancellationToken = default
     );
 
-    Task<List<FeatureResearchSearchCandidate>> SearchText(
+    Task<List<FeatureRecordSearchCandidate>> SearchText(
         List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
     );
 
-    Task<List<FeatureResearchSearchCandidate>> SearchVector(
+    Task<List<FeatureRecordSearchCandidate>> SearchVector(
         ImmutableArray<float> embedding,
         int candidateCount,
         CancellationToken cancellationToken = default
@@ -98,7 +100,7 @@ public interface IFeatureResearchSearchRepository
     /// <paramref name="candidateCount"/> ranked rows and keeping at most
     /// <paramref name="sourceCount"/> distinct features.
     /// </summary>
-    Task<List<FeatureResearchSearchCandidate>> SearchTextBySource(
+    Task<List<FeatureRecordSearchCandidate>> SearchTextBySource(
         List<string> keywords,
         int sourceCount,
         int candidateCount,
@@ -110,7 +112,7 @@ public interface IFeatureResearchSearchRepository
     /// <paramref name="candidateCount"/> nearest rows and keeping at most
     /// <paramref name="sourceCount"/> distinct features.
     /// </summary>
-    Task<List<FeatureResearchSearchCandidate>> SearchVectorBySource(
+    Task<List<FeatureRecordSearchCandidate>> SearchVectorBySource(
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
@@ -118,7 +120,7 @@ public interface IFeatureResearchSearchRepository
     );
 }
 
-public interface IFeatureResearchSearch
+public interface IFeatureRecordSearch
 {
     /// <param name="query">
     /// A meaningful sentence. Only the semantic vector leg reads it.
@@ -127,10 +129,10 @@ public interface IFeatureResearchSearch
     /// The words the full-text leg requires; a row matches when it contains
     /// all of them.
     /// </param>
-    Task<List<FeatureResearchSearchResult>> Search(
+    Task<List<FeatureRecordSearchResult>> Search(
         string query,
         List<string> keywords,
-        HybridFeatureResearchSearchOptions? options = null,
+        HybridFeatureRecordSearchOptions? options = null,
         CancellationToken cancellationToken = default
     );
 
@@ -139,10 +141,10 @@ public interface IFeatureResearchSearch
     /// index, so callers also receive discoveries from distinct features
     /// instead of repeated chunks of one feature.
     /// </summary>
-    Task<FeatureResearchSearchResults> SearchWithSources(
+    Task<FeatureRecordSearchResults> SearchWithSources(
         string query,
         List<string> keywords,
-        HybridFeatureResearchSearchOptions? options = null,
+        HybridFeatureRecordSearchOptions? options = null,
         CancellationToken cancellationToken = default
     );
 }

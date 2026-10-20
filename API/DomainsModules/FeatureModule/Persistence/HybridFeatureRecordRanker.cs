@@ -3,14 +3,14 @@ using FeatureModule.Persistence.Interfaces;
 
 namespace FeatureModule.Persistence;
 
-public static class HybridFeatureResearchRanker
+public static class HybridFeatureRecordRanker
 {
     public const int RankConstant = 60;
 
-    public static List<FeatureResearchSearchResult> Fuse(
-        List<FeatureResearchSearchCandidate> textCandidates,
-        List<FeatureResearchSearchCandidate> vectorCandidates,
-        HybridFeatureResearchSearchOptions options
+    public static List<FeatureRecordSearchResult> Fuse(
+        List<FeatureRecordSearchCandidate> textCandidates,
+        List<FeatureRecordSearchCandidate> vectorCandidates,
+        HybridFeatureRecordSearchOptions options
     )
     {
         Validate(options);
@@ -21,14 +21,14 @@ public static class HybridFeatureResearchRanker
 
         return results.Values
             .OrderByDescending(result => result.Score)
-            .ThenBy(result => result.Discovery.FeatureName, StringComparer.Ordinal)
-            .ThenBy(result => result.Discovery.Title, StringComparer.Ordinal)
-            .ThenBy(result => result.Discovery.ChunkIndex)
-            .DistinctBy(result => SourceKey.From(result.Discovery))
+            .ThenBy(result => result.Record.FeatureName, StringComparer.Ordinal)
+            .ThenBy(result => result.Record.Title, StringComparer.Ordinal)
+            .ThenBy(result => result.Record.ChunkIndex)
+            .DistinctBy(result => SourceKey.From(result.Record))
             .Take(options.ResultCount)
             .Select(
-                result => new FeatureResearchSearchResult(
-                    result.Discovery,
+                result => new FeatureRecordSearchResult(
+                    result.Record,
                     result.Score,
                     result.TextRank,
                     result.VectorRank
@@ -41,10 +41,10 @@ public static class HybridFeatureResearchRanker
     /// Fuses candidates that already hold one row per feature, so the ranking
     /// keeps at most one discovery per feature.
     /// </summary>
-    public static List<FeatureResearchSearchResult> FuseSources(
-        List<FeatureResearchSearchCandidate> textCandidates,
-        List<FeatureResearchSearchCandidate> vectorCandidates,
-        HybridFeatureResearchSearchOptions options
+    public static List<FeatureRecordSearchResult> FuseSources(
+        List<FeatureRecordSearchCandidate> textCandidates,
+        List<FeatureRecordSearchCandidate> vectorCandidates,
+        HybridFeatureRecordSearchOptions options
     )
     {
         Validate(options);
@@ -60,13 +60,13 @@ public static class HybridFeatureResearchRanker
 
         return results.Values
             .OrderByDescending(result => result.Score)
-            .ThenBy(result => result.Discovery.FeatureName, StringComparer.Ordinal)
-            .ThenBy(result => result.Discovery.Title, StringComparer.Ordinal)
-            .ThenBy(result => result.Discovery.ChunkIndex)
+            .ThenBy(result => result.Record.FeatureName, StringComparer.Ordinal)
+            .ThenBy(result => result.Record.Title, StringComparer.Ordinal)
+            .ThenBy(result => result.Record.ChunkIndex)
             .Take(options.SourceResultCount)
             .Select(
-                result => new FeatureResearchSearchResult(
-                    result.Discovery,
+                result => new FeatureRecordSearchResult(
+                    result.Record,
                     result.Score,
                     result.TextRank,
                     result.VectorRank
@@ -75,7 +75,7 @@ public static class HybridFeatureResearchRanker
             .ToList();
     }
 
-    public static void Validate(HybridFeatureResearchSearchOptions options)
+    public static void Validate(HybridFeatureRecordSearchOptions options)
     {
         if (options.ResultCount <= 0)
             throw new ArgumentOutOfRangeException(nameof(options.ResultCount));
@@ -107,7 +107,7 @@ public static class HybridFeatureResearchRanker
 
     private static void AddCandidates(
         Dictionary<DocumentKey, MutableResult> results,
-        List<FeatureResearchSearchCandidate> candidates,
+        List<FeatureRecordSearchCandidate> candidates,
         double weight,
         bool isText
     )
@@ -134,7 +134,7 @@ public static class HybridFeatureResearchRanker
 
     private static void AddSourceCandidates(
         Dictionary<AggregateId, MutableResult> results,
-        List<FeatureResearchSearchCandidate> candidates,
+        List<FeatureRecordSearchCandidate> candidates,
         double weight,
         bool isText
     )
@@ -172,39 +172,39 @@ public static class HybridFeatureResearchRanker
 
     private readonly record struct DocumentKey(
         AggregateId FeatureAggregateId,
-        Guid ResearchDiscoveryId,
+        Guid RecordId,
         int ChunkIndex
     )
     {
         public static DocumentKey From(
-            FeatureResearchSearchCandidate candidate
+            FeatureRecordSearchCandidate candidate
         ) =>
             new(
                 candidate.FeatureAggregateId,
-                candidate.ResearchDiscoveryId,
+                candidate.RecordId,
                 candidate.ChunkIndex
             );
     }
 
     private readonly record struct SourceKey(
         AggregateId FeatureAggregateId,
-        Guid ResearchDiscoveryId
+        Guid RecordId
     )
     {
         public static SourceKey From(
-            FeatureResearchSearchCandidate candidate
+            FeatureRecordSearchCandidate candidate
         ) =>
             new(
                 candidate.FeatureAggregateId,
-                candidate.ResearchDiscoveryId
+                candidate.RecordId
             );
     }
 
     private sealed class MutableResult(
-        FeatureResearchSearchCandidate discovery
+        FeatureRecordSearchCandidate record
     )
     {
-        public FeatureResearchSearchCandidate Discovery { get; } = discovery;
+        public FeatureRecordSearchCandidate Record { get; } = record;
         public double Score { get; set; }
         public int? TextRank { get; set; }
         public int? VectorRank { get; set; }

@@ -19,10 +19,23 @@ const feature: FeatureDto = {
   records: [
     {
       id: 'record-1',
-      userMessage: 'Why use a projection?',
-      aiAnswer: 'To provide paged feature search.',
+      type: 'conversation',
+      title: 'Why use a projection?',
+      content: 'To provide paged feature search.',
+      sourceType: null,
+      sourceReference: '',
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T10:00:00Z',
+    },
+    {
+      id: 'discovery-1',
+      type: 'research',
+      title: 'YAML configuration',
+      content: 'Feature transitions are configured in YAML.',
+      sourceType: 'Code',
+      sourceReference: 'StateMachines/features.yaml',
+      createdAt: '2026-08-22T10:00:00Z',
+      updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
   reviewNotes: [
@@ -30,17 +43,6 @@ const feature: FeatureDto = {
       id: 'review-note-1',
       title: 'Replay reloads state',
       content: 'State replay is intentional.',
-      createdAt: '2026-08-22T10:00:00Z',
-      updatedAt: '2026-08-22T11:00:00Z',
-    },
-  ],
-  researchDiscoveries: [
-    {
-      id: 'discovery-1',
-      title: 'YAML configuration',
-      content: 'Feature transitions are configured in YAML.',
-      sourceType: 'Code',
-      sourceReference: 'StateMachines/features.yaml',
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
@@ -55,6 +57,7 @@ const feature: FeatureDto = {
       status: 'InProgress',
       branch: { name: 'feature/plans', description: '', subBranches: [] },
       previousPlanId: null,
+      recordIds: ['discovery-1'],
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
@@ -76,6 +79,15 @@ const addPlanRequest = {
   branchName: 'feature/plans',
   branchDescription: 'Plan rework',
   previousPlanId: 'plan-1',
+  recordIds: ['record-1'],
+} as const;
+
+const recordContent = {
+  type: 'research',
+  title: 'YAML configuration',
+  content: 'Feature transitions are configured in YAML.',
+  sourceType: 'Code',
+  sourceReference: 'StateMachines/features.yaml',
 } as const;
 
 describe('FeatureService', () => {
@@ -150,7 +162,7 @@ describe('FeatureService', () => {
     await expect(resultPromise).resolves.toEqual({
       ...feature,
       planCount: 1,
-      recordCount: 1,
+      recordCount: 2,
     });
   });
 
@@ -199,74 +211,25 @@ describe('FeatureService', () => {
       action: (api: FeatureService) => api.removeSkill(feature.id, 'skill-1'),
     },
     {
-      name: 'adds a record',
+      name: 'adds a record linked to plans',
       path: 'records',
-      body: { userMessage: 'Question', aiAnswer: 'Answer' },
+      body: { ...recordContent, planIds: ['plan-1'] },
       action: (api: FeatureService) =>
-        api.addRecord(feature.id, { userMessage: 'Question', aiAnswer: 'Answer' }),
+        api.addRecord(feature.id, { ...recordContent, planIds: ['plan-1'] }),
       result: { status: 'OK', recordId: 'record-2' },
     },
     {
       name: 'updates a record',
       path: 'records/update',
-      body: { recordId: 'record-1', userMessage: 'Question', aiAnswer: 'Answer' },
+      body: { ...recordContent, recordId: 'record-1' },
       action: (api: FeatureService) =>
-        api.updateRecord(feature.id, {
-          recordId: 'record-1',
-          userMessage: 'Question',
-          aiAnswer: 'Answer',
-        }),
+        api.updateRecord(feature.id, { ...recordContent, recordId: 'record-1' }),
     },
     {
       name: 'removes a record',
       path: 'records/remove',
       body: { recordId: 'record-1' },
       action: (api: FeatureService) => api.removeRecord(feature.id, 'record-1'),
-    },
-    {
-      name: 'adds a research discovery',
-      path: 'research-discoveries',
-      body: {
-        title: 'YAML configuration',
-        content: 'Feature transitions are configured in YAML.',
-        sourceType: 'Code',
-        sourceReference: 'StateMachines/features.yaml',
-      },
-      action: (api: FeatureService) =>
-        api.addResearchDiscovery(feature.id, {
-          title: 'YAML configuration',
-          content: 'Feature transitions are configured in YAML.',
-          sourceType: 'Code',
-          sourceReference: 'StateMachines/features.yaml',
-        }),
-      result: { status: 'OK', discoveryId: 'discovery-2' },
-    },
-    {
-      name: 'updates a research discovery',
-      path: 'research-discoveries/update',
-      body: {
-        discoveryId: 'discovery-1',
-        title: 'YAML transitions and validators',
-        content: 'Feature transitions and validators are configured in YAML.',
-        sourceType: 'Code',
-        sourceReference: 'StateMachines/features.yaml',
-      },
-      action: (api: FeatureService) =>
-        api.updateResearchDiscovery(feature.id, {
-          discoveryId: 'discovery-1',
-          title: 'YAML transitions and validators',
-          content:
-            'Feature transitions and validators are configured in YAML.',
-          sourceType: 'Code',
-          sourceReference: 'StateMachines/features.yaml',
-        }),
-    },
-    {
-      name: 'removes a research discovery',
-      path: 'research-discoveries/remove',
-      body: { discoveryId: 'discovery-1' },
-      action: (api: FeatureService) =>
-        api.removeResearchDiscovery(feature.id, 'discovery-1'),
     },
     {
       name: 'adds a plan',

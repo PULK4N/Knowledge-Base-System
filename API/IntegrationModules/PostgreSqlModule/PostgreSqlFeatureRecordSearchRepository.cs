@@ -9,17 +9,17 @@ using Pgvector.EntityFrameworkCore;
 
 namespace PostgreSqlModule;
 
-internal sealed class PostgreSqlFeatureResearchSearchRepository(
+internal sealed class PostgreSqlFeatureRecordSearchRepository(
     EventSourcingDbContext dbContext
-) : IFeatureResearchSearchRepository
+) : IFeatureRecordSearchRepository
 {
-    private const string Table = "FeatureResearchSearchEntries";
+    private const string Table = "FeatureRecordSearchEntries";
     private const string SourceColumns = "\"FeatureAggregateId\"";
-    private const string TieBreakers = "\"UpdatedAt\" DESC, \"ResearchDiscoveryId\", \"ChunkIndex\"";
+    private const string TieBreakers = "\"UpdatedAt\" DESC, \"RecordId\", \"ChunkIndex\"";
 
     public async Task Write(
         List<AggregateId> featureAggregateIds,
-        List<FeatureResearchSearchDocument> documents,
+        List<FeatureRecordSearchDocument> documents,
         CancellationToken cancellationToken = default
     )
     {
@@ -35,11 +35,11 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
             : null;
 
-        await dbContext.Set<FeatureResearchSearchEntry>()
+        await dbContext.Set<FeatureRecordSearchEntry>()
             .Where(entry => aggregateIds.Contains(entry.FeatureAggregateId))
             .ExecuteDeleteAsync(cancellationToken);
 
-        await dbContext.Set<FeatureResearchSearchEntry>().AddRangeAsync(
+        await dbContext.Set<FeatureRecordSearchEntry>().AddRangeAsync(
             documents.Select(ToEntry),
             cancellationToken
         );
@@ -49,7 +49,7 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<List<FeatureResearchSearchCandidate>> SearchText(
+    public async Task<List<FeatureRecordSearchCandidate>> SearchText(
         List<string> keywords,
         int candidateCount,
         CancellationToken cancellationToken = default
@@ -61,11 +61,11 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
         return entries.Select(ToCandidate).ToList();
     }
 
-    internal IQueryable<FeatureResearchSearchEntry> CreateTextQuery(
+    internal IQueryable<FeatureRecordSearchEntry> CreateTextQuery(
         List<string> keywords,
         int candidateCount
     ) =>
-        dbContext.Set<FeatureResearchSearchEntry>()
+        dbContext.Set<FeatureRecordSearchEntry>()
             .AsNoTracking()
             .Where(
                 entry => entry.SearchVector.Matches(
@@ -85,11 +85,11 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             )
             .ThenByDescending(entry => entry.UpdatedAt)
             .ThenBy(entry => entry.FeatureAggregateId)
-            .ThenBy(entry => entry.ResearchDiscoveryId)
+            .ThenBy(entry => entry.RecordId)
             .ThenBy(entry => entry.ChunkIndex)
             .Take(candidateCount);
 
-    public async Task<List<FeatureResearchSearchCandidate>> SearchVector(
+    public async Task<List<FeatureRecordSearchCandidate>> SearchVector(
         ImmutableArray<float> embedding,
         int candidateCount,
         CancellationToken cancellationToken = default
@@ -101,24 +101,24 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
         return entries.Select(ToCandidate).ToList();
     }
 
-    internal IQueryable<FeatureResearchSearchEntry> CreateVectorQuery(
+    internal IQueryable<FeatureRecordSearchEntry> CreateVectorQuery(
         ImmutableArray<float> embedding,
         int candidateCount
     )
     {
         var vector = new Vector(embedding.ToArray());
 
-        return dbContext.Set<FeatureResearchSearchEntry>()
+        return dbContext.Set<FeatureRecordSearchEntry>()
             .AsNoTracking()
             .OrderBy(entry => entry.Embedding.CosineDistance(vector))
             .ThenByDescending(entry => entry.UpdatedAt)
             .ThenBy(entry => entry.FeatureAggregateId)
-            .ThenBy(entry => entry.ResearchDiscoveryId)
+            .ThenBy(entry => entry.RecordId)
             .ThenBy(entry => entry.ChunkIndex)
             .Take(candidateCount);
     }
 
-    public async Task<List<FeatureResearchSearchCandidate>> SearchTextBySource(
+    public async Task<List<FeatureRecordSearchCandidate>> SearchTextBySource(
         List<string> keywords,
         int sourceCount,
         int candidateCount,
@@ -134,12 +134,12 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
         return entries.Select(ToCandidate).ToList();
     }
 
-    internal IQueryable<FeatureResearchSearchEntry> CreateTextSourceQuery(
+    internal IQueryable<FeatureRecordSearchEntry> CreateTextSourceQuery(
         List<string> keywords,
         int sourceCount,
         int candidateCount
     ) =>
-        dbContext.Set<FeatureResearchSearchEntry>()
+        dbContext.Set<FeatureRecordSearchEntry>()
             .FromSqlRaw(
                 SourceSearchSql.Text(Table, SourceColumns, TieBreakers),
                 SourceSearchSql.TextParameters(
@@ -150,7 +150,7 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             )
             .AsNoTracking();
 
-    public async Task<List<FeatureResearchSearchCandidate>> SearchVectorBySource(
+    public async Task<List<FeatureRecordSearchCandidate>> SearchVectorBySource(
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount,
@@ -166,12 +166,12 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
         return entries.Select(ToCandidate).ToList();
     }
 
-    internal IQueryable<FeatureResearchSearchEntry> CreateVectorSourceQuery(
+    internal IQueryable<FeatureRecordSearchEntry> CreateVectorSourceQuery(
         ImmutableArray<float> embedding,
         int sourceCount,
         int candidateCount
     ) =>
-        dbContext.Set<FeatureResearchSearchEntry>()
+        dbContext.Set<FeatureRecordSearchEntry>()
             .FromSqlRaw(
                 SourceSearchSql.Vector(Table, SourceColumns, TieBreakers),
                 SourceSearchSql.VectorParameters(
@@ -182,14 +182,15 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             )
             .AsNoTracking();
 
-    private static FeatureResearchSearchEntry ToEntry(
-        FeatureResearchSearchDocument document
+    private static FeatureRecordSearchEntry ToEntry(
+        FeatureRecordSearchDocument document
     ) =>
         new()
         {
             FeatureAggregateId = document.FeatureAggregateId.Value,
             FeatureName = document.FeatureName,
-            ResearchDiscoveryId = document.ResearchDiscoveryId,
+            RecordId = document.RecordId,
+            RecordType = document.RecordType,
             Title = document.Title,
             SourceType = document.SourceType,
             SourceReference = document.SourceReference,
@@ -199,13 +200,14 @@ internal sealed class PostgreSqlFeatureResearchSearchRepository(
             Embedding = new Vector(document.Embedding.ToArray())
         };
 
-    private static FeatureResearchSearchCandidate ToCandidate(
-        FeatureResearchSearchEntry entry
+    private static FeatureRecordSearchCandidate ToCandidate(
+        FeatureRecordSearchEntry entry
     ) =>
         new(
             AggregateId.FromDatabaseGuid(entry.FeatureAggregateId),
             entry.FeatureName,
-            entry.ResearchDiscoveryId,
+            entry.RecordId,
+            entry.RecordType,
             entry.Title,
             entry.SourceType,
             entry.SourceReference,

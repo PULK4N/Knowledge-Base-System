@@ -1,0 +1,37 @@
+.link-picker {
+  display: grid;
+  gap: 0.35rem;
+  max-height: 14rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.link-picker legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.link-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  cursor: pointer;
+}
+
+.link-option input {
+  flex: none;
+  width: auto;
+}
+
+.link-label {
+  overflow-wrap: anywhere;
+}
+
+.link-detail,
+.link-empty {
+  color: var(--muted);
+  font-size: 0.85em;
+}

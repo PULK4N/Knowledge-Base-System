@@ -1,14 +1,10 @@
 import { convertToParamMap } from '@angular/router';
+import { FeaturePlan, FeatureRecord } from '../data-access/feature.models';
 import {
-  FeaturePlan,
-  FeatureRecord,
-  FeatureResearchDiscovery,
-} from '../data-access/feature.models';
-import {
+  featureRecordTypes,
   parseFeatureDetailListState,
   selectFeaturePlans,
   selectFeatureRecords,
-  selectFeatureResearch,
 } from './feature-detail-list-state';
 
 const plans: readonly FeaturePlan[] = [
@@ -21,6 +17,7 @@ const plans: readonly FeaturePlan[] = [
     status: 'NotStarted',
     branch: null,
     previousPlanId: null,
+    recordIds: [],
     createdAt: '2026-08-20T10:00:00Z',
     updatedAt: '2026-08-21T10:00:00Z',
   },
@@ -33,14 +30,16 @@ const plans: readonly FeaturePlan[] = [
     status: 'NotStarted',
     branch: null,
     previousPlanId: null,
+    recordIds: [],
     createdAt: '2026-08-22T10:00:00Z',
     updatedAt: '2026-08-23T10:00:00Z',
   },
 ];
 
-const research: readonly FeatureResearchDiscovery[] = [
+const records: readonly FeatureRecord[] = [
   {
     id: 'research-1',
+    type: 'research',
     title: 'Routed list state',
     content: 'The route owns list state.',
     sourceType: 'Code',
@@ -50,6 +49,7 @@ const research: readonly FeatureResearchDiscovery[] = [
   },
   {
     id: 'research-2',
+    type: 'research',
     title: 'Shareable browser state',
     content: 'The browser URL is shareable.',
     sourceType: 'Web',
@@ -57,44 +57,44 @@ const research: readonly FeatureResearchDiscovery[] = [
     createdAt: '2026-08-21T10:00:00Z',
     updatedAt: '2026-08-22T10:00:00Z',
   },
-];
-
-const records: readonly FeatureRecord[] = [
   {
     id: 'record-1',
-    userMessage: 'Keep this original.',
-    aiAnswer: 'Done.',
+    type: 'conversation',
+    title: 'Keep this original',
+    content: '## User\n\nKeep this original.\n\n## AI\n\nDone.',
+    sourceType: null,
+    sourceReference: '',
     createdAt: '2026-08-20T10:00:00Z',
-    updatedAt: '2026-08-20T10:00:00Z',
-  },
-  {
-    id: 'record-2',
-    userMessage: 'Revise the frontend.',
-    aiAnswer: 'Updated.',
-    createdAt: '2026-08-21T10:00:00Z',
-    updatedAt: '2026-08-22T10:00:00Z',
+    updatedAt: '2026-08-23T10:00:00Z',
   },
 ];
 
 describe('Feature detail client list state', () => {
-  it('parses namespaced tab state from query parameters', () => {
+  it('parses namespaced record state and lowercases the type filter', () => {
     const state = parseFeatureDetailListState(
       convertToParamMap({
-        tab: 'research',
-        researchSearch: 'route',
-        researchSource: 'Code',
-        researchSort: 'sourceType',
-        researchDirection: 'Ascending',
+        tab: 'records',
+        recordSearch: 'route',
+        recordType: 'Research',
+        recordSort: 'type',
+        recordDirection: 'Ascending',
       }),
     );
 
-    expect(state.activeTab).toBe('research');
-    expect(state.research).toEqual({
+    expect(state.activeTab).toBe('records');
+    expect(state.records).toEqual({
       search: 'route',
-      filter: 'Code',
-      sortBy: 'sourceType',
+      filter: 'research',
+      sortBy: 'type',
       sortDirection: 'Ascending',
     });
+  });
+
+  it('falls back to the overview for removed tabs', () => {
+    expect(
+      parseFeatureDetailListState(convertToParamMap({ tab: 'research' }))
+        .activeTab,
+    ).toBe('overview');
   });
 
   it('searches, filters, and sorts plans in memory', () => {
@@ -108,38 +108,26 @@ describe('Feature detail client list state', () => {
     ).toEqual(['plan-2']);
   });
 
-  it('searches provenance and filters research by source', () => {
-    expect(
-      selectFeatureResearch(research, {
-        search: 'feature-details',
-        filter: 'Code',
-        sortBy: 'updatedAt',
-        sortDirection: 'Descending',
-      }).map(discovery => discovery.id),
-    ).toEqual(['research-1']);
-  });
+  it.each([
+    ['feature-details', 'research', 'updatedAt', ['research-1']],
+    ['', 'conversation', 'updatedAt', ['record-1']],
+    ['', 'All', 'type', ['record-1', 'research-1', 'research-2']],
+    ['shareable browser', 'All', 'title', ['research-2']],
+  ] as const)(
+    'searches %j, filters by type %j, and sorts by %j',
+    (search, filter, sortBy, expected) => {
+      expect(
+        selectFeatureRecords(records, {
+          search,
+          filter,
+          sortBy,
+          sortDirection: 'Ascending',
+        }).map(record => record.id),
+      ).toEqual(expected);
+    },
+  );
 
-  it('searches and sorts research by title', () => {
-    expect(
-      selectFeatureResearch(research, {
-        search: 'shareable browser',
-        filter: 'All',
-        sortBy: 'title',
-        sortDirection: 'Ascending',
-      }).map(discovery => discovery.id),
-    ).toEqual(['research-2']);
-  });
-
-  it('filters edited conversations and sorts them without mutating input', () => {
-    const originalOrder = records.map(record => record.id);
-    const result = selectFeatureRecords(records, {
-      search: '',
-      filter: 'Edited',
-      sortBy: 'updatedAt',
-      sortDirection: 'Descending',
-    });
-
-    expect(result.map(record => record.id)).toEqual(['record-2']);
-    expect(records.map(record => record.id)).toEqual(originalOrder);
+  it('lists each record type once, sorted', () => {
+    expect(featureRecordTypes(records)).toEqual(['conversation', 'research']);
   });
 });
