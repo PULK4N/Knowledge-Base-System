@@ -1,4 +1,5 @@
 using ActionModule.Shared.Models;
+using EmbeddingModule;
 using EventSourcing.Shared.Models;
 using MemoryModule.Application.Queries;
 using MemoryModule.Domain.Models;
@@ -37,6 +38,11 @@ public sealed class SearchMemoryToolCallsQueryTests
             PageSize = 5,
             Search = "bash",
             ToolName = " Bash ",
+            MemoryId = MemoryId.Value,
+            ThreadId = ThreadIdentifier.Value,
+            PromptId = PromptIdentifier.Value,
+            InputKeywords = [" git ", "status"],
+            OutputKeywords = ["fatal"],
             SortBy = MemoryToolCallSortField.ToolName,
             SortDirection = SortDirection.Ascending
         };
@@ -50,6 +56,11 @@ public sealed class SearchMemoryToolCallsQueryTests
         Assert.Equal(5, request.Page.Size);
         Assert.Equal("bash", request.Search);
         Assert.Equal("Bash", request.Filters.ToolName);
+        Assert.Equal(MemoryId, request.Filters.MemoryAggregateId);
+        Assert.Equal(ThreadIdentifier, request.Filters.ThreadId);
+        Assert.Equal(PromptIdentifier, request.Filters.PromptId);
+        Assert.Equal(["git", "status"], request.Filters.InputKeywords);
+        Assert.Equal(["fatal"], request.Filters.OutputKeywords);
         Assert.Equal(MemoryToolCallSortField.ToolName, request.Sort.Field);
         Assert.Equal(SortDirection.Ascending, request.Sort.Direction);
     }
@@ -93,6 +104,50 @@ public sealed class SearchMemoryToolCallsQueryTests
             SortBy = sortBy,
             SortDirection = sortDirection
         };
+
+        Assert.False(await query.CanExecute(Executor));
+    }
+
+    [Fact]
+    public async Task Search_without_chat_prompt_or_keywords_leaves_them_unfiltered()
+    {
+        var repository = CreateRepository();
+
+        await new SearchMemoryToolCallsQuery(repository).Execute(Executor);
+
+        var request = Assert.IsType<
+            EntityQuery<MemoryToolCallFilters, MemoryToolCallSortField>
+        >(repository.LastSearchRequest);
+        Assert.Null(request.Filters.MemoryAggregateId);
+        Assert.Null(request.Filters.ThreadId);
+        Assert.Null(request.Filters.PromptId);
+        Assert.Empty(request.Filters.InputKeywords!);
+        Assert.Empty(request.Filters.OutputKeywords!);
+    }
+
+    [Theory]
+    [InlineData(" ", false)]
+    [InlineData(" ", true)]
+    [InlineData("long", false)]
+    [InlineData("many", true)]
+    public async Task Search_rejects_invalid_input_or_output_keywords(
+        string keywordKind,
+        bool isOutput
+    )
+    {
+        List<string> keywords = keywordKind switch
+        {
+            "long" => [new string('a', SearchKeywordLimits.MaximumKeywordLength + 1)],
+            "many" => Enumerable
+                .Repeat("word", SearchKeywordLimits.MaximumCount + 1)
+                .ToList(),
+            _ => [keywordKind]
+        };
+        var query = new SearchMemoryToolCallsQuery(CreateRepository());
+        if (isOutput)
+            query.OutputKeywords = keywords;
+        else
+            query.InputKeywords = keywords;
 
         Assert.False(await query.CanExecute(Executor));
     }

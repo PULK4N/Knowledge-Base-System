@@ -144,6 +144,11 @@ public sealed class MemoriesController(
         query.PageSize = request.PageSize;
         query.Search = request.Search;
         query.ToolName = request.ToolName;
+        query.MemoryId = request.MemoryId;
+        query.ThreadId = request.ThreadId;
+        query.PromptId = request.PromptId;
+        query.InputKeywords = WithoutBlankKeywords(request.InputKeywords);
+        query.OutputKeywords = WithoutBlankKeywords(request.OutputKeywords);
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }
@@ -156,10 +161,7 @@ public sealed class MemoriesController(
         query.Page = request.Page;
         query.PageSize = request.PageSize;
         query.Search = request.Query;
-        query.Keywords = request.Keywords
-            .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
-            .Select(keyword => keyword.Trim())
-            .ToList();
+        query.Keywords = WithoutBlankKeywords(request.Keywords);
         query.Model = request.Model;
         query.HasSummary = request.HasSummary;
         query.MinimumPromptCount = request.MinimumPromptCount;
@@ -168,4 +170,10 @@ public sealed class MemoriesController(
         query.SortBy = request.SortBy;
         query.SortDirection = request.SortDirection;
     }
+
+    private static List<string> WithoutBlankKeywords(List<string> keywords) =>
+        keywords
+            .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
+            .Select(keyword => keyword.Trim())
+            .ToList();
 }

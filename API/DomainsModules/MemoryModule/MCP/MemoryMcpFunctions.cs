@@ -13,6 +13,9 @@ namespace MemoryModule.MCP;
 public static class MemoryMcpFunctions
 {
     private const int TimeSearchPageSize = 10;
+    private const int ToolCallSearchPageSize = 10;
+    private const int DefaultToolCallPayloadLength = 4000;
+    private const int MaximumToolCallPayloadLength = 100_000;
     private const string FromDescription =
         "Start of the range as an ISO 8601 timestamp, for example 2026-10-16T08:00:00Z. A timestamp without a zone is read as UTC.";
     private const string ToDescription =
@@ -64,6 +67,23 @@ public static class MemoryMcpFunctions
                 >)GetConversationText,
                 "memory_conversation_get",
                 "Gets the chat text of one memory in conversation order, without raw hook payloads. Returns at most 'limit' messages starting at 'offset', plus the total message count and whether more messages follow. Page through a long chat by increasing offset."
+            ),
+            CreateFunction(
+                (Func<
+                    IServiceProvider,
+                    List<string>?,
+                    List<string>?,
+                    Guid?,
+                    Guid?,
+                    Guid?,
+                    string?,
+                    int,
+                    int,
+                    int,
+                    Task<PagedResult<MemoryToolCallSearchMcpItem>>
+                >)SearchToolCalls,
+                "memory_tool_call_search",
+                "Full-text search over recorded tool calls, with the tool input and the tool output searched separately. inputKeywords must all appear in the tool input, such as a command, file path, or query; outputKeywords must all appear in the tool output, such as an error message. Optional memoryId or threadId limit the search to one chat, promptId to one prompt, and toolName to tool names containing that text. With keywords, the most relevant calls come first; otherwise the newest come first. Each result has its memory, thread, and prompt IDs and the payload with tool_input and tool_response, cut to payloadLength characters."
             ),
             CreateFunction(
                 (Func<
@@ -150,6 +170,69 @@ public static class MemoryMcpFunctions
                 search.SortDirection = SortDirection.Descending;
             }
         );
+
+    private static async Task<
+        PagedResult<MemoryToolCallSearchMcpItem>
+    > SearchToolCalls(
+        IServiceProvider services,
+        [Description("Words that must all appear in the tool input. Pass only distinctive terms.")]
+        List<string>? inputKeywords = null,
+        [Description("Words that must all appear in the tool output. Pass only distinctive terms.")]
+        List<string>? outputKeywords = null,
+        [Description("Optional memory ID of one chat, as returned by memory_search or memory_search_by_time.")]
+        Guid? memoryId = null,
+        [Description("Optional thread (session) ID of one chat.")]
+        Guid? threadId = null,
+        [Description("Optional prompt ID, to search the tool calls of one prompt.")]
+        Guid? promptId = null,
+        [Description("Optional text the tool name must contain, for example Bash or skill_get.")]
+        string? toolName = null,
+        int page = Pagination.DefaultPage,
+        [Description("Tool calls per page, from 1 to 100.")]
+        int pageSize = ToolCallSearchPageSize,
+        [Description("Maximum payload characters returned per tool call, from 1 to 100000.")]
+        int payloadLength = DefaultToolCallPayloadLength
+    )
+    {
+        if (payloadLength is < 1 or > MaximumToolCallPayloadLength)
+            throw new ArgumentOutOfRangeException(
+                nameof(payloadLength),
+                $"payloadLength must be from 1 to {MaximumToolCallPayloadLength}."
+            );
+
+        var result = await MemoryMcpActionExecutor.ExecuteQuery<
+            SearchMemoryToolCallsQuery,
+            PagedResult<MemoryToolCallSearchItemDto>
+        >(
+            services,
+            search =>
+            {
+                search.InputKeywords = WithoutBlankKeywords(inputKeywords);
+                search.OutputKeywords = WithoutBlankKeywords(outputKeywords);
+                search.MemoryId = memoryId;
+                search.ThreadId = threadId;
+                search.PromptId = promptId;
+                search.ToolName = toolName;
+                search.Page = page;
+                search.PageSize = pageSize;
+                search.SortBy = MemoryToolCallSortField.Relevance;
+                search.SortDirection = SortDirection.Descending;
+            }
+        );
+
+        return result.Map(
+            toolCall => MemoryToolCallSearchMcpItem.FromDto(
+                toolCall,
+                payloadLength
+            )
+        );
+    }
+
+    private static List<string> WithoutBlankKeywords(List<string>? keywords) =>
+        keywords?
+            .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
+            .ToList()
+        ?? [];
 
     private static Task<List<string>> GetModels(IServiceProvider services) =>
         MemoryMcpActionExecutor.ExecuteQuery<

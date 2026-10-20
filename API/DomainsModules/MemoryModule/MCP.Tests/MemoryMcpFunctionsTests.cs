@@ -1,3 +1,4 @@
+using MemoryModule.Application.DTOs;
 using ModelContextProtocol.Server;
 
 namespace MemoryModule.MCP.Tests;
@@ -16,6 +17,7 @@ public sealed class MemoryMcpFunctionsTests
                 "memory_search_by_time",
                 "memory_models_list",
                 "memory_conversation_get",
+                "memory_tool_call_search",
                 "memory_summary_add"
             },
             functions.Select(function => function.Name)
@@ -32,6 +34,67 @@ public sealed class MemoryMcpFunctionsTests
             Assert.Equal(function.Name, tool.ProtocolTool.Name);
             Assert.Equal(function.JsonSchema, tool.ProtocolTool.InputSchema);
         }
+    }
+
+    [Fact]
+    public void Tool_call_search_exposes_only_optional_filters()
+    {
+        var function = MemoryMcpFunctions.Create().Single(
+            function => function.Name == "memory_tool_call_search"
+        );
+        var properties = function.JsonSchema.GetProperty("properties");
+
+        Assert.False(function.JsonSchema.TryGetProperty("required", out var required)
+            && required.GetArrayLength() > 0);
+        foreach (
+            var name in new List<string>
+            {
+                "inputKeywords",
+                "outputKeywords",
+                "memoryId",
+                "threadId",
+                "promptId",
+                "toolName",
+                "page",
+                "pageSize",
+                "payloadLength"
+            }
+        )
+            Assert.True(properties.TryGetProperty(name, out _), name);
+        Assert.Equal(
+            4000,
+            properties.GetProperty("payloadLength")
+                .GetProperty("default")
+                .GetInt32()
+        );
+    }
+
+    [Theory]
+    [InlineData(5, "{\"a\":", true)]
+    [InlineData(100, "{\"a\":1}", false)]
+    public void Tool_call_search_item_cuts_the_payload_to_the_limit(
+        int payloadLength,
+        string expectedPayload,
+        bool expectedTruncated
+    )
+    {
+        var item = MemoryToolCallSearchMcpItem.FromDto(
+            new MemoryToolCallSearchItemDto(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                0,
+                DateTime.UnixEpoch,
+                "Bash",
+                "tool-use-1",
+                "List files",
+                "{\"a\":1}"
+            ),
+            payloadLength
+        );
+
+        Assert.Equal(expectedPayload, item.PayloadJson);
+        Assert.Equal(expectedTruncated, item.PayloadTruncated);
     }
 
     [Fact]

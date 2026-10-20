@@ -470,9 +470,30 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasIndex(toolCall => toolCall.PayloadJson)
                     .HasMethod("GIN")
                     .HasOperators("gin_trgm_ops");
+                memory.Property(toolCall => toolCall.InputText).IsRequired();
+                memory.Property(toolCall => toolCall.OutputText).IsRequired();
+                memory
+                    .HasGeneratedTsVectorColumn(
+                        toolCall => toolCall.InputSearchVector,
+                        "simple",
+                        toolCall => new { toolCall.InputText }
+                    )
+                    .HasIndex(toolCall => toolCall.InputSearchVector)
+                    .HasMethod("GIN");
+                memory
+                    .HasGeneratedTsVectorColumn(
+                        toolCall => toolCall.OutputSearchVector,
+                        "simple",
+                        toolCall => new { toolCall.OutputText }
+                    )
+                    .HasIndex(toolCall => toolCall.OutputSearchVector)
+                    .HasMethod("GIN");
                 memory.HasIndex(
                     toolCall =>
                         new { toolCall.MemoryAggregateId, toolCall.Timestamp }
+                );
+                memory.HasIndex(
+                    toolCall => new { toolCall.PromptId, toolCall.ToolCallIndex }
                 );
             }
         );

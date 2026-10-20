@@ -1,3 +1,5 @@
+using NpgsqlTypes;
+
 namespace PostgreSqlModule;
 
 internal sealed class MemoryToolCallEntry
@@ -11,4 +13,8 @@ internal sealed class MemoryToolCallEntry
     public string ToolUseId { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string PayloadJson { get; set; } = string.Empty;
+    public string InputText { get; set; } = string.Empty;
+    public string OutputText { get; set; } = string.Empty;
+    public NpgsqlTsVector InputSearchVector { get; set; } = null!;
+    public NpgsqlTsVector OutputSearchVector { get; set; } = null!;
 }

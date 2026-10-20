@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using EmbeddingModule;
+using ActionModule.Persistence;
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Persistence;
 using AttachmentsModule.Application;
@@ -8,6 +9,7 @@ using EventSourcing.Persistence;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Persistence.Models;
 using EventSourcing.Shared.Interfaces;
+using EventSourcing.Shared.Models;
 using ActionModule.Shared.Models;
 using FeatureModule.Contracts;
 using FeatureModule.Persistence.Models;
@@ -20,6 +22,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MemoryModule.Persistence;
+using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Interfaces;
@@ -113,6 +116,33 @@ public sealed class InjectionSetupTests
                 operation => operation is SqlOperation
                     or InsertDataOperation
             )
+        );
+    }
+
+    [Fact]
+    public void MemoryToolCallFullTextMigration_adds_text_columns_before_their_generated_vectors()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddMemoryToolCallFullTextSearch();
+
+        var addedColumns = migration.UpOperations
+            .OfType<AddColumnOperation>()
+            .Select(operation => operation.Name)
+            .ToList();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+        Assert.True(
+            addedColumns.IndexOf("InputText")
+                < addedColumns.IndexOf("InputSearchVector")
+        );
+        Assert.True(
+            addedColumns.IndexOf("OutputText")
+                < addedColumns.IndexOf("OutputSearchVector")
         );
     }
 
@@ -816,6 +846,73 @@ public sealed class InjectionSetupTests
     }
 
     [Fact]
+    public void MemoryToolCallQueries_filter_by_chat_prompt_and_separate_input_output_text()
+    {
+        using var context = CreateEventSourcingContext();
+        var filters = new MemoryToolCallFilters(
+            "Bash",
+            AggregateId.FromDatabaseGuid(Guid.NewGuid()),
+            new ThreadId(Guid.NewGuid()),
+            new PromptId(Guid.NewGuid()),
+            ["git", "status"],
+            ["fatal"]
+        );
+
+        var sql = CreateMemoryToolCallPageQuery(
+            context,
+            filters,
+            MemoryToolCallSortField.Relevance
+        ).ToQueryString();
+
+        Assert.Contains("\"InputSearchVector\" @@ plainto_tsquery", sql);
+        Assert.Contains("\"OutputSearchVector\" @@ plainto_tsquery", sql);
+        Assert.Contains("ts_rank_cd(m.\"InputSearchVector\"", sql);
+        Assert.Contains("ts_rank_cd(m.\"OutputSearchVector\"", sql);
+        Assert.Contains("\"MemoryAggregateId\" = ", sql);
+        Assert.Contains("\"ThreadId\" = ", sql);
+        Assert.Contains("\"PromptId\" = ", sql);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void MemoryToolCallRelevance_ranks_only_the_searched_sides(
+        bool hasInputKeywords,
+        bool hasOutputKeywords
+    )
+    {
+        using var context = CreateEventSourcingContext();
+        var filters = new MemoryToolCallFilters(
+            InputKeywords: hasInputKeywords ? ["git"] : [],
+            OutputKeywords: hasOutputKeywords ? ["fatal"] : []
+        );
+
+        var sql = CreateMemoryToolCallPageQuery(
+            context,
+            filters,
+            MemoryToolCallSortField.Relevance
+        ).ToQueryString();
+        var orderBy = sql[sql.IndexOf("ORDER BY", StringComparison.Ordinal)..];
+
+        Assert.Equal(
+            hasInputKeywords,
+            orderBy.Contains("\"InputSearchVector\"")
+        );
+        Assert.Equal(
+            hasOutputKeywords,
+            orderBy.Contains("\"OutputSearchVector\"")
+        );
+        Assert.Equal(
+            !hasInputKeywords && !hasOutputKeywords,
+            orderBy.StartsWith(
+                "ORDER BY m.\"Timestamp\" DESC",
+                StringComparison.Ordinal
+            )
+        );
+    }
+
+    [Fact]
     public void MemorySummaryQueries_group_models_and_filter_sessions_by_model()
     {
         var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
@@ -1150,4 +1247,35 @@ public sealed class InjectionSetupTests
                 && index.Properties.Count == propertyCount
         );
     }
+
+    private static PostgreSqlEventSourcingDbContext CreateEventSourcingContext()
+    {
+        var options = new DbContextOptionsBuilder<EventSourcingDbContext>();
+        PostgreSqlDbContextOptions.Configure(
+            options,
+            PostgreSqlModuleDefaults.LocalDevelopmentConnectionString,
+            PostgreSqlModuleDefaults.EventSourcingMigrationsHistoryTable
+        );
+
+        return new PostgreSqlEventSourcingDbContext(options.Options);
+    }
+
+    private static IQueryable<MemoryToolCall> CreateMemoryToolCallPageQuery(
+        PostgreSqlEventSourcingDbContext context,
+        MemoryToolCallFilters filters,
+        MemoryToolCallSortField sortBy
+    ) =>
+        EntityQueryExecutor.BuildPageQuery(
+            context.Set<MemoryToolCallEntry>(),
+            new EntityQuery<MemoryToolCallFilters, MemoryToolCallSortField>(
+                new PageRequest(1, 10),
+                null,
+                filters,
+                new SortRequest<MemoryToolCallSortField>(
+                    sortBy,
+                    SortDirection.Descending
+                )
+            ),
+            new MemoryToolCallQueryProfile(filters)
+        );
 }

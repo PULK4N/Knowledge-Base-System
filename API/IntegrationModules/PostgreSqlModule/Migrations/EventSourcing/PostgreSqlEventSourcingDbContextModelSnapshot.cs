@@ -753,6 +753,28 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<NpgsqlTsVector>("InputSearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "simple")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "InputText" });
+
+                    b.Property<string>("InputText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<NpgsqlTsVector>("OutputSearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "simple")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "OutputText" });
+
+                    b.Property<string>("OutputText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("PayloadJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -778,6 +800,14 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Description"), "GIN");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Description"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex("InputSearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("InputSearchVector"), "GIN");
+
+                    b.HasIndex("OutputSearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("OutputSearchVector"), "GIN");
+
                     b.HasIndex("PayloadJson");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PayloadJson"), "GIN");
@@ -788,6 +818,8 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.HasIndex("ToolName");
 
                     b.HasIndex("MemoryAggregateId", "Timestamp");
+
+                    b.HasIndex("PromptId", "ToolCallIndex");
 
                     b.HasIndex(new[] { "ToolName" }, "IX_MemoryToolCallEntries_ToolName_Trigram");
 

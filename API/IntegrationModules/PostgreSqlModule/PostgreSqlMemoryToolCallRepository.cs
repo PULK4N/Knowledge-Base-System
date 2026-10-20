@@ -12,8 +12,6 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
     EventSourcingDbContext dbContext
 ) : IMemoryToolCallRepository
 {
-    private static readonly MemoryToolCallQueryProfile QueryProfile = new();
-
     public async Task<List<MemoryToolCall>> Get(
         AggregateId memoryAggregateId,
         CancellationToken cancellationToken = default
@@ -40,7 +38,7 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
         EntityQueryExecutor.Execute(
             dbContext.Set<MemoryToolCallEntry>(),
             request,
-            QueryProfile,
+            new MemoryToolCallQueryProfile(request.Filters),
             cancellationToken
         );
 
@@ -79,8 +77,12 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
             await transaction.CommitAsync(cancellationToken);
     }
 
-    private static MemoryToolCallEntry ToEntry(MemoryToolCall toolCall) =>
-        new()
+    private static MemoryToolCallEntry ToEntry(MemoryToolCall toolCall)
+    {
+        var (inputText, outputText) =
+            MemoryToolCallSearchText.From(toolCall.PayloadJson);
+
+        return new MemoryToolCallEntry
         {
             MemoryAggregateId = toolCall.MemoryAggregateId.Value,
             PromptId = toolCall.PromptId.Value,
@@ -90,8 +92,11 @@ internal sealed class PostgreSqlMemoryToolCallRepository(
             ToolName = toolCall.ToolName,
             ToolUseId = toolCall.ToolUseId,
             Description = toolCall.Description,
-            PayloadJson = toolCall.PayloadJson
+            PayloadJson = toolCall.PayloadJson,
+            InputText = inputText,
+            OutputText = outputText
         };
+    }
 
     private static MemoryToolCall ToReadModel(MemoryToolCallEntry toolCall) =>
         new(

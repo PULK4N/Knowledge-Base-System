@@ -57,6 +57,16 @@ public sealed record SearchMemoryToolCallsRequest : PagedSearchRequest
     [StringLength(EntityQueryLimits.MaximumSearchLength)]
     public string? ToolName { get; init; }
 
+    public Guid? MemoryId { get; init; }
+    public Guid? ThreadId { get; init; }
+    public Guid? PromptId { get; init; }
+
+    [MaxLength(SearchKeywordLimits.MaximumCount)]
+    public List<string> InputKeywords { get; init; } = [];
+
+    [MaxLength(SearchKeywordLimits.MaximumCount)]
+    public List<string> OutputKeywords { get; init; } = [];
+
     [EnumDataType(typeof(MemoryToolCallSortField))]
     public MemoryToolCallSortField SortBy { get; init; }
 

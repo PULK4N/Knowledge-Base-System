@@ -22,14 +22,29 @@ public sealed record MemoryToolCall(
 );
 
 /// <summary>
-/// Filters allow callers to narrow tool-call content by tool name.
+/// Filters narrow tool calls by tool name, by the chat (memory or thread) and
+/// prompt they belong to, and by full-text keywords. Input keywords must all
+/// appear in the tool input and output keywords must all appear in the tool
+/// response; an empty list leaves that side unfiltered.
 /// </summary>
-public sealed record MemoryToolCallFilters(string? ToolName = null);
+public sealed record MemoryToolCallFilters(
+    string? ToolName = null,
+    AggregateId? MemoryAggregateId = null,
+    ThreadId? ThreadId = null,
+    PromptId? PromptId = null,
+    List<string>? InputKeywords = null,
+    List<string>? OutputKeywords = null
+);
 
 public enum MemoryToolCallSortField
 {
     Timestamp,
-    ToolName
+    ToolName,
+    /// <summary>
+    /// Full-text rank of the input and output keywords. Without keywords it
+    /// falls back to timestamp order.
+    /// </summary>
+    Relevance
 }
 
 public interface IMemoryToolCallRepository
