@@ -196,7 +196,9 @@ public sealed class FeatureRecordSearchProjector(
                     ["contentType"] = plan.ContentType.ToString(),
                     ["status"] = plan.Status.ToString(),
                     ["additionalInfo"] = plan.AdditionalInfo,
-                    ["branch"] = plan.Branch?.Name,
+                    ["branches"] = plan.Branches
+                        .Select(branch => branch.Name)
+                        .ToList(),
                     ["createdAt"] = plan.CreatedAt,
                     ["updatedAt"] = plan.UpdatedAt
                 }),

@@ -10,12 +10,25 @@ const base: FeaturePlanBranch = {
       name: 'feature/plans-api',
       description: 'Backend',
       subBranches: [
-        { name: 'feature/plans-api-tests', description: '', subBranches: [] },
+        { name: 'feature/plans-api-tests', description: '', subBranches: [], sources: [] },
       ],
+      sources: [],
     },
-    { name: 'feature/plans-ui', description: '', subBranches: [] },
+    { name: 'feature/plans-ui', description: '', subBranches: [], sources: [] },
   ],
+  sources: [],
 };
+const secondBase: FeaturePlanBranch = {
+  name: 'feature/plans-web',
+  description: '',
+  subBranches: [],
+  sources: [{ planId: 'x1', branchName: 'x1-api' }],
+};
+const sourceOptions = [
+  { id: 'feature', label: 'main', detail: 'feature branch' },
+  { id: 'x1:x1-api', label: 'x1-api', detail: 'Plan X1' },
+  { id: 'x3:x3-web', label: 'x3-web', detail: 'Plan X3' },
+];
 
 describe('FeaturePlanBranchTreeComponent', () => {
   let fixture: ComponentFixture<FeaturePlanBranchTreeComponent>;
@@ -26,7 +39,13 @@ describe('FeaturePlanBranchTreeComponent', () => {
       imports: [FeaturePlanBranchTreeComponent],
     }).compileComponents();
     fixture = TestBed.createComponent(FeaturePlanBranchTreeComponent);
-    fixture.componentRef.setInput('branch', base);
+    fixture.componentRef.setInput('branches', [base]);
+    fixture.componentRef.setInput('sourceOptions', sourceOptions);
+    fixture.componentRef.setInput(
+      'describeSources',
+      (branch: FeaturePlanBranch) =>
+        branch.sources.map(source => source.branchName).join(', ') || 'main',
+    );
     fixture.detectChanges();
     element = fixture.nativeElement as HTMLElement;
   });
@@ -96,6 +115,7 @@ describe('FeaturePlanBranchTreeComponent', () => {
       branchName: 'feature/plans-ui-tests',
       description: 'UI tests',
       parentBranchName: 'feature/plans-ui',
+      sources: [],
     });
   });
 
@@ -117,12 +137,75 @@ describe('FeaturePlanBranchTreeComponent', () => {
   });
 
   it('offers to add a base branch to a plan without one', () => {
-    fixture.componentRef.setInput('branch', null);
+    fixture.componentRef.setInput('branches', []);
     fixture.detectChanges();
 
     expect(element.querySelector('.branch-tree')).toBeNull();
     expect(button(element, 'Add base branch')).toBeDefined();
   });
+
+  it('shows every base branch with its sources and lets a base branch be removed when another remains', () => {
+    fixture.componentRef.setInput('branches', [base, secondBase]);
+    fixture.detectChanges();
+
+    expect(element.querySelectorAll('.base-badge')).toHaveLength(2);
+    expect(rowFor('feature/plans')?.querySelector('.branch-sources')?.textContent).toContain('main');
+    expect(rowFor('feature/plans-web')?.querySelector('.branch-sources')?.textContent).toContain('x1-api');
+    expect(button(rowFor('feature/plans')!, 'Remove')).toBeDefined();
+  });
+
+  it('adds another base branch created from branches of two plans', async () => {
+    const added = vi.fn();
+    fixture.componentInstance.branchAdded.subscribe(added);
+
+    button(element, 'Add base branch')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    setValue('.branch-form [name="name"]', ' x2 ');
+    pick('x1-api');
+    fixture.detectChanges();
+    pick('x3-web');
+    fixture.detectChanges();
+    element.querySelector('.branch-form')?.dispatchEvent(new Event('submit'));
+
+    expect(added).toHaveBeenCalledWith({
+      branchName: 'x2',
+      description: '',
+      parentBranchName: null,
+      sources: [
+        { planId: 'x1', branchName: 'x1-api' },
+        { planId: 'x3', branchName: 'x3-web' },
+      ],
+    });
+  });
+
+  it('edits the sources of a base branch starting from the current ones', () => {
+    const sourcesSet = vi.fn();
+    fixture.componentInstance.sourcesSet.subscribe(sourcesSet);
+    fixture.componentRef.setInput('branches', [base, secondBase]);
+    fixture.detectChanges();
+
+    button(rowFor('feature/plans-web')!, 'Sources')?.click();
+    fixture.detectChanges();
+    pick('main');
+    fixture.detectChanges();
+    button(element, 'Save sources')?.click();
+
+    expect(sourcesSet).toHaveBeenCalledWith({
+      branchName: 'feature/plans-web',
+      sources: [
+        { planId: 'x1', branchName: 'x1-api' },
+        { planId: null, branchName: '' },
+      ],
+    });
+  });
+
+  function pick(label: string): void {
+    Array.from(element.querySelectorAll<HTMLElement>('.link-option'))
+      .find(option => option.querySelector('.link-label')?.textContent === label)
+      ?.querySelector<HTMLInputElement>('input')
+      ?.click();
+  }
 
   function rows(): HTMLElement[] {
     return Array.from(element.querySelectorAll<HTMLElement>('.branch-row'));

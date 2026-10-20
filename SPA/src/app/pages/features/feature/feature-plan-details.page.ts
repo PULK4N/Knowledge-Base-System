@@ -27,13 +27,19 @@ import {
   AddFeaturePlanBranchRequest,
   Feature,
   FeaturePlan,
+  FeaturePlanBranch,
   FeaturePlanContentRequest,
   FeaturePlanStatus,
+  SetFeaturePlanBranchSourcesRequest,
   FeatureRecord,
   UpdateFeaturePlanBranchRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
-import { previousPlanOptions } from '../ui/feature-branch-tree';
+import {
+  branchSourceOptions,
+  describeSources,
+  previousPlanOptions,
+} from '../ui/feature-branch-graph';
 import {
   FeatureLinkOption,
   FeatureLinkPickerComponent,
@@ -53,6 +59,9 @@ interface FeaturePlanDetailsView {
   /** Linked records in link order; IDs of removed records are left out. */
   readonly linkedRecords: readonly FeatureRecord[];
   readonly recordOptions: readonly FeatureLinkOption[];
+  /** Branches this plan's base branches may come from. */
+  readonly sourceOptions: readonly FeatureLinkOption[];
+  readonly describeSources: (branch: FeaturePlanBranch) => string;
 }
 
 interface PlanTarget {
@@ -68,7 +77,8 @@ type PlanAction =
   | ({ readonly kind: 'previous-plan'; readonly previousPlanId: string | null } & PlanTarget)
   | ({ readonly kind: 'add-branch'; readonly request: AddFeaturePlanBranchRequest } & PlanTarget)
   | ({ readonly kind: 'update-branch'; readonly request: UpdateFeaturePlanBranchRequest } & PlanTarget)
-  | ({ readonly kind: 'remove-branch'; readonly branchName: string } & PlanTarget);
+  | ({ readonly kind: 'remove-branch'; readonly branchName: string } & PlanTarget)
+  | ({ readonly kind: 'branch-sources'; readonly request: SetFeaturePlanBranchSourcesRequest } & PlanTarget);
 
 type MutationState =
   | { readonly status: 'idle' }
@@ -137,6 +147,9 @@ export class FeaturePlanDetailsPage {
                       )
                       .filter((record): record is FeatureRecord => !!record),
                     recordOptions: toRecordOptions(feature.records),
+                    sourceOptions: branchSourceOptions(feature, plan.id),
+                    describeSources: (branch: FeaturePlanBranch) =>
+                      describeSources(branch.sources, feature),
                   },
                 } as const)
               : ({
@@ -259,6 +272,13 @@ export class FeaturePlanDetailsPage {
     this.actions.next({ kind: 'remove-branch', ...target, branchName });
   }
 
+  protected setBranchSources(
+    target: PlanTarget,
+    request: SetFeaturePlanBranchSourcesRequest,
+  ): void {
+    this.actions.next({ kind: 'branch-sources', ...target, request });
+  }
+
   private execute(action: PlanAction): Observable<Feature> {
     switch (action.kind) {
       case 'update':
@@ -299,6 +319,12 @@ export class FeaturePlanDetailsPage {
           action.featureId,
           action.planId,
           action.branchName,
+        );
+      case 'branch-sources':
+        return this.features.setPlanBranchSources(
+          action.featureId,
+          action.planId,
+          action.request,
         );
     }
   }

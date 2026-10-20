@@ -38,6 +38,7 @@ public sealed class FeatureMcpFunctionsTests
         "feature_plan_previous_set",
         "feature_branch_set",
         "feature_plan_branch_add",
+        "feature_plan_branch_sources_set",
         "feature_plan_branch_update",
         "feature_plan_branch_remove",
         "feature_plan_remove"
@@ -239,6 +240,33 @@ public sealed class FeatureMcpFunctionsTests
             schema.GetProperty("properties").TryGetProperty("recordIds", out _)
         );
         Assert.DoesNotContain("recordIds", required);
+    }
+
+    [Theory]
+    [InlineData("feature_plan_add", "branchSources", false)]
+    [InlineData("feature_plan_branch_add", "sources", false)]
+    [InlineData("feature_plan_branch_sources_set", "sources", true)]
+    public void Branch_sources_are_objects_with_an_optional_plan_id(
+        string functionName,
+        string parameterName,
+        bool required
+    )
+    {
+        var schema = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == functionName)
+            .JsonSchema;
+        var items = schema.GetProperty("properties")
+            .GetProperty(parameterName)
+            .GetProperty("items");
+        var requiredNames = schema
+            .GetProperty("required")
+            .EnumerateArray()
+            .Select(element => element.GetString())
+            .ToList();
+
+        Assert.True(items.GetProperty("properties").TryGetProperty("planId", out _));
+        Assert.True(items.GetProperty("properties").TryGetProperty("branchName", out _));
+        Assert.Equal(required, requiredNames.Contains(parameterName));
     }
 
     [Fact]

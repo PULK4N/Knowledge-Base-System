@@ -113,11 +113,14 @@ public readonly record struct FeaturePlanAddedV3(
                 ContentType = ContentType,
                 AdditionalInfo = AdditionalInfo,
                 Status = Status,
-                Branch = new FeaturePlanBranch
-                {
-                    Name = BranchName,
-                    Description = BranchDescription
-                },
+                Branches =
+                [
+                    new FeaturePlanBranch
+                    {
+                        Name = BranchName,
+                        Description = BranchDescription
+                    }
+                ],
                 CreatedAt = eventExecutionInfo.Timestamp,
                 UpdatedAt = eventExecutionInfo.Timestamp
             }
@@ -165,11 +168,14 @@ public readonly record struct FeaturePlanAddedV4(
                 ContentType = ContentType,
                 AdditionalInfo = AdditionalInfo,
                 Status = Status,
-                Branch = new FeaturePlanBranch
-                {
-                    Name = BranchName,
-                    Description = BranchDescription
-                },
+                Branches =
+                [
+                    new FeaturePlanBranch
+                    {
+                        Name = BranchName,
+                        Description = BranchDescription
+                    }
+                ],
                 PreviousPlanId = PreviousPlanId,
                 CreatedAt = eventExecutionInfo.Timestamp,
                 UpdatedAt = eventExecutionInfo.Timestamp

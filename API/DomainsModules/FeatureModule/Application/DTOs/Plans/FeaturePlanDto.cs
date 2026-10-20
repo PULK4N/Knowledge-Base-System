@@ -17,10 +17,10 @@ public sealed record FeaturePlanDto
     public required FeaturePlanStatus Status { get; init; }
 
     /// <summary>
-    /// The base branch with nested sub-branches; null only for plans created
-    /// before plans required a base branch.
+    /// Base branches with nested sub-branches; the first is the main one.
+    /// Empty only for plans created before plans required a base branch.
     /// </summary>
-    public FeaturePlanBranchDto? Branch { get; init; }
+    public required IReadOnlyList<FeaturePlanBranchDto> Branches { get; init; }
 
     public Guid? PreviousPlanId { get; init; }
 
@@ -42,9 +42,9 @@ public sealed record FeaturePlanDto
             ContentType = plan.ContentType,
             AdditionalInfo = plan.AdditionalInfo,
             Status = plan.Status,
-            Branch = plan.Branch is null
-                ? null
-                : FeaturePlanBranchDto.FromModel(plan.Branch),
+            Branches = plan.Branches
+                .Select(FeaturePlanBranchDto.FromModel)
+                .ToList(),
             PreviousPlanId = plan.PreviousPlanId?.Value,
             RecordIds = plan.RecordIds
                 .Select(recordId => recordId.Value)

@@ -11,9 +11,10 @@ public sealed class FeaturePlanBranchTreeFormatterTests
             "feature/plans",
             "Plan storage rework",
             [
-                new("feature/plans-api", "Events\nand MCP", [new("feature/plans-api-tests", "", [])]),
-                new("feature/plans-ui", "Angular pages", [])
-            ]
+                new("feature/plans-api", "Events\nand MCP", [new("feature/plans-api-tests", "", [], [])], []),
+                new("feature/plans-ui", "Angular pages", [], [])
+            ],
+            []
         );
 
         Assert.Equal(

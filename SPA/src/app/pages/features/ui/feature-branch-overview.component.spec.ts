@@ -1,71 +1,93 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Feature, FeaturePlan } from '../data-access/feature.models';
+import { provideKnowledgeMarkdown } from '../../../shared/markdown/markdown.providers';
+import { Feature } from '../data-access/feature.models';
 import { FeatureBranchOverviewComponent } from './feature-branch-overview.component';
 
-const research: FeaturePlan = {
-  id: 'research',
-  title: 'RabbitMQ design',
-  content: '',
-  contentType: 'Markdown',
-  additionalInfo: '',
-  status: 'Delayed',
-  branch: { name: 'feature/research', description: '', subBranches: [] },
-  previousPlanId: null,
-  recordIds: [],
-  createdAt: '2026-10-01T00:00:00Z',
-  updatedAt: '2026-10-01T00:00:00Z',
-};
-const implementation: FeaturePlan = {
-  ...research,
-  id: 'impl',
-  title: 'Outbox processing',
-  status: 'InProgress',
-  branch: { name: 'feature/outbox', description: 'Dispatch', subBranches: [] },
-  previousPlanId: 'research',
-  recordIds: [],
-  createdAt: '2026-10-02T00:00:00Z',
-};
+const feature = {
+  id: 'feature-1',
+  branch: { name: 'develop', description: 'Main line' },
+  plans: [],
+  branchGraph: [
+    {
+      key: 'feature',
+      name: 'develop',
+      description: 'Main line',
+      planId: null,
+      planTitle: null,
+      planStatus: null,
+      isBaseBranch: false,
+      fromKeys: [],
+    },
+    {
+      key: 'x1:x1-api',
+      name: 'x1-api',
+      description: '',
+      planId: 'x1',
+      planTitle: 'Outbox API',
+      planStatus: 'InProgress',
+      isBaseBranch: true,
+      fromKeys: ['feature'],
+    },
+    {
+      key: 'x3:x3-web',
+      name: 'x3-web',
+      description: '',
+      planId: 'x3',
+      planTitle: 'Outbox web',
+      planStatus: 'Delayed',
+      isBaseBranch: true,
+      fromKeys: ['feature'],
+    },
+    {
+      key: 'x2:x2',
+      name: 'x2',
+      description: 'Retry',
+      planId: 'x2',
+      planTitle: 'Retry policy',
+      planStatus: 'NotStarted',
+      isBaseBranch: true,
+      fromKeys: ['x1:x1-api', 'x3:x3-web'],
+    },
+  ],
+} as unknown as Feature;
 
 describe('FeatureBranchOverviewComponent', () => {
   let fixture: ComponentFixture<FeatureBranchOverviewComponent>;
   let element: HTMLElement;
 
   beforeEach(async () => {
+    Object.assign(globalThis, {
+      mermaid: { initialize: vi.fn(), run: vi.fn() },
+    });
     await TestBed.configureTestingModule({
       imports: [FeatureBranchOverviewComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), ...provideKnowledgeMarkdown()],
     }).compileComponents();
     fixture = TestBed.createComponent(FeatureBranchOverviewComponent);
-    fixture.componentRef.setInput('feature', {
-      id: 'feature-1',
-      branch: { name: 'develop', description: 'Main line' },
-      plans: [implementation, research],
-    } as unknown as Feature);
+    fixture.componentRef.setInput('feature', feature);
     fixture.detectChanges();
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('starts collapsed below the first level and links plans', () => {
-    expect(names()).toEqual(['develop', 'feature/research']);
-    const link = element.querySelector<HTMLAnchorElement>('.plan-link');
-    expect(link?.getAttribute('href')).toBe('/features/feature-1/plans/research');
-    expect(element.querySelector('.plan-status')?.textContent?.trim()).toBe(
-      'Delayed',
+  it('lists every branch with where it came from and links plans', () => {
+    const lines = Array.from(element.querySelectorAll<HTMLElement>('.branch-graph-line'));
+
+    expect(lines.map(line => line.querySelector('.branch-graph-name')?.textContent)).toEqual([
+      'develop',
+      'x1-api',
+      'x3-web',
+      'x2',
+    ]);
+    expect(lines[3].querySelector('.branch-graph-from')?.textContent).toContain('x1-api, x3-web');
+    expect(lines[3].querySelector('.plan-link')?.getAttribute('href')).toBe(
+      '/features/feature-1/plans/x2',
     );
+    expect(lines[2].querySelector('.plan-status')?.textContent?.trim()).toBe('Delayed');
   });
 
-  it('expands and collapses every branch below the feature branch', () => {
-    button('Expand all')?.click();
-    fixture.detectChanges();
-    expect(names()).toEqual(['develop', 'feature/research', 'feature/outbox']);
-    expect(element.querySelectorAll('.plan-status')[1].textContent?.trim()).toBe(
-      'In progress',
-    );
-
-    button('Collapse all')?.click();
-    fixture.detectChanges();
-    expect(names()).toEqual(['develop', 'feature/research']);
+  it('draws the graph from a Mermaid block', () => {
+    expect(element.querySelector('app-markdown-content.branch-graph')).not.toBeNull();
   });
 
   it('emits the feature branch from the form', async () => {
@@ -85,12 +107,6 @@ describe('FeatureBranchOverviewComponent', () => {
       description: 'Main line',
     });
   });
-
-  function names(): string[] {
-    return Array.from(element.querySelectorAll('.branch-row code')).map(
-      code => code.textContent ?? '',
-    );
-  }
 
   function button(label: string): HTMLButtonElement | undefined {
     return Array.from(element.querySelectorAll<HTMLButtonElement>('button')).find(

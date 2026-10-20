@@ -5,8 +5,8 @@ using Shared.Interfaces;
 namespace FeatureModule.Domain.Validators;
 
 /// <summary>
-/// Keeps one base branch per plan: a new branch must name an existing parent,
-/// except for adding the base branch to a plan created before plans required one.
+/// A new sub-branch must name an existing parent branch of its plan. A branch
+/// without a parent is another base branch and is always allowed.
 /// </summary>
 public sealed class FeaturePlanBranchParentValidator : IPreEventValidator
 {
@@ -30,8 +30,6 @@ public sealed class FeaturePlanBranchParentValidator : IPreEventValidator
         var error = (plan, eventData.ParentBranchName) switch
         {
             (null, _) => "The feature plan does not exist.",
-            ({ Branch: not null }, null) => "The plan already has a base branch; name a parent branch.",
-            ({ Branch: null }, not null) => "The plan has no base branch yet; add it without a parent.",
             (_, { } parentName) when plan.FindBranch(parentName) is null =>
                 $"The plan does not have a parent branch named '{parentName}'.",
             _ => null

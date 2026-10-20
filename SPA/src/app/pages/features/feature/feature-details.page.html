@@ -282,7 +282,7 @@
                   </option>
                   @for (plan of vm.state.data.plans; track plan.id) {
                     <option [value]="plan.id">
-                      {{ plan.title }}{{ plan.branch ? ' (' + plan.branch.name + ')' : '' }}
+                      {{ plan.title }}{{ plan.branches.length > 0 ? ' (' + plan.branches[0].name + ')' : '' }}
                     </option>
                   }
                 </select>
@@ -353,6 +353,13 @@
                 ></textarea>
               </label>
               <app-feature-link-picker
+                legend="Base branch created from (none uses the previous plan or the feature branch)"
+                emptyMessage="There are no branches yet."
+                [options]="vm.collections.branchSourceOptions"
+                [selectedIds]="newPlanSourceIds()"
+                (selectedIdsChange)="newPlanSourceIds.set($event)"
+              />
+              <app-feature-link-picker
                 legend="Linked records"
                 emptyMessage="This feature has no records yet."
                 [options]="vm.collections.recordOptions"
@@ -401,8 +408,8 @@
                 >
                   <strong>{{ plan.title }}</strong>
                   <small>
-                    @if (plan.branch) {
-                      <span class="plan-branch-name">⑂ {{ plan.branch.name }}</span> ·
+                    @for (branch of plan.branches; track branch.name) {
+                      <span class="plan-branch-name">⑂ {{ branch.name }}</span> ·
                     }
                     {{ plan.contentType }} · Updated
                     {{ plan.updatedAt | date: 'medium' }}

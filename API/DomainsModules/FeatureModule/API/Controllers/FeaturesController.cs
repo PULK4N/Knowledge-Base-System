@@ -254,6 +254,7 @@ public sealed class FeaturesController(
         command.BranchName = request.BranchName;
         command.BranchDescription = request.BranchDescription;
         command.PreviousPlanId = request.PreviousPlanId;
+        command.BranchSources = request.BranchSources;
         MapPlanContent(request, command);
         return Ok(
             (FeaturePlanCreatedCommandResult)await Execute(command)
@@ -346,6 +347,23 @@ public sealed class FeaturesController(
         command.BranchName = request.BranchName;
         command.Description = request.Description;
         command.ParentBranchName = request.ParentBranchName;
+        command.Sources = request.Sources;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/plans/{planId:guid}/branches/sources")]
+    public async Task<ActionResult<FeatureCommandResult>> SetPlanBranchSources(
+        Guid featureId,
+        Guid planId,
+        [FromBody] SetFeaturePlanBranchSourcesRequest request,
+        [FromServices] SetFeaturePlanBranchSourcesCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.PlanId = planId;
+        command.BranchName = request.BranchName;
+        command.Sources = request.Sources;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 

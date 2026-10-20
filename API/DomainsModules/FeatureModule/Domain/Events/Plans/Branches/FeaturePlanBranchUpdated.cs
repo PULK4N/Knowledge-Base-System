@@ -28,6 +28,7 @@ public readonly record struct FeaturePlanBranchUpdatedV1(
         var plan = state.Plans.Single(item => item.Id == planId);
         var branch = plan.FindBranch(BranchName)!;
         branch.Name = NewBranchName;
+        FeaturePlanBranchSources.Rename(state, planId, BranchName, NewBranchName);
         branch.Description = Description;
         plan.UpdatedAt = eventExecutionInfo.Timestamp;
         state.MemoryHistory.Add(

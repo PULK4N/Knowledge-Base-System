@@ -14,6 +14,7 @@ public sealed class FeaturePlanEventTests
     private const string Api = "feature/plans-api";
     private const string ApiTests = "feature/plans-api-tests";
     private const string Ui = "feature/plans-ui";
+    private const string SecondBase = "feature/plans-web";
 
     private static readonly AggregateId FeatureId = AggregateId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly AggregateId MemoryId = AggregateId.FromDatabaseGuid(Guid.NewGuid());
@@ -69,8 +70,10 @@ public sealed class FeaturePlanEventTests
 
         var plan = Assert.Single(state.Plans);
         Assert.Equal(("Research only.", FeaturePlanStatus.NotStarted), (plan.AdditionalInfo, plan.Status));
-        Assert.Equal((Root, "Plan storage rework"), (plan.Branch!.Name, plan.Branch.Description));
-        Assert.Empty(plan.Branch.SubBranches);
+        var baseBranch = Assert.Single(plan.Branches);
+        Assert.Equal((Root, "Plan storage rework"), (baseBranch.Name, baseBranch.Description));
+        Assert.Empty(baseBranch.SubBranches);
+        Assert.Empty(baseBranch.Sources);
 #pragma warning disable CS0618
         Assert.Null(state.CurrentPlanId);
 #pragma warning restore CS0618
@@ -152,10 +155,10 @@ public sealed class FeaturePlanEventTests
     [Theory]
     [InlineData(false, null, true)]
     [InlineData(false, Root, false)]
-    [InlineData(true, null, false)]
+    [InlineData(true, null, true)]
     [InlineData(true, Api, true)]
     [InlineData(true, "feature/missing", false)]
-    public void Branch_parent_validator_keeps_one_base_branch(
+    public void Branch_parent_validator_allows_more_base_branches_and_requires_existing_parents(
         bool hasBaseBranch,
         string? parentBranchName,
         bool succeeds
@@ -202,16 +205,49 @@ public sealed class FeaturePlanEventTests
     }
 
     [Theory]
-    [InlineData(Root, false)]
-    [InlineData(Api, true)]
-    public void Base_branch_cannot_be_removed(string branchName, bool succeeds)
+    [InlineData(false, Root, false)]
+    [InlineData(false, Api, true)]
+    [InlineData(true, Root, true)]
+    [InlineData(true, SecondBase, true)]
+    public void Only_the_last_base_branch_cannot_be_removed(
+        bool hasSecondBaseBranch,
+        string branchName,
+        bool succeeds
+    )
     {
-        var result = new FeaturePlanBaseBranchCannotBeRemovedValidator().Validate(
-            StateWithPlan(),
+        var state = StateWithPlan();
+        if (hasSecondBaseBranch)
+            state.Plans[0].Branches.Add(Branch(SecondBase));
+
+        var result = new FeaturePlanLastBaseBranchCannotBeRemovedValidator().Validate(
+            state,
             Payload(new FeaturePlanBranchRemovedV1(PlanId, branchName, SessionId, MemoryId))
         );
 
         Assert.Equal(succeeds, result.Succeded);
+    }
+
+    [Fact]
+    public void Branch_added_v1_without_a_parent_adds_another_base_branch()
+    {
+        var state = StateWithPlan();
+        var eventData = new FeaturePlanBranchAddedV1(PlanId, SecondBase, "", null, SessionId, MemoryId);
+
+        eventData.Apply(state, Payload(eventData).EventExecutionInfo);
+
+        Assert.Equal([Root, SecondBase], state.Plans[0].Branches.Select(branch => branch.Name));
+    }
+
+    [Fact]
+    public void Branch_removed_v1_removes_a_base_branch()
+    {
+        var state = StateWithPlan();
+        state.Plans[0].Branches.Add(Branch(SecondBase));
+        var eventData = new FeaturePlanBranchRemovedV1(PlanId, Root, SessionId, MemoryId);
+
+        eventData.Apply(state, Payload(eventData).EventExecutionInfo);
+
+        Assert.Equal([SecondBase], state.Plans[0].Branches.Select(branch => branch.Name));
     }
 
     [Fact]
@@ -275,7 +311,7 @@ public sealed class FeaturePlanEventTests
     }
 
     private static List<string> BranchNames(FeaturePlan plan) =>
-        plan.Branch!.SelfAndDescendants().Select(branch => branch.Name).ToList();
+        plan.AllBranches().Select(branch => branch.Name).ToList();
 
     private static FeatureStateData StateWithPlan(bool hasBaseBranch = true) => new(FeatureId)
     {
@@ -287,9 +323,9 @@ public sealed class FeaturePlanEventTests
                 Title = "Plan",
                 Content = "content",
                 AdditionalInfo = "info",
-                Branch = hasBaseBranch
-                    ? Branch(Root, Branch(Api, Branch(ApiTests)), Branch(Ui))
-                    : null
+                Branches = hasBaseBranch
+                    ? [Branch(Root, Branch(Api, Branch(ApiTests)), Branch(Ui))]
+                    : []
             }
         ]
     };

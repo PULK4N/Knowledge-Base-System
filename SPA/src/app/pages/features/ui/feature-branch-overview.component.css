@@ -27,3 +27,52 @@
 .feature-branch-form {
   margin: 0 0 16px;
 }
+
+.branch-graph {
+  display: block;
+  margin: 0 0 12px;
+  overflow-x: auto;
+}
+
+.branch-graph-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.branch-graph-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.branch-graph-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.branch-graph-name {
+  color: var(--indigo);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.branch-graph-from,
+.branch-kind {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.branch-graph-description {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 13px;
+}

@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins for the MCP Knowledge Base.",
-    "version": "0.3.10+0fc53a978ee2"
+    "version": "0.3.11+74c7c59a59cc"
   },
   "plugins": [
     {

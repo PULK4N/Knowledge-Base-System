@@ -28,6 +28,12 @@ public sealed record FeatureDto
 
     public FeatureBranchDto? Branch { get; init; }
 
+    /// <summary>
+    /// The feature branch followed by the branches of plans not yet completed,
+    /// each after the branches it came from.
+    /// </summary>
+    public required IReadOnlyList<FeatureBranchGraphNodeDto> BranchGraph { get; init; }
+
     public required IReadOnlyCollection<FeatureMemoryHistoryDto>
         MemoryHistory { get; init; }
 
@@ -55,6 +61,7 @@ public sealed record FeatureDto
             Branch = state.Branch is null
                 ? null
                 : FeatureBranchDto.FromModel(state.Branch),
+            BranchGraph = FeatureBranchGraphBuilder.Build(state),
             MemoryHistory = state.MemoryHistory
                 .Select(FeatureMemoryHistoryDto.FromModel)
                 .ToList()

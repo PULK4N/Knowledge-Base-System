@@ -46,10 +46,34 @@ export interface FeatureReviewNote {
   readonly updatedAt: string;
 }
 
+/** The feature branch when planId is null, otherwise a branch of another plan. */
+export interface FeaturePlanBranchSource {
+  readonly planId: string | null;
+  readonly branchName: string;
+}
+
 export interface FeaturePlanBranch {
   readonly name: string;
   readonly description: string;
   readonly subBranches: readonly FeaturePlanBranch[];
+  /**
+   * Only on base branches: where the branch came from. Empty means the default,
+   * the previous plan's first base branch or the feature branch.
+   */
+  readonly sources: readonly FeaturePlanBranchSource[];
+}
+
+/** One branch of the feature's branch graph; a branch can come from several. */
+export interface FeatureBranchGraphNode {
+  /** 'feature' for the feature branch, otherwise `<planId>:<branchName>`. */
+  readonly key: string;
+  readonly name: string | null;
+  readonly description: string;
+  readonly planId: string | null;
+  readonly planTitle: string | null;
+  readonly planStatus: FeaturePlanStatus | null;
+  readonly isBaseBranch: boolean;
+  readonly fromKeys: readonly string[];
 }
 
 export interface FeatureBranch {
@@ -64,8 +88,8 @@ export interface FeaturePlan {
   readonly contentType: FeaturePlanContentType;
   readonly additionalInfo: string;
   readonly status: FeaturePlanStatus;
-  /** Base branch with nested sub-branches; null only for plans made before branches were required. */
-  readonly branch: FeaturePlanBranch | null;
+  /** Base branches with nested sub-branches; the first is the main one. Empty only for old plans. */
+  readonly branches: readonly FeaturePlanBranch[];
   /** Plan done before this one; its base branch is where this plan's base branch came from. */
   readonly previousPlanId: string | null;
   /** Records of the feature this plan links, in link order. */
@@ -89,6 +113,11 @@ export interface Feature extends FeatureSummary {
   readonly plans: readonly FeaturePlan[];
   /** Null until the feature branch is set; features are often written before it exists. */
   readonly branch: FeatureBranch | null;
+  /**
+   * The feature branch first, then the branches of plans not yet completed,
+   * each after the branches it came from.
+   */
+  readonly branchGraph: readonly FeatureBranchGraphNode[];
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
@@ -131,6 +160,7 @@ export interface FeatureDto {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly plans: readonly FeaturePlan[];
   readonly branch: FeatureBranch | null;
+  readonly branchGraph: readonly FeatureBranchGraphNode[];
   readonly memoryHistory: readonly FeatureMemoryHistoryEntry[];
 }
 
@@ -203,8 +233,9 @@ export interface FeaturePlanContentRequest {
 export interface AddFeaturePlanRequest extends FeaturePlanContentRequest {
   readonly branchName: string;
   readonly branchDescription: string;
-  /** Null when the base branch comes from the feature branch. */
   readonly previousPlanId: string | null;
+  /** Where the base branch came from; empty uses the previous plan or the feature branch. */
+  readonly branchSources?: readonly FeaturePlanBranchSource[];
 }
 
 export interface SetFeatureBranchRequest {
@@ -215,8 +246,16 @@ export interface SetFeatureBranchRequest {
 export interface AddFeaturePlanBranchRequest {
   readonly branchName: string;
   readonly description: string;
-  /** Null only adds a base branch to a plan that has none. */
+  /** Null adds another base branch to the plan. */
   readonly parentBranchName: string | null;
+  /** Only for a new base branch: where it came from. */
+  readonly sources?: readonly FeaturePlanBranchSource[];
+}
+
+export interface SetFeaturePlanBranchSourcesRequest {
+  readonly branchName: string;
+  /** An empty list goes back to the default source. */
+  readonly sources: readonly FeaturePlanBranchSource[];
 }
 
 export interface UpdateFeaturePlanBranchRequest {

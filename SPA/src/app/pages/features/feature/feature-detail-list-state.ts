@@ -14,7 +14,7 @@ import {
   FeatureRecord,
   FeatureReviewNote,
 } from '../data-access/feature.models';
-import { flattenBranches } from '../ui/feature-plan-branches';
+import { flattenPlanBranches } from '../ui/feature-plan-branches';
 
 export type FeatureTab =
   | 'overview'
@@ -163,7 +163,7 @@ export function selectFeaturePlans(
       [
         plan.title,
         plan.additionalInfo,
-        ...flattenBranches(plan.branch).map(branch => branch.name),
+        ...flattenPlanBranches(plan.branches).map(branch => branch.name),
         plan.content,
       ].join('\n'),
     matchesFilter: (plan, filter) =>

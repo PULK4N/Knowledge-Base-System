@@ -14,9 +14,11 @@ public sealed record FeatureMcpPlanDto
     public required string AdditionalInfo { get; init; }
 
     /// <summary>
-    /// Base branch and sub-branches rendered as a tree; null only for plans created before plans required a base branch.
+    /// Each base branch with its sub-branches rendered as a tree, each base line
+    /// followed by the branches it came from; null only for plans created before
+    /// plans required a base branch.
     /// </summary>
-    public string? Branch { get; init; }
+    public string? Branches { get; init; }
 
     public Guid? PreviousPlanId { get; init; }
 
@@ -34,12 +36,9 @@ public sealed record FeatureMcpPlanDto
 
     public required DateTime UpdatedAt { get; init; }
 
-    public static FeatureMcpPlanDto FromPlan(
-        FeaturePlanDto plan,
-        IReadOnlyCollection<FeatureRecordDto> featureRecords
-    )
+    public static FeatureMcpPlanDto FromPlan(FeaturePlanDto plan, FeatureDto feature)
     {
-        var recordsById = featureRecords.ToDictionary(record => record.Id);
+        var recordsById = feature.Records.ToDictionary(record => record.Id);
 
         return new FeatureMcpPlanDto
         {
@@ -47,7 +46,7 @@ public sealed record FeatureMcpPlanDto
             Title = plan.Title,
             Status = plan.Status,
             AdditionalInfo = plan.AdditionalInfo,
-            Branch = FeaturePlanBranchTreeFormatter.Format(plan.Branch),
+            Branches = FeaturePlanBranchTreeFormatter.FormatBaseBranches(plan, feature),
             PreviousPlanId = plan.PreviousPlanId,
             Records = plan.RecordIds
                 .Where(recordsById.ContainsKey)

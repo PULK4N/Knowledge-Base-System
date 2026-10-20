@@ -21,7 +21,7 @@ public sealed class FeatureMcpDtoTests
         {
             Status = FeaturePlanStatus.InProgress,
             AdditionalInfo = "Production implementation.",
-            Branch = new FeaturePlanBranchDto("feature/plans", "Plan rework", [])
+            Branches = [new FeaturePlanBranchDto("feature/plans", "Plan rework", [], [])]
         };
         var feature = Feature(records, [olderPlan, newerPlan], now);
 
@@ -77,7 +77,10 @@ public sealed class FeatureMcpDtoTests
             [records[2].Id, records[0].Id]
         );
 
-        var result = FeatureMcpPlanDto.FromPlan(plan, records);
+        var result = FeatureMcpPlanDto.FromPlan(
+            plan,
+            Feature(records, [plan], now)
+        );
 
         Assert.Equal(
             [
@@ -106,6 +109,7 @@ public sealed class FeatureMcpDtoTests
             Records = records,
             ReviewNotes = [ReviewNote("Intended behaviour", now)],
             Plans = plans,
+            BranchGraph = [],
             MemoryHistory = []
         };
 
@@ -123,6 +127,7 @@ public sealed class FeatureMcpDtoTests
             AdditionalInfo = string.Empty,
             Status = FeaturePlanStatus.NotStarted,
             RecordIds = recordIds,
+            Branches = [],
             CreatedAt = updatedAt,
             UpdatedAt = updatedAt
         };

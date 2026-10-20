@@ -1,13 +1,9 @@
 <div class="branch-tree-heading">
   <div>
     <span class="eyebrow">Source control</span>
-    <h2>Branch tree</h2>
+    <h2>Branch graph</h2>
   </div>
   <div class="branch-tree-actions">
-    @if (tree().children.length > 0) {
-      <button type="button" (click)="expandAll()">Expand all</button>
-      <button type="button" (click)="collapseAll()">Collapse all</button>
-    }
     <button
       type="button"
       [attr.aria-expanded]="editingBranch()"
@@ -52,66 +48,44 @@
   </form>
 }
 
-<ul class="branch-tree" role="tree" aria-label="Feature branch tree">
-  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: tree() }" />
-</ul>
+@if (lines().length > 1) {
+  <app-markdown-content
+    class="branch-graph"
+    [blocks]="emptyBlocks"
+    [markdown]="graphMarkdown()"
+  />
+}
 
-<ng-template #nodeTemplate let-node>
-  <li
-    class="branch-node"
-    role="treeitem"
-    [attr.aria-expanded]="node.children.length > 0 ? isOpen(node.key) : null"
-  >
-    <div class="branch-row" [class.plan-node]="node.plan">
-      @if (node.children.length > 0) {
-        <button
-          type="button"
-          class="branch-toggle"
-          [attr.aria-label]="(!isOpen(node.key) ? 'Expand ' : 'Collapse ') + (node.name ?? 'branch')"
-          (click)="toggle(node.key)"
-        >
-          <span aria-hidden="true" [class.collapsed]="!isOpen(node.key)">▾</span>
-        </button>
-      } @else {
-        <span class="branch-toggle-spacer" aria-hidden="true"></span>
-      }
+<p class="branch-graph-note">
+  Branches of completed plans are hidden; branches made from them point to
+  where those came from.
+</p>
+
+<ul class="branch-graph-list" aria-label="Branches and where they came from">
+  @for (line of lines(); track line.key) {
+    <li class="branch-graph-line" [class.feature-line]="!line.node.planId">
       <span class="branch-icon" aria-hidden="true">⑂</span>
-      <div class="branch-text">
-        <div class="branch-name">
-          @if (node.name) {
-            <code>{{ node.name }}</code>
-          } @else {
-            <span class="missing-branch">
-              Feature branch not set
-            </span>
-          }
-          @if (node.key === 'feature') {
-            <span class="base-badge">Feature</span>
-          }
-          @if (node.plan; as plan) {
-            <a class="plan-link" [routerLink]="['/features', feature().id, 'plans', plan.id]">
-              {{ plan.title }}
-            </a>
-            <span [class]="'plan-status status-' + plan.status">
-              {{ plan.status | featurePlanStatus }}
-            </span>
-          }
-          @if (node.children.length > 0 && !isOpen(node.key)) {
-            <small>{{ node.children.length }} hidden</small>
-          }
-        </div>
-        @if (node.description) {
-          <p>{{ node.description }}</p>
+      <code class="branch-graph-name">{{ line.name }}</code>
+      @if (!line.node.planId) {
+        <span class="base-badge">Feature</span>
+      } @else {
+        <a class="plan-link" [routerLink]="['/features', feature().id, 'plans', line.node.planId]">
+          {{ line.node.planTitle }}
+        </a>
+        @if (line.node.isBaseBranch && line.node.planStatus; as status) {
+          <span [class]="'plan-status status-' + status">
+            {{ status | featurePlanStatus }}
+          </span>
+        } @else {
+          <span class="branch-kind">sub-branch</span>
         }
-      </div>
-    </div>
-
-    @if (node.children.length > 0 && isOpen(node.key)) {
-      <ul class="branch-children" role="group">
-        @for (child of node.children; track child.key) {
-          <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child }" />
-        }
-      </ul>
-    }
-  </li>
-</ng-template>
+        <span class="branch-graph-from">
+          from <code>{{ line.from.join(', ') }}</code>
+        </span>
+      }
+      @if (line.description) {
+        <p class="branch-graph-description">{{ line.description }}</p>
+      }
+    </li>
+  }
+</ul>

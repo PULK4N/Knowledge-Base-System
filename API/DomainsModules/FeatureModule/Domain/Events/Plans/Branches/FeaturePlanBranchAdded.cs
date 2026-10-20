@@ -7,8 +7,8 @@ namespace FeatureModule.Domain.Events;
 public interface IFeaturePlanBranchAdded : IEvent;
 
 /// <summary>
-/// Adds a sub-branch under its parent. Without a parent it adds the base branch
-/// to a plan created before plans required one.
+/// Adds a sub-branch under its parent. Without a parent it adds another base
+/// branch to the plan, or the first one to a plan created before plans required one.
 /// </summary>
 public readonly record struct FeaturePlanBranchAddedV1(
     FeaturePlanId PlanId,
@@ -34,7 +34,7 @@ public readonly record struct FeaturePlanBranchAddedV1(
         };
 
         if (ParentBranchName is null)
-            plan.Branch = branch;
+            plan.Branches.Add(branch);
         else
             plan.FindBranch(ParentBranchName)!.SubBranches.Add(branch);
 

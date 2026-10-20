@@ -52,6 +52,7 @@ const feature: Feature = {
   ],
   plans: [],
   branch: null,
+  branchGraph: [],
   memoryHistory: [
     {
       eventName: 'FeatureAddedV2',
@@ -79,13 +80,16 @@ const featureWithPlans: Feature = {
       contentType: 'Markdown',
       additionalInfo: 'Production implementation.',
       status: 'InProgress',
-      branch: {
-        name: 'feature/plans',
-        description: 'Plan rework',
-        subBranches: [
-          { name: 'feature/plans-api', description: '', subBranches: [] },
-        ],
-      },
+      branches: [
+        {
+          name: 'feature/plans',
+          description: 'Plan rework',
+          subBranches: [
+            { name: 'feature/plans-api', description: '', subBranches: [], sources: [] },
+          ],
+          sources: [],
+        },
+      ],
       previousPlanId: null,
       recordIds: ['discovery-1'],
       createdAt: '2026-08-20T10:00:00Z',
@@ -98,7 +102,7 @@ const featureWithPlans: Feature = {
       contentType: 'Markdown',
       additionalInfo: '',
       status: 'Completed',
-      branch: null,
+      branches: [],
       previousPlanId: null,
       recordIds: [],
       createdAt: '2026-08-18T10:00:00Z',
@@ -630,6 +634,7 @@ describe('FeatureDetailsPage', () => {
       contentType: 'Markdown',
       content: '# Follow-up',
       recordIds: ['discovery-1'],
+      branchSources: [],
     });
   });
 

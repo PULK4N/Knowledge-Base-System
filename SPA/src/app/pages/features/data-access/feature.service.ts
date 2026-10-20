@@ -29,6 +29,7 @@ import {
   FeaturePlanCreatedCommandResult,
   FeaturePlanStatus,
   SetFeatureBranchRequest,
+  SetFeaturePlanBranchSourcesRequest,
   AddFeatureRecordRequest,
   FeatureRecordCreatedCommandResult,
   FeatureReviewNoteContentRequest,
@@ -274,6 +275,18 @@ export class FeatureService {
       id,
       `${this.planPath(planId)}/branches/remove`,
       { branchName },
+    );
+  }
+
+  setPlanBranchSources(
+    id: string,
+    planId: string,
+    request: SetFeaturePlanBranchSourcesRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(
+      id,
+      `${this.planPath(planId)}/branches/sources`,
+      request,
     );
   }
 

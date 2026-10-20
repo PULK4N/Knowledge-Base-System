@@ -3,37 +3,39 @@
     <span class="eyebrow">Source control</span>
     <h2>Branches</h2>
   </div>
-  @if (branch()) {
-    <div class="branch-tree-actions">
+  <div class="branch-tree-actions">
+    @if (branches().length > 0) {
       <span class="count-badge">{{ branchCount() }}</span>
       <button type="button" (click)="expandAll()">Expand all</button>
       <button type="button" (click)="collapseAll()">Collapse all</button>
-    </div>
-  }
+    }
+    <button
+      type="button"
+      [disabled]="saving()"
+      (click)="openEditor({ mode: 'add', parentBranchName: null })"
+    >
+      Add base branch
+    </button>
+  </div>
 </div>
 
-@if (branch(); as base) {
+@if (isEditing('add', null)) {
+  <ng-container
+    *ngTemplateOutlet="addForm; context: { parentBranchName: null }"
+  />
+}
+
+@if (branches().length > 0) {
   <ul class="branch-tree" role="tree" aria-label="Plan branches">
-    <ng-container
-      *ngTemplateOutlet="node; context: { $implicit: base, isBase: true }"
-    />
+    @for (base of branches(); track base.name) {
+      <ng-container
+        *ngTemplateOutlet="node; context: { $implicit: base, isBase: true }"
+      />
+    }
   </ul>
 } @else {
   <div class="branch-empty">
     <p>This plan was created before plans required a base branch.</p>
-    @if (isEditing('add', null)) {
-      <ng-container
-        *ngTemplateOutlet="addForm; context: { parentBranchName: null }"
-      />
-    } @else {
-      <button
-        type="button"
-        class="primary-action"
-        (click)="openEditor({ mode: 'add', parentBranchName: null })"
-      >
-        Add base branch
-      </button>
-    }
   </div>
 }
 
@@ -69,6 +71,7 @@
           <code>{{ branch.name }}</code>
           @if (isBase) {
             <span class="base-badge">Base</span>
+            <small class="branch-sources">from {{ describeSources()(branch) }}</small>
           }
           @if (branch.subBranches.length > 0 && !isOpen(branch.name, isBase)) {
             <small>{{ branch.subBranches.length }} hidden</small>
@@ -93,7 +96,16 @@
         >
           Edit
         </button>
-        @if (!isBase) {
+        @if (isBase) {
+          <button
+            type="button"
+            [disabled]="saving()"
+            (click)="openEditor({ mode: 'sources', branchName: branch.name })"
+          >
+            Sources
+          </button>
+        }
+        @if (canRemove(branch.name)) {
           @if (confirmingRemoval() === branch.name) {
             <button
               type="button"
@@ -148,6 +160,29 @@
       </form>
     }
 
+    @if (isEditing('sources', branch.name)) {
+      <div class="branch-form">
+        <app-feature-link-picker
+          [legend]="'Created from (none uses the default)'"
+          emptyMessage="There are no branches to choose from."
+          [options]="sourceOptions()"
+          [selectedIds]="pickedSourceIds()"
+          (selectedIdsChange)="pickedSourceIds.set($event)"
+        />
+        <div class="branch-form-actions">
+          <button
+            type="button"
+            class="primary-action"
+            [disabled]="saving()"
+            (click)="setSources(branch.name)"
+          >
+            Save sources
+          </button>
+          <button type="button" (click)="editor.set(null)">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (isEditing('add', branch.name)) {
       <ng-container
         *ngTemplateOutlet="addForm; context: { parentBranchName: branch.name }"
@@ -180,6 +215,15 @@
       <span>Description</span>
       <input #addDescription="ngModel" name="description" type="text" ngModel />
     </label>
+    @if (!parentBranchName) {
+      <app-feature-link-picker
+        [legend]="'Created from (none uses the default)'"
+        emptyMessage="There are no branches to choose from."
+        [options]="sourceOptions()"
+        [selectedIds]="pickedSourceIds()"
+        (selectedIdsChange)="pickedSourceIds.set($event)"
+      />
+    }
     <div class="branch-form-actions">
       <button type="submit" class="primary-action" [disabled]="addBranchForm.invalid || saving()">
         Add branch

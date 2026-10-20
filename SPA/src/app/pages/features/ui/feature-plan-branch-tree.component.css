@@ -243,3 +243,8 @@ button:disabled {
     margin-left: 0;
   }
 }
+
+.branch-sources {
+  color: var(--muted);
+  font-size: 12px;
+}

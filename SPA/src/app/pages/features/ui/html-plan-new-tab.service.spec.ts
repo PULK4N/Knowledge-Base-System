@@ -12,7 +12,7 @@ describe('HtmlPlanNewTabService', () => {
       contentType: 'Html',
       additionalInfo: '',
       status: 'NotStarted',
-      branch: null,
+      branches: [],
       previousPlanId: null,
       recordIds: [],
       createdAt: '2026-08-26T10:00:00Z',

@@ -7,7 +7,7 @@ namespace FeatureModule.Domain.Validators;
 
 /// <summary>
 /// A previous plan must be another plan of the same feature, and following it
-/// must not lead back to the plan itself.
+/// must not lead back to the plan itself or make branches come from themselves.
 /// </summary>
 public sealed class FeaturePreviousPlanValidator : IPreEventValidator
 {
@@ -41,6 +41,8 @@ public sealed class FeaturePreviousPlanValidator : IPreEventValidator
             null => null,
             { } id when !plans.ContainsKey(id) => "The previous plan does not exist in this feature.",
             { } id when LeadsBackTo(planId, id, plans) => "A plan cannot follow itself or a plan that comes after it.",
+            _ when MakesBranchCycle(planId, previousPlanId, plans.Values) =>
+                "The plan's base branch would come from a branch created from it.",
             _ => null
         };
 
@@ -51,6 +53,24 @@ public sealed class FeaturePreviousPlanValidator : IPreEventValidator
             error
         );
     }
+
+    /// <summary>
+    /// A base branch without sources comes from the previous plan, so a new
+    /// previous plan must not make branches come from themselves.
+    /// </summary>
+    private static bool MakesBranchCycle(
+        FeaturePlanId planId,
+        FeaturePlanId? previousPlanId,
+        IReadOnlyCollection<FeaturePlan> plans
+    ) =>
+        FeatureBranchGraph.HasCycle(
+            FeatureBranchGraph.Build(
+                plans,
+                previousPlanOf: plan => plan.Id == planId
+                    ? previousPlanId
+                    : plan.PreviousPlanId
+            )
+        );
 
     private static bool LeadsBackTo(
         FeaturePlanId planId,

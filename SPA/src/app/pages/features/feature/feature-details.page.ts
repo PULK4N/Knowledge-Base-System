@@ -47,6 +47,10 @@ import {
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { FeatureBranchOverviewComponent } from '../ui/feature-branch-overview.component';
+import {
+  branchSourceOptions,
+  sourceFromOptionId,
+} from '../ui/feature-branch-graph';
 import { toRecordOptions } from '../ui/feature-link-options';
 import {
   FeatureLinkOption,
@@ -185,6 +189,8 @@ export class FeatureDetailsPage {
   protected readonly addingPlan = signal(false);
   /** Records picked in the add-plan form. */
   protected readonly newPlanRecordIds = signal<readonly string[]>([]);
+  /** Branches the new plan's base branch came from; none uses the default. */
+  protected readonly newPlanSourceIds = signal<readonly string[]>([]);
   protected readonly addingRecord = signal(false);
   /** Plans picked in the add-record form; only plans store the link. */
   protected readonly newRecordPlanIds = signal<readonly string[]>([]);
@@ -272,6 +278,7 @@ export class FeatureDetailsPage {
           if (action.kind === 'add-plan') {
             this.addingPlan.set(false);
             this.newPlanRecordIds.set([]);
+            this.newPlanSourceIds.set([]);
           }
           if (action.kind === 'remove-plan') {
             this.confirmingPlanRemoval.set(null);
@@ -323,11 +330,12 @@ export class FeatureDetailsPage {
               ),
               plansByRecordId: toPlansByRecordId(vm.state.data.plans),
               recordOptions: toRecordOptions(vm.state.data.records),
+              branchSourceOptions: branchSourceOptions(vm.state.data, ''),
               planOptions: vm.state.data.plans.map(
                 (plan): FeatureLinkOption => ({
                   id: plan.id,
                   label: plan.title,
-                  detail: plan.branch?.name ?? '',
+                  detail: plan.branches.map(branch => branch.name).join(', '),
                 }),
               ),
               reviewNotes: selectFeatureReviewNotes(
@@ -343,6 +351,7 @@ export class FeatureDetailsPage {
               recordsById: new Map<string, FeatureRecord>(),
               plansByRecordId: new Map<string, readonly FeaturePlan[]>(),
               recordOptions: [],
+              branchSourceOptions: [],
               planOptions: [],
               reviewNotes: [],
               history: [],
@@ -524,6 +533,7 @@ export class FeatureDetailsPage {
         branchDescription: request.branchDescription.trim(),
         additionalInfo: request.additionalInfo.trim(),
         recordIds: this.newPlanRecordIds(),
+        branchSources: this.newPlanSourceIds().map(sourceFromOptionId),
       },
     });
   }

@@ -8,3 +8,10 @@ export function flattenBranches(
     ? [branch, ...branch.subBranches.flatMap(subBranch => flattenBranches(subBranch))]
     : [];
 }
+
+/** Lists every base branch of a plan with all of its sub-branches, parents first. */
+export function flattenPlanBranches(
+  branches: readonly FeaturePlanBranch[],
+): readonly FeaturePlanBranch[] {
+  return branches.flatMap(branch => flattenBranches(branch));
+}

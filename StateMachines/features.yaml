@@ -197,7 +197,7 @@ events:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
       - FeaturePlanBranchMustExistValidator
-      - FeaturePlanBaseBranchCannotBeRemovedValidator
+      - FeaturePlanLastBaseBranchCannotBeRemovedValidator
   FeatureBranchSetV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
@@ -216,3 +216,8 @@ events:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
       - FeaturePlanRecordsMustExistValidator
+  FeaturePlanBaseBranchSourcesSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanMustExistValidator
+      - FeaturePlanBranchSourcesValidator

@@ -55,7 +55,7 @@ const feature: FeatureDto = {
       contentType: 'Markdown',
       additionalInfo: 'Production implementation.',
       status: 'InProgress',
-      branch: { name: 'feature/plans', description: '', subBranches: [] },
+      branches: [{ name: 'feature/plans', description: '', subBranches: [], sources: [] }],
       previousPlanId: null,
       recordIds: ['discovery-1'],
       createdAt: '2026-08-22T10:00:00Z',
@@ -63,6 +63,7 @@ const feature: FeatureDto = {
     },
   ],
   branch: null,
+  branchGraph: [],
   memoryHistory: [],
 };
 

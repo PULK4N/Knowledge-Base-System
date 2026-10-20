@@ -25,6 +25,10 @@ public readonly record struct FeaturePlanRemovedV1(
         var planId = PlanId;
         var plan = state.Plans.Single(item => item.Id == planId);
         state.Plans.Remove(plan);
+        FeaturePlanBranchSources.Remove(
+            state,
+            source => source.PlanId == planId
+        );
 
         if (state.CurrentPlanId == PlanId)
             state.CurrentPlanId = null;
@@ -48,6 +52,10 @@ public readonly record struct FeaturePlanRemovedV2(
         var planId = PlanId;
         var plan = state.Plans.Single(item => item.Id == planId);
         state.Plans.Remove(plan);
+        FeaturePlanBranchSources.Remove(
+            state,
+            source => source.PlanId == planId
+        );
 
         if (state.CurrentPlanId == PlanId)
             state.CurrentPlanId = null;

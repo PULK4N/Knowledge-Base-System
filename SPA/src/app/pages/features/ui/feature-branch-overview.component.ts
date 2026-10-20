@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,17 +8,28 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { Feature, SetFeatureBranchRequest } from '../data-access/feature.models';
-import { FeatureBranchTreeNode, buildFeatureBranchTree } from './feature-branch-tree';
+import {
+  toBranchGraphLines,
+  toBranchGraphMarkdown,
+} from './feature-branch-graph';
 import { FeaturePlanStatusPipe } from './feature-plan-status';
 
 /**
- * Shows the feature branch with every plan's branches nested in the order the
- * plans were done, and lets the user set the feature branch.
+ * Shows the feature's branches as a graph, because a branch can come from
+ * several branches, with a readable list of where each branch came from.
+ * Branches of completed plans are left out. Also lets the user set the
+ * feature branch.
  */
 @Component({
   selector: 'app-feature-branch-overview',
-  imports: [FeaturePlanStatusPipe, FormsModule, NgTemplateOutlet, RouterLink],
+  imports: [
+    FeaturePlanStatusPipe,
+    FormsModule,
+    MarkdownContentComponent,
+    RouterLink,
+  ],
   templateUrl: './feature-branch-overview.component.html',
   styleUrls: [
     './feature-plan-branch-tree.component.css',
@@ -34,33 +44,12 @@ export class FeatureBranchOverviewComponent {
 
   readonly branchSet = output<SetFeatureBranchRequest>();
 
-  protected readonly tree = computed(() => buildFeatureBranchTree(this.feature()));
-  /**
-   * Nodes whose open state differs from the default: the feature branch starts
-   * open and every branch below it starts collapsed.
-   */
-  protected readonly toggled = signal<ReadonlySet<string>>(new Set());
+  protected readonly emptyBlocks = [];
+  protected readonly lines = computed(() => toBranchGraphLines(this.feature()));
+  protected readonly graphMarkdown = computed(() =>
+    toBranchGraphMarkdown(this.feature()),
+  );
   protected readonly editingBranch = signal(false);
-
-  protected isOpen(key: string): boolean {
-    return (key === ROOT_KEY) !== this.toggled().has(key);
-  }
-
-  protected toggle(key: string): void {
-    this.toggled.update(current => {
-      const next = new Set(current);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
-  }
-
-  protected expandAll(): void {
-    this.toggled.set(new Set(parentKeys(this.tree()).filter(key => key !== ROOT_KEY)));
-  }
-
-  protected collapseAll(): void {
-    this.toggled.set(new Set());
-  }
 
   protected setBranch(branchName: string, description: string): void {
     this.branchSet.emit({
@@ -69,12 +58,4 @@ export class FeatureBranchOverviewComponent {
     });
     this.editingBranch.set(false);
   }
-}
-
-const ROOT_KEY = 'feature';
-
-function parentKeys(node: FeatureBranchTreeNode): string[] {
-  return node.children.length === 0
-    ? []
-    : [node.key, ...node.children.flatMap(parentKeys)];
 }

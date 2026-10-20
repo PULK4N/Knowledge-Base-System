@@ -1,3 +1,5 @@
+using FeatureModule.Application.DTOs;
+using EventSourcing.Shared.Interfaces;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using FeatureModule.Application.Models;
@@ -18,6 +20,12 @@ public sealed class AddFeaturePlanCommand(
     /// The plan done before this one, or null when the base branch comes from the feature branch.
     /// </summary>
     public Guid? PreviousPlanId { get; set; }
+
+    /// <summary>
+    /// The branches the base branch was created from. Empty keeps the default,
+    /// the previous plan's first base branch or the feature branch.
+    /// </summary>
+    public List<FeaturePlanBranchSourceDto> BranchSources { get; set; } = [];
 
     public override async Task<bool> CanExecute(Executor executor) =>
         !string.IsNullOrWhiteSpace(BranchName) && await base.CanExecute(executor);
@@ -46,9 +54,24 @@ public sealed class AddFeaturePlanCommand(
                 SessionId,
                 memoryAggregateId
             ),
-            _ => RecordIds is { Count: > 0 }
-                ? CreateRecordLinkEvents(planId, memoryAggregateId)
-                : [],
+            _ =>
+            [
+                .. RecordIds is { Count: > 0 }
+                    ? CreateRecordLinkEvents(planId, memoryAggregateId)
+                    : [],
+                .. BranchSources.Count == 0
+                    ? (List<IEvent>)[]
+                    :
+                    [
+                        new FeaturePlanBaseBranchSourcesSetV1(
+                            planId,
+                            BranchName.Trim(),
+                            [.. BranchSources.Select(source => source.ToModel())],
+                            SessionId,
+                            memoryAggregateId
+                        )
+                    ]
+            ],
             memoryAggregateId
         );
 

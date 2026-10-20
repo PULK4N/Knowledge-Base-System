@@ -33,14 +33,35 @@ public enum FeaturePlanStatus
 }
 
 /// <summary>
+/// A branch a base branch was created from: the feature branch when PlanId is
+/// null, otherwise the named branch of another plan of the same feature.
+/// </summary>
+public sealed record FeaturePlanBranchSource(
+    FeaturePlanId? PlanId,
+    string BranchName
+)
+{
+    public static FeaturePlanBranchSource FeatureBranch { get; } =
+        new(null, string.Empty);
+
+    public bool IsFeatureBranch => PlanId is null;
+}
+
+/// <summary>
 /// A source-control branch used by a plan, with the branches created from it.
-/// Its name is unique within the plan's branch tree.
+/// Its name is unique within the plan's branches.
 /// </summary>
 public sealed class FeaturePlanBranch
 {
     public string Name { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Only for base branches: the branches it was created from. Empty means
+    /// the default, the previous plan's first base branch or the feature branch.
+    /// </summary>
+    public List<FeaturePlanBranchSource> Sources { get; set; } = [];
 
     public List<FeaturePlanBranch> SubBranches { get; set; } = [];
 
@@ -69,10 +90,11 @@ public sealed class FeaturePlan
     public FeaturePlanStatus Status { get; set; }
 
     /// <summary>
-    /// The plan's base branch. It is null only for plans created before
-    /// plans required a base branch.
+    /// The plan's base branches, each with its own sub-branches. The first is
+    /// the plan's main base branch, which later plans start from by default.
+    /// It is empty only for plans created before plans required a base branch.
     /// </summary>
-    public FeaturePlanBranch? Branch { get; set; }
+    public List<FeaturePlanBranch> Branches { get; set; } = [];
 
     /// <summary>
     /// The plan done before this one. Its base branch is where this plan's base
@@ -90,13 +112,17 @@ public sealed class FeaturePlan
 
     public DateTime UpdatedAt { get; set; }
 
+    public IEnumerable<FeaturePlanBranch> AllBranches() =>
+        Branches.SelectMany(branch => branch.SelfAndDescendants());
+
     public FeaturePlanBranch? FindBranch(string name) =>
-        Branch?.SelfAndDescendants()
-            .SingleOrDefault(branch => branch.Name == name);
+        AllBranches().SingleOrDefault(branch => branch.Name == name);
+
+    public FeaturePlanBranch? FindBaseBranch(string name) =>
+        Branches.SingleOrDefault(branch => branch.Name == name);
 
     public FeaturePlanBranch? FindParentBranch(string name) =>
-        Branch?.SelfAndDescendants()
-            .SingleOrDefault(
-                branch => branch.SubBranches.Any(subBranch => subBranch.Name == name)
-            );
+        AllBranches().SingleOrDefault(
+            branch => branch.SubBranches.Any(subBranch => subBranch.Name == name)
+        );
 }
