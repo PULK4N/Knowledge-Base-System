@@ -28,6 +28,7 @@ import {
   Feature,
   FeaturePlan,
   FeaturePlanBranch,
+  FeaturePlanBranchMerge,
   FeaturePlanContentRequest,
   FeaturePlanStatus,
   SetFeaturePlanBranchSourcesRequest,
@@ -39,6 +40,7 @@ import {
   branchSourceOptions,
   describeSources,
   previousPlanOptions,
+  sourceFromOptionId,
 } from '../ui/feature-branch-graph';
 import {
   FeatureLinkOption,
@@ -72,7 +74,11 @@ interface PlanTarget {
 type PlanAction =
   | ({ readonly kind: 'update'; readonly request: FeaturePlanContentRequest } & PlanTarget)
   | ({ readonly kind: 'records'; readonly request: FeaturePlanContentRequest } & PlanTarget)
-  | ({ readonly kind: 'status'; readonly status: FeaturePlanStatus } & PlanTarget)
+  | ({
+      readonly kind: 'status';
+      readonly status: FeaturePlanStatus;
+      readonly mergedInto: readonly FeaturePlanBranchMerge[];
+    } & PlanTarget)
   | ({ readonly kind: 'remove' } & PlanTarget)
   | ({ readonly kind: 'previous-plan'; readonly previousPlanId: string | null } & PlanTarget)
   | ({ readonly kind: 'add-branch'; readonly request: AddFeaturePlanBranchRequest } & PlanTarget)
@@ -108,6 +114,10 @@ export class FeaturePlanDetailsPage {
   private readonly actions = new Subject<PlanAction>();
 
   protected readonly editing = signal(false);
+  /** Set while the user picks where the branches of the plan being completed were merged. */
+  protected readonly completing = signal(false);
+  /** Merge target per base branch name: a source option ID, or '' for its own sources. */
+  protected readonly mergeTargets = signal<ReadonlyMap<string, string>>(new Map());
   protected readonly editingRecords = signal(false);
   /** Records picked while editing the plan's links. */
   protected readonly pickedRecordIds = signal<readonly string[]>([]);
@@ -129,6 +139,10 @@ export class FeaturePlanDetailsPage {
           previous.featureId === current.featureId &&
           previous.planId === current.planId,
       ),
+      tap(() => {
+        this.completing.set(false);
+        this.mergeTargets.set(new Map());
+      }),
       switchMap(({ featureId, planId }) =>
         this.features.watch(featureId).pipe(
           map(feature => {
@@ -173,6 +187,7 @@ export class FeaturePlanDetailsPage {
     exhaustMap(action =>
       this.execute(action).pipe(
         tap(() => {
+          if (action.kind === 'status') this.completing.set(false);
           if (action.kind === 'update') this.editing.set(false);
           if (action.kind === 'records') this.editingRecords.set(false);
           if (action.kind === 'remove') {
@@ -238,8 +253,43 @@ export class FeaturePlanDetailsPage {
     });
   }
 
-  protected changeStatus(target: PlanTarget, status: FeaturePlanStatus): void {
-    this.actions.next({ kind: 'status', ...target, status });
+  protected changeStatus(
+    target: PlanTarget,
+    plan: FeaturePlan,
+    status: FeaturePlanStatus,
+  ): void {
+    if (status === 'Completed' && plan.branches.length > 0) {
+      this.mergeTargets.set(new Map());
+      this.completing.set(true);
+      return;
+    }
+
+    this.completing.set(false);
+    this.actions.next({ kind: 'status', ...target, status, mergedInto: [] });
+  }
+
+  protected setMergeTarget(branchName: string, optionId: string): void {
+    this.mergeTargets.update(current => new Map(current).set(branchName, optionId));
+  }
+
+  protected completePlan(target: PlanTarget): void {
+    const mergedInto = [...this.mergeTargets()]
+      .filter(([, optionId]) => optionId !== '')
+      .map(([branchName, optionId]) => {
+        const into = sourceFromOptionId(optionId);
+        return {
+          branchName,
+          intoPlanId: into.planId,
+          intoBranchName: into.branchName,
+        };
+      });
+
+    this.actions.next({
+      kind: 'status',
+      ...target,
+      status: 'Completed',
+      mergedInto,
+    });
   }
 
   protected setPreviousPlan(target: PlanTarget, previousPlanId: string): void {
@@ -293,6 +343,7 @@ export class FeaturePlanDetailsPage {
           action.featureId,
           action.planId,
           action.status,
+          action.mergedInto,
         );
       case 'remove':
         return this.features.removePlan(action.featureId, action.planId);

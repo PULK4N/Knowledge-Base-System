@@ -51,8 +51,8 @@
             <select
               name="planStatus"
               [disabled]="saving"
-              [ngModel]="plan.status"
-              (ngModelChange)="changeStatus(target, $event)"
+              [ngModel]="completing() ? 'Completed' : plan.status"
+              (ngModelChange)="changeStatus(target, plan, $event)"
             >
               @for (option of statusOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
@@ -80,6 +80,38 @@
           }
         </div>
       </header>
+
+      @if (completing()) {
+        <section class="plan-completion surface-card" aria-label="Complete plan">
+          <span class="eyebrow">Complete plan</span>
+          <p>
+            Plans whose branches came from this plan's branches will come from
+            the branch each one was merged into.
+          </p>
+          @for (branch of plan.branches; track branch.name) {
+            <label class="merge-target">
+              <span><code>{{ branch.name }}</code> was merged into</span>
+              <select
+                [name]="'mergedInto-' + branch.name"
+                [disabled]="saving"
+                [ngModel]="mergeTargets().get(branch.name) ?? ''"
+                (ngModelChange)="setMergeTarget(branch.name, $event)"
+              >
+                <option value="">Its sources: {{ vm.state.data.describeSources(branch) }}</option>
+                @for (option of vm.state.data.sourceOptions; track option.id) {
+                  <option [value]="option.id">{{ option.label }} ({{ option.detail }})</option>
+                }
+              </select>
+            </label>
+          }
+          <div class="completion-actions">
+            <button type="button" class="primary-action" [disabled]="saving" (click)="completePlan(target)">
+              Complete plan
+            </button>
+            <button type="button" [disabled]="saving" (click)="completing.set(false)">Cancel</button>
+          </div>
+        </section>
+      }
 
       @if (vm.mutation.status === 'error') {
         <p class="form-error" role="alert">{{ vm.mutation.message }}</p>

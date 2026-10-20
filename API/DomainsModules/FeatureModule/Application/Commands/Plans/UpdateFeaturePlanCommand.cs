@@ -32,7 +32,17 @@ public sealed class UpdateFeaturePlanCommand(
                 SessionId,
                 memoryAggregateId
             ),
-            _ => CreateRecordLinkEvents(planId, memoryAggregateId),
+            feature =>
+            [
+                .. CreateRecordLinkEvents(planId, memoryAggregateId),
+                .. FeaturePlanCompletion.CreateEvents(
+                    feature,
+                    planId,
+                    MergedInto,
+                    SessionId,
+                    memoryAggregateId
+                )
+            ],
             memoryAggregateId
         );
     }

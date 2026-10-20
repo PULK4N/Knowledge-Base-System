@@ -118,14 +118,14 @@ public static class FeatureMcpFunctions
             "Adds a Markdown or HTML plan with its required base branch (branchName, optional branchDescription). additionalInfo is short text returned with feature_get so an AI can tell what the plan is for, for example research only or production implementation, without loading its content. previousPlanId is the plan done before this one. branchSources lists the branches the base branch was created from: the feature branch (planId omitted) or a branch of another plan (planId and branchName), several when it was started from more than one; omit it to use the previous plan's first base branch, or the feature branch when there is no previous plan. Optional recordIds link records of the same feature. Add more base branches or sub-branches with feature_plan_branch_add."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, string, string, FeaturePlanContentType, string, FeaturePlanStatus, List<Guid>?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlan,
+            (Func<IServiceProvider, Guid, Guid, string, string, FeaturePlanContentType, string, FeaturePlanStatus, List<Guid>?, List<FeaturePlanBranchMergeDto>?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlan,
             "feature_plan_update",
-            "Replaces a plan's title, content, content type, additional info, and status by plan ID. recordIds replaces the linked records: omit it to keep the current links, or pass an empty list to remove them. Branches are kept; change them with the feature_plan_branch tools."
+            "Replaces a plan's title, content, content type, additional info, and status by plan ID. recordIds replaces the linked records: omit it to keep the current links, or pass an empty list to remove them. When status is Completed, plans whose base branches came from this plan's branches now come from where those branches were merged; mergedInto names that branch per base branch, and an unlisted base branch was merged into its own sources. Branches are kept; change them with the feature_plan_branch tools."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, FeaturePlanStatus, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlanStatus,
+            (Func<IServiceProvider, Guid, Guid, FeaturePlanStatus, List<FeaturePlanBranchMergeDto>?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlanStatus,
             "feature_plan_status_update",
-            "Changes only a plan's status: NotStarted, InProgress, Delayed, or Completed."
+            "Changes only a plan's status: NotStarted, InProgress, Delayed, or Completed. Completing a plan means its branches were merged: plans whose base branches came from them now come from the branch each was merged into. mergedInto names that branch per base branch (intoPlanId omitted for the feature branch); an unlisted base branch was merged into its own sources. With x1 <- x2 <- x3, completing x2 merged into x1 makes x3 come from x1."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)SetPlanPreviousPlan,
@@ -654,6 +654,8 @@ public static class FeatureMcpFunctions
         FeaturePlanStatus status = FeaturePlanStatus.NotStarted,
         [Description("Records to link, replacing the current links. Omit it to keep them; pass an empty list to remove them.")]
         List<Guid>? recordIds = null,
+        [Description("Only when status is Completed: the branch each base branch was merged into. Omit intoPlanId for the feature branch.")]
+        List<FeaturePlanBranchMergeDto>? mergedInto = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -672,6 +674,7 @@ public static class FeatureMcpFunctions
                 command.AdditionalInfo = additionalInfo;
                 command.Status = status;
                 command.RecordIds = recordIds;
+                command.MergedInto = mergedInto ?? [];
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }
@@ -682,6 +685,8 @@ public static class FeatureMcpFunctions
         Guid featureId,
         Guid planId,
         FeaturePlanStatus status,
+        [Description("Only when status is Completed: the branch each base branch was merged into. Omit intoPlanId for the feature branch; unlisted base branches were merged into their own sources.")]
+        List<FeaturePlanBranchMergeDto>? mergedInto = null,
         Guid? sessionId = null,
         Guid? memoryAggregateId = null
     ) =>
@@ -695,6 +700,7 @@ public static class FeatureMcpFunctions
                 command.FeatureId = featureId;
                 command.PlanId = planId;
                 command.Status = status;
+                command.MergedInto = mergedInto ?? [];
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

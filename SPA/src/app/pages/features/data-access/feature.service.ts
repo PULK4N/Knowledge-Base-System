@@ -30,6 +30,7 @@ import {
   FeaturePlanStatus,
   SetFeatureBranchRequest,
   SetFeaturePlanBranchSourcesRequest,
+  FeaturePlanBranchMerge,
   AddFeatureRecordRequest,
   FeatureRecordCreatedCommandResult,
   FeatureReviewNoteContentRequest,
@@ -218,13 +219,19 @@ export class FeatureService {
     return this.postAndRefresh(id, `${this.planPath(planId)}/update`, request);
   }
 
+  /**
+   * Completing a plan moves plans that came from its branches to where those
+   * branches were merged; mergedInto names that branch per base branch.
+   */
   changePlanStatus(
     id: string,
     planId: string,
     status: FeaturePlanStatus,
+    mergedInto: readonly FeaturePlanBranchMerge[] = [],
   ): Observable<Feature> {
     return this.postAndRefresh(id, `${this.planPath(planId)}/status`, {
       status,
+      mergedInto,
     });
   }
 

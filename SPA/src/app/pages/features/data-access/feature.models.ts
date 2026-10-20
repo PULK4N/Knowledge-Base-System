@@ -228,6 +228,8 @@ export interface FeaturePlanContentRequest {
   readonly status: FeaturePlanStatus;
   /** Records to link. Null keeps the current links; an empty list removes them. */
   readonly recordIds?: readonly string[] | null;
+  /** Only when completing: where each base branch was merged. */
+  readonly mergedInto?: readonly FeaturePlanBranchMerge[];
 }
 
 export interface AddFeaturePlanRequest extends FeaturePlanContentRequest {
@@ -250,6 +252,16 @@ export interface AddFeaturePlanBranchRequest {
   readonly parentBranchName: string | null;
   /** Only for a new base branch: where it came from. */
   readonly sources?: readonly FeaturePlanBranchSource[];
+}
+
+/**
+ * Where a base branch of a completed plan was merged: the feature branch when
+ * intoPlanId is null, otherwise a branch of another plan.
+ */
+export interface FeaturePlanBranchMerge {
+  readonly branchName: string;
+  readonly intoPlanId: string | null;
+  readonly intoBranchName: string;
 }
 
 export interface SetFeaturePlanBranchSourcesRequest {

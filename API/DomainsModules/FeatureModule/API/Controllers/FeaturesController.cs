@@ -288,6 +288,7 @@ public sealed class FeaturesController(
         command.FeatureId = featureId;
         command.PlanId = planId;
         command.Status = request.Status;
+        command.MergedInto = request.MergedInto;
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
@@ -422,5 +423,6 @@ public sealed class FeaturesController(
         command.AdditionalInfo = request.AdditionalInfo;
         command.Status = request.Status;
         command.RecordIds = request.RecordIds;
+        command.MergedInto = request.MergedInto;
     }
 }

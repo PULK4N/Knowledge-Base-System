@@ -1,3 +1,4 @@
+using FeatureModule.Application.DTOs;
 using System.Collections.Immutable;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
@@ -29,6 +30,12 @@ public abstract class FeaturePlanContentCommand(
     /// </summary>
     public List<Guid>? RecordIds { get; set; }
 
+    /// <summary>
+    /// Only when completing: the branch each base branch was merged into. A
+    /// base branch that is not listed was merged into its own sources.
+    /// </summary>
+    public List<FeaturePlanBranchMergeDto> MergedInto { get; set; } = [];
+
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(
             FeatureId != Guid.Empty
@@ -37,6 +44,7 @@ public abstract class FeaturePlanContentCommand(
             && !string.IsNullOrWhiteSpace(Content)
             && Enum.IsDefined(ContentType)
             && Enum.IsDefined(Status)
+            && (MergedInto.Count == 0 || Status == FeaturePlanStatus.Completed)
         );
 
     /// <summary>

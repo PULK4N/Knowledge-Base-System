@@ -269,6 +269,28 @@ public sealed class FeatureMcpFunctionsTests
         Assert.Equal(required, requiredNames.Contains(parameterName));
     }
 
+    [Theory]
+    [InlineData("feature_plan_status_update")]
+    [InlineData("feature_plan_update")]
+    public void Completing_tools_take_optional_merge_targets(string functionName)
+    {
+        var schema = FeatureMcpFunctions.Create()
+            .Single(item => item.Name == functionName)
+            .JsonSchema;
+        var properties = schema.GetProperty("properties")
+            .GetProperty("mergedInto")
+            .GetProperty("items")
+            .GetProperty("properties");
+
+        Assert.True(properties.TryGetProperty("branchName", out _));
+        Assert.True(properties.TryGetProperty("intoPlanId", out _));
+        Assert.True(properties.TryGetProperty("intoBranchName", out _));
+        Assert.DoesNotContain(
+            "mergedInto",
+            schema.GetProperty("required").EnumerateArray().Select(element => element.GetString())
+        );
+    }
+
     [Fact]
     public void Get_RequiresFeatureIdButNotOrderNumber()
     {

@@ -1,3 +1,4 @@
+using FeatureModule.Application.DTOs;
 using FeatureModule.Domain.Models;
 
 namespace FeatureModule.API.Requests;
@@ -19,4 +20,9 @@ public record FeaturePlanContentRequest
     /// an empty list removes them.
     /// </summary>
     public List<Guid>? RecordIds { get; init; }
+
+    /// <summary>
+    /// Only when completing: where each base branch was merged.
+    /// </summary>
+    public List<FeaturePlanBranchMergeDto> MergedInto { get; init; } = [];
 }

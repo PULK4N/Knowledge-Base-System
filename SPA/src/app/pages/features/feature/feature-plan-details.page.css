@@ -77,7 +77,8 @@
   font-weight: 680;
 }
 
-.previous-plan-control select {
+.previous-plan-control select,
+.merge-target select {
   min-width: 260px;
   padding: 8px 11px;
   border: 1px solid #ccd3df;
@@ -116,7 +117,8 @@
   flex-wrap: wrap;
 }
 
-.plan-controls button {
+.plan-controls button,
+.completion-actions button {
   padding: 9px 12px;
   border: 1px solid #ccd3df;
   border-radius: 7px;
@@ -285,4 +287,46 @@ button:disabled {
 .plan-record-empty {
   color: var(--muted);
   font-size: 13px;
+}
+
+.plan-completion {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.plan-completion .eyebrow {
+  color: var(--indigo);
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plan-completion p {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.merge-target {
+  display: grid;
+  gap: 6px;
+}
+
+.completion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.completion-actions .primary-action {
+  color: white;
+  border-color: var(--indigo);
+  background: var(--indigo);
+}
+
+.merge-target select {
+  min-width: 0;
+  width: 100%;
 }
