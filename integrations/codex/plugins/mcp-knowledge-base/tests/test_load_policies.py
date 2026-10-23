@@ -216,7 +216,7 @@ class LoadPoliciesTests(unittest.TestCase):
             self.assertEqual("Authoritative policy", content)
             self.assertIn("AGENTS.md", self.context(output))
 
-    def test_policies_are_not_pushed_into_context(self):
+    def test_policies_are_pushed_into_context_when_agents_md_had_none(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
             output = load_policies.process_hook(
                 self.event(cwd),
@@ -226,7 +226,31 @@ class LoadPoliciesTests(unittest.TestCase):
                 data_directory=Path(data),
             )
 
-            self.assertNotIn("Secret sauce policy", self.context(output))
+            self.assertIn("Secret sauce policy", self.context(output))
+
+    def test_restored_agents_md_sends_full_policies_instead_of_changes(self):
+        with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
+            event = self.event(cwd)
+            load_policies.process_hook(
+                event,
+                client_factory=lambda: FakeClient(
+                    {"status": "OK", "policies": "# General policies\n\n## Old\nOld."}
+                ),
+                data_directory=Path(data),
+            )
+            (Path(cwd) / "AGENTS.md").unlink()
+
+            output = load_policies.process_hook(
+                {**event, "hook_event_name": "UserPromptSubmit"},
+                client_factory=lambda: FakeClient(
+                    {"status": "OK", "policies": "# General policies\n\n## New\nNew."}
+                ),
+                data_directory=Path(data),
+            )
+
+            context = self.context(output)
+            self.assertNotIn("POLICY CHANGE", context)
+            self.assertIn("# General policies\n\n## New\nNew.", context)
 
     def test_later_prompt_fetches_api_even_when_policies_are_unchanged(self):
         with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryDirectory() as data:
@@ -522,9 +546,9 @@ class LoadPoliciesTests(unittest.TestCase):
                 data_directory=Path(data),
             )
 
-            self.assertEqual(
-                "Policies written to AGENTS.md.", self.context(output)
-            )
+            context = self.context(output)
+            self.assertTrue(context.startswith("Policies written to AGENTS.md."))
+            self.assertTrue(context.endswith("\n\n# General policies"))
 
     @staticmethod
     def event(cwd):

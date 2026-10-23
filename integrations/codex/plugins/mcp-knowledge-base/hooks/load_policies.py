@@ -186,7 +186,8 @@ def process_hook(
 
     output = _policy_file_output(event_name, repository_path, result, project)
     if status == "OK":
-        if cached_result is not None:
+        # A full policy document already covers every change since the baseline.
+        if cached_result is not None and output is None:
             changes = _policy_changes(
                 str(_get_case_insensitive(cached_result, "policies") or ""),
                 str(_get_case_insensitive(result, "policies") or ""),
@@ -303,10 +304,15 @@ def _policy_file_output(
         # The agent reads the policy file on its own; saying so every turn only
         # spends context on something it already has.
         return None
-    return _context_output(
-        event_name,
-        f"Policies written to {POLICY_FILE_NAME}.",
-    )
+    # Codex reads AGENTS.md before this hook writes it, so a file that had no
+    # policies left the session without them; deliver the document directly.
+    announcement = f"Policies written to {POLICY_FILE_NAME}."
+    if document.strip():
+        announcement += (
+            f" {POLICY_FILE_NAME} had no policies when this session loaded it, "
+            "so they are included here:\n\n" + document
+        )
+    return _context_output(event_name, announcement)
 
 
 def _write_project_policy_files(
