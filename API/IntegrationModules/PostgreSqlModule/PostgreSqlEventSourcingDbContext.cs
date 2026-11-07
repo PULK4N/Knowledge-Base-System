@@ -5,6 +5,8 @@ using FeatureModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
+using ProjectModule.Persistence;
+using ProjectModule.Persistence.Models;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Models;
 using SharedModule.Persistence;
@@ -17,6 +19,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     IEntityRelationDbContext,
     IFeatureModuleDbContext,
     IPolicyModuleDbContext,
+    IProjectModuleDbContext,
     ISkillsModuleDbContext
 {
     public DbSet<EntityRelation> EntityRelations => Set<EntityRelation>();

@@ -25,8 +25,11 @@ using MemoryModule.Persistence;
 using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
-using PolicyModule.Persistence.Interfaces;
+using PolicyModule.Interfaces;
 using PolicyModule.Persistence.Models;
+using ProjectModule.Persistence;
+using ProjectModule.Persistence.Interfaces;
+using ProjectModule.Persistence.Models;
 using SkillsModule.Contracts;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
@@ -171,6 +174,8 @@ public sealed class InjectionSetupTests
             scope.ServiceProvider.GetRequiredService<AttachmentsModuleDbContext>();
         var policyContext =
             scope.ServiceProvider.GetRequiredService<IPolicyModuleDbContext>();
+        var projectContext =
+            scope.ServiceProvider.GetRequiredService<IProjectModuleDbContext>();
         var skillProjectionContext =
             scope.ServiceProvider.GetRequiredService<ISkillsModuleDbContext>();
         var entityRelationContext =
@@ -190,6 +195,10 @@ public sealed class InjectionSetupTests
         Assert.Same(
             eventSourcingContext,
             policyContext
+        );
+        Assert.Same(
+            eventSourcingContext,
+            projectContext
         );
         Assert.Same(
             eventSourcingContext,
@@ -226,7 +235,17 @@ public sealed class InjectionSetupTests
         );
         Assert.IsType<PolicyTextRepository>(
             scope.ServiceProvider.GetRequiredService<
-                IPolicyTextRepository
+                ISessionPolicyTextService
+            >()
+        );
+        Assert.IsType<ProjectPolicyTextRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IProjectPolicyTextRepository
+            >()
+        );
+        Assert.IsType<PolicyProjectSummaryRepository>(
+            scope.ServiceProvider.GetRequiredService<
+                IPolicyProjectSummaryRepository
             >()
         );
         Assert.IsType<SkillSummaryRepository>(

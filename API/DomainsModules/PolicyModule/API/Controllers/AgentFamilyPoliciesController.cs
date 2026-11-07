@@ -6,7 +6,6 @@ using ActionModule.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
-using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 
 namespace PolicyModule.API.Controllers;

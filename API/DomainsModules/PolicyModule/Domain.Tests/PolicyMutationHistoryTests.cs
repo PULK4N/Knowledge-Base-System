@@ -17,15 +17,13 @@ public sealed class PolicyMutationHistoryTests
     private static readonly Policy Policy = new() { PolicyId = PolicyId, Title = "Policy", Description = "Description" };
     private static readonly Policy UpdatedPolicy = Policy with { Title = "Updated" };
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void All_mutations_round_trip_and_replay_with_the_same_transitions_and_memory_history(bool project)
+    [Fact]
+    public void All_mutations_round_trip_and_replay_with_the_same_transitions_and_memory_history()
     {
-        var state = project ? (object)new ProjectPoliciesStateData(AggregateId) : new GeneralPoliciesStateData(AggregateId);
-        var legacyState = project ? (object)new ProjectPoliciesStateData(AggregateId) : new GeneralPoliciesStateData(AggregateId);
+        var state = new GeneralPoliciesStateData(AggregateId);
+        var legacyState = new GeneralPoliciesStateData(AggregateId);
         var expectedHistoryCount = 0;
-        foreach (var (current, legacy) in project ? ProjectMutations() : GeneralMutations())
+        foreach (var (current, legacy) in GeneralMutations())
         {
             var type = current.GetType();
             var json = JsonSerializer.Serialize(current, type);
@@ -33,7 +31,7 @@ public sealed class PolicyMutationHistoryTests
             Assert.Equal(json, JsonSerializer.Serialize(restored, type));
             var payload = EventPayload.Create(
                 EventExecutor.FromDatabaseGuid(Guid.NewGuid()), AggregateId,
-                project ? "project-policies-state-machine" : "general-policies-state-machine", restored
+                "general-policies-state-machine", restored
             );
 
             restored.Apply(state, payload.EventExecutionInfo);
@@ -48,7 +46,7 @@ public sealed class PolicyMutationHistoryTests
             Assert.Empty(History(legacyState));
             Assert.Equal(Snapshot(legacyState), Snapshot(state));
         }
-        Assert.Equal(project ? 9 : 15, expectedHistoryCount);
+        Assert.Equal(15, expectedHistoryCount);
     }
 
     private static List<(IEvent Current, IEvent Legacy)> GeneralMutations() =>
@@ -70,29 +68,11 @@ public sealed class PolicyMutationHistoryTests
         (new AgentFamilyRemovedV2(AgentFamilyName, SessionId, MemoryId), new AgentFamilyRemovedV1(AgentFamilyName))
     ];
 
-    private static List<(IEvent Current, IEvent Legacy)> ProjectMutations() =>
-    [
-        (new ProjectCreatedV2("Project", "Description", ["/workspace/first"], SessionId, MemoryId), new ProjectCreatedV1("Project", "Description", ["/workspace/first"])),
-        (new ProjectUpdatedV2("Updated", "Updated description", SessionId, MemoryId), new ProjectUpdatedV1("Updated", "Updated description")),
-        (new RepositoryAddedToProjectV2("/workspace/second", SessionId, MemoryId), new RepositoryAddedToProjectV1("/workspace/second")),
-        (new ProjectPolicyAddedV2(Policy, SessionId, MemoryId), new ProjectPolicyAddedV1(Policy)),
-        (new ProjectPolicyUpdatedV2(UpdatedPolicy, SessionId, MemoryId), new ProjectPolicyUpdatedV1(UpdatedPolicy)),
-        (new ProjectPolicyRemovedV2(PolicyId, SessionId, MemoryId), new ProjectPolicyRemovedV1(PolicyId)),
-        (new TopicRelationAddedToProjectV2(TopicName, SessionId, MemoryId), new TopicRelationAddedToProjectV1(TopicName)),
-        (new TopicRelationRemovedFromProjectV2(TopicName, SessionId, MemoryId), new TopicRelationRemovedFromProjectV1(TopicName)),
-        (new ProjectDeletedV2(SessionId, MemoryId), new ProjectDeletedV1())
-    ];
+    private static List<MemoryHistoryRecord> History(GeneralPoliciesStateData state) =>
+        state.MemoryHistory;
 
-    private static List<MemoryHistoryRecord> History(object state) => state switch
-    {
-        GeneralPoliciesStateData general => general.MemoryHistory,
-        ProjectPoliciesStateData project => project.MemoryHistory,
-        _ => throw new InvalidOperationException()
-    };
-
-    private static string Snapshot(object state) => state switch
-    {
-        GeneralPoliciesStateData general => JsonSerializer.Serialize(new
+    private static string Snapshot(GeneralPoliciesStateData general) =>
+        JsonSerializer.Serialize(new
         {
             general.Id, general.IsDeleted, Policies = general.Policies.Values,
             Topics = general.Topics.Values.Select(topic => new
@@ -103,12 +83,5 @@ public sealed class PolicyMutationHistoryTests
             {
                 family.AgentFamilyName, family.Description, Policies = family.Policies.Values
             })
-        }),
-        ProjectPoliciesStateData project => JsonSerializer.Serialize(new
-        {
-            project.Id, project.IsDeleted, project.ProjectName, project.ProjectDescription,
-            project.RepositoryPaths, project.RelatedTopics, Policies = project.Policies.Values
-        }),
-        _ => throw new InvalidOperationException()
-    };
+        });
 }

@@ -10,7 +10,6 @@
     <ProjectReference Include="../../MemoryModule/Application/Application.csproj" />
     <ProjectReference Include="../../MemoryModule/Domain/Domain.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
-    <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

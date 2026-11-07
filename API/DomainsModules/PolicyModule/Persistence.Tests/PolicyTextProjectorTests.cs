@@ -2,65 +2,67 @@ using EventSourcing.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using PolicyModule.Domain;
 using PolicyModule.Domain.Models;
-using PolicyModule.Persistence.Models;
 
 namespace PolicyModule.Persistence.Tests;
 
 public sealed class PolicyTextProjectorTests
 {
-    private static readonly AggregateId ProjectId =
-        AggregateId.FromDatabaseGuid(
-            Guid.Parse("11111111-1111-1111-1111-111111111111")
-        );
-
     [Fact]
-    public async Task Projections_AreJoinedInGeneralProjectTopicOrder()
+    public async Task SessionText_ReturnsGeneralFamilyAndTopicsInRequestedOrder()
     {
         await using var context = CreateContext();
         var repository = new PolicyTextRepository(context);
-        var general = CreateGeneralPolicies("General policy");
-        var project = CreateProject();
-        var generalStateInfo = CreateStateInfo(general);
-        var projectStateInfo = CreateStateInfo(project);
+        await Project(repository, CreateGeneralPolicies("General policy"));
 
-        await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new TopicPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new ProjectPolicyTextProjector(repository).Update(
-            [projectStateInfo]
-        );
-        await new ProjectTopicProjector(repository).Update(
-            [projectStateInfo]
-        );
-        await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new TopicPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new ProjectPolicyTextProjector(repository).Update(
-            [projectStateInfo]
-        );
-        await new ProjectTopicProjector(repository).Update(
-            [projectStateInfo]
+        var text = await repository.Get(
+            "  Codex ",
+            [new TopicName("dotnet"), new TopicName("missing"), new TopicName("cloud")]
         );
 
         Assert.Equal(
-            "# General policies\n\n"
-                + "## General policy\nGeneral text.\n\n"
-                + "# Project \"Policy project\" policies\n\n"
-                + "## Project policy\nProject text.\n\n"
-                + "# Topic \"cloud\" policies\n\n"
-                + "## Topic policy\nTopic text.",
-            await repository.Get(ProjectId, null)
+            "# General policies\n\n## General policy\nGeneral text.",
+            text.GeneralText
         );
-        Assert.Single(context.GeneralPolicyTexts);
-        Assert.Single(context.ProjectPolicyTexts);
-        Assert.Single(context.TopicPolicyTexts);
-        Assert.Single(context.ProjectPolicyTopics);
+        Assert.Equal(
+            "# Agent family \"codex\" policies\n\n## Codex policy\nCodex text.",
+            text.AgentFamilyText
+        );
+        Assert.Equal(
+            [
+                "# Topic \"dotnet\" policies\n\n## Dotnet policy\nDotnet text.",
+                "# Topic \"cloud\" policies\n\n## Topic policy\nTopic text."
+            ],
+            text.TopicTexts
+        );
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("gemini")]
+    public async Task SessionText_IsEmptyForAMissingFamily(string? agentFamily)
+    {
+        await using var context = CreateContext();
+        var repository = new PolicyTextRepository(context);
+        await Project(repository, CreateGeneralPolicies("General policy"));
+
+        var text = await repository.Get(agentFamily, []);
+
+        Assert.Equal(string.Empty, text.AgentFamilyText);
+        Assert.Empty(text.TopicTexts);
+        Assert.False(await repository.AgentFamilyExists("gemini"));
+        Assert.True(await repository.AgentFamilyExists(" Claude "));
+    }
+
+    [Fact]
+    public async Task SessionText_IsEmptyBeforeAnythingIsProjected()
+    {
+        await using var context = CreateContext();
+
+        var text = await new PolicyTextRepository(context).Get("claude", [new TopicName("cloud")]);
+
+        Assert.Equal(string.Empty, text.GeneralText);
+        Assert.Equal(string.Empty, text.AgentFamilyText);
+        Assert.Empty(text.TopicTexts);
     }
 
     [Fact]
@@ -69,23 +71,8 @@ public sealed class PolicyTextProjectorTests
         await using var context = CreateContext();
         var repository = new PolicyTextRepository(context);
         var general = CreateGeneralPolicies("General policy");
-        var project = CreateProject();
-        var generalStateInfo = CreateStateInfo(general);
-        var projectStateInfo = CreateStateInfo(project);
-        await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new TopicPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new ProjectPolicyTextProjector(repository).Update(
-            [projectStateInfo]
-        );
-        await new ProjectTopicProjector(repository).Update(
-            [projectStateInfo]
-        );
-        var projectText = context.ProjectPolicyTexts.Single().Text;
-        var topicText = context.TopicPolicyTexts.Single().Text;
+        await Project(repository, general);
+        var topicText = context.TopicPolicyTexts.Single(text => text.TopicName == "cloud").Text;
 
         general.Policies.Clear();
         AddPolicy(
@@ -95,7 +82,7 @@ public sealed class PolicyTextProjectorTests
             "Updated general text."
         );
         await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
+            [CreateStateInfo(general)]
         );
 
         Assert.Equal(
@@ -103,145 +90,21 @@ public sealed class PolicyTextProjectorTests
                 + "## Updated general policy\nUpdated general text.",
             context.GeneralPolicyTexts.Single().Text
         );
-        Assert.Equal(projectText, context.ProjectPolicyTexts.Single().Text);
-        Assert.Equal(topicText, context.TopicPolicyTexts.Single().Text);
-        Assert.Single(context.ProjectPolicyTopics);
+        Assert.Equal(
+            topicText,
+            context.TopicPolicyTexts.Single(text => text.TopicName == "cloud").Text
+        );
     }
 
-    [Fact]
-    public async Task DeletedProject_RemovesItsTextAndTopicRelations()
-    {
-        await using var context = CreateContext();
-        var repository = new PolicyTextRepository(context);
-        var project = CreateProject();
-        var stateInfo = CreateStateInfo(project);
-        await new ProjectPolicyTextProjector(repository).Update([stateInfo]);
-        await new ProjectTopicProjector(repository).Update([stateInfo]);
-
-        project.IsDeleted = true;
-        await new ProjectPolicyTextProjector(repository).Update([stateInfo]);
-        await new ProjectTopicProjector(repository).Update([stateInfo]);
-
-        Assert.Empty(context.ProjectPolicyTexts);
-        Assert.Empty(context.ProjectPolicyTopics);
-        Assert.Null(await repository.Get(ProjectId, null));
-    }
-
-    [Fact]
-    public async Task ProjectSummaryProjection_ListsNamesAndRepositoryPaths()
-    {
-        await using var context = CreateContext();
-        var repository = new PolicyProjectSummaryRepository(context);
-        var project = CreateProject();
-        var stateInfo = CreateStateInfo(project);
-        var projector = new PolicyProjectSummaryProjector(repository);
-
-        await projector.Update([stateInfo]);
-
-        var summary = Assert.Single(await repository.List());
-        Assert.Equal(ProjectId.Value, summary.ProjectId);
-        Assert.Equal("Policy project", summary.ProjectName);
-        Assert.Equal(
-            ["/workspace/policy-project"],
-            summary.RepositoryPaths
-        );
-        Assert.Equal(
-            ProjectId.Value,
-            (await repository.GetByName("  POLICY PROJECT "))?.ProjectId
-        );
-        Assert.Null(await repository.GetByName("missing"));
-
-        project.ProjectName = "Renamed policy project";
-        project.RepositoryPaths.Add("/workspace/secondary");
-        await projector.Update([stateInfo]);
-
-        summary = Assert.Single(await repository.List());
-        Assert.Equal("Renamed policy project", summary.ProjectName);
-        Assert.Equal(
-            [
-                "/workspace/policy-project",
-                "/workspace/secondary"
-            ],
-            summary.RepositoryPaths
-        );
-
-        project.IsDeleted = true;
-        await projector.Update([stateInfo]);
-
-        Assert.Empty(await repository.List());
-    }
-
-    [Theory]
-    [InlineData("claude", "Claude policy", "Claude text.")]
-    [InlineData("Codex", "Codex policy", "Codex text.")]
-    public async Task AgentFamilyProjection_AppendsOnlyTheRequestedFamily(
-        string requestedAgentFamily,
-        string expectedTitle,
-        string expectedText
+    private static async Task Project(
+        PolicyTextRepository repository,
+        GeneralPoliciesStateData general
     )
     {
-        await using var context = CreateContext();
-        var repository = new PolicyTextRepository(context);
-        var generalStateInfo = CreateStateInfo(
-            CreateGeneralPolicies("General policy")
-        );
-        var projectStateInfo = CreateStateInfo(CreateProject());
-        await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new TopicPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new AgentFamilyPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new ProjectPolicyTextProjector(repository).Update(
-            [projectStateInfo]
-        );
-        await new ProjectTopicProjector(repository).Update(
-            [projectStateInfo]
-        );
-
-        Assert.Equal(
-            "# General policies\n\n"
-                + "## General policy\nGeneral text.\n\n"
-                + "# Project \"Policy project\" policies\n\n"
-                + "## Project policy\nProject text.\n\n"
-                + $"# Agent family \"{requestedAgentFamily.ToLowerInvariant()}\" policies\n\n"
-                + $"## {expectedTitle}\n{expectedText}\n\n"
-                + "# Topic \"cloud\" policies\n\n"
-                + "## Topic policy\nTopic text.",
-            await repository.Get(ProjectId, requestedAgentFamily)
-        );
-        Assert.Equal(2, context.AgentFamilyPolicyTexts.Count());
-    }
-
-    [Fact]
-    public async Task AgentFamilyProjection_IsOmittedWhenNoFamilyIsRequested()
-    {
-        await using var context = CreateContext();
-        var repository = new PolicyTextRepository(context);
-        var generalStateInfo = CreateStateInfo(
-            CreateGeneralPolicies("General policy")
-        );
-        var projectStateInfo = CreateStateInfo(CreateProject());
-        await new GeneralPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new AgentFamilyPolicyTextProjector(repository).Update(
-            [generalStateInfo]
-        );
-        await new ProjectPolicyTextProjector(repository).Update(
-            [projectStateInfo]
-        );
-
-        var policies = await repository.Get(ProjectId, null);
-
-        Assert.DoesNotContain("Agent family", policies);
-        Assert.DoesNotContain(
-            "Agent family",
-            await repository.Get(ProjectId, "cursor")
-        );
+        var stateInfo = CreateStateInfo(general);
+        await new GeneralPolicyTextProjector(repository).Update([stateInfo]);
+        await new TopicPolicyTextProjector(repository).Update([stateInfo]);
+        await new AgentFamilyPolicyTextProjector(repository).Update([stateInfo]);
     }
 
     private static TestPolicyDbContext CreateContext()
@@ -272,19 +135,8 @@ public sealed class PolicyTextProjectorTests
             generalPolicyTitle,
             "General text."
         );
-        var topicName = new TopicName("cloud");
-        var topic = new Topic
-        {
-            TopicName = topicName,
-            Description = "Cloud policies."
-        };
-        AddPolicy(
-            topic.Policies,
-            "aaaaaaaa-3333-3333-3333-333333333333",
-            "Topic policy",
-            "Topic text."
-        );
-        state.Topics.Add(topicName, topic);
+        AddTopic(state, "cloud", "aaaaaaaa-3333-3333-3333-333333333333", "Topic policy", "Topic text.");
+        AddTopic(state, "dotnet", "aaaaaaaa-7777-7777-7777-777777777777", "Dotnet policy", "Dotnet text.");
 
         foreach (var (agentFamilyName, policyId, title, description) in
             new[]
@@ -315,23 +167,21 @@ public sealed class PolicyTextProjectorTests
         return state;
     }
 
-    private static ProjectPoliciesStateData CreateProject()
+    private static void AddTopic(
+        GeneralPoliciesStateData state,
+        string name,
+        string policyId,
+        string title,
+        string description
+    )
     {
-        var state = new ProjectPoliciesStateData(ProjectId)
+        var topic = new Topic
         {
-            ProjectName = "Policy project",
-            ProjectDescription = "Projection test project.",
-            RepositoryPaths = ["/workspace/policy-project"]
+            TopicName = new TopicName(name),
+            Description = $"{name} policies."
         };
-        AddPolicy(
-            state.Policies,
-            "aaaaaaaa-2222-2222-2222-222222222222",
-            "Project policy",
-            "Project text."
-        );
-        state.RelatedTopics.Add(new TopicName("cloud"));
-
-        return state;
+        AddPolicy(topic.Policies, policyId, title, description);
+        state.Topics.Add(topic.TopicName, topic);
     }
 
     private static void AddPolicy(
@@ -350,15 +200,6 @@ public sealed class PolicyTextProjectorTests
         policies.Add(policy.PolicyId, policy);
     }
 
-    private static StateInfo CreateStateInfo(object stateData) =>
-        StateInfo.Create(
-            stateData,
-            "test-state-machine",
-            stateData switch
-            {
-                GeneralPoliciesStateData general => general.Id,
-                ProjectPoliciesStateData project => project.Id,
-                _ => throw new InvalidOperationException()
-            }
-        );
+    private static StateInfo CreateStateInfo(GeneralPoliciesStateData stateData) =>
+        StateInfo.Create(stateData, "test-state-machine", stateData.Id);
 }

@@ -37,7 +37,7 @@ public sealed class PolicyMcpIntegrationTests : McpIntegrationTest
         Assert.Equal("OK", topicPolicy.Status);
 
         var project = await CallTool<ProjectCreatedResult>(
-            "policy_project_create",
+            "project_create",
             ("projectName", $"Integration project {suffix}"),
             ("projectDescription", "Project used by MCP integration tests"),
             ("repositoryPaths", new List<string> { repositoryPath })
@@ -79,7 +79,7 @@ public sealed class PolicyMcpIntegrationTests : McpIntegrationTest
         var unmappedRepository = $"/workspace/unmapped-{suffix}";
         var projectName = $"Existing integration project {suffix}";
         var project = await CallTool<ProjectCreatedResult>(
-            "policy_project_create",
+            "project_create",
             ("projectName", projectName),
             ("projectDescription", "Available mapping target"),
             (

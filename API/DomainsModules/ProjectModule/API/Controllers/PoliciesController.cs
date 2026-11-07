@@ -1,0 +1,33 @@
+using System.ComponentModel.DataAnnotations;
+using ActionModule.API;
+using ActionModule.Shared;
+using Microsoft.AspNetCore.Mvc;
+using ProjectModule.Application.Models;
+using ProjectModule.Application.Queries;
+
+namespace ProjectModule.API.Controllers;
+
+[ApiController]
+[Route("api/policies")]
+public sealed class PoliciesController(
+    IExecutorProvider executorProvider
+) : ActionController(executorProvider)
+{
+    [HttpGet]
+    public async Task<ActionResult<GetPoliciesByRepositoryResult>> GetByRepository(
+        [FromQuery, Required] string repositoryPath,
+        [FromQuery, Required] string agentFamily,
+        [FromServices] GetPoliciesByRepositoryQuery query
+    )
+    {
+        query.RepositoryPath = repositoryPath;
+        query.AgentFamily = agentFamily;
+
+        var result = await Execute(query);
+
+        return result.Status
+            == GetPoliciesByRepositoryResult.AgentFamilyNotFoundStatus
+            ? BadRequest(result)
+            : Ok(result);
+    }
+}

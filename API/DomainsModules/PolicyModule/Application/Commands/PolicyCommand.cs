@@ -6,7 +6,6 @@ using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
-using PolicyModule.Application.Models;
 using PolicyModule.Domain.Models;
 using SharedModule.Constants;
 
@@ -79,11 +78,6 @@ public abstract class PolicyCommand(
             StateDataAggregateIds.GeneralPolicies
         );
 
-    protected static AggregateId RepositoryToProjectMapAggregateId =>
-        AggregateId.FromDatabaseGuid(
-            StateDataAggregateIds.RepositoryToProjectMap
-        );
-
     protected static Policy CreatePolicy(
         PolicyId policyId,
         string title,
@@ -139,18 +133,6 @@ public abstract class PolicyCommand(
             eventData
         );
 
-    protected Task<object> ExecuteProjectPoliciesEvent(
-        Executor executor,
-        Guid projectId,
-        IEvent eventData
-    ) =>
-        ExecuteEvent(
-            executor,
-            AggregateId.FromDatabaseGuid(projectId),
-            Constants.StateMachineIds.ProjectPolicies,
-            eventData
-        );
-
     protected Task ExecuteEvents(List<EventPayload> payloads) =>
         stateMachineHandler.ExecuteEvents(payloads);
 
@@ -191,20 +173,6 @@ public abstract class PolicyCommand(
             memoryAggregateId
         );
 
-    protected Task<object> ExecuteProjectPoliciesEvent(
-        Executor executor,
-        Guid projectId,
-        IEvent eventData,
-        AggregateId memoryAggregateId
-    ) =>
-        ExecuteEvent(
-            executor,
-            AggregateId.FromDatabaseGuid(projectId),
-            Constants.StateMachineIds.ProjectPolicies,
-            eventData,
-            memoryAggregateId
-        );
-
     protected void AddMemoryRelation(
         List<EventPayload> payloads,
         Executor executor,
@@ -240,37 +208,4 @@ public abstract class PolicyCommand(
             return payloads;
         }
     );
-}
-
-public abstract class ExistingProjectPoliciesCommand(
-    StateMachineHandler stateMachineHandler
-) : PolicyCommand(stateMachineHandler)
-{
-    public required Guid ProjectId { get; set; }
-
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(ProjectId != Guid.Empty);
-
-    protected Task<object> ExecuteProjectPoliciesEvent(
-        Executor executor,
-        IEvent eventData
-    ) =>
-        ExecuteProjectPoliciesEvent(
-            executor,
-            ProjectId,
-            eventData
-        );
-
-    protected Task<object> ExecuteProjectPoliciesEvent(
-        Executor executor,
-        IEvent eventData,
-        AggregateId memoryAggregateId
-    ) =>
-        ExecuteProjectPoliciesEvent(
-            executor,
-            ProjectId,
-            eventData,
-            memoryAggregateId
-        );
-
 }

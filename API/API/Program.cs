@@ -28,6 +28,10 @@ using PolicyModule.Application.Commands;
 using PolicyModule.Domain;
 using PolicyModule.MCP;
 using PostgreSqlModule;
+using ProjectModule.API.Controllers;
+using ProjectModule.Application.Commands;
+using ProjectModule.Domain;
+using ProjectModule.MCP;
 using SharedModule.DistributedMessaging.Consuming;
 using SharedModule.DistributedMessaging.Queues;
 using SharedModule.Mcp;
@@ -66,7 +70,8 @@ builder.Services
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
     .AddApplicationPart(typeof(KnowledgeSearchController).Assembly)
-    .AddApplicationPart(typeof(PoliciesController).Assembly);
+    .AddApplicationPart(typeof(GeneralPoliciesController).Assembly)
+    .AddApplicationPart(typeof(ProjectPoliciesController).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -94,7 +99,8 @@ builder.Services.RegisterEventSourcingCore(
     typeof(SkillStateData).Assembly,
     typeof(FeatureStateData).Assembly,
     typeof(MemoryStateData).Assembly,
-    typeof(GeneralPoliciesStateData).Assembly
+    typeof(GeneralPoliciesStateData).Assembly,
+    typeof(ProjectStateData).Assembly
 );
 builder.Services.RegisterActions(
     typeof(QueueProjectionReplayCommand).Assembly,
@@ -103,7 +109,8 @@ builder.Services.RegisterActions(
     typeof(AddSkillCommand).Assembly,
     typeof(RecordCodexPromptHookCommand).Assembly,
     typeof(SearchKnowledgeQuery).Assembly,
-    typeof(AddGeneralPolicyCommand).Assembly
+    typeof(AddGeneralPolicyCommand).Assembly,
+    typeof(CreateProjectCommand).Assembly
 );
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
@@ -128,6 +135,7 @@ builder.Services
     .WithHttpTransport()
     .WithTools(
         PolicyMcpFunctions.Create()
+            .Concat(ProjectMcpFunctions.Create())
             .Concat(FeatureMcpFunctions.Create())
             .Concat(SkillMcpFunctions.Create())
             .Concat(MemoryMcpFunctions.Create())

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PolicyModule.Interfaces</AssemblyName>
+    <RootNamespace>PolicyModule.Interfaces</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SharedModule.Policies" />
+  </ItemGroup>
+
+</Project>

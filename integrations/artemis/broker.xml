@@ -282,6 +282,17 @@ under the License.
             <auto-delete-addresses>false</auto-delete-addresses>
             <auto-delete-queues>false</auto-delete-queues>
          </address-setting>
+         <address-setting match="knowledge-base.project-state-machine.projections">
+            <dead-letter-address>knowledge-base.project-state-machine.projections.dlq</dead-letter-address>
+            <max-delivery-attempts>5</max-delivery-attempts>
+            <redelivery-delay>5000</redelivery-delay>
+            <redelivery-delay-multiplier>2.0</redelivery-delay-multiplier>
+            <max-redelivery-delay>60000</max-redelivery-delay>
+            <auto-create-addresses>false</auto-create-addresses>
+            <auto-create-queues>false</auto-create-queues>
+            <auto-delete-addresses>false</auto-delete-addresses>
+            <auto-delete-queues>false</auto-delete-queues>
+         </address-setting>
          <address-setting match="knowledge-base.skills-state-machine.hooks">
             <dead-letter-address>knowledge-base.skills-state-machine.hooks.dlq</dead-letter-address>
             <max-delivery-attempts>5</max-delivery-attempts>
@@ -369,9 +380,23 @@ under the License.
                </queue>
             </anycast>
          </address>
+         <address name="knowledge-base.project-state-machine.projections">
+            <anycast>
+               <queue name="knowledge-base.project-state-machine.projections">
+                  <durable>true</durable>
+               </queue>
+            </anycast>
+         </address>
          <address name="knowledge-base.project-policies-state-machine.projections.dlq">
             <anycast>
                <queue name="knowledge-base.project-policies-state-machine.projections.dlq">
+                  <durable>true</durable>
+               </queue>
+            </anycast>
+         </address>
+         <address name="knowledge-base.project-state-machine.projections.dlq">
+            <anycast>
+               <queue name="knowledge-base.project-state-machine.projections.dlq">
                   <durable>true</durable>
                </queue>
             </anycast>

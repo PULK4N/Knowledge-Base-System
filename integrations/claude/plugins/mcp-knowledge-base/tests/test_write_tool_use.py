@@ -161,11 +161,12 @@ class WriteToolUseTests(unittest.TestCase):
     def test_policy_mutations_receive_session_context_through_configured_matcher(self):
         hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
         matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
-        source_directory = SCRIPT.parents[5] / "API" / "DomainsModules" / "PolicyModule" / "MCP"
+        modules_directory = SCRIPT.parents[5] / "API" / "DomainsModules"
         mutations = {
             name
-            for source in source_directory.glob("*PolicyMcpFunctions.cs")
-            for name in re.findall(r'"(policy_[a-z_]+)"', source.read_text(encoding="utf-8"))
+            for module in ("PolicyModule", "ProjectModule")
+            for source in (modules_directory / module / "MCP").glob("*PolicyMcpFunctions.cs")
+            for name in re.findall(r'"((?:policy|project)_[a-z_]+)"', source.read_text(encoding="utf-8"))
             if name.endswith(("_add", "_update", "_remove", "_create", "_delete"))
         }
         self.assertEqual(24, len(mutations))

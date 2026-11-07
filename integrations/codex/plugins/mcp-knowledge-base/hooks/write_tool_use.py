@@ -80,7 +80,7 @@ POLICY_MUTATION_TOOLS = frozenset(
         "policy_general_add",
         "policy_general_remove",
         "policy_general_update",
-        "policy_project_create",
+        "project_create",
         "policy_project_delete",
         "policy_project_policy_add",
         "policy_project_policy_remove",

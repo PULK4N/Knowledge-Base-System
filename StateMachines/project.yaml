@@ -1,0 +1,76 @@
+id: project-state-machine
+stateData: ProjectStateData
+initializationEvents:
+  - ProjectCreatedV1
+  - ProjectCreatedV2
+projections:
+  - ProjectPolicyTextProjector
+  - ProjectTopicProjector
+  - PolicyProjectSummaryProjector
+events:
+  ProjectCreatedV1:
+    preEventValidators:
+      - ProjectMustNotExistValidator
+  ProjectCreatedV2:
+    preEventValidators:
+      - ProjectMustNotExistValidator
+  ProjectUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  ProjectUpdatedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  ProjectDeletedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  ProjectDeletedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+  RepositoryAddedToProjectV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectRepositoryMustNotExistValidator
+  RepositoryAddedToProjectV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectRepositoryMustNotExistValidator
+  ProjectPolicyAddedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustNotExistValidator
+  ProjectPolicyAddedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustNotExistValidator
+  ProjectPolicyUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  ProjectPolicyUpdatedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  ProjectPolicyRemovedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  ProjectPolicyRemovedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectPolicyMustExistValidator
+  TopicRelationAddedToProjectV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustNotExistValidator
+  TopicRelationAddedToProjectV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustNotExistValidator
+  TopicRelationRemovedFromProjectV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustExistValidator
+  TopicRelationRemovedFromProjectV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectTopicMustExistValidator

@@ -1,6 +1,6 @@
 using EventSourcing.Shared.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using PolicyModule.Persistence.Interfaces;
+using PolicyModule.Interfaces;
 
 namespace PolicyModule.Persistence;
 
@@ -11,23 +11,13 @@ public static class InjectionSetup
     )
     {
         services.AddScoped<PolicyTextRepository>();
-        services.AddScoped<IPolicyTextRepository>(
+        services.AddScoped<ISessionPolicyTextService>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<PolicyTextRepository>()
-        );
-        services.AddScoped<PolicyProjectSummaryRepository>();
-        services.AddScoped<IPolicyProjectSummaryRepository>(
-            serviceProvider =>
-                serviceProvider.GetRequiredService<
-                    PolicyProjectSummaryRepository
-                >()
         );
         services.AddScoped<IProjector, GeneralPolicyTextProjector>();
         services.AddScoped<IProjector, TopicPolicyTextProjector>();
         services.AddScoped<IProjector, AgentFamilyPolicyTextProjector>();
-        services.AddScoped<IProjector, ProjectPolicyTextProjector>();
-        services.AddScoped<IProjector, ProjectTopicProjector>();
-        services.AddScoped<IProjector, PolicyProjectSummaryProjector>();
 
         return services;
     }

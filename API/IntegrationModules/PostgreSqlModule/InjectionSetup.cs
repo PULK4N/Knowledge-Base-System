@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using MemoryModule.Persistence;
 using MemoryModule.Persistence.Interfaces;
 using PolicyModule.Persistence;
+using ProjectModule.Persistence;
 using SkillsModule.Persistence;
 using SkillsModule.Persistence.Interfaces;
 using SharedModule.Persistence;
@@ -98,6 +99,12 @@ public static class InjectionSetup
         services.AddScoped<IPolicyModuleDbContext>(
             serviceProvider =>
                 (IPolicyModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
+        services.RegisterProjectModulePersistence();
+        services.AddScoped<IProjectModuleDbContext>(
+            serviceProvider =>
+                (IProjectModuleDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
         services.AddScoped<IFeatureModuleDbContext>(

@@ -9,14 +9,8 @@ internal sealed class TestPolicyDbContext(
 {
     public DbSet<GeneralPolicyText> GeneralPolicyTexts =>
         Set<GeneralPolicyText>();
-    public DbSet<ProjectPolicyText> ProjectPolicyTexts =>
-        Set<ProjectPolicyText>();
-    public DbSet<PolicyProjectSummaryEntry> PolicyProjectSummaries =>
-        Set<PolicyProjectSummaryEntry>();
     public DbSet<TopicPolicyText> TopicPolicyTexts =>
         Set<TopicPolicyText>();
-    public DbSet<ProjectPolicyTopic> ProjectPolicyTopics =>
-        Set<ProjectPolicyTopic>();
     public DbSet<AgentFamilyPolicyText> AgentFamilyPolicyTexts =>
         Set<AgentFamilyPolicyText>();
 
@@ -26,30 +20,10 @@ internal sealed class TestPolicyDbContext(
             .Entity<GeneralPolicyText>()
             .HasKey(text => text.Id);
         modelBuilder
-            .Entity<ProjectPolicyText>()
-            .HasKey(text => text.Id);
-        modelBuilder
-            .Entity<PolicyProjectSummaryEntry>()
-            .HasKey(summary => summary.Id);
-        modelBuilder
             .Entity<TopicPolicyText>()
             .HasKey(text => text.Id);
         modelBuilder
-            .Entity<ProjectPolicyTopic>()
-            .HasKey(relation => relation.Id);
-        modelBuilder
             .Entity<AgentFamilyPolicyText>()
             .HasKey(text => text.Id);
-        modelBuilder
-            .Entity<ProjectPolicyTopic>()
-            .HasIndex(
-                relation =>
-                    new
-                    {
-                        relation.ProjectAggregateId,
-                        relation.TopicName
-                    }
-            )
-            .IsUnique();
     }
 }

@@ -1,6 +1,5 @@
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
-using PolicyModule.Application.Models;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 

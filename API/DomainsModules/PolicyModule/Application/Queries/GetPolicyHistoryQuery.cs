@@ -13,8 +13,7 @@ public enum PolicyScope
 {
     General,
     Topic,
-    AgentFamily,
-    Project
+    AgentFamily
 }
 
 /// <summary>
@@ -28,10 +27,8 @@ public sealed class GetPolicyHistoryQuery(
 {
     public required PolicyScope Scope { get; set; }
 
-    /// <summary>Topic or agent family name; unused for general and project policies.</summary>
+    /// <summary>Topic or agent family name; unused for general policies.</summary>
     public string? ScopeName { get; set; }
-
-    public Guid ProjectId { get; set; }
 
     public required Guid PolicyId { get; set; }
 
@@ -42,7 +39,6 @@ public sealed class GetPolicyHistoryQuery(
             {
                 PolicyScope.Topic or PolicyScope.AgentFamily =>
                     !string.IsNullOrWhiteSpace(ScopeName),
-                PolicyScope.Project => ProjectId != Guid.Empty,
                 _ => true
             }
         );
@@ -52,19 +48,6 @@ public sealed class GetPolicyHistoryQuery(
     )
     {
         var policyId = SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId);
-        if (Scope == PolicyScope.Project)
-        {
-            var projectId = AggregateId.FromDatabaseGuid(ProjectId);
-            var project = await Replay<ProjectPoliciesStateData>(
-                await GetEvents([projectId]),
-                projectId
-            );
-
-            return project is null || project.IsDeleted
-                ? null
-                : Find(project.Policies, policyId, project.MemoryHistory);
-        }
-
         var generalId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
         );
