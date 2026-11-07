@@ -15,7 +15,8 @@ public sealed class SkillListProjector(
                 .Select(
                     stateInfo => new SkillListUpdate(
                         (SkillStateData)stateInfo.StateData,
-                        stateInfo.CurrentOrderNumber
+                        stateInfo.CurrentOrderNumber,
+                        stateInfo.LastUpdateTimestamp
                     )
                 )
                 .ToList()

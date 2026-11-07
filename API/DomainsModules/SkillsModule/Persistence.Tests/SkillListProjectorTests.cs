@@ -110,6 +110,8 @@ public sealed class SkillListProjectorTests
     [InlineData(SkillSearchSortField.ReferenceCount, SortDirection.Descending, 2)]
     [InlineData(SkillSearchSortField.AttachmentCount, SortDirection.Ascending, 3)]
     [InlineData(SkillSearchSortField.AttachmentCount, SortDirection.Descending, 1)]
+    [InlineData(SkillSearchSortField.UpdatedAt, SortDirection.Ascending, 2)]
+    [InlineData(SkillSearchSortField.UpdatedAt, SortDirection.Descending, 1)]
     public async Task Search_applies_each_allowlisted_sort(
         SkillSearchSortField sortBy,
         SortDirection direction,
@@ -118,9 +120,9 @@ public sealed class SkillListProjectorTests
     {
         await using var context = CreateContext();
         context.SkillListEntries.AddRange(
-            CreateEntry(3, "Zebra", 2, 1),
-            CreateEntry(1, "Alpha", 1, 3),
-            CreateEntry(2, "Beta", 3, 2)
+            CreateEntry(3, "Zebra", 2, 1, updatedDay: 2),
+            CreateEntry(1, "Alpha", 1, 3, updatedDay: 3),
+            CreateEntry(2, "Beta", 3, 2, updatedDay: 1)
         );
         await context.SaveChangesAsync();
 
@@ -320,7 +322,8 @@ public sealed class SkillListProjectorTests
         int id,
         string name,
         int referenceCount,
-        int attachmentCount
+        int attachmentCount,
+        int updatedDay = 1
     ) =>
         new()
         {
@@ -331,6 +334,7 @@ public sealed class SkillListProjectorTests
             SearchText = $"{name} {name} description".ToUpperInvariant(),
             ReferenceCount = referenceCount,
             AttachmentCount = attachmentCount,
+            UpdatedAt = new DateTime(2026, 10, updatedDay, 0, 0, 0, DateTimeKind.Utc),
             ProjectedOrderNumber = 1
         };
 

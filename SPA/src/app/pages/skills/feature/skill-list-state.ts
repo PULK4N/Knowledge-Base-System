@@ -19,6 +19,7 @@ const MAXIMUM_OFFSET = 100_000;
 const MAXIMUM_FILTER_LENGTH = 500;
 
 const SKILL_SORT_FIELDS: readonly SkillSearchSortField[] = [
+  'UpdatedAt',
   'Name',
   'ReferenceCount',
   'AttachmentCount',
@@ -35,8 +36,8 @@ export const DEFAULT_SKILL_SEARCH_REQUEST: SkillSearchRequest = {
   tag: '',
   hasReferences: null,
   hasAttachments: null,
-  sortBy: 'Name',
-  sortDirection: 'Ascending',
+  sortBy: 'UpdatedAt',
+  sortDirection: 'Descending',
 };
 
 export function parseSkillSearchRequest(params: ParamMap): SkillSearchRequest {
@@ -56,12 +57,17 @@ export function parseSkillSearchRequest(params: ParamMap): SkillSearchRequest {
     tag: boundedValue(params, 'tag'),
     hasReferences: readNullableBoolean(params, 'hasReferences'),
     hasAttachments: readNullableBoolean(params, 'hasAttachments'),
-    sortBy: readAllowedValue(params, 'sortBy', SKILL_SORT_FIELDS, 'Name'),
+    sortBy: readAllowedValue(
+      params,
+      'sortBy',
+      SKILL_SORT_FIELDS,
+      DEFAULT_SKILL_SEARCH_REQUEST.sortBy,
+    ),
     sortDirection: readAllowedValue(
       params,
       'sortDirection',
       SORT_DIRECTIONS,
-      'Ascending',
+      DEFAULT_SKILL_SEARCH_REQUEST.sortDirection,
     ),
   };
 }
@@ -76,8 +82,11 @@ export function skillSearchQueryParams(
     tag: omitEmpty(request.tag),
     hasReferences: serializeNullableBoolean(request.hasReferences),
     hasAttachments: serializeNullableBoolean(request.hasAttachments),
-    sortBy: omitDefault(request.sortBy, 'Name'),
-    sortDirection: omitDefault(request.sortDirection, 'Ascending'),
+    sortBy: omitDefault(request.sortBy, DEFAULT_SKILL_SEARCH_REQUEST.sortBy),
+    sortDirection: omitDefault(
+      request.sortDirection,
+      DEFAULT_SKILL_SEARCH_REQUEST.sortDirection,
+    ),
   } satisfies Params;
 }
 

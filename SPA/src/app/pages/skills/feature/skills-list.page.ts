@@ -38,6 +38,7 @@ import {
 } from './skill-list-state';
 
 const SKILL_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'UpdatedAt', label: 'Last updated' },
   { value: 'Name', label: 'Name' },
   { value: 'ReferenceCount', label: 'Reference count' },
   { value: 'AttachmentCount', label: 'Attachment count' },

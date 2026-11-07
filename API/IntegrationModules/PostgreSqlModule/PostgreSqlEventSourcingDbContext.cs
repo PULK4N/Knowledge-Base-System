@@ -211,6 +211,13 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                         entry.SkillAggregateId
                     }
                 ).HasFilter("\"IsDeleted\" = FALSE");
+                skill.HasIndex(
+                    entry => new
+                    {
+                        entry.UpdatedAt,
+                        entry.SkillAggregateId
+                    }
+                ).HasFilter("\"IsDeleted\" = FALSE");
                 skill
                     .HasIndex(entry => entry.SearchText)
                     .HasMethod("GIN")

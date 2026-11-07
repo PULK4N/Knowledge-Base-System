@@ -11,6 +11,7 @@ public sealed class SkillListEntry
     public bool IsDeleted { get; set; }
     public int ReferenceCount { get; set; }
     public int AttachmentCount { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public long ProjectedOrderNumber { get; set; }
     public List<SkillListTagEntry> Tags { get; set; } = [];
 }

@@ -116,6 +116,18 @@ internal sealed class SkillListQueryProfile
             ) => query
                 .OrderByDescending(skill => skill.AttachmentCount)
                 .ThenByDescending(skill => skill.SkillAggregateId),
+            (
+                SkillSearchSortField.UpdatedAt,
+                SortDirection.Ascending
+            ) => query
+                .OrderBy(skill => skill.UpdatedAt)
+                .ThenBy(skill => skill.SkillAggregateId),
+            (
+                SkillSearchSortField.UpdatedAt,
+                SortDirection.Descending
+            ) => query
+                .OrderByDescending(skill => skill.UpdatedAt)
+                .ThenByDescending(skill => skill.SkillAggregateId),
             _ => throw new ArgumentOutOfRangeException(nameof(sort))
         };
 

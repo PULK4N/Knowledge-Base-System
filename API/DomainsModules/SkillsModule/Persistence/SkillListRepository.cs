@@ -92,6 +92,7 @@ public sealed class SkillListRepository(
             current.IsDeleted = entry.IsDeleted;
             current.ReferenceCount = entry.ReferenceCount;
             current.AttachmentCount = entry.AttachmentCount;
+            current.UpdatedAt = entry.UpdatedAt;
             current.ProjectedOrderNumber = entry.ProjectedOrderNumber;
 
             await dbContext.SkillListTags
@@ -167,6 +168,7 @@ public sealed class SkillListRepository(
             IsDeleted = skill.IsDeleted,
             ReferenceCount = skill.References.Count,
             AttachmentCount = skill.Attachments.Count,
+            UpdatedAt = update.UpdatedAt,
             ProjectedOrderNumber = update.OrderNumber,
             Tags = tags
         };
@@ -175,5 +177,6 @@ public sealed class SkillListRepository(
 
 internal sealed record SkillListUpdate(
     SkillStateData State,
-    long OrderNumber
+    long OrderNumber,
+    DateTime UpdatedAt
 );

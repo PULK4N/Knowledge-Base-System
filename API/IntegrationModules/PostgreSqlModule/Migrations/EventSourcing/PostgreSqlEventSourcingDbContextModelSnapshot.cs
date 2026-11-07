@@ -949,6 +949,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.Property<Guid>("SkillAggregateId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SearchText")
@@ -964,6 +967,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.HasIndex("ReferenceCount", "SkillAggregateId")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("UpdatedAt", "SkillAggregateId")
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.HasIndex("NormalizedName", "Name", "SkillAggregateId")

@@ -10,5 +10,6 @@ public enum SkillSearchSortField
 {
     Name,
     ReferenceCount,
-    AttachmentCount
+    AttachmentCount,
+    UpdatedAt
 }

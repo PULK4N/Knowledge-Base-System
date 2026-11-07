@@ -32,6 +32,13 @@ describe('Skill list route state', () => {
     });
   });
 
+  it('lists the most recently updated skills first by default', () => {
+    expect(parseSkillSearchRequest(convertToParamMap({}))).toMatchObject({
+      sortBy: 'UpdatedAt',
+      sortDirection: 'Descending',
+    });
+  });
+
   it('falls back to safe defaults for unsupported route values', () => {
     expect(
       parseSkillSearchRequest(
@@ -40,7 +47,7 @@ describe('Skill list route state', () => {
           pageSize: '100',
           hasReferences: 'sometimes',
           hasAttachments: '1',
-          sortBy: 'UpdatedAt',
+          sortBy: 'Status',
           sortDirection: 'Sideways',
         }),
       ),
@@ -65,7 +72,7 @@ describe('Skill list route state', () => {
         hasReferences: true,
         hasAttachments: false,
         sortBy: 'AttachmentCount',
-        sortDirection: 'Descending',
+        sortDirection: 'Ascending',
       }),
     ).toEqual({
       page: 2,
@@ -75,7 +82,7 @@ describe('Skill list route state', () => {
       hasReferences: 'true',
       hasAttachments: 'false',
       sortBy: 'AttachmentCount',
-      sortDirection: 'Descending',
+      sortDirection: 'Ascending',
     });
   });
 

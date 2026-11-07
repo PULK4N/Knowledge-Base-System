@@ -42,6 +42,7 @@ export interface Skill extends SkillListItem {
 }
 
 export type SkillSearchSortField =
+  | 'UpdatedAt'
   | 'Name'
   | 'ReferenceCount'
   | 'AttachmentCount';
