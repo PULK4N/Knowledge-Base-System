@@ -51,7 +51,7 @@ public sealed class GetPolicyHistoryQuery(
         Executor executor
     )
     {
-        var policyId = Domain.Models.PolicyId.FromDatabaseGuid(PolicyId);
+        var policyId = SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId);
         if (Scope == PolicyScope.Project)
         {
             var projectId = AggregateId.FromDatabaseGuid(ProjectId);

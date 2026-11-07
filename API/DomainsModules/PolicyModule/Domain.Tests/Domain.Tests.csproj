@@ -19,7 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SharedModule.Policies" />
   </ItemGroup>
 
 </Project>

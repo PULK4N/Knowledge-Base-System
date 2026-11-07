@@ -13,7 +13,7 @@ public sealed class PolicyValidatorTests
             Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
         );
     private static readonly PolicyId PolicyId =
-        PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+        SharedModule.Policies.PolicyId.FromDatabaseGuid(
             Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
         );
     private static readonly TopicName TopicName = new("cloud");

@@ -267,7 +267,7 @@ public sealed class UpdateProjectPolicyCommand(
             executor,
             new ProjectPolicyUpdatedV2(
                 CreatePolicy(
-                    PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                    SharedModule.Policies.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
@@ -300,7 +300,7 @@ public sealed class RemoveProjectPolicyCommand(
         return await ExecuteProjectPoliciesEvent(
             executor,
             new ProjectPolicyRemovedV2(
-                PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                SharedModule.Policies.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,

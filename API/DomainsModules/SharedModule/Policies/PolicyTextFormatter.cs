@@ -1,8 +1,6 @@
-using PolicyModule.Application.DTOs;
+namespace SharedModule.Policies;
 
-namespace PolicyModule.MCP;
-
-internal static class PolicyTextFormatter
+public static class PolicyTextFormatter
 {
     public static string Format(IEnumerable<PolicyDto>? policies) =>
         string.Join(

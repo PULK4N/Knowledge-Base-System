@@ -64,7 +64,7 @@ public sealed class UpdateGeneralPolicyCommand(
             executor,
             new GeneralPolicyUpdatedV2(
                 CreatePolicy(
-                    PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                    SharedModule.Policies.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
@@ -94,7 +94,7 @@ public sealed class RemoveGeneralPolicyCommand(
         return await ExecuteGeneralPoliciesEvent(
             executor,
             new GeneralPolicyRemovedV2(
-                PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                SharedModule.Policies.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,

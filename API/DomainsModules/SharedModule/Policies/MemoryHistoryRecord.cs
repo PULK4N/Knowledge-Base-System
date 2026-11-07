@@ -1,6 +1,6 @@
 using EventSourcing.Shared.Models;
 
-namespace PolicyModule.Domain.Models;
+namespace SharedModule.Policies;
 
 public readonly record struct MemoryHistoryRecord(
     string EventName,

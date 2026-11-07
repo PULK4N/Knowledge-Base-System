@@ -13,9 +13,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
     <ProjectReference Include="../../../ActionModule/API/API.csproj" />
     <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
     <ProjectReference Include="../Application/Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SharedModule.Policies" />
   </ItemGroup>
 
 </Project>

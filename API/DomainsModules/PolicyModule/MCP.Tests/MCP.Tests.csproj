@@ -20,7 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
     <ProjectReference Include="../MCP/MCP.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SharedModule.Policies" />
   </ItemGroup>
 
 </Project>

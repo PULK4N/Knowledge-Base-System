@@ -1,6 +1,4 @@
-using PolicyModule.Domain.Models;
-
-namespace PolicyModule.Application.DTOs;
+namespace SharedModule.Policies;
 
 public sealed record PolicyHistoryDto(
     Guid PolicyId,

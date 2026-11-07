@@ -1,4 +1,4 @@
-namespace PolicyModule.Application.Models;
+namespace SharedModule.Policies;
 
 public sealed record PolicyCommandResult(string Status)
 {
@@ -12,15 +12,4 @@ public sealed record PolicyAddedCommandResult(
 {
     public static PolicyAddedCommandResult Ok(Guid policyId) =>
         new("OK", policyId);
-}
-
-public sealed record ProjectCreatedCommandResult(
-    string Status,
-    Guid ProjectId
-)
-{
-    public static ProjectCreatedCommandResult Ok(
-        Guid projectId
-    ) =>
-        new("OK", projectId);
 }
