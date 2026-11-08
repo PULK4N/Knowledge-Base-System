@@ -52,6 +52,14 @@ services:
       ARTEMIS_USER: artemis
       ARTEMIS_PASSWORD: artemis
       ANONYMOUS_LOGIN: "false"
+    # The image copies etc-override into etc only when it creates the instance, and etc lives in the
+    # data volume, so re-copy the overrides on every start to apply broker.xml changes.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - if [ -f ./etc/broker.xml ]; then cp ./etc-override/* ./etc/; fi; exec /docker-run.sh "$$@"
+      - docker-run
+    command: ["run"]
     ports:
       - "5673:5672"
       - "8162:8161"
