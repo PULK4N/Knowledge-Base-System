@@ -248,6 +248,85 @@
                   } @else {
                     <span class="no-topics">No use scenarios yet.</span>
                   }
+                  @if (editingSkillReviewId() === skill.skillId) {
+                    <form
+                      #reviewForm="ngForm"
+                      class="skill-review-form"
+                      (ngSubmit)="
+                        saveSkillReview(
+                          vm.state.data.scope.projectId,
+                          skill.skillId,
+                          reviewForm.value
+                        )
+                      "
+                    >
+                      <label class="review-check">
+                        <input
+                          type="checkbox"
+                          name="usedForReview"
+                          [ngModel]="skill.usedForReview"
+                        />
+                        Used for review
+                      </label>
+                      <label>
+                        <span>Review level</span>
+                        <select name="reviewLevel" [ngModel]="skill.reviewLevel ?? ''">
+                          <option value="">None</option>
+                          @for (level of reviewLevels; track level) {
+                            <option [value]="level">{{ level }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label class="review-notes">
+                        <span>Review notes</span>
+                        <textarea
+                          name="reviewNotes"
+                          rows="2"
+                          [ngModel]="skill.reviewNotes"
+                        ></textarea>
+                      </label>
+                      <span class="review-actions">
+                        <button
+                          type="submit"
+                          [disabled]="vm.connectionMutation.status === 'saving'"
+                        >
+                          {{
+                            vm.connectionMutation.status === 'saving' &&
+                            vm.connectionMutation.kind === 'update-skill'
+                              ? 'Saving…'
+                              : 'Save review'
+                          }}
+                        </button>
+                        <button
+                          class="secondary-action"
+                          type="button"
+                          (click)="cancelEditingSkillReview()"
+                        >
+                          Cancel
+                        </button>
+                      </span>
+                    </form>
+                  } @else {
+                    <div class="skill-review-summary">
+                      @if (skill.usedForReview) {
+                        <span class="review-badge">
+                          Review · {{ skill.reviewLevel }}
+                        </span>
+                        @if (skill.reviewNotes) {
+                          <span class="review-notes-text">{{ skill.reviewNotes }}</span>
+                        }
+                      } @else {
+                        <span class="no-topics">Not used for review.</span>
+                      }
+                      <button
+                        class="link-action"
+                        type="button"
+                        (click)="startEditingSkillReview(skill.skillId)"
+                      >
+                        Edit review
+                      </button>
+                    </div>
+                  }
                 </li>
               } @empty {
                 <li class="no-topics">No skills linked.</li>
@@ -303,7 +382,108 @@
             @if (
               vm.connectionMutation.status === 'error' &&
               (vm.connectionMutation.kind === 'skill' ||
-                vm.connectionMutation.kind === 'remove-skill')
+                vm.connectionMutation.kind === 'remove-skill' ||
+                vm.connectionMutation.kind === 'update-skill')
+            ) {
+              <p class="connection-error" role="alert">
+                {{ vm.connectionMutation.message }}
+              </p>
+            }
+          </div>
+        </section>
+
+        <section
+          class="project-topics surface-card"
+          aria-labelledby="project-review-models-title"
+        >
+          <div>
+            <p class="section-label">Code review</p>
+            <h2 id="project-review-models-title">Review models</h2>
+          </div>
+          <div class="connection-management">
+            <form
+              #reviewModelsForm="ngForm"
+              (ngSubmit)="
+                saveReviewModels(
+                  vm.state.data.scope.projectId,
+                  reviewModelsForm.value
+                )
+              "
+            >
+              <table class="review-models-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Level</th>
+                    <th scope="col">Model</th>
+                    <th scope="col">Reasoning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (level of reviewLevels; track level) {
+                    <tr>
+                      <th scope="row">{{ level }}</th>
+                      @if (editingReviewModels()) {
+                        <td>
+                          <input
+                            type="text"
+                            [name]="level + 'Model'"
+                            [attr.aria-label]="level + ' model'"
+                            [ngModel]="vm.state.data.reviewLevelModels[level]?.model ?? ''"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            [name]="level + 'Reasoning'"
+                            [attr.aria-label]="level + ' reasoning'"
+                            [ngModel]="vm.state.data.reviewLevelModels[level]?.reasoning ?? ''"
+                          />
+                        </td>
+                      } @else {
+                        <td>{{ vm.state.data.reviewLevelModels[level]?.model ?? '—' }}</td>
+                        <td>{{ vm.state.data.reviewLevelModels[level]?.reasoning ?? '—' }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <div class="review-actions">
+                @if (editingReviewModels()) {
+                  <button
+                    type="submit"
+                    [disabled]="vm.connectionMutation.status === 'saving'"
+                  >
+                    {{
+                      vm.connectionMutation.status === 'saving' &&
+                      vm.connectionMutation.kind === 'review-models'
+                        ? 'Saving…'
+                        : 'Save models'
+                    }}
+                  </button>
+                  <button
+                    class="secondary-action"
+                    type="button"
+                    (click)="cancelEditingReviewModels()"
+                  >
+                    Cancel
+                  </button>
+                } @else {
+                  <button
+                    class="secondary-action"
+                    type="button"
+                    (click)="startEditingReviewModels()"
+                  >
+                    Edit models
+                  </button>
+                }
+              </div>
+            </form>
+            @if (reviewModelsError(); as message) {
+              <p class="connection-error" role="alert">{{ message }}</p>
+            }
+            @if (
+              vm.connectionMutation.status === 'error' &&
+              vm.connectionMutation.kind === 'review-models'
             ) {
               <p class="connection-error" role="alert">
                 {{ vm.connectionMutation.message }}

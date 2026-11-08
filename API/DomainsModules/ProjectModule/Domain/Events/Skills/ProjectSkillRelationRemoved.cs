@@ -16,6 +16,7 @@ public readonly record struct ProjectSkillRelationRemovedV1(
         var project = (ProjectStateData)stateData;
 
         project.RelatedSkillIds.Remove(SkillId);
+        project.SkillReviews.Remove(SkillId);
         project.MemoryHistory.Add(
             new MemoryHistoryRecord(
                 eventExecutionInfo.EventName,

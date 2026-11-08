@@ -39,6 +39,8 @@ import {
   PolicyTopicSummary,
   PolicyTopicSummaryDto,
   ProjectCreatedCommandResult,
+  ProjectSkillReview,
+  ReviewLevelModels,
   PolicyWithHistory,
   UpdatePolicyRequest,
 } from './policy.models';
@@ -54,7 +56,8 @@ function isProjectDetails(
     !!project &&
     'topicNames' in project &&
     'description' in project &&
-    'skills' in project
+    'skills' in project &&
+    'reviewLevelModels' in project
   );
 }
 
@@ -267,6 +270,7 @@ export class PolicyService {
           repositoryPaths: request.repositoryPaths,
           topicNames: [],
           skills: [],
+          reviewLevelModels: {},
         })),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),
       );
@@ -320,6 +324,32 @@ export class PolicyService {
       .pipe(switchMap(() => this.refreshProject(projectId)));
   }
 
+  updateProjectSkill(
+    projectId: string,
+    skillId: string,
+    review: ProjectSkillReview,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/skills/update', {
+        projectId,
+        skillId,
+        ...review,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  setProjectReviewLevelModels(
+    projectId: string,
+    levelModels: ReviewLevelModels,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/review-level-models', {
+        projectId,
+        levelModels,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
   removeProjectSkill(
     projectId: string,
     skillId: string,
@@ -346,6 +376,7 @@ export class PolicyService {
             repositoryPaths: project.repositoryPaths,
             topicNames: project.topicNames,
             skills: project.skills,
+            reviewLevelModels: project.reviewLevelModels,
           }),
         ),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),

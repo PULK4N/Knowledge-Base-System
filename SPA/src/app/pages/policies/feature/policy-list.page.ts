@@ -29,7 +29,12 @@ import {
   PolicySearchRequest,
   PolicySearchResult,
   ProjectSkill,
+  ProjectSkillReview,
+  REVIEW_LEVELS,
+  ReviewLevel,
+  ReviewLevelModels,
 } from '../data-access/policy.models';
+import { toReviewLevelModels } from './project-review';
 import { PolicyService } from '../data-access/policy.service';
 import { SkillListItem } from '../../skills/data-access/skill.models';
 import { SkillService } from '../../skills/data-access/skill.service';
@@ -48,6 +53,7 @@ interface PolicyListView {
   readonly topicNames: readonly string[];
   readonly repositoryPaths: readonly string[];
   readonly skills: readonly ProjectSkill[];
+  readonly reviewLevelModels: ReviewLevelModels;
   readonly result: PolicySearchResult;
 }
 
@@ -100,6 +106,17 @@ type ProjectConnectionAction =
       readonly kind: 'remove-skill';
       readonly projectId: string;
       readonly value: string;
+    }
+  | {
+      readonly kind: 'update-skill';
+      readonly projectId: string;
+      readonly skillId: string;
+      readonly review: ProjectSkillReview;
+    }
+  | {
+      readonly kind: 'review-models';
+      readonly projectId: string;
+      readonly levelModels: ReviewLevelModels;
     };
 
 type ProjectConnectionKind = ProjectConnectionAction['kind'];
@@ -169,6 +186,10 @@ export class PolicyListPage {
   protected readonly confirmingProjectTopicName = signal<string | null>(null);
   protected readonly confirmingProjectSkillId = signal<string | null>(null);
   protected readonly skillNameError = signal<string | null>(null);
+  protected readonly reviewLevels = REVIEW_LEVELS;
+  protected readonly editingSkillReviewId = signal<string | null>(null);
+  protected readonly editingReviewModels = signal(false);
+  protected readonly reviewModelsError = signal<string | null>(null);
   protected readonly searchText = signal('');
 
   private readonly scope$ = combineLatest([
@@ -286,6 +307,12 @@ export class PolicyListPage {
             }
             if (action.kind === 'remove-skill') {
               this.confirmingProjectSkillId.set(null);
+            }
+            if (action.kind === 'update-skill') {
+              this.editingSkillReviewId.set(null);
+            }
+            if (action.kind === 'review-models') {
+              this.editingReviewModels.set(false);
             }
           }),
           map(() => ({ status: 'idle' }) as const),
@@ -428,6 +455,63 @@ export class PolicyListPage {
     });
   }
 
+  protected startEditingSkillReview(skillId: string): void {
+    this.editingSkillReviewId.set(skillId);
+  }
+
+  protected cancelEditingSkillReview(): void {
+    this.editingSkillReviewId.set(null);
+  }
+
+  protected saveSkillReview(
+    projectId: string,
+    skillId: string,
+    form: {
+      readonly usedForReview?: boolean;
+      readonly reviewLevel?: ReviewLevel | '';
+      readonly reviewNotes?: string;
+    },
+  ): void {
+    this.connectionRequests.next({
+      kind: 'update-skill',
+      projectId,
+      skillId,
+      review: {
+        usedForReview: !!form.usedForReview,
+        reviewLevel: form.reviewLevel || null,
+        reviewNotes: (form.reviewNotes ?? '').trim(),
+      },
+    });
+  }
+
+  protected startEditingReviewModels(): void {
+    this.reviewModelsError.set(null);
+    this.editingReviewModels.set(true);
+  }
+
+  protected cancelEditingReviewModels(): void {
+    this.reviewModelsError.set(null);
+    this.editingReviewModels.set(false);
+  }
+
+  protected saveReviewModels(
+    projectId: string,
+    form: Readonly<Record<string, string | undefined>>,
+  ): void {
+    const result = toReviewLevelModels(form);
+    if (result.status === 'invalid') {
+      this.reviewModelsError.set(result.message);
+      return;
+    }
+
+    this.reviewModelsError.set(null);
+    this.connectionRequests.next({
+      kind: 'review-models',
+      projectId,
+      levelModels: result.levelModels,
+    });
+  }
+
   private executeConnectionAction(
     action: ProjectConnectionAction,
   ): Observable<PolicyProjectDetails> {
@@ -451,6 +535,17 @@ export class PolicyListPage {
           action.projectId,
           action.value,
         );
+      case 'update-skill':
+        return this.policies.updateProjectSkill(
+          action.projectId,
+          action.skillId,
+          action.review,
+        );
+      case 'review-models':
+        return this.policies.setProjectReviewLevelModels(
+          action.projectId,
+          action.levelModels,
+        );
     }
   }
 
@@ -472,6 +567,7 @@ export class PolicyListPage {
           topicNames: [],
           repositoryPaths: [],
           skills: [],
+          reviewLevelModels: {},
           result,
         })),
       );
@@ -495,6 +591,7 @@ export class PolicyListPage {
           topicNames: [],
           repositoryPaths: [],
           skills: [],
+          reviewLevelModels: {},
           result,
         })),
       );
@@ -518,6 +615,7 @@ export class PolicyListPage {
           topicNames: [],
           repositoryPaths: [],
           skills: [],
+          reviewLevelModels: {},
           result,
         })),
       );
@@ -555,6 +653,7 @@ export class PolicyListPage {
       topicNames: project.topicNames,
       repositoryPaths: project.repositoryPaths,
       skills: project.skills,
+      reviewLevelModels: project.reviewLevelModels,
       result,
     };
   }

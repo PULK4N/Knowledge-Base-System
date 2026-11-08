@@ -78,7 +78,21 @@ events:
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectSkillMustNotExistValidator
+  ProjectSkillRelationAddedV2:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectSkillMustNotExistValidator
+      - ProjectSkillReviewLevelRequiredValidator
+  ProjectSkillRelationUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectSkillMustExistValidator
+      - ProjectSkillReviewLevelRequiredValidator
   ProjectSkillRelationRemovedV1:
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectSkillMustExistValidator
+  ProjectReviewLevelModelsSetV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectReviewLevelModelsMustBeCompleteValidator

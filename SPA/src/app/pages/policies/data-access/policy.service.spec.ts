@@ -138,6 +138,7 @@ describe('PolicyService', () => {
       repositoryPaths: project.repositoryPaths,
       topicNames: [],
       skills: [],
+      reviewLevelModels: {},
     });
   });
 
@@ -170,6 +171,35 @@ describe('PolicyService', () => {
       body: { projectId: 'project-1', skillId: 'skill-1' },
     },
     {
+      label: 'skill review',
+      invoke: (policyService: PolicyService) =>
+        policyService.updateProjectSkill('project-1', 'skill-1', {
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Heavy',
+        }),
+      path: '/api/policies/projects/skills/update',
+      body: {
+        projectId: 'project-1',
+        skillId: 'skill-1',
+        usedForReview: true,
+        reviewNotes: 'Focus on RxJS.',
+        reviewLevel: 'Heavy',
+      },
+    },
+    {
+      label: 'review level model mapping',
+      invoke: (policyService: PolicyService) =>
+        policyService.setProjectReviewLevelModels('project-1', {
+          Medium: { model: 'gpt-6.1-sol', reasoning: 'high' },
+        }),
+      path: '/api/policies/projects/review-level-models',
+      body: {
+        projectId: 'project-1',
+        levelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
+      },
+    },
+    {
       label: 'skill removal',
       invoke: (policyService: PolicyService) =>
         policyService.removeProjectSkill('project-1', 'skill-1'),
@@ -192,6 +222,7 @@ describe('PolicyService', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
       skills: [],
+      reviewLevelModels: {},
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -222,6 +253,7 @@ describe('PolicyService', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: [],
       skills: [],
+      reviewLevelModels: {},
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -355,8 +387,12 @@ describe('PolicyService', () => {
           skillId: 'skill-1',
           name: 'angular-code-writter',
           useScenarios: ['Writing or reviewing Angular code'],
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Medium',
         },
       ],
+      reviewLevelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
     });
 
     await expect(projectPromise).resolves.toEqual({
@@ -370,8 +406,12 @@ describe('PolicyService', () => {
           skillId: 'skill-1',
           name: 'angular-code-writter',
           useScenarios: ['Writing or reviewing Angular code'],
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Medium',
         },
       ],
+      reviewLevelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
     });
   });
 
