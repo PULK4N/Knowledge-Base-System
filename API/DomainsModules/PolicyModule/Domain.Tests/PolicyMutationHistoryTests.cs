@@ -27,6 +27,7 @@ public sealed class PolicyMutationHistoryTests
         {
             var type = current.GetType();
             var json = JsonSerializer.Serialize(current, type);
+            Assert.DoesNotContain("UpdatedAt", json);
             var restored = (IEvent)JsonSerializer.Deserialize(json, type)!;
             Assert.Equal(json, JsonSerializer.Serialize(restored, type));
             var payload = EventPayload.Create(
@@ -36,6 +37,7 @@ public sealed class PolicyMutationHistoryTests
 
             restored.Apply(state, payload.EventExecutionInfo);
             legacy.Apply(legacyState, payload.EventExecutionInfo);
+            Assert.Equal(json, JsonSerializer.Serialize(restored, type));
 
             var history = History(state);
             Assert.Equal(++expectedHistoryCount, history.Count);
@@ -45,8 +47,56 @@ public sealed class PolicyMutationHistoryTests
             Assert.Equal(type.Name.Contains("Policy") ? PolicyId : null, history.Last().PolicyId);
             Assert.Empty(History(legacyState));
             Assert.Equal(Snapshot(legacyState), Snapshot(state));
+            Assert.Equal(state.Policies.Values.ToList(), legacyState.Policies.Values.ToList());
+            if (state.Policies.ContainsKey(PolicyId))
+                Assert.Equal(payload.EventExecutionInfo.Timestamp, state.Policies[PolicyId].UpdatedAt);
+            foreach (var topic in state.Topics.Values)
+            {
+                Assert.Equal(payload.EventExecutionInfo.Timestamp, topic.UpdatedAt);
+                Assert.Equal(topic.Policies.Values.ToList(), legacyState.Topics[topic.TopicName].Policies.Values.ToList());
+                if (topic.Policies.ContainsKey(PolicyId))
+                    Assert.Equal(payload.EventExecutionInfo.Timestamp, topic.Policies[PolicyId].UpdatedAt);
+            }
+            foreach (var family in state.AgentFamilies.Values)
+            {
+                Assert.Equal(payload.EventExecutionInfo.Timestamp, family.UpdatedAt);
+                Assert.Equal(family.Policies.Values.ToList(), legacyState.AgentFamilies[family.AgentFamilyName].Policies.Values.ToList());
+                if (family.Policies.ContainsKey(PolicyId))
+                    Assert.Equal(payload.EventExecutionInfo.Timestamp, family.Policies[PolicyId].UpdatedAt);
+            }
         }
         Assert.Equal(15, expectedHistoryCount);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void Updating_a_container_preserves_its_policy_timestamps(bool family, bool legacy)
+    {
+        var state = new GeneralPoliciesStateData(AggregateId);
+        var mutations = GeneralMutations();
+        var offset = family ? 9 : 3;
+        var timestamp = DateTime.UnixEpoch;
+        foreach (var index in new List<int> { offset, offset + 2, offset + 1 })
+        {
+            var mutation = legacy ? mutations[index].Legacy : mutations[index].Current;
+            mutation.Apply(state, new EventExecutionInfo
+            {
+                AggregateId = AggregateId,
+                Timestamp = timestamp
+            });
+            timestamp = timestamp.AddMinutes(1);
+        }
+
+        var policies = family
+            ? state.AgentFamilies[AgentFamilyName].Policies
+            : state.Topics[TopicName].Policies;
+        Assert.Equal(DateTime.UnixEpoch.AddMinutes(1), policies[PolicyId].UpdatedAt);
+        Assert.Equal(DateTime.UnixEpoch.AddMinutes(2), family
+            ? state.AgentFamilies[AgentFamilyName].UpdatedAt
+            : state.Topics[TopicName].UpdatedAt);
     }
 
     private static List<(IEvent Current, IEvent Legacy)> GeneralMutations() =>

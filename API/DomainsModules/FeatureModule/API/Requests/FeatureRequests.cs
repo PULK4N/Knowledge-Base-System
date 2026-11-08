@@ -6,11 +6,16 @@ namespace FeatureModule.API.Requests;
 
 public sealed record SearchFeaturesRequest : PagedSearchRequest
 {
+    public SearchFeaturesRequest()
+    {
+        SortDirection = SortDirection.Descending;
+    }
+
     public Guid? ProjectId { get; init; }
 
     [EnumDataType(typeof(FeatureSearchSortField))]
     public FeatureSearchSortField SortBy { get; init; } =
-        FeatureSearchSortField.Name;
+        FeatureSearchSortField.UpdatedAt;
 }
 
 public sealed record UpdateFeatureStatusRequest

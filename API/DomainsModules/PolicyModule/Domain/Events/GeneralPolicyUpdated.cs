@@ -11,7 +11,8 @@ public readonly record struct GeneralPolicyUpdatedV1(Policy Policy) : IGeneralPo
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
-        generalPoliciesStateData.Policies[Policy.PolicyId] = Policy;
+        generalPoliciesStateData.Policies[Policy.PolicyId] =
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         return generalPoliciesStateData;
     }
@@ -26,7 +27,8 @@ public readonly record struct GeneralPolicyUpdatedV2(
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
-        generalPoliciesStateData.Policies[Policy.PolicyId] = Policy;
+        generalPoliciesStateData.Policies[Policy.PolicyId] =
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         generalPoliciesStateData.MemoryHistory.Add(
             new MemoryHistoryRecord(

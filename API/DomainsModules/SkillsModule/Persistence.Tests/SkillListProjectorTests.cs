@@ -104,6 +104,27 @@ public sealed class SkillListProjectorTests
     }
 
     [Theory]
+    [InlineData(SortDirection.Ascending)]
+    [InlineData(SortDirection.Descending)]
+    public async Task Equal_update_times_use_name_then_id(SortDirection direction)
+    {
+        await using var context = CreateContext();
+        context.SkillListEntries.AddRange(
+            CreateEntry(1, "Zulu", 1, 1),
+            CreateEntry(3, "Alpha", 1, 1),
+            CreateEntry(2, "Alpha", 1, 1)
+        );
+        await context.SaveChangesAsync();
+
+        var result = await new SkillListRepository(context).Search(
+            CreateRequest(new SkillSearchFilters(null, null, null), null,
+                SkillSearchSortField.UpdatedAt, direction));
+
+        Assert.Equal(new List<Guid> { SkillId(2), SkillId(3), SkillId(1) },
+            result.Items.Select(item => item.SkillId).ToList());
+    }
+
+    [Theory]
     [InlineData(SkillSearchSortField.Name, SortDirection.Ascending, 1)]
     [InlineData(SkillSearchSortField.Name, SortDirection.Descending, 3)]
     [InlineData(SkillSearchSortField.ReferenceCount, SortDirection.Ascending, 1)]

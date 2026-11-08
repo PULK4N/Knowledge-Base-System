@@ -104,13 +104,17 @@ internal sealed class FeatureSearchQueryProfile
                 SortDirection.Ascending
             ) => query
                 .OrderBy(feature => feature.UpdatedAt)
+                .ThenBy(feature => feature.NormalizedName)
+                .ThenBy(feature => feature.Name)
                 .ThenBy(feature => feature.FeatureAggregateId),
             (
                 FeatureSearchSortField.UpdatedAt,
                 SortDirection.Descending
             ) => query
                 .OrderByDescending(feature => feature.UpdatedAt)
-                .ThenByDescending(feature => feature.FeatureAggregateId),
+                .ThenBy(feature => feature.NormalizedName)
+                .ThenBy(feature => feature.Name)
+                .ThenBy(feature => feature.FeatureAggregateId),
             _ => throw new ArgumentOutOfRangeException(nameof(sort))
         };
 

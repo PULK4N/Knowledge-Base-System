@@ -66,7 +66,8 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
 
         var totalCount = await query.CountAsync(cancellationToken);
         var entries = await query
-            .OrderBy(summary => summary.ProjectName)
+            .OrderByDescending(summary => summary.UpdatedAt)
+            .ThenBy(summary => summary.ProjectName)
             .ThenBy(summary => summary.ProjectAggregateId)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -91,7 +92,7 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
             .Select(relation => relation.RelatedEntityId)
             .ToListAsync(cancellationToken);
 
-    public async Task Write(List<ProjectStateData> projects)
+    public async Task Write(List<PolicyProjectSummaryUpdate> updates)
     {
         var context =
             dbContext as DbContext
@@ -101,9 +102,9 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
         await using var transaction = context.Database.CurrentTransaction is null
             ? await context.Database.BeginTransactionAsync()
             : null;
-        var projectIds = projects.Select(project => project.Id.Value).ToList();
-        var activeProjects = projects
-            .Where(project => !project.IsDeleted)
+        var projectIds = updates.Select(update => update.State.Id.Value).ToList();
+        var activeProjects = updates
+            .Where(update => !update.State.IsDeleted)
             .ToList();
 
         await dbContext
@@ -114,7 +115,7 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
 
         dbContext.EntityRelations.AddRange(
             activeProjects.SelectMany(
-                project => ToSkillRelations(project, skillRelations)
+                update => ToSkillRelations(update.State, skillRelations)
             )
         );
         await dbContext
@@ -122,14 +123,15 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
             .AddRangeAsync(
                 activeProjects
                     .Select(
-                        project =>
+                        update =>
                             new PolicyProjectSummaryEntry
                             {
-                                ProjectAggregateId = project.Id.Value,
-                                ProjectName = project.ProjectName,
+                                ProjectAggregateId = update.State.Id.Value,
+                                ProjectName = update.State.ProjectName,
                                 RepositoryPathsJson = JsonSerializer.Serialize(
-                                    project.RepositoryPaths
-                                )
+                                    update.State.RepositoryPaths
+                                ),
+                                UpdatedAt = update.UpdatedAt
                             }
                     )
             );

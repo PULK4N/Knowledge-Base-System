@@ -6,4 +6,5 @@ public sealed class PolicyProjectSummaryEntry
     public required Guid ProjectAggregateId { get; set; }
     public required string ProjectName { get; set; }
     public required string RepositoryPathsJson { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

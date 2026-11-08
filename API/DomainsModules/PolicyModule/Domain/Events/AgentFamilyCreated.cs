@@ -22,7 +22,8 @@ public readonly record struct AgentFamilyCreatedV1(
             new AgentFamily
             {
                 AgentFamilyName = AgentFamilyName,
-                Description = Description
+                Description = Description,
+                UpdatedAt = eventExecutionInfo.Timestamp
             }
         );
 
@@ -48,7 +49,8 @@ public readonly record struct AgentFamilyCreatedV2(
             new AgentFamily
             {
                 AgentFamilyName = AgentFamilyName,
-                Description = Description
+                Description = Description,
+                UpdatedAt = eventExecutionInfo.Timestamp
             }
         );
 

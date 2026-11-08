@@ -11,8 +11,11 @@ public sealed class PolicyProjectSummaryProjector(
     public Task Update(List<StateInfo> stateInfos) =>
         repository.Write(
             stateInfos
-                .Select(stateInfo => stateInfo.StateData)
-                .OfType<ProjectStateData>()
+                .Where(stateInfo => stateInfo.StateData is ProjectStateData)
+                .Select(stateInfo => new PolicyProjectSummaryUpdate(
+                    (ProjectStateData)stateInfo.StateData,
+                    stateInfo.LastUpdateTimestamp
+                ))
                 .ToList()
         );
 }

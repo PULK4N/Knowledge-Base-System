@@ -17,9 +17,10 @@ public readonly record struct TopicPolicyUpdatedV1(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.Topics[TopicName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.Topics[TopicName].Policies[
             Policy.PolicyId
-        ] = Policy;
+        ] = Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         return generalPolicies;
     }
@@ -38,9 +39,10 @@ public readonly record struct TopicPolicyUpdatedV2(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.Topics[TopicName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.Topics[TopicName].Policies[
             Policy.PolicyId
-        ] = Policy;
+        ] = Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         generalPolicies.MemoryHistory.Add(
             new MemoryHistoryRecord(

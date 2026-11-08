@@ -25,6 +25,7 @@ public sealed class ProjectMutationHistoryTests
         {
             var type = current.GetType();
             var json = JsonSerializer.Serialize(current, type);
+            Assert.DoesNotContain("UpdatedAt", json);
             var restored = (IEvent)JsonSerializer.Deserialize(json, type)!;
             Assert.Equal(json, JsonSerializer.Serialize(restored, type));
             var payload = EventPayload.Create(
@@ -34,6 +35,7 @@ public sealed class ProjectMutationHistoryTests
 
             restored.Apply(state, payload.EventExecutionInfo);
             legacy.Apply(legacyState, payload.EventExecutionInfo);
+            Assert.Equal(json, JsonSerializer.Serialize(restored, type));
 
             var history = History(state);
             Assert.Equal(++expectedHistoryCount, history.Count);
@@ -43,6 +45,9 @@ public sealed class ProjectMutationHistoryTests
             Assert.Equal(type.Name.Contains("Policy") ? PolicyId : null, history.Last().PolicyId);
             Assert.Empty(History(legacyState));
             Assert.Equal(Snapshot(legacyState), Snapshot(state));
+            Assert.Equal(state.Policies.Values.ToList(), legacyState.Policies.Values.ToList());
+            if (restored is IProjectPolicyAdded or IProjectPolicyUpdated)
+                Assert.Equal(payload.EventExecutionInfo.Timestamp, state.Policies[PolicyId].UpdatedAt);
         }
         Assert.Equal(9, expectedHistoryCount);
     }

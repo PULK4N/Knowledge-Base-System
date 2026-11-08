@@ -34,7 +34,7 @@ public sealed class SearchProjectQueryTests
         };
 
         var result = await query.Execute(
-            new Executor { Id = EventExecutor.New() }
+            new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")) }
         );
 
         Assert.Equal(2, result.Page);

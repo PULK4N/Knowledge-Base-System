@@ -19,7 +19,8 @@ public readonly record struct TopicCreatedV1(
             new Topic
             {
                 TopicName = TopicName,
-                Description = Description
+                Description = Description,
+                UpdatedAt = eventExecutionInfo.Timestamp
             }
         );
 
@@ -42,7 +43,8 @@ public readonly record struct TopicCreatedV2(
             new Topic
             {
                 TopicName = TopicName,
-                Description = Description
+                Description = Description,
+                UpdatedAt = eventExecutionInfo.Timestamp
             }
         );
 

@@ -139,6 +139,41 @@ public sealed class ProjectProjectorTests
         Assert.Empty(await repository.List());
     }
 
+    [Fact]
+    public async Task ProjectSummaryProjection_sorts_rest_pages_by_last_event_time_and_keeps_mcp_name_order()
+    {
+        await using var context = TestKnowledgeBaseDbContext.Create();
+        var repository = new PolicyProjectSummaryRepository(context);
+        var projector = new PolicyProjectSummaryProjector(repository);
+        var states = new List<StateInfo>();
+        foreach (var (name, minute) in new List<(string, int)> { ("Alpha", 1), ("Zulu", 2), ("Beta", 2) })
+        {
+            var project = new ProjectStateData(AggregateId.FromDatabaseGuid(Guid.NewGuid()))
+            {
+                ProjectName = name, RepositoryPaths = ["/workspace/sorting"]
+            };
+            var stateInfo = CreateStateInfo(project);
+            stateInfo.LastUpdateTimestamp = DateTime.UnixEpoch.AddMinutes(minute);
+            states.Add(stateInfo);
+        }
+        await projector.Update(states);
+        await projector.Update(states);
+
+        var page = await repository.Search(1, 2, "sorting");
+        Assert.Equal(3, page.TotalCount);
+        Assert.Equal(new List<string> { "Beta", "Zulu" }, page.Items.Select(item => item.ProjectName).ToList());
+        Assert.Equal("Alpha", Assert.Single((await repository.Search(2, 2, "sorting")).Items).ProjectName);
+        Assert.Equal(new List<string> { "Alpha", "Beta", "Zulu" },
+            (await repository.List()).Select(item => item.ProjectName).ToList());
+        Assert.All(context.PolicyProjectSummaries.AsEnumerable(), entry =>
+            Assert.Equal(entry.ProjectName == "Alpha" ? 1 : 2,
+                (entry.UpdatedAt - DateTime.UnixEpoch).TotalMinutes));
+
+        states[0].LastUpdateTimestamp = DateTime.UnixEpoch.AddMinutes(3);
+        await projector.Update([states[0]]);
+        Assert.Equal("Alpha", Assert.Single((await repository.Search(1, 1, null)).Items).ProjectName);
+    }
+
     private static ProjectStateData CreateProject()
     {
         var state = new ProjectStateData(ProjectId)

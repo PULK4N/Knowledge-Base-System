@@ -17,9 +17,10 @@ public readonly record struct AgentFamilyPolicyAddedV1(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.AgentFamilies[AgentFamilyName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.AgentFamilies[AgentFamilyName].Policies.Add(
             Policy.PolicyId,
-            Policy
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp }
         );
 
         return generalPolicies;
@@ -39,9 +40,10 @@ public readonly record struct AgentFamilyPolicyAddedV2(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.AgentFamilies[AgentFamilyName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.AgentFamilies[AgentFamilyName].Policies.Add(
             Policy.PolicyId,
-            Policy
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp }
         );
 
         generalPolicies.MemoryHistory.Add(

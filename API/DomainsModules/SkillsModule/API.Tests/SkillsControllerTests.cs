@@ -29,8 +29,8 @@ public sealed class SkillsControllerTests
 
         Assert.Equal(Pagination.DefaultPage, request.Page);
         Assert.Equal(Pagination.DefaultPageSize, request.PageSize);
-        Assert.Equal(SkillSearchSortField.Name, request.SortBy);
-        Assert.Equal(SortDirection.Ascending, request.SortDirection);
+        Assert.Equal(SkillSearchSortField.UpdatedAt, request.SortBy);
+        Assert.Equal(SortDirection.Descending, request.SortDirection);
     }
 
     [Fact]

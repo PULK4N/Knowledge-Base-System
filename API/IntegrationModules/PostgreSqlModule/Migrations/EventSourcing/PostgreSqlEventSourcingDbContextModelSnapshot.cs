@@ -819,6 +819,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectAggregateId")
@@ -826,6 +829,9 @@ namespace PostgreSqlModule.Migrations.EventSourcing
 
                     b.HasIndex("ProjectName")
                         .IsUnique();
+
+                    b.HasIndex("UpdatedAt", "ProjectName", "ProjectAggregateId")
+                        .IsDescending(true, false, false);
 
                     b.ToTable("PolicyProjectSummaries");
                 });

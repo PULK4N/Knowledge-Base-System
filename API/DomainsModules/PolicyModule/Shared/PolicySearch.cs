@@ -38,6 +38,9 @@ public static class PolicySearch
                         StringComparison.OrdinalIgnoreCase
                     )
             )
+            .ThenByDescending(
+                policy => policy.UpdatedAt
+            )
             .ThenBy(
                 policy => policy.Title,
                 StringComparer.OrdinalIgnoreCase

@@ -115,6 +115,27 @@ public sealed class FeatureSearchProjectorTests
     }
 
     [Theory]
+    [InlineData(SortDirection.Ascending)]
+    [InlineData(SortDirection.Descending)]
+    public async Task Equal_update_times_use_name_then_id(SortDirection direction)
+    {
+        await using var context = CreateContext();
+        context.FeatureSearchEntries.AddRange(
+            CreateEntry(1, "Zulu", "Planning", 1, 1),
+            CreateEntry(3, "Alpha", "Planning", 1, 1),
+            CreateEntry(2, "Alpha", "Planning", 1, 1)
+        );
+        await context.SaveChangesAsync();
+
+        var result = await new FeatureSearchRepository(context).Search(
+            CreateRequest(new FeatureSearchFilters(null), null,
+                FeatureSearchSortField.UpdatedAt, direction));
+
+        Assert.Equal(new List<Guid> { FeatureId(2), FeatureId(3), FeatureId(1) },
+            result.Items.Select(item => item.FeatureId).ToList());
+    }
+
+    [Theory]
     [InlineData(FeatureSearchSortField.Name, SortDirection.Ascending, 2)]
     [InlineData(FeatureSearchSortField.Name, SortDirection.Descending, 1)]
     [InlineData(FeatureSearchSortField.PlanCount, SortDirection.Ascending, 2)]
