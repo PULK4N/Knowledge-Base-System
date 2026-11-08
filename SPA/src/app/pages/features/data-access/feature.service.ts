@@ -35,6 +35,9 @@ import {
   AddFeatureRecordRequest,
   FeatureRecordCreatedCommandResult,
   FeatureReviewNoteContentRequest,
+  FeatureReviewerContentRequest,
+  FeatureReviewerCreatedCommandResult,
+  UpdateFeatureReviewerRequest,
   FeatureReviewNoteCreatedCommandResult,
   UpdateFeaturePlanBranchRequest,
   UpdateFeatureRecordRequest,
@@ -202,6 +205,29 @@ export class FeatureService {
     return this.postAndRefresh(id, 'review-notes/remove', { reviewNoteId });
   }
 
+  addReviewer(
+    id: string,
+    request: FeatureReviewerContentRequest,
+  ): Observable<Feature> {
+    return this.http
+      .post<FeatureReviewerCreatedCommandResult>(
+        `${this.featurePath(id)}/reviewers`,
+        request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  updateReviewer(
+    id: string,
+    request: UpdateFeatureReviewerRequest,
+  ): Observable<Feature> {
+    return this.postAndRefresh(id, 'reviewers/update', request);
+  }
+
+  removeReviewer(id: string, reviewerId: string): Observable<Feature> {
+    return this.postAndRefresh(id, 'reviewers/remove', { reviewerId });
+  }
+
   addPlan(
     id: string,
     request: AddFeaturePlanRequest,
@@ -326,6 +352,7 @@ export class FeatureService {
       .pipe(
         map(feature => ({
           ...feature,
+          reviewers: feature.reviewers ?? [],
           planCount: feature.plans.length,
           recordCount: feature.records.length,
         })),

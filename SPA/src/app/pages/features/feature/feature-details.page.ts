@@ -1,3 +1,4 @@
+import { REVIEW_LEVELS, ReviewLevel } from '../../policies/data-access/policy.models';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -66,6 +67,7 @@ import {
   selectFeaturePlans,
   selectFeatureRecords,
   selectFeatureReviewNotes,
+  selectFeatureReviewers,
 } from './feature-detail-list-state';
 import { toFeatureHistory } from './feature-history';
 
@@ -129,6 +131,26 @@ type FeatureAction =
       readonly reviewNoteId: string;
     }
   | {
+      readonly kind: 'add-reviewer';
+      readonly featureId: string;
+      readonly title: string;
+      readonly description: string;
+      readonly reviewLevel: ReviewLevel;
+    }
+  | {
+      readonly kind: 'update-reviewer';
+      readonly featureId: string;
+      readonly reviewerId: string;
+      readonly title: string;
+      readonly description: string;
+      readonly reviewLevel: ReviewLevel;
+    }
+  | {
+      readonly kind: 'remove-reviewer';
+      readonly featureId: string;
+      readonly reviewerId: string;
+    }
+  | {
       readonly kind: 'add-plan';
       readonly featureId: string;
       readonly request: AddFeaturePlanRequest;
@@ -188,6 +210,13 @@ export class FeatureDetailsPage {
   protected readonly statusOverflows = signal(false);
   protected readonly editingRecordId = signal<string | null>(null);
   protected readonly editingReviewNoteId = signal<string | null>(null);
+  protected readonly editingReviewerId = signal<string | null>(null);
+  protected readonly addingReviewer = signal(false);
+  protected readonly reviewLevels = REVIEW_LEVELS;
+  protected readonly reviewerFilterOptions: readonly ListControlOption[] = [
+    { value: 'All', label: 'All review levels' },
+    ...REVIEW_LEVELS.map(level => ({ value: level, label: level })),
+  ];
   protected readonly addingReviewNote = signal(false);
   protected readonly addingPlan = signal(false);
   /** Records picked in the add-plan form. */
@@ -253,6 +282,8 @@ export class FeatureDetailsPage {
           if (action.kind === 'update-review-note') {
             this.editingReviewNoteId.set(null);
           }
+          if (action.kind === 'add-reviewer') this.addingReviewer.set(false);
+          if (action.kind === 'update-reviewer') this.editingReviewerId.set(null);
           if (action.kind === 'add-review-note') {
             this.addingReviewNote.set(false);
           }
@@ -317,6 +348,7 @@ export class FeatureDetailsPage {
                   detail: plan.branches.map(branch => branch.name).join(', '),
                 }),
               ),
+              reviewers: selectFeatureReviewers(vm.state.data.reviewers ?? [], vm.listState.reviewers),
               reviewNotes: selectFeatureReviewNotes(
                 vm.state.data.reviewNotes,
                 vm.listState.reviewNotes,
@@ -332,6 +364,7 @@ export class FeatureDetailsPage {
               recordOptions: [],
               branchSourceOptions: [],
               planOptions: [],
+              reviewers: [],
               reviewNotes: [],
               history: [],
             },
@@ -399,6 +432,30 @@ export class FeatureDetailsPage {
   protected updateReviewNoteDirection(direction: ListSortDirection): void {
     this.updateListQuery({
       reviewNoteDirection: omitDefault(direction, 'Descending'),
+    });
+  }
+
+  protected updateReviewerSearch(search: string): void {
+    this.updateListQuery({ reviewerSearch: omitEmpty(search) }, true);
+  }
+
+  protected updateReviewerFilter(filter: string): void {
+    if (!this.reviewerFilterOptions.some(option => option.value === filter)) {
+      return;
+    }
+    this.updateListQuery({ reviewerLevel: omitDefault(filter, 'All') });
+  }
+
+  protected updateReviewerSort(sortBy: string): void {
+    if (!REVIEW_NOTE_SORT_OPTIONS.some(option => option.value === sortBy)) {
+      return;
+    }
+    this.updateListQuery({ reviewerSort: omitDefault(sortBy, 'updatedAt') });
+  }
+
+  protected updateReviewerDirection(direction: ListSortDirection): void {
+    this.updateListQuery({
+      reviewerDirection: omitDefault(direction, 'Descending'),
     });
   }
 
@@ -493,6 +550,46 @@ export class FeatureDetailsPage {
     });
   }
 
+  protected addReviewer(
+    featureId: string,
+    title: string,
+    description: string,
+    reviewLevel: ReviewLevel,
+  ): void {
+    this.actions.next({
+      kind: 'add-reviewer',
+      featureId,
+      title: title.trim(),
+      description: description.trim(),
+      reviewLevel,
+    });
+  }
+
+  protected updateReviewer(
+    featureId: string,
+    reviewerId: string,
+    title: string,
+    description: string,
+    reviewLevel: ReviewLevel,
+  ): void {
+    this.actions.next({
+      kind: 'update-reviewer',
+      featureId,
+      reviewerId,
+      title: title.trim(),
+      description: description.trim(),
+      reviewLevel,
+    });
+  }
+
+  protected removeReviewer(featureId: string, reviewerId: string): void {
+    this.actions.next({
+      kind: 'remove-reviewer',
+      featureId,
+      reviewerId,
+    });
+  }
+
   protected addPlan(featureId: string, request: AddFeaturePlanRequest): void {
     this.actions.next({
       kind: 'add-plan',
@@ -561,6 +658,24 @@ export class FeatureDetailsPage {
         return this.features.removeReviewNote(
           action.featureId,
           action.reviewNoteId,
+        );
+      case 'add-reviewer':
+        return this.features.addReviewer(action.featureId, {
+          title: action.title,
+          description: action.description,
+          reviewLevel: action.reviewLevel,
+        });
+      case 'update-reviewer':
+        return this.features.updateReviewer(action.featureId, {
+          reviewerId: action.reviewerId,
+          title: action.title,
+          description: action.description,
+          reviewLevel: action.reviewLevel,
+        });
+      case 'remove-reviewer':
+        return this.features.removeReviewer(
+          action.featureId,
+          action.reviewerId,
         );
       case 'add-plan':
         return this.features.addPlan(action.featureId, action.request);

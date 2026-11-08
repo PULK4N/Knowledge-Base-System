@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using System.Collections.Immutable;
 using ActionModule.Shared.Models;
 using EventSourcing.Core;

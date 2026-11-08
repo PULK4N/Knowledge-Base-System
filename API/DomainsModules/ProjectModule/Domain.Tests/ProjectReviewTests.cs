@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using System.Collections.Immutable;
 using System.Text.Json;
 using EventSourcing.Shared.Interfaces;

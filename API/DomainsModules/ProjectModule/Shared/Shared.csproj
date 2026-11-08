@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ProjectModule.Shared</AssemblyName>
+    <RootNamespace>ProjectModule.Shared</RootNamespace>
+  </PropertyGroup>
+</Project>

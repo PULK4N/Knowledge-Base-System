@@ -224,3 +224,17 @@ events:
   FeatureCompositeBranchSetV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
+  FeatureReviewerAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewerMustNotExistValidator
+      - FeatureReviewerContentValidator
+  FeatureReviewerUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewerMustExistValidator
+      - FeatureReviewerContentValidator
+  FeatureReviewerRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureReviewerMustExistValidator

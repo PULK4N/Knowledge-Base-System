@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using ProjectModule.Domain;
 using ProjectModule.Domain.Models;
 using SkillsModule.Persistence.Interfaces;

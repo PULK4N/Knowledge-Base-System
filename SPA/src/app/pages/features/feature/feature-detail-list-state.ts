@@ -13,6 +13,7 @@ import {
   FeaturePlan,
   FeatureRecord,
   FeatureReviewNote,
+  FeatureReviewer,
 } from '../data-access/feature.models';
 import { flattenPlanBranches } from '../ui/feature-plan-branches';
 
@@ -21,6 +22,7 @@ export type FeatureTab =
   | 'plans'
   | 'records'
   | 'review-notes'
+  | 'reviewers'
   | 'history';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
@@ -34,6 +36,7 @@ export interface FeatureDetailListState {
   readonly activeTab: FeatureTab;
   readonly plans: ClientListState<FeaturePlanSort, FeaturePlanFilter>;
   readonly records: ClientListState<FeatureRecordSort, FeatureRecordFilter>;
+  readonly reviewers: ClientListState<FeatureReviewNoteSort, string>;
   readonly reviewNotes: ClientListState<
     FeatureReviewNoteSort,
     FeatureReviewNoteFilter
@@ -45,6 +48,7 @@ const FEATURE_TABS: readonly FeatureTab[] = [
   'plans',
   'records',
   'review-notes',
+  'reviewers',
   'history',
 ];
 const SORT_DIRECTIONS: readonly ListSortDirection[] = [
@@ -104,6 +108,12 @@ export function parseFeatureDetailListState(
         SORT_DIRECTIONS,
         'Descending',
       ),
+    },
+    reviewers: {
+      search: params.get('reviewerSearch')?.trim() ?? '',
+      filter: readAllowedValue(params, 'reviewerLevel', ['All', 'Easy', 'Medium', 'Heavy'], 'All'),
+      sortBy: readAllowedValue(params, 'reviewerSort', REVIEW_NOTE_SORTS, 'updatedAt'),
+      sortDirection: readAllowedValue(params, 'reviewerDirection', SORT_DIRECTIONS, 'Descending'),
     },
     reviewNotes: {
       search: params.get('reviewNoteSearch')?.trim() ?? '',
@@ -216,4 +226,21 @@ export function featureRecordTypes(
   records: readonly FeatureRecord[],
 ): readonly string[] {
   return [...new Set(records.map(record => record.type))].sort(compareText);
+}
+
+export function selectFeatureReviewers(
+  reviewers: readonly FeatureReviewer[],
+  state: FeatureDetailListState['reviewers'],
+): readonly FeatureReviewer[] {
+  return selectClientList(reviewers, state, {
+    searchText: reviewer => `${reviewer.title}\n${reviewer.description}`,
+    matchesFilter: (reviewer, filter) => filter === 'All' || reviewer.reviewLevel === filter,
+    compare: (left, right, sortBy) => {
+      switch (sortBy) {
+        case 'title': return compareText(left.title, right.title);
+        case 'createdAt': return compareIsoDate(left.createdAt, right.createdAt);
+        case 'updatedAt': return compareIsoDate(left.updatedAt, right.updatedAt);
+      }
+    },
+  });
 }

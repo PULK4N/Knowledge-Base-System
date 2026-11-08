@@ -66,6 +66,16 @@
         <a
           role="tab"
           [routerLink]="[]"
+          [queryParams]="{ tab: 'reviewers' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'reviewers'"
+          [class.active]="vm.listState.activeTab === 'reviewers'"
+        >
+          Reviewers <span>{{ vm.state.data.reviewers.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
           [queryParams]="{ tab: 'history' }"
           queryParamsHandling="merge"
           [attr.aria-selected]="vm.listState.activeTab === 'history'"
@@ -980,6 +990,211 @@
                 No review notes have been saved.
               } @else {
                 No review notes match the current search and filter.
+              }
+            </div>
+          }
+        </div>
+        </section>
+      }
+
+      @if (vm.listState.activeTab === 'reviewers') {
+        <section class="section-card surface-card review-notes tab-section">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Feature review instructions</span>
+            <h2>Reviewers</h2>
+          </div>
+          <div class="section-actions">
+            <span class="count-badge">{{ vm.state.data.reviewers.length }}</span>
+            <button
+              type="button"
+              class="add-toggle"
+              [attr.aria-expanded]="addingReviewer()"
+              (click)="addingReviewer.set(!addingReviewer())"
+            >
+              {{ addingReviewer() ? 'Cancel' : 'Add reviewer' }}
+            </button>
+          </div>
+        </div>
+
+        <p class="section-description">
+          Define what each reviewer should check and choose its review level.
+        </p>
+
+        @if (addingReviewer()) {
+          <form
+            class="inline-editor review-note-editor"
+            #newReviewerForm="ngForm"
+            (ngSubmit)="addReviewer(
+              vm.state.data.id,
+              newReviewerTitle.value,
+              newReviewerDescription.value,
+              newReviewerLevel.value
+            )"
+          >
+            <label class="review-note-title-field">
+              <span>Title</span>
+              <input
+                #newReviewerTitle="ngModel"
+                name="reviewerTitle"
+                type="text"
+                required
+                ngModel
+              />
+            </label>
+            <label class="review-note-content-field">
+              <span>Description (Markdown)</span>
+              <textarea
+                #newReviewerDescription="ngModel"
+                name="reviewerContent"
+                rows="10"
+                required
+                placeholder="Describe what this reviewer should check."
+                ngModel
+              ></textarea>
+            </label>
+            <label>
+              <span>Review level</span>
+              <select #newReviewerLevel="ngModel" name="reviewerLevel" required [ngModel]="'Medium'">
+                @for (level of reviewLevels; track level) { <option [ngValue]="level">{{ level }}</option> }
+              </select>
+            </label>
+            <button
+              type="submit"
+              [disabled]="newReviewerForm.invalid || vm.mutation.status === 'saving'"
+            >
+              Add reviewer
+            </button>
+          </form>
+        }
+
+        <app-list-controls
+          class="tab-list-controls"
+          [search]="vm.listState.reviewers.search"
+          searchLabel="Search reviewers"
+          searchPlaceholder="Search titles and descriptions"
+          [filter]="vm.listState.reviewers.filter"
+          filterLabel="Review level"
+          [filterOptions]="reviewerFilterOptions"
+          [sortBy]="vm.listState.reviewers.sortBy"
+          [sortOptions]="reviewNoteSortOptions"
+          [sortDirection]="vm.listState.reviewers.sortDirection"
+          (searchChanged)="updateReviewerSearch($event)"
+          (filterChanged)="updateReviewerFilter($event)"
+          (sortByChanged)="updateReviewerSort($event)"
+          (sortDirectionChanged)="updateReviewerDirection($event)"
+        />
+        <p class="visible-count">
+          Showing {{ vm.collections.reviewers.length }} of
+          {{ vm.state.data.reviewers.length }} reviewers
+        </p>
+
+        <div class="review-note-list">
+          @for (reviewer of vm.collections.reviewers; track reviewer.id) {
+            <article class="review-note-item">
+              <header>
+                <span>{{ reviewer.reviewLevel }} · Updated {{ reviewer.updatedAt | date: 'medium' }}</span>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    (click)="editingReviewerId.set(reviewer.id)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="danger-text"
+                    [disabled]="vm.mutation.status === 'saving'"
+                    (click)="removeReviewer(vm.state.data.id, reviewer.id)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </header>
+
+              @if (editingReviewerId() === reviewer.id) {
+                <form
+                  class="record-editor review-note-editor"
+                  #editReviewerForm="ngForm"
+                  (ngSubmit)="updateReviewer(
+                    vm.state.data.id,
+                    reviewer.id,
+                    editReviewerTitle.value,
+                    editReviewerDescription.value,
+                    editReviewerLevel.value
+                  )"
+                >
+                  <label class="review-note-title-field">
+                    <span>Title</span>
+                    <input
+                      #editReviewerTitle="ngModel"
+                      name="editReviewerTitle"
+                      type="text"
+                      required
+                      [ngModel]="reviewer.title"
+                    />
+                  </label>
+                  <label class="review-note-content-field">
+                    <span>Description (Markdown)</span>
+                    <textarea
+                      #editReviewerDescription="ngModel"
+                      name="editReviewerDescription"
+                      rows="10"
+                      required
+                      [ngModel]="reviewer.description"
+                    ></textarea>
+                  </label>
+                  <label>
+                    <span>Review level</span>
+                    <select #editReviewerLevel="ngModel" name="editReviewerLevel" required [ngModel]="reviewer.reviewLevel">
+                      @for (level of reviewLevels; track level) { <option [ngValue]="level">{{ level }}</option> }
+                    </select>
+                  </label>
+                  <div class="editor-actions">
+                    <button
+                      type="submit"
+                      [disabled]="editReviewerForm.invalid || vm.mutation.status === 'saving'"
+                    >
+                      Save reviewer
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-button"
+                      (click)="editingReviewerId.set(null)"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <details class="review-note-document">
+                  <summary class="review-note-toggle">
+                    <h3>{{ reviewer.title }}</h3>
+                    <svg
+                      class="discovery-chevron"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="m7 9 5 5 5-5" />
+                    </svg>
+                  </summary>
+                  <div class="review-note-body">
+                    <app-markdown-content
+                      class="readme-document"
+                      [blocks]="emptyBlocks"
+                      [markdown]="reviewer.description"
+                      emptyMessage="This reviewer has no content."
+                    />
+                  </div>
+                </details>
+              }
+            </article>
+          } @empty {
+            <div class="empty-section">
+              @if (vm.state.data.reviewers.length === 0) {
+                No reviewers have been saved.
+              } @else {
+                No reviewers match the current search and filter.
               }
             </div>
           }

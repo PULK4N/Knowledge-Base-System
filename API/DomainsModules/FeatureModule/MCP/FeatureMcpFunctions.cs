@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using System.ComponentModel;
 using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
@@ -25,7 +26,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, uint, Task<FeatureMcpDto?>>)Get,
             "feature_get",
-            "Gets a bounded feature context: its overview, the composite testing branch for Analyst checking all functionalities together before review finishes, a branch graph listing the feature branch and each branch of plans not yet completed with the branches it came from (a branch can come from several; branches of completed plans are left out because they are merged), plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes are excluded; load them with feature_review_note_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
+            "Gets a bounded feature context: its overview, the composite testing branch for Analyst checking all functionalities together before review finishes, a branch graph listing the feature branch and each branch of plans not yet completed with the branches it came from (a branch can come from several; branches of completed plans are left out because they are merged), plan summaries (ID, title, status, additional info, previous plan ID, linked record IDs) without plan content, and every record as ID, title, and type without content. Read each plan's status and additional info first and load a plan with feature_plan_get only when it is relevant; load records with feature_record_get only when needed. Review notes and reviewers are excluded; load them with feature_review_note_list and feature_reviewer_list before reviewing code. Set orderNumber to zero for the latest state or to an event order number for historical state."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
@@ -51,6 +52,11 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, uint, Task<List<FeatureReviewNoteDto>>>)ListReviewNotes,
             "feature_review_note_list",
             "Gets all review notes for a feature. Each note records a reviewed decision that intended behaviour is not a defect; read them before reporting review findings so a settled decision is not raised again."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, uint, Task<List<FeatureReviewerDto>>>)ListReviewers,
+            "feature_reviewer_list",
+            "Gets all feature reviewers with their title, Markdown description and review level. No skill is required."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, string?, Guid?, Guid?, Task<FeatureCreatedCommandResult>>)Add,
@@ -101,6 +107,21 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveReviewNote,
             "feature_review_note_remove",
             "Removes a review note from the current feature state while retaining event history."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, string, string, ReviewLevel, Guid?, Guid?, Task<FeatureReviewerCreatedCommandResult>>)AddReviewer,
+            "feature_reviewer_add",
+            "Adds a feature reviewer with a title, Markdown description and required Easy, Medium or Heavy review level. No skill is required."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, string, string, ReviewLevel, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateReviewer,
+            "feature_reviewer_update",
+            "Updates a feature reviewer title, Markdown description and review level."
+        ),
+        CreateFunction(
+            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveReviewer,
+            "feature_reviewer_remove",
+            "Removes a feature reviewer while retaining event history."
         ),
         CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, FeaturePlanContentType, string, FeaturePlanStatus, string, Guid?, List<Guid>?, List<FeaturePlanBranchSourceDto>?, Guid?, Guid?, Task<FeaturePlanCreatedCommandResult>>)AddPlan,
@@ -294,6 +315,16 @@ public static class FeatureMcpFunctions
         (await GetFullFeature(services, featureId, orderNumber))?.ReviewNotes
             .OrderByDescending(reviewNote => reviewNote.UpdatedAt)
             .ThenBy(reviewNote => reviewNote.Id)
+            .ToList() ?? [];
+
+    private static async Task<List<FeatureReviewerDto>> ListReviewers(
+        IServiceProvider services,
+        Guid featureId,
+        uint orderNumber = 0
+    ) =>
+        (await GetFullFeature(services, featureId, orderNumber))?.Reviewers
+            .OrderByDescending(reviewer => reviewer.UpdatedAt)
+            .ThenBy(reviewer => reviewer.Id)
             .ToList() ?? [];
 
     private static Task<FeatureDto?> GetFullFeature(
@@ -557,6 +588,79 @@ public static class FeatureMcpFunctions
             {
                 command.FeatureId = featureId;
                 command.ReviewNoteId = reviewNoteId;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<FeatureReviewerCreatedCommandResult> AddReviewer(
+        IServiceProvider services,
+        Guid featureId,
+        string title,
+        string description,
+        ReviewLevel reviewLevel,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            AddFeatureReviewerCommand,
+            FeatureReviewerCreatedCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.Title = title;
+                command.Description = description;
+                command.ReviewLevel = reviewLevel;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<FeatureCommandResult> UpdateReviewer(
+        IServiceProvider services,
+        Guid featureId,
+        Guid reviewerId,
+        string title,
+        string description,
+        ReviewLevel reviewLevel,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            UpdateFeatureReviewerCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.ReviewerId = reviewerId;
+                command.Title = title;
+                command.Description = description;
+                command.ReviewLevel = reviewLevel;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<FeatureCommandResult> RemoveReviewer(
+        IServiceProvider services,
+        Guid featureId,
+        Guid reviewerId,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        FeatureMcpActionExecutor.ExecuteCommand<
+            RemoveFeatureReviewerCommand,
+            FeatureCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.FeatureId = featureId;
+                command.ReviewerId = reviewerId;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

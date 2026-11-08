@@ -219,6 +219,54 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
+    [HttpPost("{featureId:guid}/reviewers")]
+    public async Task<
+        ActionResult<FeatureReviewerCreatedCommandResult>
+    > AddReviewer(
+        Guid featureId,
+        [FromBody] AddFeatureReviewerRequest request,
+        [FromServices] AddFeatureReviewerCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.ReviewLevel = request.ReviewLevel;
+        return Ok(
+            (FeatureReviewerCreatedCommandResult)await Execute(command)
+        );
+    }
+
+    [HttpPost("{featureId:guid}/reviewers/update")]
+    public async Task<ActionResult<FeatureCommandResult>> UpdateReviewer(
+        Guid featureId,
+        [FromBody] UpdateFeatureReviewerRequest request,
+        [FromServices] UpdateFeatureReviewerCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.ReviewerId = request.ReviewerId;
+        command.Title = request.Title;
+        command.Description = request.Description;
+        command.ReviewLevel = request.ReviewLevel;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
+    [HttpPost("{featureId:guid}/reviewers/remove")]
+    public async Task<ActionResult<FeatureCommandResult>> RemoveReviewer(
+        Guid featureId,
+        [FromBody] RemoveFeatureReviewerRequest request,
+        [FromServices] RemoveFeatureReviewerCommand command
+    )
+    {
+        command.UseUserOrigin();
+        command.FeatureId = featureId;
+        command.ReviewerId = request.ReviewerId;
+        return Ok((FeatureCommandResult)await Execute(command));
+    }
+
     [HttpPost("{featureId:guid}/plans")]
     public async Task<ActionResult<FeaturePlanCreatedCommandResult>> AddPlan(
         Guid featureId,

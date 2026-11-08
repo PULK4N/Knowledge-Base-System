@@ -5,6 +5,7 @@ import {
   parseFeatureDetailListState,
   selectFeaturePlans,
   selectFeatureRecords,
+  selectFeatureReviewers,
 } from './feature-detail-list-state';
 
 const plans: readonly FeaturePlan[] = [
@@ -70,6 +71,18 @@ const records: readonly FeatureRecord[] = [
 ];
 
 describe('Feature detail client list state', () => {
+  it('restores the reviewers tab and filters reviewers by level and description', () => {
+    const state = parseFeatureDetailListState(convertToParamMap({ tab: 'reviewers', reviewerSearch: 'permissions', reviewerLevel: 'Heavy' }));
+    expect(state.activeTab).toBe('reviewers');
+    const common = { title: 'Security', description: 'Check permissions', createdAt: '2026-11-08', updatedAt: '2026-11-08' };
+    const shown = selectFeatureReviewers([
+      { ...common, id: 'heavy', reviewLevel: 'Heavy' },
+      { ...common, id: 'easy', reviewLevel: 'Easy' },
+      { ...common, id: 'unrelated', description: 'Check routing', reviewLevel: 'Heavy' },
+    ], state.reviewers);
+    expect(shown.map(item => item.id)).toEqual(['heavy']);
+  });
+
   it('parses namespaced record state and lowercases the type filter', () => {
     const state = parseFeatureDetailListState(
       convertToParamMap({

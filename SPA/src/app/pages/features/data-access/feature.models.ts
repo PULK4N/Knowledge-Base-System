@@ -1,3 +1,4 @@
+import { ReviewLevel } from '../../policies/data-access/policy.models';
 import { PagedResult } from '../../../core/store/entity-store.service';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 
@@ -109,6 +110,7 @@ export interface Feature extends FeatureSummary {
   readonly isDeleted: boolean;
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
+  readonly reviewers: readonly FeatureReviewer[];
   readonly plans: readonly FeaturePlan[];
   /** Null until the feature branch is set; features are often written before it exists. */
   readonly branch: FeatureBranch | null;
@@ -158,6 +160,7 @@ export interface FeatureDto {
   readonly status: string;
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
+  readonly reviewers: readonly FeatureReviewer[];
   readonly plans: readonly FeaturePlan[];
   readonly branch: FeatureBranch | null;
   readonly compositeBranchName?: string | null;
@@ -281,4 +284,24 @@ export interface UpdateFeaturePlanBranchRequest {
   readonly branchName: string;
   readonly newBranchName: string;
   readonly description: string;
+}
+
+export interface FeatureReviewerContentRequest {
+  readonly title: string;
+  readonly description: string;
+  readonly reviewLevel: ReviewLevel;
+}
+
+export interface FeatureReviewer extends FeatureReviewerContentRequest {
+  readonly id: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface UpdateFeatureReviewerRequest extends FeatureReviewerContentRequest {
+  readonly reviewerId: string;
+}
+
+export interface FeatureReviewerCreatedCommandResult extends FeatureCommandResult {
+  readonly reviewerId: string;
 }

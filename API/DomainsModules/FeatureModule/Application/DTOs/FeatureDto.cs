@@ -22,6 +22,8 @@ public sealed record FeatureDto
     public required IReadOnlyCollection<FeatureReviewNoteDto>
         ReviewNotes { get; init; }
 
+    public List<FeatureReviewerDto> Reviewers { get; init; } = [];
+
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
     public FeatureBranchDto? Branch { get; init; }
@@ -55,6 +57,7 @@ public sealed record FeatureDto
             ReviewNotes = state.ReviewNotes
                 .Select(FeatureReviewNoteDto.FromModel)
                 .ToList(),
+            Reviewers = state.Reviewers.Select(FeatureReviewerDto.FromModel).ToList(),
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),

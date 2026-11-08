@@ -39,6 +39,7 @@ const feature: Feature = {
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
+  reviewers: [{ id: 'reviewer-1', title: 'Security', description: 'Check **permissions**.', reviewLevel: 'Easy', createdAt: '2026-11-08T10:00:00Z', updatedAt: '2026-11-08T10:00:00Z' }],
   reviewNotes: [
     {
       id: 'review-note-1',
@@ -117,6 +118,9 @@ describe('FeatureDetailsPage', () => {
     addRecord: ReturnType<typeof vi.fn>;
     updateRecord: ReturnType<typeof vi.fn>;
     removeRecord: ReturnType<typeof vi.fn>;
+    addReviewer: ReturnType<typeof vi.fn>;
+    updateReviewer: ReturnType<typeof vi.fn>;
+    removeReviewer: ReturnType<typeof vi.fn>;
     addReviewNote: ReturnType<typeof vi.fn>;
     updateReviewNote: ReturnType<typeof vi.fn>;
     removeReviewNote: ReturnType<typeof vi.fn>;
@@ -138,6 +142,9 @@ describe('FeatureDetailsPage', () => {
       addRecord: vi.fn(() => of(feature)),
       updateRecord: vi.fn(() => of(feature)),
       removeRecord: vi.fn(() => of(feature)),
+      addReviewer: vi.fn(() => of(feature)),
+      updateReviewer: vi.fn(() => of(feature)),
+      removeReviewer: vi.fn(() => of(feature)),
       addReviewNote: vi.fn(() => of(feature)),
       updateReviewNote: vi.fn(() => of(feature)),
       removeReviewNote: vi.fn(() => of(feature)),
@@ -547,6 +554,98 @@ describe('FeatureDetailsPage', () => {
     expect(features.removeReviewNote).toHaveBeenCalledWith(
       feature.id,
       'review-note-1',
+    );
+  });
+
+  it('renders reviewers as Markdown and submits a new one', async () => {
+    const element = await harness.navigateByUrl('/features/feature-1?tab=reviewers', FeatureDetailsPage).then(() => {
+      harness.detectChanges(); return harness.routeNativeElement as HTMLElement;
+    });
+
+    expect(element.textContent).toContain('Reviewers');
+    expect(element.querySelector('form.review-note-editor')).toBeNull();
+    expect(element.textContent).toContain('Security');
+
+    element
+      .querySelector<HTMLButtonElement>('.section-actions .add-toggle')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    setControlValue(element, '[name="reviewerTitle"]', ' Retry is intended ');
+    setControlValue(
+      element,
+      '[name="reviewerContent"]',
+      'The projector retries by design. ',
+    );
+
+    const level = element.querySelector<HTMLSelectElement>('[name="reviewerLevel"]')!;
+    level.selectedIndex = 2; level.dispatchEvent(new Event('change'));
+    const form = element.querySelector(
+      'form.review-note-editor',
+    ) as HTMLFormElement;
+    form.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.addReviewer).toHaveBeenCalledWith(feature.id, {
+      title: 'Retry is intended',
+      description: 'The projector retries by design.',
+      reviewLevel: 'Heavy',
+    });
+  });
+
+  it('updates and removes an existing reviewer', async () => {
+    const element = await harness.navigateByUrl('/features/feature-1?tab=reviewers', FeatureDetailsPage).then(() => {
+      harness.detectChanges(); return harness.routeNativeElement as HTMLElement;
+    });
+    const item = element.querySelector('.review-note-item') as HTMLElement;
+
+    Array.from(item.querySelectorAll<HTMLButtonElement>('header button'))
+      .find(button => button.textContent?.trim() === 'Edit')
+      ?.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    setControlValue(
+      element,
+      '[name="editReviewerTitle"]',
+      'Security by design',
+    );
+    setControlValue(
+      element,
+      '[name="editReviewerDescription"]',
+      'State replay is intentional and is not a defect.',
+    );
+    const level = element.querySelector<HTMLSelectElement>('[name="editReviewerLevel"]')!;
+    level.selectedIndex = 1; level.dispatchEvent(new Event('change'));
+    await harness.fixture.whenStable();
+    const editForm = element.querySelector(
+      '.review-note-item form',
+    ) as HTMLFormElement;
+    editForm.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+
+    expect(features.updateReviewer).toHaveBeenCalledWith(feature.id, {
+      reviewerId: 'reviewer-1',
+      title: 'Security by design',
+      description: 'State replay is intentional and is not a defect.',
+      reviewLevel: 'Medium',
+    });
+
+    Array.from(
+      element.querySelectorAll<HTMLButtonElement>(
+        '.review-note-item header button',
+      ),
+    )
+      .find(button => button.textContent?.trim() === 'Remove')
+      ?.click();
+    harness.detectChanges();
+
+    expect(features.removeReviewer).toHaveBeenCalledWith(
+      feature.id,
+      'reviewer-1',
     );
   });
 
