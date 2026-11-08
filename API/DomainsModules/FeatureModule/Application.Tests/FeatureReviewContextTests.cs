@@ -1,0 +1,94 @@
+using EventSourcing.Shared.Models;
+using FeatureModule.Application.Services;
+using FeatureModule.Domain;
+using FeatureModule.Domain.Models;
+using Xunit;
+
+namespace FeatureModule.Application.Tests;
+
+public sealed class FeatureReviewContextTests
+{
+    [Theory]
+    [InlineData("next", "previous")]
+    [InlineData("child", "next")]
+    public void Resolve_UsesRecordedOriginIncludingCompletedPlans(string branch, string expectedOrigin)
+    {
+        var state = State();
+        var previous = Plan("previous");
+        previous.Status = FeaturePlanStatus.Completed;
+        var next = Plan("next");
+        next.PreviousPlanId = previous.Id;
+        next.CreatedAt = previous.CreatedAt.AddSeconds(1);
+        next.Branches[0].SubBranches.Add(new() { Name = "child" });
+        state.Plans.AddRange([previous, next]);
+
+        var result = FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, branch);
+
+        Assert.Equal(expectedOrigin, result!.OriginBranch);
+        Assert.Equal(next.Id.Value, result.Plan.Id);
+        Assert.Equal(state.Summary, result.Feature.Summary);
+    }
+
+    [Fact]
+    public void Resolve_UsesFeatureBranchAndDoesNotCrossProjectOrDeletedFeature()
+    {
+        var state = State();
+        state.Plans.Add(Plan("implementation"));
+        Assert.Equal("feature", FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation")!.OriginBranch);
+        Assert.Null(FeatureReviewContextResolver.Resolve(state, Guid.NewGuid(), "implementation"));
+        Assert.Null(FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "missing"));
+        state.IsDeleted = true;
+        Assert.Null(FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Resolve_RejectsMissingRecordedOriginInsteadOfFallingBack(bool explicitSource)
+    {
+        var state = State();
+        var plan = Plan("implementation");
+        var missing = FeaturePlanId.FromDatabaseGuid(Guid.NewGuid());
+        if (explicitSource)
+            plan.Branches[0].Sources.Add(new(missing, "missing"));
+        else
+            plan.PreviousPlanId = missing;
+        state.Plans.Add(plan);
+        Assert.Throws<InvalidOperationException>(() =>
+            FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Resolve_RejectsAmbiguousPlanOrOrigin(bool multipleOrigins)
+    {
+        var state = State();
+        var first = Plan("first");
+        var second = Plan(multipleOrigins ? "second" : "first");
+        if (multipleOrigins)
+        {
+            second.Branches[0].Sources.Add(FeaturePlanBranchSource.FeatureBranch);
+            second.Branches[0].Sources.Add(new(first.Id, "first"));
+        }
+        state.Plans.AddRange([first, second]);
+        Assert.Throws<InvalidOperationException>(() => FeatureReviewContextResolver.Resolve(
+            state, state.ProjectId.Value, multipleOrigins ? "second" : "first"));
+    }
+
+    private static FeatureStateData State() => new(AggregateId.FromDatabaseGuid(Guid.NewGuid()))
+    {
+        ProjectId = AggregateId.FromDatabaseGuid(Guid.NewGuid()),
+        Branch = new() { Name = "feature" },
+        Summary = "Feature overview"
+    };
+
+    private static FeaturePlan Plan(string branch) => new()
+    {
+        Id = FeaturePlanId.FromDatabaseGuid(Guid.NewGuid()),
+        Title = branch,
+        Content = "Plan content",
+        CreatedAt = new DateTime(2026, 11, 8, 0, 0, 0, DateTimeKind.Utc),
+        Branches = [new() { Name = branch }]
+    };
+}

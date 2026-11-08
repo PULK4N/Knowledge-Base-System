@@ -1,0 +1,15 @@
+id: settings-state-machine
+stateData: SettingsStateData
+initializationEvents:
+  - SettingsInitializedV1
+projections:
+  - CodeReviewSettingsProjector
+events:
+  SettingsInitializedV1:
+    preEventValidators:
+      - SettingsMustNotExistValidator
+      - CodeReviewSettingsValidValidator
+  CodeReviewSettingsUpdatedV1:
+    preEventValidators:
+      - SettingsMustExistValidator
+      - CodeReviewSettingsValidValidator

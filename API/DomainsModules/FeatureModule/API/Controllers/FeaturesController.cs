@@ -17,6 +17,25 @@ public sealed class FeaturesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet("review-context")]
+    public async Task<ActionResult<FeatureReviewContextDto>> ResolveReviewContext(
+        [FromQuery, Required] Guid projectId,
+        [FromQuery, Required] string branchName,
+        [FromServices] ResolveFeatureReviewContextQuery query)
+    {
+        query.ProjectId = projectId;
+        query.BranchName = branchName;
+        try
+        {
+            var context = await Execute(query);
+            return context is null ? NotFound() : Ok(context);
+        }
+        catch (InvalidOperationException error)
+        {
+            return Conflict(new { message = error.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResult<FeatureSummaryDto>>> List(
         [FromServices] SearchFeaturesQuery query,

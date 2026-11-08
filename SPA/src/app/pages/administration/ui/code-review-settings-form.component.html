@@ -1,0 +1,23 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <fieldset [disabled]="saving">
+    <label for="review-batch-size">Reviewers per batch</label>
+    <input id="review-batch-size" type="number" min="1" step="1" max="2147483647"
+      formControlName="batchSize" aria-describedby="review-batch-help" />
+    <p id="review-batch-help">Reviewers in a batch run together. The next batch starts after all of them finish.</p>
+    @if (form.controls.batchSize.invalid && form.controls.batchSize.touched) {
+      <p role="alert">Enter a positive whole number of reviewers.</p>
+    }
+
+    <label for="review-task-message">Shared review task message</label>
+    <textarea id="review-task-message" rows="15" formControlName="taskMessage"
+      aria-describedby="review-task-help"></textarea>
+    <p id="review-task-help">Added after each reviewer's skill and notes or feature-specific instructions.</p>
+    @if (form.controls.taskMessage.invalid && form.controls.taskMessage.touched) {
+      <p role="alert">Enter a review task message.</p>
+    }
+
+    <button type="submit" [disabled]="saving || form.invalid">
+      {{ saving ? 'Saving…' : 'Save reviewer settings' }}
+    </button>
+  </fieldset>
+</form>

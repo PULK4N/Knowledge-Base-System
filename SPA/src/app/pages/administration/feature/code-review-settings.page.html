@@ -1,0 +1,23 @@
+<h2>Code reviewers</h2>
+<p>Configure how code reviews run across projects. Changes apply to new review runs.</p>
+@if (vm$ | async; as vm) {
+  @if (vm.load.status === 'loading') {
+    <p role="status">Loading reviewer settings…</p>
+  } @else if (vm.load.status === 'error') {
+    <p role="alert">{{ vm.load.message }}</p>
+    <button type="button" (click)="reload()">Try again</button>
+  } @else {
+    <app-code-review-settings-form
+      [settings]="vm.load.data"
+      [saving]="vm.save.status === 'saving'"
+      (saveRequested)="save($event)"
+    />
+  }
+  @if (vm.save.status === 'saved') {
+    <p role="status">Settings saved. New review runs will use these values.</p>
+  } @else if (vm.save.status === 'saving') {
+    <p role="status">Saving settings…</p>
+  } @else if (vm.save.status === 'error') {
+    <p role="alert">{{ vm.save.message }}</p>
+  }
+}

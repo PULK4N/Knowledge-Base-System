@@ -8,8 +8,14 @@ namespace FeatureModule.Persistence;
 
 public sealed class FeatureSummaryRepository(
     IFeatureModuleDbContext dbContext
-) : IFeatureSummaryRepository
+) : IFeatureSummaryRepository, IFeatureReviewCandidateReader
 {
+    public Task<List<Guid>> ListFeatureIds(Guid projectId) =>
+        dbContext.FeatureSummaries.AsNoTracking()
+            .Where(value => value.ProjectId == projectId)
+            .Select(value => value.FeatureAggregateId)
+            .ToListAsync();
+
     public Task<List<FeatureSummary>> List(
         CancellationToken cancellationToken = default
     ) =>

@@ -19,6 +19,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../ActionModule/Shared/Shared.csproj" />
+    <ProjectReference Include="../DomainsModules/SettingsModule/API/API.csproj" />
+    <ProjectReference Include="../DomainsModules/SettingsModule/Application/Application.csproj" />
+    <ProjectReference Include="../DomainsModules/SettingsModule/Domain/Domain.csproj" />
     <ProjectReference Include="../DomainsModules/AdministrationModule/API/API.csproj" />
     <ProjectReference Include="../DomainsModules/AdministrationModule/Application/Application.csproj" />
     <ProjectReference Include="../DomainsModules/AttachmentsModule/API/API.csproj" />

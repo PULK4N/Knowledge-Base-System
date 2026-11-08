@@ -9,6 +9,13 @@ export const ADMINISTRATION_ROUTES: Routes = [
       ),
     children: [
       {
+        path: 'code-reviewers',
+        loadComponent: () =>
+          import('./feature/code-review-settings.page').then(
+            module => module.CodeReviewSettingsPage,
+          ),
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'projections',
