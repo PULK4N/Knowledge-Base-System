@@ -29,7 +29,11 @@ type ReviewerMutation = 'add' | 'update' | 'remove' | 'models';
   selector: 'app-project-reviewers',
   imports: [AsyncPipe, FormsModule, RouterLink],
   templateUrl: './project-reviewers.component.html',
-  styleUrl: './project-pages.css',
+  styleUrls: [
+    '../../policies/feature/policy-directory-list.page.css',
+    '../../policies/ui/knowledge-list.css',
+    './project-pages.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectReviewersComponent {

@@ -1,16 +1,20 @@
 @if (vm$ | async; as vm) {
-  <section class="project-card-section surface-card" aria-labelledby="reviewers-title">
+  <section class="list-panel surface-card implicit-skills" aria-labelledby="reviewers-title">
     <div>
-      <h2 id="reviewers-title">Reviewers</h2>
+      <h2 id="reviewers-title" class="panel-title">Reviewers</h2>
       <p class="section-hint">Skills a review script runs, each at its review level.</p>
     </div>
 
-    <div class="inline-form">
-      <label>
-        <span>Skill</span>
+    <div class="toolbar reviewer-toolbar">
+      <label class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m15.5 15.5 5 5" />
+        </svg>
+        <span class="sr-only">Skill</span>
         <input
           #reviewerSkill
-          type="text"
+          type="search"
           placeholder="Search skills by name"
           list="reviewer-skill-options"
           autocomplete="off"
@@ -21,18 +25,18 @@
           <option [value]="option.name"></option>
         }
       </datalist>
-      <label class="narrow">
-        <span>Level</span>
+      <label class="toolbar-field narrow">
+        <span class="sr-only">Level</span>
         <select #reviewerLevel>
-          <option value="">Choose…</option>
+          <option value="">Level…</option>
           @for (level of reviewLevels; track level) {
             <option [value]="level">{{ level }}</option>
           }
         </select>
       </label>
-      <label>
-        <span>Notes</span>
-        <input #reviewerNotes type="text" placeholder="Optional instructions" />
+      <label class="toolbar-field">
+        <span class="sr-only">Notes</span>
+        <input #reviewerNotes type="text" placeholder="Notes (optional)" />
       </label>
       <button
         class="primary-button"
@@ -48,7 +52,7 @@
           )
         "
       >
-        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add' }}
+        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
       </button>
     </div>
     @if (formError(); as message) {
@@ -58,13 +62,42 @@
       <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
     }
 
-    <ul class="item-list" aria-label="Reviewers">
+    <div class="list-heading" aria-hidden="true">
+      <span>Reviewer</span>
+      <span>Level</span>
+      <span></span>
+    </div>
+
+    <div class="directory-list" aria-label="Reviewers">
       @for (reviewer of reviewers(); track reviewer.skillId) {
-        <li class="item">
+        <article class="directory-row with-actions">
+          <a class="directory-entry-link" [routerLink]="['/skills', reviewer.skillId]">
+            <span class="entry-copy">
+              <span class="entry-icon skill" aria-hidden="true">&lt;/&gt;</span>
+              <span>
+                <strong>{{ reviewer.name }}</strong>
+                <small [title]="reviewer.reviewNotes">{{ reviewer.reviewNotes || 'No notes' }}</small>
+              </span>
+            </span>
+            <span class="metadata">{{ reviewer.reviewLevel }}</span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 5 7 7-7 7" />
+            </svg>
+          </a>
+          <div class="directory-actions">
+            <button type="button" (click)="editingSkillId.set(reviewer.skillId)">Edit</button>
+            <button
+              class="danger-link"
+              type="button"
+              [disabled]="vm.mutation.status === 'saving'"
+              (click)="removeReviewer(project().id, reviewer)"
+            >
+              Remove
+            </button>
+          </div>
           @if (editingSkillId() === reviewer.skillId) {
-            <div class="inline-form">
-              <strong>{{ reviewer.name }}</strong>
-              <label class="narrow">
+            <div class="row-editor">
+              <label class="toolbar-field narrow">
                 <span>Level</span>
                 <select #editLevel>
                   @for (level of reviewLevels; track level) {
@@ -74,7 +107,7 @@
                   }
                 </select>
               </label>
-              <label>
+              <label class="toolbar-field">
                 <span>Notes</span>
                 <input #editNotes type="text" [value]="reviewer.reviewNotes" />
               </label>
@@ -90,31 +123,15 @@
                 Cancel
               </button>
             </div>
-          } @else {
-            <div class="item-heading">
-              <a [routerLink]="['/skills', reviewer.skillId]">{{ reviewer.name }}</a>
-              <span class="item-actions">
-                <span class="badge">{{ reviewer.reviewLevel }}</span>
-                <button class="link-button" type="button" (click)="editingSkillId.set(reviewer.skillId)">
-                  Edit
-                </button>
-                <button
-                  class="link-button danger"
-                  type="button"
-                  [disabled]="vm.mutation.status === 'saving'"
-                  (click)="removeReviewer(project().id, reviewer)"
-                >
-                  Remove
-                </button>
-              </span>
-            </div>
-            <span class="muted">{{ reviewer.reviewNotes || '—' }}</span>
           }
-        </li>
+        </article>
       } @empty {
-        <li class="muted">No reviewers yet.</li>
+        <div class="empty-state">
+          <strong>No reviewers yet</strong>
+          <span>Add a skill with a review level.</span>
+        </div>
       }
-    </ul>
+    </div>
   </section>
 
   <section class="project-card-section surface-card" aria-labelledby="review-models-title">

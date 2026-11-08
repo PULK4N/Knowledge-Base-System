@@ -21,7 +21,11 @@ type SkillMutation = 'add' | 'remove';
   selector: 'app-implicit-skills',
   imports: [AsyncPipe, RouterLink],
   templateUrl: './implicit-skills.component.html',
-  styleUrl: './project-pages.css',
+  styleUrls: [
+    '../../policies/feature/policy-directory-list.page.css',
+    '../../policies/ui/knowledge-list.css',
+    './project-pages.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImplicitSkillsComponent {
