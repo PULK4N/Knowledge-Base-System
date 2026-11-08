@@ -4,12 +4,14 @@ using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
 using ProjectModule.Application.DTOs;
 using ProjectModule.Domain;
+using SkillsModule.Persistence.Interfaces;
 
 namespace ProjectModule.Application.Queries;
 
 public sealed class GetPolicyProjectQuery(
     StateCalculator stateCalculator,
-    IEventStore eventStore
+    IEventStore eventStore,
+    ISkillSummaryRepository skillSummaryRepository
 ) : ProjectQuery<PolicyProjectDetailsDto?>(stateCalculator, eventStore)
 {
     public required Guid ProjectId { get; set; }
@@ -27,8 +29,13 @@ public sealed class GetPolicyProjectQuery(
             aggregateId
         );
 
-        return state is null || state.IsDeleted
-            ? null
-            : PolicyProjectDetailsDto.FromStateData(state);
+        if (state is null || state.IsDeleted)
+            return null;
+
+        var skills = await skillSummaryRepository.GetUseScenarios(
+            state.RelatedSkillIds.Select(skillId => skillId.Value).ToList()
+        );
+
+        return PolicyProjectDetailsDto.FromStateData(state, skills);
     }
 }

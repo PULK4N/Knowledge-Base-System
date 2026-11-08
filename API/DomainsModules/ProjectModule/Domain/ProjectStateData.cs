@@ -13,4 +13,5 @@ public class ProjectStateData(AggregateId id) : ISharedStateData
     public bool IsDeleted { get; set; }
     public Dictionary<PolicyId, Policy> Policies { get; } = new Dictionary<PolicyId, Policy>();
     public List<TopicName> RelatedTopics { get; } = new List<TopicName>();
+    public List<AggregateId> RelatedSkillIds { get; } = [];
 }

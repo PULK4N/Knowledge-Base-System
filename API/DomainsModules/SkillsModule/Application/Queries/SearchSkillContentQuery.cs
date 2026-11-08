@@ -7,7 +7,8 @@ using SkillsModule.Persistence.Interfaces;
 namespace SkillsModule.Application.Queries;
 
 public sealed class SearchSkillContentQuery(
-    ISkillSearch skillSearch
+    ISkillSearch skillSearch,
+    ISkillSummaryRepository skillSummaryRepository
 ) : Query<SkillSearchResultsDto>
 {
     public const int DefaultResultCount =
@@ -36,17 +37,31 @@ public sealed class SearchSkillContentQuery(
 
     protected override async Task<SkillSearchResultsDto> ExecuteInternal(
         Executor executor
-    ) =>
-        SkillSearchResultsDto.FromSearchResults(
-            await skillSearch.SearchWithSources(
-                SearchText,
-                Keywords,
-                new HybridSkillSearchOptions
-                {
-                    ResultCount = ResultCount,
-                    CandidateCount = CandidateCount,
-                    SourceResultCount = ResultCount
-                }
-            )
+    )
+    {
+        var results = await skillSearch.SearchWithSources(
+            SearchText,
+            Keywords,
+            new HybridSkillSearchOptions
+            {
+                ResultCount = ResultCount,
+                CandidateCount = CandidateCount,
+                SourceResultCount = ResultCount
+            }
         );
+        var skillIds = results.TopMatches
+            .Concat(results.DistinctSources)
+            .Select(result => result.Skill.SkillAggregateId.Value)
+            .Distinct()
+            .ToList();
+        var useScenarios = (
+                await skillSummaryRepository.GetUseScenarios(skillIds)
+            )
+            .ToDictionary(
+                skill => skill.SkillId,
+                skill => skill.UseScenarios
+            );
+
+        return SkillSearchResultsDto.FromSearchResults(results, useScenarios);
+    }
 }

@@ -74,3 +74,11 @@ events:
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectTopicMustExistValidator
+  ProjectSkillRelationAddedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectSkillMustNotExistValidator
+  ProjectSkillRelationRemovedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectSkillMustExistValidator

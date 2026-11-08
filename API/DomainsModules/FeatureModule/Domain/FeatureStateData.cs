@@ -27,6 +27,7 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     /// <summary>
     /// Skills that may help an AI understand or work on this feature.
     /// </summary>
+    /// <summary>Written only by the retired feature-skill events; not read.</summary>
     public List<AggregateId> RelatedSkillIds { get; set; } = [];
 
     /// <summary>

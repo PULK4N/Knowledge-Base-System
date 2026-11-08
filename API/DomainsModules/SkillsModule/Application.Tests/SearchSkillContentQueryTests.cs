@@ -54,7 +54,18 @@ public sealed class SearchSkillContentQueryTests
             [topMatch],
             [topMatch, otherSkillMatch]
         );
-        var query = new SearchSkillContentQuery(search)
+        var query = new SearchSkillContentQuery(
+            search,
+            new StubSkillSummaryRepository(
+                [
+                    new SkillUseScenarios(
+                        skillId.Value,
+                        "event-sourcing",
+                        ["Writing event-sourced modules"]
+                    )
+                ]
+            )
+        )
         {
             SearchText = "PostgreSQL event projections",
             Keywords = ["PostgreSQL", "projections"]
@@ -67,6 +78,7 @@ public sealed class SearchSkillContentQueryTests
         Assert.Equal(5, search.LastOptions!.ResultCount);
         Assert.Equal(50, search.LastOptions.CandidateCount);
         Assert.Equal(5, search.LastOptions.SourceResultCount);
+        var match = Assert.Single(results.TopMatches);
         Assert.Equal(
             new SkillSearchMatchDto(
                 skillId.Value,
@@ -76,14 +88,17 @@ public sealed class SearchSkillContentQueryTests
                 "Use PostgreSQL projections.",
                 0.031,
                 1,
-                3
+                3,
+                match.UseScenarios
             ),
-            Assert.Single(results.TopMatches)
+            match
         );
+        Assert.Equal(["Writing event-sourced modules"], match.UseScenarios);
         Assert.Equal(
             [skillId.Value, otherSkillId.Value],
-            results.DistinctSources.Select(match => match.SkillId).ToList()
+            results.DistinctSources.Select(source => source.SkillId).ToList()
         );
+        Assert.Empty(results.DistinctSources[1].UseScenarios);
     }
 
     [Theory]
@@ -95,7 +110,10 @@ public sealed class SearchSkillContentQueryTests
         int resultCount
     )
     {
-        var query = new SearchSkillContentQuery(new FakeSkillSearch([]))
+        var query = new SearchSkillContentQuery(
+            new FakeSkillSearch([]),
+            new StubSkillSummaryRepository([])
+        )
         {
             SearchText = searchText,
             Keywords = ["skill"],
@@ -108,7 +126,10 @@ public sealed class SearchSkillContentQueryTests
     [Fact]
     public async Task CanExecute_rejects_a_search_without_keywords()
     {
-        var query = new SearchSkillContentQuery(new FakeSkillSearch([]))
+        var query = new SearchSkillContentQuery(
+            new FakeSkillSearch([]),
+            new StubSkillSummaryRepository([])
+        )
         {
             SearchText = "PostgreSQL event projections",
             Keywords = []
@@ -155,5 +176,33 @@ public sealed class SearchSkillContentQueryTests
                 new SkillSearchResults(results, sourceResults ?? [])
             );
         }
+    }
+
+    private sealed class StubSkillSummaryRepository(
+        List<SkillUseScenarios> skills
+    ) : ISkillSummaryRepository
+    {
+        public Task<List<SkillSummary>> List() =>
+            throw new NotSupportedException();
+
+        public Task<SkillSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<SkillSummarySearchResult> Search(
+            int page,
+            int pageSize,
+            string? search,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<List<SkillUseScenarios>> GetUseScenarios(
+            List<Guid> skillIds,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(
+                skills.Where(skill => skillIds.Contains(skill.SkillId)).ToList()
+            );
     }
 }

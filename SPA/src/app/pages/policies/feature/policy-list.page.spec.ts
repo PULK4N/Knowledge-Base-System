@@ -54,6 +54,7 @@ describe('PolicyListPage project topics', () => {
       description: 'Agent knowledge application.',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
+      skills: [],
     });
     const policies = {
       searchPolicies: vi.fn(() =>

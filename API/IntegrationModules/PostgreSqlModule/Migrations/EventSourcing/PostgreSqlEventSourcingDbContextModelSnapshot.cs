@@ -1022,6 +1022,10 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.Property<Guid>("SkillAggregateId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UseScenariosJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")

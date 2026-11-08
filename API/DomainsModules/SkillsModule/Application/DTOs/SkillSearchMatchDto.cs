@@ -13,14 +13,15 @@ public sealed record SkillSearchResultsDto(
 )
 {
     public static SkillSearchResultsDto FromSearchResults(
-        SkillSearchResults results
+        SkillSearchResults results,
+        IReadOnlyDictionary<Guid, List<string>> useScenarios
     ) =>
         new(
             results.TopMatches
-                .Select(SkillSearchMatchDto.FromSearchResult)
+                .Select(result => SkillSearchMatchDto.FromSearchResult(result, useScenarios))
                 .ToList(),
             results.DistinctSources
-                .Select(SkillSearchMatchDto.FromSearchResult)
+                .Select(result => SkillSearchMatchDto.FromSearchResult(result, useScenarios))
                 .ToList()
         );
 }
@@ -33,11 +34,13 @@ public sealed record SkillSearchMatchDto(
     string Text,
     double Score,
     int? TextRank,
-    int? VectorRank
+    int? VectorRank,
+    List<string> UseScenarios
 )
 {
     public static SkillSearchMatchDto FromSearchResult(
-        SkillSearchResult result
+        SkillSearchResult result,
+        IReadOnlyDictionary<Guid, List<string>> useScenarios
     ) =>
         new(
             result.Skill.SkillAggregateId.Value,
@@ -47,6 +50,10 @@ public sealed record SkillSearchMatchDto(
             result.Skill.Text,
             result.Score,
             result.TextRank,
-            result.VectorRank
+            result.VectorRank,
+            useScenarios.GetValueOrDefault(
+                result.Skill.SkillAggregateId.Value,
+                []
+            )
         );
 }

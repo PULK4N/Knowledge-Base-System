@@ -189,6 +189,128 @@
             }
           </div>
         </section>
+
+        <section
+          class="project-topics surface-card"
+          aria-labelledby="project-skills-title"
+        >
+          <div>
+            <p class="section-label">Agent guidance</p>
+            <h2 id="project-skills-title">Skills</h2>
+          </div>
+          <div class="connection-management">
+            <ul class="project-skill-list">
+              @for (skill of vm.state.data.skills; track skill.skillId) {
+                <li class="project-skill">
+                  <div class="project-skill-heading">
+                    <a [routerLink]="['/skills', skill.skillId]">{{ skill.name }}</a>
+                    @if (confirmingProjectSkillId() === skill.skillId) {
+                      <span class="topic-removal-confirmation">
+                        <span>Unlink?</span>
+                        <button
+                          class="danger-action"
+                          type="button"
+                          [disabled]="vm.connectionMutation.status === 'saving'"
+                          (click)="
+                            removeProjectSkill(
+                              vm.state.data.scope.projectId,
+                              skill.skillId
+                            )
+                          "
+                        >
+                          {{
+                            vm.connectionMutation.status === 'saving' &&
+                            vm.connectionMutation.kind === 'remove-skill'
+                              ? 'Removing…'
+                              : 'Confirm'
+                          }}
+                        </button>
+                        <button type="button" (click)="cancelRemovingProjectSkill()">
+                          Cancel
+                        </button>
+                      </span>
+                    } @else {
+                      <button
+                        class="topic-remove-button"
+                        type="button"
+                        (click)="startRemovingProjectSkill(skill.skillId)"
+                      >
+                        Remove
+                      </button>
+                    }
+                  </div>
+                  @if (skill.useScenarios.length > 0) {
+                    <ul class="project-skill-scenarios">
+                      @for (scenario of skill.useScenarios; track $index) {
+                        <li>{{ scenario }}</li>
+                      }
+                    </ul>
+                  } @else {
+                    <span class="no-topics">No use scenarios yet.</span>
+                  }
+                </li>
+              } @empty {
+                <li class="no-topics">No skills linked.</li>
+              }
+            </ul>
+            <form
+              #skillForm="ngForm"
+              class="connection-form"
+              (ngSubmit)="
+                addProjectSkill(
+                  vm.state.data.scope.projectId,
+                  skillName.value,
+                  vm.skillOptions
+                )
+              "
+            >
+              <label>
+                <span class="sr-only">Skill name</span>
+                <input
+                  #skillName="ngModel"
+                  name="skillName"
+                  type="text"
+                  required
+                  placeholder="Search skills by name"
+                  list="project-skill-options"
+                  autocomplete="off"
+                  ngModel
+                />
+              </label>
+              <datalist id="project-skill-options">
+                @for (option of vm.skillOptions; track option.id) {
+                  <option [value]="option.name"></option>
+                }
+              </datalist>
+              <button
+                type="submit"
+                [disabled]="
+                  skillForm.invalid ||
+                  vm.connectionMutation.status === 'saving'
+                "
+              >
+                {{
+                  vm.connectionMutation.status === 'saving' &&
+                  vm.connectionMutation.kind === 'skill'
+                    ? 'Adding…'
+                    : 'Add skill'
+                }}
+              </button>
+            </form>
+            @if (skillNameError(); as message) {
+              <p class="connection-error" role="alert">{{ message }}</p>
+            }
+            @if (
+              vm.connectionMutation.status === 'error' &&
+              (vm.connectionMutation.kind === 'skill' ||
+                vm.connectionMutation.kind === 'remove-skill')
+            ) {
+              <p class="connection-error" role="alert">
+                {{ vm.connectionMutation.message }}
+              </p>
+            }
+          </div>
+        </section>
       }
 
       <section class="list-panel surface-card">

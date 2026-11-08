@@ -201,6 +201,58 @@
   color: var(--muted);
 }
 
+.project-skill-list,
+.project-skill-scenarios {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-skill-list {
+  display: grid;
+  gap: 10px;
+}
+
+.project-skill {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid #dfe4ed;
+  border-radius: 8px;
+}
+
+.project-skill-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.project-skill-heading a {
+  overflow-wrap: anywhere;
+  color: var(--navy);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.project-skill-heading a:hover {
+  text-decoration: underline;
+}
+
+.project-skill-scenarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.project-skill-scenarios li {
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #27335a;
+  background: #f3f5f8;
+  font-size: 13px;
+}
+
 .policy-row {
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr) auto;

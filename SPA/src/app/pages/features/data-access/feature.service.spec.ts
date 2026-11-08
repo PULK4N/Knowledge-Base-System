@@ -15,7 +15,6 @@ const feature: FeatureDto = {
   name: 'Feature journal',
   summary: 'Trace implementation decisions.',
   status: 'Frontend implementation is in progress.',
-  relatedSkillIds: ['skill-1'],
   records: [
     {
       id: 'record-1',
@@ -223,18 +222,6 @@ describe('FeatureService', () => {
       path: 'summary',
       body: { summary: 'Overview', compositeBranchName: '' },
       action: (api: FeatureService) => api.updateSummary(feature.id, 'Overview', ''),
-    },
-    {
-      name: 'adds a skill',
-      path: 'skills',
-      body: { skillId: 'skill-2' },
-      action: (api: FeatureService) => api.addSkill(feature.id, 'skill-2'),
-    },
-    {
-      name: 'removes a skill',
-      path: 'skills/remove',
-      body: { skillId: 'skill-1' },
-      action: (api: FeatureService) => api.removeSkill(feature.id, 'skill-1'),
     },
     {
       name: 'adds a record linked to plans',

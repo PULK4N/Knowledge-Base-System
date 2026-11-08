@@ -121,13 +121,6 @@ public sealed class FeatureSummaryRepository(
             .Except(activeFeatureSummaries.Keys)
             .ToHashSet();
         var featureSummaries = await FeatureSummaries(activeFeatures);
-        var existingRelationSummaries = existingRelations.ToDictionary(
-            relation => (
-                relation.EntityId,
-                relation.RelatedEntityId
-            ),
-            relation => relation.RelatedEntitySummary
-        );
 
         var relations = existingRelations
             .Where(
@@ -154,8 +147,7 @@ public sealed class FeatureSummaryRepository(
             activeFeatures.SelectMany(
                 feature => ToEntityRelations(
                     feature,
-                    featureSummaries,
-                    existingRelationSummaries
+                    featureSummaries
                 )
             )
         );
@@ -236,9 +228,7 @@ public sealed class FeatureSummaryRepository(
 
     private static List<EntityRelation> ToEntityRelations(
         FeatureStateData feature,
-        Dictionary<Guid, string> featureSummaries,
-        Dictionary<(Guid EntityId, Guid RelatedEntityId), string>
-            existingRelationSummaries
+        Dictionary<Guid, string> featureSummaries
     )
     {
         var relations = new List<EntityRelation>();
@@ -253,23 +243,6 @@ public sealed class FeatureSummaryRepository(
                     Summary(featureSummaries, parentFeatureId.Value),
                     FeatureEntityRelationTypes.ParentFeature,
                     FeatureEntityRelationTypes.Subfeature
-                )
-            );
-        }
-
-        foreach (var skillId in feature.RelatedSkillIds)
-        {
-            relations.AddRange(
-                CreateRelationPair(
-                    feature.Id.Value,
-                    feature.Summary,
-                    skillId.Value,
-                    existingRelationSummaries.GetValueOrDefault(
-                        (feature.Id.Value, skillId.Value),
-                        string.Empty
-                    ),
-                    FeatureEntityRelationTypes.Skill,
-                    FeatureEntityRelationTypes.Feature
                 )
             );
         }
@@ -302,6 +275,11 @@ public sealed class FeatureSummaryRepository(
             }
         ];
 
+    /// <remarks>
+    /// Skill and Feature rows are no longer written; they stay listed here so
+    /// a feature replay removes the rows written before feature-skill links
+    /// were retired.
+    /// </remarks>
     private static bool IsOwnedByProjectedFeature(
         EntityRelation relation,
         HashSet<Guid> projectedFeatureIds

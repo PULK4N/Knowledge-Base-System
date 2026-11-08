@@ -169,9 +169,6 @@ public sealed class FeatureRecordSearchProjector(
                 ["featureId"] = feature.Id.Value.ToString(),
                 ["featureName"] = feature.Name,
                 ["projectId"] = feature.ProjectId.Value.ToString(),
-                ["relatedSkillIds"] = feature.RelatedSkillIds
-                    .Select(id => id.Value)
-                    .ToList(),
                 ["updatedAt"] = lastUpdateTimestamp
             }),
             $"# {feature.Name}\n\n## Summary\n\n{feature.Summary}\n\n"

@@ -115,7 +115,6 @@ public sealed class FeatureMcpDtoTests
             Name = "Feature",
             Summary = "Summary",
             Status = "In progress",
-            RelatedSkillIds = [],
             Records = records,
             ReviewNotes = [ReviewNote("Intended behaviour", now)],
             Plans = plans,

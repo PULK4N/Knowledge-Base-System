@@ -5,6 +5,7 @@ using EventSourcing.Shared.Models;
 using ProjectModule.Application.Models;
 using ProjectModule.Domain;
 using ProjectModule.Domain.Events;
+using SkillsModule.Domain.Events;
 
 namespace ProjectModule.Application.Commands;
 
@@ -35,8 +36,10 @@ public sealed class DeleteProjectCommand(
             executor,
             projectDeleted,
             projectStateInfos =>
-                ((ProjectStateData)projectStateInfos[0].StateData)
-                    .RepositoryPaths
+            {
+                var project = (ProjectStateData)projectStateInfos[0].StateData;
+
+                return project.RepositoryPaths
                     .Select(
                         repositoryPath => CreatePayload(
                             executor,
@@ -48,7 +51,22 @@ public sealed class DeleteProjectCommand(
                             )
                         )
                     )
-                    .ToList(),
+                    .Concat(
+                        project.RelatedSkillIds.Select(
+                            skillId => CreatePayload(
+                                executor,
+                                skillId,
+                                Constants.StateMachineIds.Skills,
+                                new SkillProjectRelationRemovedV1(
+                                    projectAggregateId,
+                                    SessionId,
+                                    memoryAggregateId
+                                )
+                            )
+                        )
+                    )
+                    .ToList();
+            },
             memoryAggregateId
         );
 

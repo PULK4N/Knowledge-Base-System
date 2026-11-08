@@ -35,6 +35,7 @@ SKILL_MUTATION_TOOLS = frozenset(
         "skill_reference_delete",
         "skill_attachment_add",
         "skill_attachment_delete",
+        "skill_use_scenarios_set",
     }
 )
 
@@ -45,8 +46,6 @@ FEATURE_MUTATION_TOOLS = frozenset(
         "feature_remove",
         "feature_status_update",
         "feature_summary_update",
-        "feature_skill_add",
-        "feature_skill_remove",
         "feature_record_add",
         "feature_record_update",
         "feature_record_remove",
@@ -58,6 +57,7 @@ FEATURE_MUTATION_TOOLS = frozenset(
         "feature_plan_status_update",
         "feature_plan_previous_set",
         "feature_branch_set",
+        "feature_composite_branch_set",
         "feature_plan_branch_add",
         "feature_plan_branch_sources_set",
         "feature_plan_branch_update",
@@ -86,6 +86,8 @@ POLICY_MUTATION_TOOLS = frozenset(
         "policy_project_repository_add",
         "policy_project_topic_add",
         "policy_project_topic_remove",
+        "project_skill_add",
+        "project_skill_remove",
         "policy_project_update",
         "policy_topic_create",
         "policy_topic_policy_add",

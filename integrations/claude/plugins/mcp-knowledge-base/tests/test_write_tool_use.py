@@ -129,7 +129,7 @@ class WriteToolUseTests(unittest.TestCase):
             SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs"
         ).read_text(encoding="utf-8")
         mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
-        self.assertEqual(22, len(mutations))
+        self.assertEqual(21, len(mutations))
         self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):
@@ -165,11 +165,11 @@ class WriteToolUseTests(unittest.TestCase):
         mutations = {
             name
             for module in ("PolicyModule", "ProjectModule")
-            for source in (modules_directory / module / "MCP").glob("*PolicyMcpFunctions.cs")
+            for source in (modules_directory / module / "MCP").glob("*McpFunctions.cs")
             for name in re.findall(r'"((?:policy|project)_[a-z_]+)"', source.read_text(encoding="utf-8"))
             if name.endswith(("_add", "_update", "_remove", "_create", "_delete"))
         }
-        self.assertEqual(24, len(mutations))
+        self.assertEqual(26, len(mutations))
         self.assertEqual(mutations, write_tool_use.POLICY_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):

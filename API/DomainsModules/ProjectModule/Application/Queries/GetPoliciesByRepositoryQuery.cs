@@ -8,6 +8,7 @@ using PolicyModule.Interfaces;
 using ProjectModule.Persistence.Interfaces;
 using SharedModule.Constants;
 using SharedModule.Exceptions;
+using SkillsModule.Persistence.Interfaces;
 
 namespace ProjectModule.Application.Queries;
 
@@ -16,7 +17,8 @@ public sealed class GetPoliciesByRepositoryQuery(
     IEventStore eventStore,
     IProjectPolicyTextRepository projectPolicyTextRepository,
     ISessionPolicyTextService sessionPolicyTextService,
-    IPolicyProjectSummaryRepository projectSummaryRepository
+    IPolicyProjectSummaryRepository projectSummaryRepository,
+    ISkillSummaryRepository skillSummaryRepository
 ) : ProjectQuery<GetPoliciesByRepositoryResult>(stateCalculator, eventStore)
 {
     public required string RepositoryPath { get; set; }
@@ -84,6 +86,9 @@ public sealed class GetPoliciesByRepositoryQuery(
                 .Select(topicName => new TopicName(topicName))
                 .ToList()
         );
+        var projectSkills = await skillSummaryRepository.GetUseScenarios(
+            await projectSummaryRepository.GetSkillIds(projectAggregateId.Value)
+        );
         var policies = string.Join(
             "\n\n",
             new[]
@@ -93,6 +98,7 @@ public sealed class GetPoliciesByRepositoryQuery(
                     sessionText.AgentFamilyText
                 }
                 .Concat(sessionText.TopicTexts)
+                .Append(ProjectSkillsTextCompiler.Compile(projectSkills))
                 .Where(text => !string.IsNullOrWhiteSpace(text))
         );
 

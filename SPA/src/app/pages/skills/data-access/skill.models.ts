@@ -36,6 +36,9 @@ export interface SkillMemoryHistoryEntry {
 export interface Skill extends SkillListItem {
   readonly isDeleted: boolean;
   readonly content: string;
+  /** Ordered short lines naming the kinds of work the skill applies to. */
+  readonly useScenarios: readonly string[];
+  readonly relatedProjectIds: readonly string[];
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
   readonly memoryHistory: readonly SkillMemoryHistoryEntry[];
@@ -76,6 +79,8 @@ export interface SkillDto {
   readonly description: string;
   readonly content: string;
   readonly tags: readonly string[];
+  readonly useScenarios: readonly string[];
+  readonly relatedProjectIds: readonly string[];
   readonly references: Readonly<Record<string, SkillReference>>;
   readonly attachments: Readonly<Record<string, SkillAttachment>>;
   readonly memoryHistory: readonly SkillMemoryHistoryEntry[];

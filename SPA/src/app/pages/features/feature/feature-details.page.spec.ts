@@ -4,7 +4,6 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { provideKnowledgeMarkdown } from '../../../shared/markdown/markdown.providers';
-import { SkillService } from '../../skills/data-access/skill.service';
 import { Feature } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
 import { FeatureDetailsPage } from './feature-details.page';
@@ -18,7 +17,6 @@ const feature: Feature = {
   status: 'Frontend implementation is in progress.',
   planCount: 0,
   recordCount: 2,
-  relatedSkillIds: [],
   records: [
     {
       id: 'record-1',
@@ -159,22 +157,6 @@ describe('FeatureDetailsPage', () => {
         ]),
         ...provideKnowledgeMarkdown(),
         { provide: FeatureService, useValue: features },
-        {
-          provide: SkillService,
-          useValue: {
-            search: vi.fn(() =>
-              of({
-                items: [{ id: 'skill-1', name: 'Angular code writer' }],
-                page: 1,
-                pageSize: 100,
-                totalCount: 1,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false,
-              }),
-            ),
-          },
-        },
       ],
     }).compileComponents();
 
@@ -328,24 +310,6 @@ describe('FeatureDetailsPage', () => {
     expect(
       items[1].querySelector('a.history-source')?.getAttribute('href'),
     ).toBe('/memories/memory-1');
-  });
-
-  it('shows related skills by name and falls back to a short ID', async () => {
-    features.watch.mockReturnValue(
-      of({ ...feature, relatedSkillIds: ['skill-1', 'skill-unknown'] }),
-    );
-    await harness.navigateByUrl(
-      '/features/feature-skills?tab=overview',
-      FeatureDetailsPage,
-    );
-    harness.detectChanges();
-
-    const element = harness.routeNativeElement as HTMLElement;
-    const names = Array.from(
-      element.querySelectorAll('.skill-link-item strong'),
-    ).map(item => item.textContent?.trim());
-
-    expect(names).toEqual(['Angular code writer', 'skill-unknown']);
   });
 
   it('offers Show more only when the clamped status hides text', async () => {

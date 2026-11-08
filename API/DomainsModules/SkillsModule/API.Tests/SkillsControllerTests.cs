@@ -150,7 +150,7 @@ public sealed class SkillsControllerTests
                 )
             ]
         );
-        var searchQuery = new SearchSkillContentQuery(skillSearch)
+        var searchQuery = new SearchSkillContentQuery(skillSearch, new StubSkillSummaryRepository())
         {
             SearchText = string.Empty
         };
@@ -243,5 +243,27 @@ public sealed class SkillsControllerTests
                 new SkillSearchResults(results, sourceResults ?? [])
             );
         }
+    }
+
+    private sealed class StubSkillSummaryRepository : ISkillSummaryRepository
+    {
+        public Task<List<SkillSummary>> List() => Task.FromResult(new List<SkillSummary>());
+
+        public Task<SkillSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        ) => Task.FromResult<SkillSummary?>(null);
+
+        public Task<SkillSummarySearchResult> Search(
+            int page,
+            int pageSize,
+            string? search,
+            CancellationToken cancellationToken = default
+        ) => Task.FromResult(new SkillSummarySearchResult([], 0));
+
+        public Task<List<SkillUseScenarios>> GetUseScenarios(
+            List<Guid> skillIds,
+            CancellationToken cancellationToken = default
+        ) => Task.FromResult(new List<SkillUseScenarios>());
     }
 }

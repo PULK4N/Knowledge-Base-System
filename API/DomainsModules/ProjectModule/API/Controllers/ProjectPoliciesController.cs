@@ -217,4 +217,28 @@ public sealed class ProjectPoliciesController(
         command.UseUserOrigin();
         return Ok((PolicyCommandResult)await Execute(command));
     }
+
+    [HttpPost("skills")]
+    public async Task<ActionResult<PolicyCommandResult>> AddSkill(
+        [FromBody] AddSkillToProjectRequest request,
+        [FromServices] AddSkillToProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.SkillId = request.SkillId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
+
+    [HttpPost("skills/remove")]
+    public async Task<ActionResult<PolicyCommandResult>> RemoveSkill(
+        [FromBody] RemoveSkillFromProjectRequest request,
+        [FromServices] RemoveSkillFromProjectCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.SkillId = request.SkillId;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
 }

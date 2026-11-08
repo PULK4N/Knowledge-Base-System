@@ -15,11 +15,23 @@ public interface ISkillSummaryRepository
         string? search,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>Returns the active skills among <paramref name="skillIds"/>, ordered by name.</summary>
+    Task<List<SkillUseScenarios>> GetUseScenarios(
+        List<Guid> skillIds,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public sealed record SkillSummary(
     Guid SkillId,
     string Name
+);
+
+public sealed record SkillUseScenarios(
+    Guid SkillId,
+    string Name,
+    List<string> UseScenarios
 );
 
 public sealed record SkillSummarySearchResult(

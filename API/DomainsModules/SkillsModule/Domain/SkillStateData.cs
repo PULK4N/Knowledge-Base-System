@@ -15,4 +15,6 @@ public sealed class SkillStateData(AggregateId id) : ISharedStateData
         new(StringComparer.Ordinal);
     public Dictionary<FileId, Attachment> Attachments { get; set; } = [];
     public List<MemoryHistoryRecord> MemoryHistory { get; set; } = [];
+    public List<string> UseScenarios { get; set; } = [];
+    public List<AggregateId> RelatedProjectIds { get; set; } = [];
 }

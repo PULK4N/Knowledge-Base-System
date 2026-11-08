@@ -47,6 +47,123 @@
         </div>
       </section>
 
+      <section
+        class="skill-scenarios surface-card"
+        aria-labelledby="skill-scenarios-title"
+      >
+        <header class="scenario-header">
+          <div>
+            <p class="section-label">When to use</p>
+            <h2 id="skill-scenarios-title">Use scenarios</h2>
+          </div>
+          @if (!vm.state.data.skill.isDeleted && scenarioDraft() === null) {
+            <button
+              class="secondary-button"
+              type="button"
+              (click)="startEditingScenarios(vm.state.data.skill.useScenarios)"
+            >
+              Edit scenarios
+            </button>
+          }
+        </header>
+
+        @if (scenarioDraft(); as draft) {
+          <ol class="scenario-editor">
+            @for (
+              scenario of draft;
+              track $index;
+              let index = $index, first = $first, last = $last
+            ) {
+              <li>
+                <input
+                  type="text"
+                  [value]="scenario"
+                  [attr.aria-label]="'Use scenario ' + (index + 1)"
+                  placeholder="Writing or reviewing Angular code"
+                  (input)="updateScenario(index, $any($event.target).value)"
+                />
+                <button
+                  type="button"
+                  aria-label="Move scenario up"
+                  [disabled]="first"
+                  (click)="moveScenario(index, -1)"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label="Move scenario down"
+                  [disabled]="last"
+                  (click)="moveScenario(index, 1)"
+                >
+                  ↓
+                </button>
+                <button
+                  class="remove-scenario"
+                  type="button"
+                  aria-label="Remove scenario"
+                  (click)="removeScenario(index)"
+                >
+                  ×
+                </button>
+              </li>
+            }
+          </ol>
+          <div class="scenario-actions">
+            <button class="secondary-button" type="button" (click)="addScenario()">
+              Add scenario
+            </button>
+            <span class="scenario-actions-end">
+              <button
+                class="secondary-button"
+                type="button"
+                (click)="cancelEditingScenarios()"
+              >
+                Cancel
+              </button>
+              <button
+                class="primary-button"
+                type="button"
+                [disabled]="
+                  !canSaveScenarios(draft) ||
+                  vm.scenarioMutation.status === 'saving'
+                "
+                (click)="saveScenarios(vm.state.data.skill.id, draft)"
+              >
+                {{ vm.scenarioMutation.status === 'saving' ? 'Saving…' : 'Save scenarios' }}
+              </button>
+            </span>
+          </div>
+        } @else {
+          @if (vm.state.data.skill.useScenarios.length > 0) {
+            <ul class="scenario-list">
+              @for (scenario of vm.state.data.skill.useScenarios; track $index) {
+                <li>{{ scenario }}</li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-scenarios">No use scenarios yet.</p>
+          }
+        }
+
+        @if (vm.scenarioMutation.status === 'error') {
+          <p class="scenario-error" role="alert">{{ vm.scenarioMutation.message }}</p>
+        }
+
+        <div class="used-by-projects">
+          <h3>Used by projects</h3>
+          <div class="project-links">
+            @for (projectId of vm.state.data.skill.relatedProjectIds; track projectId) {
+              <a [routerLink]="['/policies', 'projects', projectId]">
+                {{ vm.projectNames.get(projectId) ?? projectId }}
+              </a>
+            } @empty {
+              <span class="empty-scenarios">No project uses this skill.</span>
+            }
+          </div>
+        </div>
+      </section>
+
       <div class="tabs" role="tablist" aria-label="Skill sections">
         <a
           role="tab"

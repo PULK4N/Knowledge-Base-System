@@ -28,8 +28,11 @@ import {
   PolicyScope,
   PolicySearchRequest,
   PolicySearchResult,
+  ProjectSkill,
 } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
+import { SkillListItem } from '../../skills/data-access/skill.models';
+import { SkillService } from '../../skills/data-access/skill.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { policyHistoryLink } from './policy-history';
@@ -44,6 +47,7 @@ interface PolicyListView {
   readonly addRoute: readonly string[];
   readonly topicNames: readonly string[];
   readonly repositoryPaths: readonly string[];
+  readonly skills: readonly ProjectSkill[];
   readonly result: PolicySearchResult;
 }
 
@@ -84,6 +88,16 @@ type ProjectConnectionAction =
     }
   | {
       readonly kind: 'remove-topic';
+      readonly projectId: string;
+      readonly value: string;
+    }
+  | {
+      readonly kind: 'skill';
+      readonly projectId: string;
+      readonly value: string;
+    }
+  | {
+      readonly kind: 'remove-skill';
       readonly projectId: string;
       readonly value: string;
     };
@@ -139,6 +153,7 @@ export function policyScopeFromRoute(
 export class PolicyListPage {
   private readonly route = inject(ActivatedRoute);
   private readonly policies = inject(PolicyService);
+  private readonly skillCatalog = inject(SkillService);
   private readonly searchRequests = new Subject<string>();
   private readonly pageRequests = new Subject<number>();
   private readonly request$ = policySearchRequests(
@@ -152,6 +167,8 @@ export class PolicyListPage {
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly confirmingPolicyId = signal<string | null>(null);
   protected readonly confirmingProjectTopicName = signal<string | null>(null);
+  protected readonly confirmingProjectSkillId = signal<string | null>(null);
+  protected readonly skillNameError = signal<string | null>(null);
   protected readonly searchText = signal('');
 
   private readonly scope$ = combineLatest([
@@ -163,6 +180,31 @@ export class PolicyListPage {
       (previous, current) => JSON.stringify(previous) === JSON.stringify(current),
     ),
   );
+
+  /** Skills offered for linking; loaded only on a project page. */
+  private readonly skillOptions$: Observable<readonly SkillListItem[]> =
+    this.scope$.pipe(
+      switchMap(scope =>
+        scope?.kind === 'project'
+          ? this.skillCatalog
+              .search({
+                page: 1,
+                pageSize: 100,
+                search: '',
+                tag: '',
+                hasReferences: null,
+                hasAttachments: null,
+                sortBy: 'Name',
+                sortDirection: 'Ascending',
+              })
+              .pipe(
+                map(result => result.items),
+                catchError(() => of([])),
+              )
+          : of([]),
+      ),
+      startWith([]),
+    );
 
   private readonly state$: Observable<LoadState<PolicyListView>> =
     combineLatest({ scope: this.scope$, request: this.request$ }).pipe(
@@ -242,6 +284,9 @@ export class PolicyListPage {
             if (action.kind === 'remove-topic') {
               this.confirmingProjectTopicName.set(null);
             }
+            if (action.kind === 'remove-skill') {
+              this.confirmingProjectSkillId.set(null);
+            }
           }),
           map(() => ({ status: 'idle' }) as const),
           startWith({ status: 'saving', kind: action.kind } as const),
@@ -261,6 +306,7 @@ export class PolicyListPage {
     state: this.state$,
     mutation: this.mutation$,
     connectionMutation: this.connectionMutation$,
+    skillOptions: this.skillOptions$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   protected historyLink(
@@ -348,6 +394,40 @@ export class PolicyListPage {
     });
   }
 
+  protected addProjectSkill(
+    projectId: string,
+    skillName: string,
+    skillOptions: readonly SkillListItem[],
+  ): void {
+    const name = skillName.trim().toLowerCase();
+    if (!name) return;
+
+    const skill = skillOptions.find(option => option.name.toLowerCase() === name);
+    if (!skill) {
+      this.skillNameError.set(`No skill is named "${skillName.trim()}".`);
+      return;
+    }
+
+    this.skillNameError.set(null);
+    this.connectionRequests.next({ kind: 'skill', projectId, value: skill.id });
+  }
+
+  protected startRemovingProjectSkill(skillId: string): void {
+    this.confirmingProjectSkillId.set(skillId);
+  }
+
+  protected cancelRemovingProjectSkill(): void {
+    this.confirmingProjectSkillId.set(null);
+  }
+
+  protected removeProjectSkill(projectId: string, skillId: string): void {
+    this.connectionRequests.next({
+      kind: 'remove-skill',
+      projectId,
+      value: skillId,
+    });
+  }
+
   private executeConnectionAction(
     action: ProjectConnectionAction,
   ): Observable<PolicyProjectDetails> {
@@ -361,6 +441,13 @@ export class PolicyListPage {
         return this.policies.addProjectTopic(action.projectId, action.value);
       case 'remove-topic':
         return this.policies.removeProjectTopic(
+          action.projectId,
+          action.value,
+        );
+      case 'skill':
+        return this.policies.addProjectSkill(action.projectId, action.value);
+      case 'remove-skill':
+        return this.policies.removeProjectSkill(
           action.projectId,
           action.value,
         );
@@ -384,6 +471,7 @@ export class PolicyListPage {
           addRoute: ['/policies', 'general', 'new'],
           topicNames: [],
           repositoryPaths: [],
+          skills: [],
           result,
         })),
       );
@@ -406,6 +494,7 @@ export class PolicyListPage {
           ],
           topicNames: [],
           repositoryPaths: [],
+          skills: [],
           result,
         })),
       );
@@ -428,6 +517,7 @@ export class PolicyListPage {
           ],
           topicNames: [],
           repositoryPaths: [],
+          skills: [],
           result,
         })),
       );
@@ -464,6 +554,7 @@ export class PolicyListPage {
       ],
       topicNames: project.topicNames,
       repositoryPaths: project.repositoryPaths,
+      skills: project.skills,
       result,
     };
   }

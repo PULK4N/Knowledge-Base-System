@@ -62,3 +62,8 @@ public sealed record UpdateSkillReferenceAutoLoadRequest
     public required bool LoadAutomatically { get; init; }
     public Guid? SessionId { get; init; }
 }
+
+public sealed record SetSkillUseScenariosRequest
+{
+    public required List<string> Scenarios { get; init; }
+}

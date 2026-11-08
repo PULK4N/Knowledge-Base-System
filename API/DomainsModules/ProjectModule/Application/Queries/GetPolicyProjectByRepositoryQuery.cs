@@ -5,12 +5,14 @@ using EventSourcing.Shared.Models;
 using ProjectModule.Application.DTOs;
 using ProjectModule.Domain;
 using SharedModule.Constants;
+using SkillsModule.Persistence.Interfaces;
 
 namespace ProjectModule.Application.Queries;
 
 public sealed class GetPolicyProjectByRepositoryQuery(
     StateCalculator stateCalculator,
-    IEventStore eventStore
+    IEventStore eventStore,
+    ISkillSummaryRepository skillSummaryRepository
 ) : ProjectQuery<PolicyProjectDetailsDto?>(stateCalculator, eventStore)
 {
     public required string RepositoryPath { get; set; }
@@ -36,8 +38,13 @@ public sealed class GetPolicyProjectByRepositoryQuery(
         var project = await Replay<ProjectStateData>(
             await GetEvents([projectId]), projectId
         );
-        return project is null || project.IsDeleted
-            ? null
-            : PolicyProjectDetailsDto.FromStateData(project);
+        if (project is null || project.IsDeleted)
+            return null;
+
+        var skills = await skillSummaryRepository.GetUseScenarios(
+            project.RelatedSkillIds.Select(skillId => skillId.Value).ToList()
+        );
+
+        return PolicyProjectDetailsDto.FromStateData(project, skills);
     }
 }

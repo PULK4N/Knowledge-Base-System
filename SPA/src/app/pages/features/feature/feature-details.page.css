@@ -117,8 +117,7 @@
 .inline-editor select,
 .record-editor textarea,
 .record-editor input,
-.record-editor select,
-.skill-picker select {
+.record-editor select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ccd3df;
@@ -141,16 +140,14 @@
 .inline-editor select:focus,
 .record-editor textarea:focus,
 .record-editor input:focus,
-.record-editor select:focus,
-.skill-picker select:focus {
+.record-editor select:focus {
   border-color: #8790ff;
   box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
 }
 
 .overview-editor button,
 .inline-editor > button,
-.record-editor button[type='submit'],
-.skill-picker button {
+.record-editor button[type='submit'] {
   min-height: 40px;
   padding: 9px 14px;
   border: 0;
@@ -254,38 +251,6 @@ button:disabled {
 .subtle-message {
   margin: 20px 0 0;
   color: var(--muted);
-}
-
-.skill-picker {
-  display: flex;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.skill-picker select {
-  flex: 1;
-}
-
-.skill-link-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px;
-  border: 1px solid #dfe4ed;
-  border-radius: 9px;
-  overflow: hidden;
-}
-
-.skill-link-item a {
-  border: 0;
-  border-radius: 0;
-}
-
-.skill-link-item > button {
-  border: 0;
-  border-left: 1px solid #dfe4ed;
-  color: #a6293b;
-  background: #fffafb;
-  cursor: pointer;
-  font-size: 21px;
 }
 
 .danger-zone {
@@ -603,39 +568,6 @@ button:disabled {
   background: var(--surface);
 }
 
-.skill-links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.skill-links a {
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 64px;
-  padding: 12px 15px;
-  border: 1px solid #dfe4ed;
-  border-radius: 9px;
-  color: var(--navy);
-  text-decoration: none;
-}
-
-.skill-links a:hover {
-  border-color: #aab2ff;
-}
-
-.skill-links a span:first-child {
-  color: var(--indigo);
-  font-weight: 760;
-}
-
-.skill-links a span:last-child {
-  color: var(--indigo);
-}
-
 @media (max-width: 820px) {
   .feature-overview {
     grid-template-columns: 1fr;
@@ -652,10 +584,6 @@ button:disabled {
 
   .overview-editor {
     padding: 18px 20px 22px;
-  }
-
-  .skill-links {
-    grid-template-columns: 1fr;
   }
 
   .message {
@@ -685,7 +613,6 @@ button:disabled {
     flex-direction: column;
   }
 
-  .skill-picker,
   .danger-zone {
     align-items: stretch;
     flex-direction: column;

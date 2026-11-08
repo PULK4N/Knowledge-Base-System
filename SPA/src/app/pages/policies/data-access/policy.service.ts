@@ -50,7 +50,12 @@ const PROJECT_ENTITY_TYPE = 'policy-project';
 function isProjectDetails(
   project: PolicyProjectSummary | undefined,
 ): project is PolicyProjectDetails {
-  return !!project && 'topicNames' in project && 'description' in project;
+  return (
+    !!project &&
+    'topicNames' in project &&
+    'description' in project &&
+    'skills' in project
+  );
 }
 
 export function policyControllerPath(scope: PolicyScope): string {
@@ -261,6 +266,7 @@ export class PolicyService {
           description: request.projectDescription,
           repositoryPaths: request.repositoryPaths,
           topicNames: [],
+          skills: [],
         })),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),
       );
@@ -302,6 +308,30 @@ export class PolicyService {
       .pipe(switchMap(() => this.refreshProject(projectId)));
   }
 
+  addProjectSkill(
+    projectId: string,
+    skillId: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/skills', {
+        projectId,
+        skillId,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  removeProjectSkill(
+    projectId: string,
+    skillId: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/skills/remove', {
+        projectId,
+        skillId,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
   private refreshProject(projectId: string): Observable<PolicyProjectDetails> {
     return this.http
       .get<PolicyProjectDetailsDto>(
@@ -315,6 +345,7 @@ export class PolicyService {
             description: project.projectDescription,
             repositoryPaths: project.repositoryPaths,
             topicNames: project.topicNames,
+            skills: project.skills,
           }),
         ),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),

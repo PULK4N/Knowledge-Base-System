@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SkillsModule.Domain;
 using SkillsModule.Persistence.Interfaces;
@@ -75,6 +76,31 @@ public sealed class SkillSummaryRepository(
         return new SkillSummarySearchResult(items, totalCount);
     }
 
+    public async Task<List<SkillUseScenarios>> GetUseScenarios(
+        List<Guid> skillIds,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var summaries = await dbContext.SkillSummaries
+            .AsNoTracking()
+            .Where(summary => skillIds.Contains(summary.SkillAggregateId))
+            .OrderBy(summary => summary.Name)
+            .ThenBy(summary => summary.SkillAggregateId)
+            .ToListAsync(cancellationToken);
+
+        return summaries
+            .Select(
+                summary => new SkillUseScenarios(
+                    summary.SkillAggregateId,
+                    summary.Name,
+                    JsonSerializer.Deserialize<List<string>>(
+                        summary.UseScenariosJson
+                    ) ?? []
+                )
+            )
+            .ToList();
+    }
+
     public async Task Write(List<SkillStateData> skills)
     {
         var context = dbContext as DbContext
@@ -103,7 +129,10 @@ public sealed class SkillSummaryRepository(
                     skill => new SkillSummaryEntry
                     {
                         SkillAggregateId = skill.Id.Value,
-                        Name = skill.Name
+                        Name = skill.Name,
+                        UseScenariosJson = JsonSerializer.Serialize(
+                            skill.UseScenarios
+                        )
                     }
                 )
         );

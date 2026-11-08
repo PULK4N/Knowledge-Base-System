@@ -137,6 +137,12 @@ public sealed class ListSkillsQueryTests
         List<SkillSummary> skills
     ) : ISkillSummaryRepository
     {
+        public Task<List<SkillUseScenarios>> GetUseScenarios(
+            List<Guid> skillIds,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(new List<SkillUseScenarios>());
+
         public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
         public string? LastNameRequest { get; private set; }
 

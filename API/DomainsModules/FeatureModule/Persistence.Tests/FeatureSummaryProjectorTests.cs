@@ -60,7 +60,7 @@ public sealed class FeatureSummaryProjectorTests
     }
 
     [Fact]
-    public async Task Update_replaces_bidirectional_feature_and_skill_relations()
+    public async Task Update_replaces_bidirectional_feature_relations_and_drops_retired_skill_rows()
     {
         await using var context = CreateContext();
         var skillId = Guid.Parse(
@@ -82,6 +82,23 @@ public sealed class FeatureSummaryProjectorTests
         child.RelatedSkillIds = [
             AggregateId.FromDatabaseGuid(skillId)
         ];
+        context.EntityRelations.AddRange(
+            new EntityRelation
+            {
+                EntityId = child.Id.Value,
+                RelatedEntityId = skillId,
+                RelationType = FeatureEntityRelationTypes.Skill,
+                RelatedEntitySummary = string.Empty
+            },
+            new EntityRelation
+            {
+                EntityId = skillId,
+                RelatedEntityId = child.Id.Value,
+                RelationType = FeatureEntityRelationTypes.Feature,
+                RelatedEntitySummary = "Child summary"
+            }
+        );
+        await context.SaveChangesAsync();
 
         await projector.Update(
             [CreateStateInfo(parent), CreateStateInfo(child)]
@@ -90,7 +107,7 @@ public sealed class FeatureSummaryProjectorTests
         var relations = await context.EntityRelations
             .AsNoTracking()
             .ToListAsync();
-        Assert.Equal(4, relations.Count);
+        Assert.Equal(2, relations.Count);
         AssertRelation(
             relations,
             child.Id.Value,
@@ -105,20 +122,6 @@ public sealed class FeatureSummaryProjectorTests
             FeatureEntityRelationTypes.Subfeature,
             "Child summary"
         );
-        AssertRelation(
-            relations,
-            child.Id.Value,
-            skillId,
-            FeatureEntityRelationTypes.Skill,
-            string.Empty
-        );
-        AssertRelation(
-            relations,
-            skillId,
-            child.Id.Value,
-            FeatureEntityRelationTypes.Feature,
-            "Child summary"
-        );
 
         parent.Summary = "Updated parent summary";
         await projector.Update([CreateStateInfo(parent)]);
@@ -126,7 +129,7 @@ public sealed class FeatureSummaryProjectorTests
         relations = await context.EntityRelations
             .AsNoTracking()
             .ToListAsync();
-        Assert.Equal(4, relations.Count);
+        Assert.Equal(2, relations.Count);
         AssertRelation(
             relations,
             child.Id.Value,
@@ -136,7 +139,6 @@ public sealed class FeatureSummaryProjectorTests
         );
 
         child.ParentFeatureId = null;
-        child.RelatedSkillIds.Clear();
         await projector.Update([CreateStateInfo(child)]);
 
         Assert.Empty(

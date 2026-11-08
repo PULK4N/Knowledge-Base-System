@@ -137,6 +137,7 @@ describe('PolicyService', () => {
       description: project.projectDescription,
       repositoryPaths: project.repositoryPaths,
       topicNames: [],
+      skills: [],
     });
   });
 
@@ -161,6 +162,20 @@ describe('PolicyService', () => {
       path: '/api/policies/projects/topics',
       body: { projectId: 'project-1', topicName: 'Angular' },
     },
+    {
+      label: 'skill',
+      invoke: (policyService: PolicyService) =>
+        policyService.addProjectSkill('project-1', 'skill-1'),
+      path: '/api/policies/projects/skills',
+      body: { projectId: 'project-1', skillId: 'skill-1' },
+    },
+    {
+      label: 'skill removal',
+      invoke: (policyService: PolicyService) =>
+        policyService.removeProjectSkill('project-1', 'skill-1'),
+      path: '/api/policies/projects/skills/remove',
+      body: { projectId: 'project-1', skillId: 'skill-1' },
+    },
   ])('adds a project $label and refreshes details', async entry => {
     const resultPromise = firstValueFrom(entry.invoke(service));
     const mutation = http.expectOne(entry.path);
@@ -176,6 +191,7 @@ describe('PolicyService', () => {
       projectDescription: 'Agent knowledge application.',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
+      skills: [],
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -205,6 +221,7 @@ describe('PolicyService', () => {
       projectDescription: 'Agent knowledge application.',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: [],
+      skills: [],
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -323,7 +340,7 @@ describe('PolicyService', () => {
     });
   });
 
-  it('loads project details including related topic names', async () => {
+  it('loads project details including related topic names and skills', async () => {
     const projectPromise = firstValueFrom(service.watchProject('project-1'));
     const request = http.expectOne('/api/policies/projects/project-1');
 
@@ -333,6 +350,13 @@ describe('PolicyService', () => {
       projectDescription: 'Agent knowledge application.',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular', 'Event sourcing'],
+      skills: [
+        {
+          skillId: 'skill-1',
+          name: 'angular-code-writter',
+          useScenarios: ['Writing or reviewing Angular code'],
+        },
+      ],
     });
 
     await expect(projectPromise).resolves.toEqual({
@@ -341,6 +365,13 @@ describe('PolicyService', () => {
       description: 'Agent knowledge application.',
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular', 'Event sourcing'],
+      skills: [
+        {
+          skillId: 'skill-1',
+          name: 'angular-code-writter',
+          useScenarios: ['Writing or reviewing Angular code'],
+        },
+      ],
     });
   });
 

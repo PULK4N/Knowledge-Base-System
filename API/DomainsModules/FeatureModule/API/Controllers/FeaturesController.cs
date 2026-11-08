@@ -128,32 +128,6 @@ public sealed class FeaturesController(
         return Ok((FeatureCommandResult)await Execute(command));
     }
 
-    [HttpPost("{featureId:guid}/skills")]
-    public async Task<ActionResult<FeatureCommandResult>> AddSkill(
-        Guid featureId,
-        [FromBody] FeatureSkillRequest request,
-        [FromServices] AddFeatureSkillCommand command
-    )
-    {
-        command.UseUserOrigin();
-        command.FeatureId = featureId;
-        command.SkillId = request.SkillId;
-        return Ok((FeatureCommandResult)await Execute(command));
-    }
-
-    [HttpPost("{featureId:guid}/skills/remove")]
-    public async Task<ActionResult<FeatureCommandResult>> RemoveSkill(
-        Guid featureId,
-        [FromBody] FeatureSkillRequest request,
-        [FromServices] RemoveFeatureSkillCommand command
-    )
-    {
-        command.UseUserOrigin();
-        command.FeatureId = featureId;
-        command.SkillId = request.SkillId;
-        return Ok((FeatureCommandResult)await Execute(command));
-    }
-
     [HttpPost("{featureId:guid}/records")]
     public async Task<
         ActionResult<FeatureRecordCreatedCommandResult>
