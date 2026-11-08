@@ -1,7 +1,6 @@
 using EventSourcing.Shared.Models;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
-using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 
 namespace PolicyModule.Application.Tests;
@@ -12,14 +11,12 @@ public sealed partial class PolicyCommandTests
     [InlineData(PolicyScope.General)]
     [InlineData(PolicyScope.Topic)]
     [InlineData(PolicyScope.AgentFamily)]
-    [InlineData(PolicyScope.Project)]
     public async Task GetPolicyHistory_ReturnsOnlyTheChangesOfThatPolicy(
         PolicyScope scope
     )
     {
         var eventStore = new CapturingEventStoreWithOutbox();
         var handler = CreateHandler(eventStore);
-        var projectId = Guid.Empty;
         string? scopeName = null;
         if (scope == PolicyScope.Topic)
         {
@@ -39,27 +36,15 @@ public sealed partial class PolicyCommandTests
                 Description = "Claude policies."
             });
         }
-        if (scope == PolicyScope.Project)
-        {
-            projectId = Assert.IsType<ProjectCreatedCommandResult>(
-                await ExecuteAsUser(new CreateProjectCommand(handler)
-                {
-                    ProjectName = "History project",
-                    ProjectDescription = "Policy history test project.",
-                    RepositoryPaths = ["/workspace/history"]
-                })
-            ).ProjectId;
-        }
 
-        var policyId = await AddPolicy(handler, scope, scopeName, projectId, "Tracked");
-        await AddPolicy(handler, scope, scopeName, projectId, "Other");
-        await ExecuteAsUser(UpdatePolicy(handler, scope, scopeName, projectId, policyId));
+        var policyId = await AddPolicy(handler, scope, scopeName, "Tracked");
+        await AddPolicy(handler, scope, scopeName, "Other");
+        await ExecuteAsUser(UpdatePolicy(handler, scope, scopeName, policyId));
 
         var query = new GetPolicyHistoryQuery(CreateCalculator(), eventStore)
         {
             Scope = scope,
             ScopeName = scopeName,
-            ProjectId = projectId,
             PolicyId = policyId
         };
         var policy = Assert.IsType<PolicyHistoryDto>(await query.Execute(Executor));
@@ -79,7 +64,6 @@ public sealed partial class PolicyCommandTests
         EventSourcing.Core.StateMachineHandler handler,
         PolicyScope scope,
         string? scopeName,
-        Guid projectId,
         string title
     )
     {
@@ -92,10 +76,6 @@ public sealed partial class PolicyCommandTests
             PolicyScope.AgentFamily => new AddAgentFamilyPolicyCommand(handler)
             {
                 AgentFamilyName = scopeName!, Title = title, Description = "Description"
-            },
-            PolicyScope.Project => new AddProjectPolicyCommand(handler)
-            {
-                ProjectId = projectId, Title = title, Description = "Description"
             },
             _ => new AddGeneralPolicyCommand(handler)
             {
@@ -110,7 +90,6 @@ public sealed partial class PolicyCommandTests
         EventSourcing.Core.StateMachineHandler handler,
         PolicyScope scope,
         string? scopeName,
-        Guid projectId,
         Guid policyId
     ) =>
         scope switch
@@ -123,11 +102,6 @@ public sealed partial class PolicyCommandTests
             PolicyScope.AgentFamily => new UpdateAgentFamilyPolicyCommand(handler)
             {
                 AgentFamilyName = scopeName!, PolicyId = policyId,
-                Title = "Tracked updated", Description = "Description"
-            },
-            PolicyScope.Project => new UpdateProjectPolicyCommand(handler)
-            {
-                ProjectId = projectId, PolicyId = policyId,
                 Title = "Tracked updated", Description = "Description"
             },
             _ => new UpdateGeneralPolicyCommand(handler)

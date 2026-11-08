@@ -1,6 +1,5 @@
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
-using PolicyModule.Application.Models;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 
@@ -147,7 +146,7 @@ public sealed class RemoveTopicPolicyCommand(
             executor,
             new TopicPolicyRemovedV2(
                 new TopicName(TopicName),
-                PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,
@@ -183,7 +182,7 @@ public sealed class UpdateTopicPolicyCommand(
             new TopicPolicyUpdatedV2(
                 new TopicName(TopicName),
                 CreatePolicy(
-                    PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,

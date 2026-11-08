@@ -307,85 +307,6 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("GeneralPolicyTexts");
                 });
 
-            modelBuilder.Entity("PolicyModule.Persistence.Models.PolicyProjectSummaryEntry", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ProjectAggregateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ProjectName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RepositoryPathsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectAggregateId")
-                        .IsUnique();
-
-                    b.HasIndex("ProjectName")
-                        .IsUnique();
-
-                    b.ToTable("PolicyProjectSummaries");
-                });
-
-            modelBuilder.Entity("PolicyModule.Persistence.Models.ProjectPolicyText", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ProjectAggregateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectAggregateId")
-                        .IsUnique();
-
-                    b.ToTable("ProjectPolicyTexts");
-                });
-
-            modelBuilder.Entity("PolicyModule.Persistence.Models.ProjectPolicyTopic", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ProjectAggregateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TopicName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TopicOrder")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectAggregateId", "TopicName")
-                        .IsUnique();
-
-                    b.ToTable("ProjectPolicyTopics");
-                });
-
             modelBuilder.Entity("PolicyModule.Persistence.Models.TopicPolicyText", b =>
                 {
                     b.Property<int>("Id")
@@ -877,6 +798,85 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.HasIndex("SkillName");
 
                     b.ToTable("SkillSearchEntries", (string)null);
+                });
+
+            modelBuilder.Entity("ProjectModule.Persistence.Models.PolicyProjectSummaryEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ProjectAggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RepositoryPathsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectAggregateId")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectName")
+                        .IsUnique();
+
+                    b.ToTable("PolicyProjectSummaries");
+                });
+
+            modelBuilder.Entity("ProjectModule.Persistence.Models.ProjectPolicyText", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ProjectAggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectAggregateId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectPolicyTexts");
+                });
+
+            modelBuilder.Entity("ProjectModule.Persistence.Models.ProjectPolicyTopic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ProjectAggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TopicName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TopicOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectAggregateId", "TopicName")
+                        .IsUnique();
+
+                    b.ToTable("ProjectPolicyTopics");
                 });
 
             modelBuilder.Entity("SharedModule.Persistence.EntityRelation", b =>

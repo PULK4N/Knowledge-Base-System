@@ -1,6 +1,5 @@
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
-using PolicyModule.Application.Models;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 
@@ -64,7 +63,7 @@ public sealed class UpdateGeneralPolicyCommand(
             executor,
             new GeneralPolicyUpdatedV2(
                 CreatePolicy(
-                    PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
@@ -94,7 +93,7 @@ public sealed class RemoveGeneralPolicyCommand(
         return await ExecuteGeneralPoliciesEvent(
             executor,
             new GeneralPolicyRemovedV2(
-                PolicyModule.Domain.Models.PolicyId.FromDatabaseGuid(
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,

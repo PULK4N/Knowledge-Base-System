@@ -102,35 +102,6 @@ public sealed class ListTopicPoliciesQuery(
     }
 }
 
-public sealed class ListProjectPoliciesQuery(
-    StateCalculator stateCalculator,
-    IEventStore eventStore
-) : PolicyQuery<List<PolicyDto>?>(stateCalculator, eventStore)
-{
-    public required Guid ProjectId { get; set; }
-
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(ProjectId != Guid.Empty);
-
-    protected override async Task<List<PolicyDto>?> ExecuteInternal(
-        Executor executor
-    )
-    {
-        var aggregateId = AggregateId.FromDatabaseGuid(ProjectId);
-        var state = await Replay<ProjectPoliciesStateData>(
-            await GetEvents([aggregateId]),
-            aggregateId
-        );
-
-        if (state is null || state.IsDeleted)
-            return null;
-
-        return state.Policies.Values
-            .Select(PolicyDto.FromModel)
-            .ToList();
-    }
-}
-
 public sealed class ListPolicyAgentFamiliesQuery(
     StateCalculator stateCalculator,
     IEventStore eventStore

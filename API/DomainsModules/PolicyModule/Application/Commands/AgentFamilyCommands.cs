@@ -1,6 +1,5 @@
 using ActionModule.Shared.Models;
 using EventSourcing.Core;
-using PolicyModule.Application.Models;
 using PolicyModule.Domain.Events;
 using PolicyModule.Domain.Models;
 
@@ -161,7 +160,7 @@ public sealed class UpdateAgentFamilyPolicyCommand(
                     AgentFamilyName
                 ),
                 CreatePolicy(
-                    Domain.Models.PolicyId.FromDatabaseGuid(PolicyId),
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId),
                     Title,
                     Description
                 ),
@@ -196,7 +195,7 @@ public sealed class RemoveAgentFamilyPolicyCommand(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
-                Domain.Models.PolicyId.FromDatabaseGuid(PolicyId),
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId),
                 SessionId,
                 memoryAggregateId
             ),

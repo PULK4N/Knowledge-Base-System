@@ -24,18 +24,6 @@ public sealed class PolicyMcpFunctionsTests
         "policy_topic_policy_add",
         "policy_topic_policy_update",
         "policy_topic_policy_remove",
-        "policy_project_list",
-        "policy_project_get_by_name",
-        "policy_project_policy_list",
-        "policy_project_create",
-        "policy_project_update",
-        "policy_project_delete",
-        "policy_project_repository_add",
-        "policy_project_policy_add",
-        "policy_project_policy_update",
-        "policy_project_policy_remove",
-        "policy_project_topic_add",
-        "policy_project_topic_remove",
         "policy_agent_family_list",
         "policy_agent_family_policy_list",
         "policy_agent_family_create",
@@ -122,29 +110,6 @@ public sealed class PolicyMcpFunctionsTests
                 tool.ProtocolTool.InputSchema
             );
         }
-    }
-
-    [Fact]
-    public void Project_list_requires_no_arguments_and_get_by_name_requires_name()
-    {
-        var functions = PolicyMcpFunctions.Create();
-        var listProperties = functions
-            .Single(function => function.Name == "policy_project_list")
-            .JsonSchema
-            .GetProperty("properties");
-        var getByName = functions.Single(
-            function => function.Name == "policy_project_get_by_name"
-        );
-
-        Assert.Empty(listProperties.EnumerateObject());
-        Assert.Equal(
-            ["name"],
-            getByName.JsonSchema
-                .GetProperty("required")
-                .EnumerateArray()
-                .Select(element => element.GetString())
-                .ToList()
-        );
     }
 
     [Fact]

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.AI;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
-using PolicyModule.Application.Models;
 using PolicyModule.Application.Queries;
 
 namespace PolicyModule.MCP;

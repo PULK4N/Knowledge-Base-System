@@ -6,43 +6,9 @@ using EventSourcing.Shared.Models;
 using PolicyModule.Application.DTOs;
 using PolicyModule.Domain;
 using PolicyModule.Domain.Models;
-using PolicyModule.Persistence.Interfaces;
 using SharedModule.Constants;
 
 namespace PolicyModule.Application.Queries;
-
-public sealed class ListPolicyProjectsQuery(
-    IPolicyProjectSummaryRepository repository
-) : Query<List<PolicyProjectSummaryDto>>
-{
-    protected override async Task<List<PolicyProjectSummaryDto>> ExecuteInternal(
-        Executor executor
-    ) =>
-        (await repository.List())
-            .Select(PolicyProjectSummaryDto.FromReadModel)
-            .ToList();
-}
-
-public sealed class GetPolicyProjectByNameQuery(
-    IPolicyProjectSummaryRepository repository
-) : Query<PolicyProjectSummaryDto?>
-{
-    public required string Name { get; set; }
-
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(!string.IsNullOrWhiteSpace(Name));
-
-    protected override async Task<PolicyProjectSummaryDto?> ExecuteInternal(
-        Executor executor
-    )
-    {
-        var project = await repository.GetByName(Name);
-
-        return project is null
-            ? null
-            : PolicyProjectSummaryDto.FromReadModel(project);
-    }
-}
 
 public sealed class SearchGeneralPoliciesQuery(
     StateCalculator stateCalculator,
@@ -121,72 +87,6 @@ public sealed class SearchTopicPoliciesQuery(
             Page,
             PageSize,
             Search
-        );
-    }
-}
-
-public sealed class SearchProjectPoliciesQuery(
-    StateCalculator stateCalculator,
-    IEventStore eventStore
-) : PolicyQuery<PagedResult<PolicyDto>?>(stateCalculator, eventStore)
-{
-    public required Guid ProjectId { get; set; }
-    public int Page { get; set; } = Pagination.DefaultPage;
-    public int PageSize { get; set; } = Pagination.DefaultPageSize;
-    public string? Search { get; set; }
-
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(
-            ProjectId != Guid.Empty
-            && Pagination.IsValid(Page, PageSize)
-        );
-
-    protected override async Task<PagedResult<PolicyDto>?> ExecuteInternal(
-        Executor executor
-    )
-    {
-        var aggregateId = AggregateId.FromDatabaseGuid(ProjectId);
-        var state = await Replay<ProjectPoliciesStateData>(
-            await GetEvents([aggregateId]),
-            aggregateId
-        );
-
-        if (state is null || state.IsDeleted)
-            return null;
-
-        return PolicySearch.Create(
-            state.Policies.Values,
-            Page,
-            PageSize,
-            Search
-        );
-    }
-}
-
-public sealed class SearchPolicyProjectsQuery(
-    IPolicyProjectSummaryRepository repository
-) : Query<PagedResult<PolicyProjectSummaryDto>>
-{
-    public int Page { get; set; } = Pagination.DefaultPage;
-    public int PageSize { get; set; } = Pagination.DefaultPageSize;
-    public string? Search { get; set; }
-
-    public override Task<bool> CanExecute(Executor executor) =>
-        Task.FromResult(Pagination.IsValid(Page, PageSize));
-
-    protected override async Task<PagedResult<PolicyProjectSummaryDto>> ExecuteInternal(
-        Executor executor
-    )
-    {
-        var result = await repository.Search(Page, PageSize, Search);
-
-        return new PagedResult<PolicyProjectSummaryDto>(
-            result.Items
-                .Select(PolicyProjectSummaryDto.FromReadModel)
-                .ToList(),
-            Page,
-            PageSize,
-            result.TotalCount
         );
     }
 }
@@ -361,63 +261,6 @@ public sealed class SearchPolicyAgentFamiliesQuery(
                 .ToList(),
             Page,
             PageSize,
-            ordered.Count
-        );
-    }
-}
-
-internal static class PolicySearch
-{
-    public static PagedResult<PolicyDto> Create(
-        IEnumerable<Policy> policies,
-        int page,
-        int pageSize,
-        string? search
-    )
-    {
-        var normalizedSearch = string.IsNullOrWhiteSpace(search)
-            ? null
-            : search.Trim();
-        if (normalizedSearch is not null)
-        {
-            policies = policies.Where(
-                policy =>
-                    policy.Title.Contains(
-                        normalizedSearch,
-                        StringComparison.OrdinalIgnoreCase
-                    )
-                    || policy.Description.Contains(
-                        normalizedSearch,
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            );
-        }
-
-        var ordered = policies
-            .OrderByDescending(
-                policy =>
-                    normalizedSearch is not null
-                    && policy.Title.Contains(
-                        normalizedSearch,
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
-            .ThenBy(
-                policy => policy.Title,
-                StringComparer.OrdinalIgnoreCase
-            )
-            .ThenBy(policy => policy.Title, StringComparer.Ordinal)
-            .ThenBy(policy => policy.PolicyId.Value)
-            .ToList();
-
-        return new PagedResult<PolicyDto>(
-            ordered
-                .Skip(Pagination.Offset(page, pageSize))
-                .Take(pageSize)
-                .Select(PolicyDto.FromModel)
-                .ToList(),
-            page,
-            pageSize,
             ordered.Count
         );
     }

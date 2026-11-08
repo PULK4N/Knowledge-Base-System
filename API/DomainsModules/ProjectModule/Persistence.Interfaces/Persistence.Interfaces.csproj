@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ProjectModule.Persistence.Interfaces</AssemblyName>
+    <RootNamespace>ProjectModule.Persistence.Interfaces</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
+  </ItemGroup>
+
+</Project>
