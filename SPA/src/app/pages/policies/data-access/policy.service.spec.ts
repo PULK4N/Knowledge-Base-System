@@ -138,6 +138,8 @@ describe('PolicyService', () => {
       repositoryPaths: project.repositoryPaths,
       topicNames: [],
       skills: [],
+      reviewLevelModels: {},
+      proposalNotes: [],
     });
   });
 
@@ -170,6 +172,67 @@ describe('PolicyService', () => {
       body: { projectId: 'project-1', skillId: 'skill-1' },
     },
     {
+      label: 'skill review',
+      invoke: (policyService: PolicyService) =>
+        policyService.updateProjectSkill('project-1', 'skill-1', {
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Heavy',
+        }),
+      path: '/api/policies/projects/skills/update',
+      body: {
+        projectId: 'project-1',
+        skillId: 'skill-1',
+        usedForReview: true,
+        reviewNotes: 'Focus on RxJS.',
+        reviewLevel: 'Heavy',
+      },
+    },
+    {
+      label: 'review level model mapping',
+      invoke: (policyService: PolicyService) =>
+        policyService.setProjectReviewLevelModels('project-1', {
+          Medium: { model: 'gpt-6.1-sol', reasoning: 'high' },
+        }),
+      path: '/api/policies/projects/review-level-models',
+      body: {
+        projectId: 'project-1',
+        levelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
+      },
+    },
+    {
+      label: 'overview',
+      invoke: (policyService: PolicyService) =>
+        policyService.updateProject('project-1', 'Knowledge Base System', 'New overview'),
+      path: '/api/policies/projects/update',
+      body: {
+        projectId: 'project-1',
+        projectName: 'Knowledge Base System',
+        projectDescription: 'New overview',
+      },
+    },
+    {
+      label: 'proposal note',
+      invoke: (policyService: PolicyService) =>
+        policyService.addProposalNote('project-1', { title: 'Idea', content: 'Later.' }),
+      path: '/api/projects/project-1/proposal-notes',
+      body: { title: 'Idea', content: 'Later.' },
+    },
+    {
+      label: 'proposal note update',
+      invoke: (policyService: PolicyService) =>
+        policyService.updateProposalNote('project-1', 'note-1', { title: 'Idea', content: 'Soon.' }),
+      path: '/api/projects/project-1/proposal-notes/note-1/update',
+      body: { title: 'Idea', content: 'Soon.' },
+    },
+    {
+      label: 'proposal note removal',
+      invoke: (policyService: PolicyService) =>
+        policyService.removeProposalNote('project-1', 'note-1'),
+      path: '/api/projects/project-1/proposal-notes/note-1/remove',
+      body: null,
+    },
+    {
       label: 'skill removal',
       invoke: (policyService: PolicyService) =>
         policyService.removeProjectSkill('project-1', 'skill-1'),
@@ -192,6 +255,8 @@ describe('PolicyService', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
       skills: [],
+      reviewLevelModels: {},
+      proposalNotes: [],
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -222,6 +287,8 @@ describe('PolicyService', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: [],
       skills: [],
+      reviewLevelModels: {},
+      proposalNotes: [],
     });
 
     await expect(resultPromise).resolves.toMatchObject({
@@ -355,8 +422,13 @@ describe('PolicyService', () => {
           skillId: 'skill-1',
           name: 'angular-code-writter',
           useScenarios: ['Writing or reviewing Angular code'],
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Medium',
         },
       ],
+      reviewLevelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
+      proposalNotes: [],
     });
 
     await expect(projectPromise).resolves.toEqual({
@@ -370,8 +442,13 @@ describe('PolicyService', () => {
           skillId: 'skill-1',
           name: 'angular-code-writter',
           useScenarios: ['Writing or reviewing Angular code'],
+          usedForReview: true,
+          reviewNotes: 'Focus on RxJS.',
+          reviewLevel: 'Medium',
         },
       ],
+      reviewLevelModels: { Medium: { model: 'gpt-6.1-sol', reasoning: 'high' } },
+      proposalNotes: [],
     });
   });
 

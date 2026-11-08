@@ -7,6 +7,8 @@ export interface OverviewCounts {
   readonly skills: number;
   readonly policies: number;
   readonly memories: number;
+  readonly projects: number;
+  readonly features: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +26,7 @@ export class OverviewService {
       topics: this.count('/api/policies/topics'),
       agentFamilies: this.count('/api/policies/agent-families'),
       memories: this.count('/api/memories'),
+      features: this.count('/api/features'),
     }).pipe(
       map(result => ({
         skills: result.skills,
@@ -33,6 +36,8 @@ export class OverviewService {
           result.topics +
           result.agentFamilies,
         memories: result.memories,
+        projects: result.projectPolicies,
+        features: result.features,
       })),
     );
   }

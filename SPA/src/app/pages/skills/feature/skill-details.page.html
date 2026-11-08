@@ -154,7 +154,7 @@
           <h3>Used by projects</h3>
           <div class="project-links">
             @for (projectId of vm.state.data.skill.relatedProjectIds; track projectId) {
-              <a [routerLink]="['/policies', 'projects', projectId]">
+              <a [routerLink]="['/projects', projectId]">
                 {{ vm.projectNames.get(projectId) ?? projectId }}
               </a>
             } @empty {

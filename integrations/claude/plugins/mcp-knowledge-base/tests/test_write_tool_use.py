@@ -167,9 +167,9 @@ class WriteToolUseTests(unittest.TestCase):
             for module in ("PolicyModule", "ProjectModule")
             for source in (modules_directory / module / "MCP").glob("*McpFunctions.cs")
             for name in re.findall(r'"((?:policy|project)_[a-z_]+)"', source.read_text(encoding="utf-8"))
-            if name.endswith(("_add", "_update", "_remove", "_create", "_delete"))
+            if name.endswith(("_add", "_update", "_remove", "_create", "_delete", "_set"))
         }
-        self.assertEqual(26, len(mutations))
+        self.assertEqual(31, len(mutations))
         self.assertEqual(mutations, write_tool_use.POLICY_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):

@@ -67,6 +67,16 @@ a.overview-card:hover {
   background: #fff5e5;
 }
 
+.project-card .card-icon {
+  color: var(--indigo);
+  background: #f0efff;
+}
+
+.feature-card .card-icon {
+  color: #2f7d4f;
+  background: #eaf7ef;
+}
+
 .memory-card .card-icon {
   color: var(--teal);
   background: #e9f8fb;
@@ -91,6 +101,23 @@ a.overview-card:hover {
 .memory-card .card-copy strong,
 .memory-card .count {
   color: var(--teal);
+}
+
+.project-card .card-copy strong,
+.project-card .count {
+  color: var(--indigo);
+}
+
+.feature-card .card-copy strong,
+.feature-card .count {
+  color: #2f7d4f;
+}
+
+/* Two cards, centred under the three above, each the width of one column. */
+.secondary-grid {
+  grid-template-columns: repeat(2, minmax(0, calc((100% - 36px) / 3)));
+  justify-content: center;
+  margin-top: 18px;
 }
 
 .count {
@@ -191,7 +218,8 @@ a.overview-card:hover {
 }
 
 @media (max-width: 1050px) {
-  .overview-grid {
+  .overview-grid,
+  .secondary-grid {
     grid-template-columns: 1fr;
   }
 

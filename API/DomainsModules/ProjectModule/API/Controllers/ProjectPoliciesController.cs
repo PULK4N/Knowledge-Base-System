@@ -226,6 +226,36 @@ public sealed class ProjectPoliciesController(
     {
         command.ProjectId = request.ProjectId;
         command.SkillId = request.SkillId;
+        command.UsedForReview = request.UsedForReview;
+        command.ReviewNotes = request.ReviewNotes ?? string.Empty;
+        command.ReviewLevel = request.ReviewLevel;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
+
+    [HttpPost("skills/update")]
+    public async Task<ActionResult<PolicyCommandResult>> UpdateSkill(
+        [FromBody] UpdateProjectSkillRequest request,
+        [FromServices] UpdateProjectSkillCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.SkillId = request.SkillId;
+        command.UsedForReview = request.UsedForReview;
+        command.ReviewNotes = request.ReviewNotes ?? string.Empty;
+        command.ReviewLevel = request.ReviewLevel;
+        command.UseUserOrigin();
+        return Ok((PolicyCommandResult)await Execute(command));
+    }
+
+    [HttpPost("review-level-models")]
+    public async Task<ActionResult<PolicyCommandResult>> SetReviewLevelModels(
+        [FromBody] SetProjectReviewLevelModelsRequest request,
+        [FromServices] SetProjectReviewLevelModelsCommand command
+    )
+    {
+        command.ProjectId = request.ProjectId;
+        command.LevelModels = request.LevelModels;
         command.UseUserOrigin();
         return Ok((PolicyCommandResult)await Execute(command));
     }

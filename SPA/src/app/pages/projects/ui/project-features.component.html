@@ -1,0 +1,55 @@
+<section class="project-card-section surface-card" aria-labelledby="project-features-title">
+  <h2 id="project-features-title">Features</h2>
+  <label>
+    <span class="sr-only">Search features</span>
+    <input
+      #searchInput
+      type="search"
+      placeholder="Search feature names and summaries"
+      autocomplete="off"
+      (input)="search(searchInput.value)"
+    />
+  </label>
+
+  @if (state$ | async; as state) {
+    @switch (state.status) {
+      @case ('loading') {
+        <p class="muted">Loading features…</p>
+      }
+      @case ('error') {
+        <p class="form-error" role="alert">{{ state.message }}</p>
+      }
+      @case ('success') {
+        <ul class="item-list" aria-label="Project features">
+          @for (feature of state.data.items; track feature.id) {
+            <li class="item">
+              <div class="item-heading">
+                <a [routerLink]="['/features', feature.id]">{{ feature.name }}</a>
+                <span class="muted">
+                  {{ feature.planCount }} {{ feature.planCount === 1 ? 'plan' : 'plans' }} ·
+                  {{ feature.recordCount }} {{ feature.recordCount === 1 ? 'record' : 'records' }}
+                </span>
+              </div>
+              <span class="muted">{{ feature.summary }}</span>
+            </li>
+          } @empty {
+            <li class="muted">No features in this project.</li>
+          }
+        </ul>
+
+        @if (state.data.totalCount > 0) {
+          <app-pagination
+            [page]="state.data.page"
+            [pageSize]="state.data.pageSize"
+            [totalCount]="state.data.totalCount"
+            [totalPages]="state.data.totalPages"
+            [hasPreviousPage]="state.data.hasPreviousPage"
+            [hasNextPage]="state.data.hasNextPage"
+            label="Features"
+            (pageRequested)="goToPage($event)"
+          />
+        }
+      }
+    }
+  }
+</section>

@@ -1,0 +1,179 @@
+@if (vm$ | async; as vm) {
+  <section class="project-card-section surface-card" aria-labelledby="reviewers-title">
+    <div>
+      <h2 id="reviewers-title">Reviewers</h2>
+      <p class="section-hint">Skills a review script runs, each at its review level.</p>
+    </div>
+
+    <div class="inline-form">
+      <label>
+        <span>Skill</span>
+        <input
+          #reviewerSkill
+          type="text"
+          placeholder="Search skills by name"
+          list="reviewer-skill-options"
+          autocomplete="off"
+        />
+      </label>
+      <datalist id="reviewer-skill-options">
+        @for (option of vm.skillOptions; track option.id) {
+          <option [value]="option.name"></option>
+        }
+      </datalist>
+      <label class="narrow">
+        <span>Level</span>
+        <select #reviewerLevel>
+          <option value="">Choose…</option>
+          @for (level of reviewLevels; track level) {
+            <option [value]="level">{{ level }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Notes</span>
+        <input #reviewerNotes type="text" placeholder="Optional instructions" />
+      </label>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="vm.mutation.status === 'saving'"
+        (click)="
+          addReviewer(
+            project(),
+            reviewerSkill.value,
+            $any(reviewerLevel.value),
+            reviewerNotes.value,
+            vm.skillOptions
+          )
+        "
+      >
+        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add' }}
+      </button>
+    </div>
+    @if (formError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+    @if (vm.mutation.status === 'error') {
+      <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+    }
+
+    <ul class="item-list" aria-label="Reviewers">
+      @for (reviewer of reviewers(); track reviewer.skillId) {
+        <li class="item">
+          @if (editingSkillId() === reviewer.skillId) {
+            <div class="inline-form">
+              <strong>{{ reviewer.name }}</strong>
+              <label class="narrow">
+                <span>Level</span>
+                <select #editLevel>
+                  @for (level of reviewLevels; track level) {
+                    <option [value]="level" [selected]="level === (reviewer.reviewLevel ?? 'Medium')">
+                      {{ level }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <label>
+                <span>Notes</span>
+                <input #editNotes type="text" [value]="reviewer.reviewNotes" />
+              </label>
+              <button
+                class="primary-button"
+                type="button"
+                [disabled]="vm.mutation.status === 'saving'"
+                (click)="updateReviewer(project().id, reviewer, $any(editLevel.value), editNotes.value)"
+              >
+                {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'update' ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="secondary-button" type="button" (click)="editingSkillId.set(null)">
+                Cancel
+              </button>
+            </div>
+          } @else {
+            <div class="item-heading">
+              <a [routerLink]="['/skills', reviewer.skillId]">{{ reviewer.name }}</a>
+              <span class="item-actions">
+                <span class="badge">{{ reviewer.reviewLevel }}</span>
+                <button class="link-button" type="button" (click)="editingSkillId.set(reviewer.skillId)">
+                  Edit
+                </button>
+                <button
+                  class="link-button danger"
+                  type="button"
+                  [disabled]="vm.mutation.status === 'saving'"
+                  (click)="removeReviewer(project().id, reviewer)"
+                >
+                  Remove
+                </button>
+              </span>
+            </div>
+            <span class="muted">{{ reviewer.reviewNotes || '—' }}</span>
+          }
+        </li>
+      } @empty {
+        <li class="muted">No reviewers yet.</li>
+      }
+    </ul>
+  </section>
+
+  <section class="project-card-section surface-card" aria-labelledby="review-models-title">
+    <div class="section-heading">
+      <h2 id="review-models-title">Review models</h2>
+      @if (!editingModels()) {
+        <button class="secondary-button" type="button" (click)="editingModels.set(true)">
+          Edit models
+        </button>
+      }
+    </div>
+    <form #modelsForm="ngForm" (ngSubmit)="saveModels(project().id, modelsForm.value)">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Level</th>
+            <th scope="col">Model</th>
+            <th scope="col">Reasoning</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (level of reviewLevels; track level) {
+            <tr>
+              <th scope="row">{{ level }}</th>
+              @if (editingModels()) {
+                <td>
+                  <input
+                    type="text"
+                    [name]="level + 'Model'"
+                    [attr.aria-label]="level + ' model'"
+                    [ngModel]="project().reviewLevelModels[level]?.model ?? ''"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    [name]="level + 'Reasoning'"
+                    [attr.aria-label]="level + ' reasoning'"
+                    [ngModel]="project().reviewLevelModels[level]?.reasoning ?? ''"
+                  />
+                </td>
+              } @else {
+                <td>{{ project().reviewLevelModels[level]?.model ?? '—' }}</td>
+                <td>{{ project().reviewLevelModels[level]?.reasoning ?? '—' }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (editingModels()) {
+        <div class="item-actions">
+          <button class="primary-button" type="submit" [disabled]="vm.mutation.status === 'saving'">
+            {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'models' ? 'Saving…' : 'Save models' }}
+          </button>
+          <button class="secondary-button" type="button" (click)="editingModels.set(false)">
+            Cancel
+          </button>
+        </div>
+      }
+    </form>
+  </section>
+}

@@ -37,7 +37,43 @@ export interface PolicyProjectSummary {
   readonly repositoryPaths: readonly string[];
 }
 
-export interface ProjectSkill {
+export type ReviewLevel = 'Easy' | 'Medium' | 'Heavy';
+
+export const REVIEW_LEVELS: readonly ReviewLevel[] = ['Easy', 'Medium', 'Heavy'];
+
+export interface ReviewModel {
+  readonly model: string;
+  readonly reasoning: string;
+}
+
+/** Levels without a model are left out. */
+export type ReviewLevelModels = Readonly<Partial<Record<ReviewLevel, ReviewModel>>>;
+
+export interface ProjectSkillReview {
+  readonly usedForReview: boolean;
+  readonly reviewNotes: string;
+  readonly reviewLevel: ReviewLevel | null;
+}
+
+export interface ProposalNote {
+  readonly noteId: string;
+  readonly title: string;
+  /** Markdown. */
+  readonly content: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface ProposalNoteRequest {
+  readonly title: string;
+  readonly content: string;
+}
+
+export interface ProposalNoteAddedCommandResult extends PolicyCommandResult {
+  readonly noteId: string;
+}
+
+export interface ProjectSkill extends ProjectSkillReview {
   readonly skillId: string;
   readonly name: string;
   readonly useScenarios: readonly string[];
@@ -47,6 +83,8 @@ export interface PolicyProjectDetails extends PolicyProjectSummary {
   readonly description: string;
   readonly topicNames: readonly string[];
   readonly skills: readonly ProjectSkill[];
+  readonly reviewLevelModels: ReviewLevelModels;
+  readonly proposalNotes: readonly ProposalNote[];
 }
 
 export type PolicyScope =
@@ -99,6 +137,8 @@ export interface PolicyProjectDetailsDto extends PolicyProjectSummaryDto {
   readonly projectDescription: string;
   readonly topicNames: readonly string[];
   readonly skills: readonly ProjectSkill[];
+  readonly reviewLevelModels: ReviewLevelModels;
+  readonly proposalNotes: readonly ProposalNote[];
 }
 
 export interface PolicyCommandResult {

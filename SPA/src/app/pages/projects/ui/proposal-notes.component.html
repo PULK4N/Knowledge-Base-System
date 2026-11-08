@@ -1,0 +1,134 @@
+@if (mutation$ | async; as mutation) {
+  <section class="project-card-section surface-card" aria-labelledby="proposal-notes-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="proposal-notes-title">Proposal notes</h2>
+        <p class="section-hint">Ideas to implement later.</p>
+      </div>
+      @if (!adding()) {
+        <button class="primary-button" type="button" (click)="adding.set(true)">Add note</button>
+      }
+    </div>
+
+    @if (adding()) {
+      <div class="stacked-form">
+        <label>
+          <span>Title</span>
+          <input #newTitle type="text" />
+        </label>
+        <label>
+          <span>Content (Markdown)</span>
+          <textarea #newContent rows="5"></textarea>
+        </label>
+        <div class="item-actions">
+          <button
+            class="primary-button"
+            type="button"
+            [disabled]="mutation.status === 'saving'"
+            (click)="addNote(project().id, newTitle.value, newContent.value)"
+          >
+            {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add note' }}
+          </button>
+          <button class="secondary-button" type="button" (click)="adding.set(false)">Cancel</button>
+        </div>
+      </div>
+    }
+    @if (titleError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+    @if (mutation.status === 'error') {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
+    }
+
+    <div class="inline-form">
+      <label>
+        <span class="sr-only">Search proposal notes</span>
+        <input
+          #searchInput
+          type="search"
+          placeholder="Search notes"
+          [value]="search()"
+          (input)="search.set(searchInput.value)"
+        />
+      </label>
+      <label class="narrow">
+        <span class="sr-only">Sort notes</span>
+        <select #sortSelect (change)="sort.set($any(sortSelect.value))">
+          <option value="updatedAt" [selected]="sort() === 'updatedAt'">Last updated</option>
+          <option value="title" [selected]="sort() === 'title'">Title</option>
+        </select>
+      </label>
+    </div>
+
+    <ul class="item-list" aria-label="Proposal notes">
+      @for (note of notes(); track note.noteId) {
+        <li class="item">
+          @if (editingNoteId() === note.noteId) {
+            <div class="stacked-form">
+              <label>
+                <span>Title</span>
+                <input #editTitle type="text" [value]="note.title" />
+              </label>
+              <label>
+                <span>Content (Markdown)</span>
+                <textarea #editContent rows="5" [value]="note.content"></textarea>
+              </label>
+              <div class="item-actions">
+                <button
+                  class="primary-button"
+                  type="button"
+                  [disabled]="mutation.status === 'saving'"
+                  (click)="updateNote(project().id, note.noteId, editTitle.value, editContent.value)"
+                >
+                  {{ mutation.status === 'saving' && mutation.kind === 'update' ? 'Saving…' : 'Save' }}
+                </button>
+                <button class="secondary-button" type="button" (click)="editingNoteId.set(null)">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="item-heading">
+              <strong>{{ note.title }}</strong>
+              <span class="item-actions">
+                <span class="muted">{{ note.updatedAt | date: 'medium' }}</span>
+                @if (confirmingNoteId() === note.noteId) {
+                  <span>Delete this note?</span>
+                  <button
+                    class="danger-button"
+                    type="button"
+                    [disabled]="mutation.status === 'saving'"
+                    (click)="removeNote(project().id, note.noteId)"
+                  >
+                    Confirm
+                  </button>
+                  <button class="secondary-button" type="button" (click)="confirmingNoteId.set(null)">
+                    Cancel
+                  </button>
+                } @else {
+                  <button class="link-button" type="button" (click)="editingNoteId.set(note.noteId)">
+                    Edit
+                  </button>
+                  <button
+                    class="link-button danger"
+                    type="button"
+                    (click)="confirmingNoteId.set(note.noteId)"
+                  >
+                    Delete
+                  </button>
+                }
+              </span>
+            </div>
+            <app-markdown-content
+              [blocks]="emptyBlocks"
+              [markdown]="note.content"
+              emptyMessage="This note has no content."
+            />
+          }
+        </li>
+      } @empty {
+        <li class="muted">No proposal notes yet.</li>
+      }
+    </ul>
+  </section>
+}

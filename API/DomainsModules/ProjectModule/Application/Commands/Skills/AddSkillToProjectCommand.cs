@@ -2,6 +2,7 @@ using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Models;
 using ProjectModule.Domain.Events;
+using ProjectModule.Domain.Models;
 using SkillsModule.Domain.Events;
 
 namespace ProjectModule.Application.Commands;
@@ -15,6 +16,9 @@ public sealed class AddSkillToProjectCommand(
 ) : ExistingProjectCommand(stateMachineHandler)
 {
     public required Guid SkillId { get; set; }
+    public bool UsedForReview { get; set; }
+    public string ReviewNotes { get; set; } = string.Empty;
+    public ReviewLevel? ReviewLevel { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(ProjectId != Guid.Empty && SkillId != Guid.Empty);
@@ -28,8 +32,11 @@ public sealed class AddSkillToProjectCommand(
             executor,
             projectId,
             Constants.StateMachineIds.Project,
-            new ProjectSkillRelationAddedV1(
+            new ProjectSkillRelationAddedV2(
                 skillId,
+                UsedForReview,
+                ReviewNotes.Trim(),
+                ReviewLevel,
                 SessionId,
                 memoryAggregateId
             )

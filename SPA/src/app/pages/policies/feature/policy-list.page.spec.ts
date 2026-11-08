@@ -55,6 +55,8 @@ describe('PolicyListPage project topics', () => {
       repositoryPaths: ['/workspace/knowledge-base'],
       topicNames: ['Angular'],
       skills: [],
+      reviewLevelModels: {},
+      proposalNotes: [],
     });
     const policies = {
       searchPolicies: vi.fn(() =>

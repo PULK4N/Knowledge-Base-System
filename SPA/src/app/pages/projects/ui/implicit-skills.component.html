@@ -1,0 +1,90 @@
+@if (vm$ | async; as vm) {
+  <section class="project-card-section surface-card" aria-labelledby="implicit-skills-title">
+    <div>
+      <h2 id="implicit-skills-title">Implicit skills</h2>
+      <p class="section-hint">Listed in Agents.MD, so agents load them in these scenarios.</p>
+    </div>
+
+    <div class="inline-form">
+      <label>
+        <span class="sr-only">Skill name</span>
+        <input
+          #skillName
+          type="text"
+          placeholder="Search skills by name"
+          list="implicit-skill-options"
+          autocomplete="off"
+        />
+      </label>
+      <datalist id="implicit-skill-options">
+        @for (option of vm.skillOptions; track option.id) {
+          <option [value]="option.name"></option>
+        }
+      </datalist>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="vm.mutation.status === 'saving'"
+        (click)="addSkill(project().id, skillName.value, vm.skillOptions); skillName.value = ''"
+      >
+        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add skill' }}
+      </button>
+    </div>
+    @if (nameError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+    @if (vm.mutation.status === 'error') {
+      <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+    }
+
+    <ul class="item-list" aria-label="Implicit skills">
+      @for (skill of project().skills; track skill.skillId) {
+        <li class="item">
+          <div class="item-heading">
+            <a [routerLink]="['/skills', skill.skillId]">{{ skill.name }}</a>
+            <span class="item-actions">
+              @if (skill.usedForReview) {
+                <span class="badge">Reviewer</span>
+              }
+              @if (confirmingSkillId() === skill.skillId) {
+                <span>
+                  Unlink?{{ skill.usedForReview ? ' Also removes it from Reviewers.' : '' }}
+                </span>
+                <button
+                  class="danger-button"
+                  type="button"
+                  [disabled]="vm.mutation.status === 'saving'"
+                  (click)="removeSkill(project().id, skill.skillId)"
+                >
+                  Confirm
+                </button>
+                <button class="secondary-button" type="button" (click)="confirmingSkillId.set(null)">
+                  Cancel
+                </button>
+              } @else {
+                <button
+                  class="link-button danger"
+                  type="button"
+                  (click)="confirmingSkillId.set(skill.skillId)"
+                >
+                  Remove
+                </button>
+              }
+            </span>
+          </div>
+          @if (skill.useScenarios.length > 0) {
+            <ul class="chips">
+              @for (scenario of skill.useScenarios; track $index) {
+                <li>{{ scenario }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="muted">No use scenarios yet.</span>
+          }
+        </li>
+      } @empty {
+        <li class="muted">No skills linked.</li>
+      }
+    </ul>
+  </section>
+}

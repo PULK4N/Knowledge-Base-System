@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  max-width: 1185px;
+  margin: 0 auto;
+}
+
+.project-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 24px;
+  overflow-x: auto;
+  border-bottom: 1px solid #dfe3eb;
+}
+
+.project-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 17px;
+  color: #56627b;
+  border-bottom: 3px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.project-tabs a:hover,
+.project-tabs a.active {
+  color: var(--indigo);
+}
+
+.project-tabs a.active {
+  border-bottom-color: var(--indigo);
+  font-weight: 720;
+}
+
+.project-tabs a span {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  place-items: center;
+  border-radius: 999px;
+  color: #4d5870;
+  background: #edf0f5;
+  font-size: 12px;
+}
+
+.policies-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.page-heading {
+  overflow-wrap: anywhere;
+}

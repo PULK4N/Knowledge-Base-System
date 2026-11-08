@@ -14,6 +14,7 @@ public sealed class ProjectSkillMustExistValidator : IPreEventValidator
         var skillId = payload.EventData switch
         {
             ProjectSkillRelationRemovedV1 data => data.SkillId,
+            ProjectSkillRelationUpdatedV1 data => data.SkillId,
             _ => throw new InvalidCastException()
         };
         var exists = ((ProjectStateData)stateData)
