@@ -1,0 +1,64 @@
+@if (results$ | async; as results) {
+  <div class="skill-picker">
+    <label class="search-box" [class.picked]="picked() !== null">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 5 5" />
+      </svg>
+      <span class="sr-only">Skill</span>
+      <input
+        #searchInput
+        type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="open()"
+        [placeholder]="placeholder()"
+        [value]="query()"
+        autocomplete="off"
+        (input)="type(searchInput.value)"
+        (focus)="open.set(true)"
+        (blur)="open.set(false)"
+        (keydown)="keydown($event, results.status === 'done' ? results.items : [])"
+      />
+      @if (picked()) {
+        <span class="picked-mark" aria-label="Skill selected">✓</span>
+      }
+    </label>
+
+    @if (open()) {
+      <div class="results" role="listbox" aria-label="Matching skills">
+        @switch (results.status) {
+          @case ('loading') {
+            <p class="results-message">Searching skills…</p>
+          }
+          @case ('error') {
+            <p class="results-message">Skills could not be searched.</p>
+          }
+          @case ('done') {
+            @for (skill of results.items; track skill.id; let index = $index) {
+              <button
+                type="button"
+                role="option"
+                class="result"
+                [class.highlighted]="index === highlighted()"
+                [attr.aria-selected]="index === highlighted()"
+                (mousedown)="$event.preventDefault(); pick(skill)"
+              >
+                <span class="result-icon" aria-hidden="true">&lt;/&gt;</span>
+                <span class="result-copy">
+                  <strong>{{ skill.name }}</strong>
+                  <small>{{ skill.description }}</small>
+                </span>
+                @if (takenSkillIds().includes(skill.id)) {
+                  <span class="taken">Added</span>
+                }
+              </button>
+            } @empty {
+              <p class="results-message">No skills match "{{ query() }}".</p>
+            }
+          }
+        }
+      </div>
+    }
+  </div>
+}

@@ -10,9 +10,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { RouterLink } from '@angular/router';
-import { Subject, combineLatest } from 'rxjs';
+import { Subject } from 'rxjs';
 import { SkillListItem } from '../../skills/data-access/skill.models';
-import { SkillService } from '../../skills/data-access/skill.service';
 import {
   PolicyProjectDetails,
   ProjectSkill,
@@ -23,13 +22,13 @@ import { PolicyService } from '../../policies/data-access/policy.service';
 import { MutationRequest, mutationStates } from './mutation-state';
 import { pageOf } from './page-of';
 import { toReviewLevelModels } from './project-review';
-import { findSkillByName, loadSkillOptions } from './skill-options';
+import { SkillPickerComponent } from './skill-picker.component';
 
 type ReviewerMutation = 'add' | 'update' | 'remove' | 'models';
 
 @Component({
   selector: 'app-project-reviewers',
-  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink],
+  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink, SkillPickerComponent],
   templateUrl: './project-reviewers.component.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',
@@ -56,22 +55,24 @@ export class ProjectReviewersComponent {
   protected readonly editingSkillId = signal<string | null>(null);
   protected readonly editingModels = signal(false);
   protected readonly formError = signal<string | null>(null);
-  protected readonly vm$ = combineLatest({
-    mutation: mutationStates(this.mutations),
-    skillOptions: loadSkillOptions(inject(SkillService)),
-  });
+  protected readonly pickedSkill = signal<SkillListItem | null>(null);
+  protected readonly reviewerSkillIds = computed(() =>
+    this.project().skills
+      .filter(skill => skill.usedForReview)
+      .map(skill => skill.skillId),
+  );
+  protected readonly mutation$ = mutationStates(this.mutations);
 
   /** Links the skill when needed and switches review on with the level and notes. */
   protected addReviewer(
     project: PolicyProjectDetails,
-    name: string,
+    picker: SkillPickerComponent,
     level: ReviewLevel | '',
     notes: string,
-    options: readonly SkillListItem[],
   ): void {
-    const skill = findSkillByName(options, name);
+    const skill = this.pickedSkill();
     if (!skill) {
-      this.formError.set(name.trim() ? `No skill is named "${name.trim()}".` : 'Choose a skill.');
+      this.formError.set('Pick a skill from the search results.');
       return;
     }
     if (!level) {
@@ -87,6 +88,7 @@ export class ProjectReviewersComponent {
       request: linked
         ? this.projects.updateProjectSkill(project.id, skill.id, review)
         : this.projects.addProjectSkill(project.id, skill.id, review),
+      done: () => picker.clear(),
     });
   }
 

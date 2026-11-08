@@ -1,4 +1,4 @@
-@if (vm$ | async; as vm) {
+@if (mutation$ | async; as mutation) {
   <section class="list-panel surface-card implicit-skills" aria-labelledby="implicit-skills-title">
     <div>
       <h2 id="implicit-skills-title" class="panel-title">Implicit skills</h2>
@@ -6,39 +6,26 @@
     </div>
 
     <div class="toolbar">
-      <label class="search-box">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m15.5 15.5 5 5" />
-        </svg>
-        <span class="sr-only">Skill name</span>
-        <input
-          #skillName
-          type="search"
-          placeholder="Search skills by name"
-          list="implicit-skill-options"
-          autocomplete="off"
-        />
-      </label>
-      <datalist id="implicit-skill-options">
-        @for (option of vm.skillOptions; track option.id) {
-          <option [value]="option.name"></option>
-        }
-      </datalist>
+      <app-skill-picker
+        #picker
+        placeholder="Search skills by name"
+        [takenSkillIds]="linkedSkillIds()"
+        (skillPicked)="pickedSkill.set($event)"
+      />
       <button
         class="primary-button"
         type="button"
-        [disabled]="vm.mutation.status === 'saving'"
-        (click)="addSkill(project().id, skillName.value, vm.skillOptions); skillName.value = ''"
+        [disabled]="mutation.status === 'saving'"
+        (click)="addSkill(project().id, picker)"
       >
-        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add skill' }}
+        {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add skill' }}
       </button>
     </div>
     @if (nameError(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
     }
-    @if (vm.mutation.status === 'error') {
-      <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+    @if (mutation.status === 'error') {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
     }
 
     <div class="list-heading" aria-hidden="true">
@@ -75,10 +62,10 @@
               <button
                 class="danger-action"
                 type="button"
-                [disabled]="vm.mutation.status === 'saving'"
+                [disabled]="mutation.status === 'saving'"
                 (click)="removeSkill(project().id, skill.skillId)"
               >
-                {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'remove' ? 'Removing…' : 'Confirm' }}
+                {{ mutation.status === 'saving' && mutation.kind === 'remove' ? 'Removing…' : 'Confirm' }}
               </button>
               <button type="button" (click)="confirmingSkillId.set(null)">Cancel</button>
             } @else {

@@ -1,4 +1,4 @@
-@if (vm$ | async; as vm) {
+@if (mutation$ | async; as mutation) {
   <section class="list-panel surface-card implicit-skills" aria-labelledby="reviewers-title">
     <div>
       <h2 id="reviewers-title" class="panel-title">Reviewers</h2>
@@ -6,25 +6,12 @@
     </div>
 
     <div class="toolbar reviewer-toolbar">
-      <label class="search-box">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m15.5 15.5 5 5" />
-        </svg>
-        <span class="sr-only">Skill</span>
-        <input
-          #reviewerSkill
-          type="search"
-          placeholder="Search skills by name"
-          list="reviewer-skill-options"
-          autocomplete="off"
-        />
-      </label>
-      <datalist id="reviewer-skill-options">
-        @for (option of vm.skillOptions; track option.id) {
-          <option [value]="option.name"></option>
-        }
-      </datalist>
+      <app-skill-picker
+        #picker
+        placeholder="Search skills by name"
+        [takenSkillIds]="reviewerSkillIds()"
+        (skillPicked)="pickedSkill.set($event)"
+      />
       <label class="toolbar-field narrow">
         <span class="sr-only">Level</span>
         <select #reviewerLevel>
@@ -37,18 +24,17 @@
       <button
         class="primary-button"
         type="button"
-        [disabled]="vm.mutation.status === 'saving'"
+        [disabled]="mutation.status === 'saving'"
         (click)="
           addReviewer(
             project(),
-            reviewerSkill.value,
+            picker,
             $any(reviewerLevel.value),
-            reviewerNotes.value,
-            vm.skillOptions
+            reviewerNotes.value
           )
         "
       >
-        {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
+        {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
       </button>
       <label class="toolbar-field full-width">
         <span class="sr-only">Notes</span>
@@ -63,8 +49,8 @@
     @if (formError(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
     }
-    @if (vm.mutation.status === 'error') {
-      <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
+    @if (mutation.status === 'error') {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
     }
 
     <div class="list-heading" aria-hidden="true">
@@ -94,7 +80,7 @@
             <button
               class="danger-link"
               type="button"
-              [disabled]="vm.mutation.status === 'saving'"
+              [disabled]="mutation.status === 'saving'"
               (click)="removeReviewer(project().id, reviewer)"
             >
               Remove
@@ -124,10 +110,10 @@
               <button
                 class="primary-button"
                 type="button"
-                [disabled]="vm.mutation.status === 'saving'"
+                [disabled]="mutation.status === 'saving'"
                 (click)="updateReviewer(project().id, reviewer, $any(editLevel.value), editNotes.value)"
               >
-                {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'update' ? 'Saving…' : 'Save' }}
+                {{ mutation.status === 'saving' && mutation.kind === 'update' ? 'Saving…' : 'Save' }}
               </button>
               <button class="secondary-button" type="button" (click)="editingSkillId.set(null)">
                 Cancel
@@ -206,8 +192,8 @@
       </table>
       @if (editingModels()) {
         <div class="item-actions">
-          <button class="primary-button" type="submit" [disabled]="vm.mutation.status === 'saving'">
-            {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'models' ? 'Saving…' : 'Save models' }}
+          <button class="primary-button" type="submit" [disabled]="mutation.status === 'saving'">
+            {{ mutation.status === 'saving' && mutation.kind === 'models' ? 'Saving…' : 'Save models' }}
           </button>
           <button class="secondary-button" type="button" (click)="editingModels.set(false)">
             Cancel

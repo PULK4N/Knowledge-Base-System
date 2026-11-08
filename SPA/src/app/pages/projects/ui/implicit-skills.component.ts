@@ -9,20 +9,19 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { Subject, combineLatest } from 'rxjs';
+import { Subject } from 'rxjs';
 import { SkillListItem } from '../../skills/data-access/skill.models';
-import { SkillService } from '../../skills/data-access/skill.service';
 import { PolicyProjectDetails } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
 import { MutationRequest, mutationStates } from './mutation-state';
 import { pageOf } from './page-of';
-import { findSkillByName, loadSkillOptions } from './skill-options';
+import { SkillPickerComponent } from './skill-picker.component';
 
 type SkillMutation = 'add' | 'remove';
 
 @Component({
   selector: 'app-implicit-skills',
-  imports: [AsyncPipe, PaginationComponent, RouterLink],
+  imports: [AsyncPipe, PaginationComponent, RouterLink, SkillPickerComponent],
   templateUrl: './implicit-skills.component.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',
@@ -43,21 +42,16 @@ export class ImplicitSkillsComponent {
   );
   protected readonly confirmingSkillId = signal<string | null>(null);
   protected readonly nameError = signal<string | null>(null);
-  protected readonly vm$ = combineLatest({
-    mutation: mutationStates(this.mutations),
-    skillOptions: loadSkillOptions(inject(SkillService)),
-  });
+  protected readonly pickedSkill = signal<SkillListItem | null>(null);
+  protected readonly linkedSkillIds = computed(() =>
+    this.project().skills.map(skill => skill.skillId),
+  );
+  protected readonly mutation$ = mutationStates(this.mutations);
 
-  protected addSkill(
-    projectId: string,
-    name: string,
-    options: readonly SkillListItem[],
-  ): void {
-    if (!name.trim()) return;
-
-    const skill = findSkillByName(options, name);
+  protected addSkill(projectId: string, picker: SkillPickerComponent): void {
+    const skill = this.pickedSkill();
     if (!skill) {
-      this.nameError.set(`No skill is named "${name.trim()}".`);
+      this.nameError.set('Pick a skill from the search results.');
       return;
     }
 
@@ -65,6 +59,7 @@ export class ImplicitSkillsComponent {
     this.mutations.next({
       kind: 'add',
       request: this.projects.addProjectSkill(projectId, skill.id),
+      done: () => picker.clear(),
     });
   }
 
