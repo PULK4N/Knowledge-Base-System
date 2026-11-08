@@ -23,7 +23,8 @@ public readonly record struct AgentFamilyUpdatedV1(
         var updatedAgentFamily = new AgentFamily
         {
             AgentFamilyName = AgentFamilyName,
-            Description = Description
+            Description = Description,
+            UpdatedAt = eventExecutionInfo.Timestamp
         };
 
         foreach (var policy in existingAgentFamily.Policies)
@@ -55,7 +56,8 @@ public readonly record struct AgentFamilyUpdatedV2(
         var updatedAgentFamily = new AgentFamily
         {
             AgentFamilyName = AgentFamilyName,
-            Description = Description
+            Description = Description,
+            UpdatedAt = eventExecutionInfo.Timestamp
         };
 
         foreach (var policy in existingAgentFamily.Policies)

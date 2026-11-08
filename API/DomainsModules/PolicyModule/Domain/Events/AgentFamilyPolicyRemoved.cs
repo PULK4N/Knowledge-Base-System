@@ -17,6 +17,7 @@ public readonly record struct AgentFamilyPolicyRemovedV1(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.AgentFamilies[AgentFamilyName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.AgentFamilies[AgentFamilyName].Policies.Remove(
             PolicyId
         );
@@ -38,6 +39,7 @@ public readonly record struct AgentFamilyPolicyRemovedV2(
     )
     {
         var generalPolicies = (GeneralPoliciesStateData)stateData;
+        generalPolicies.AgentFamilies[AgentFamilyName].UpdatedAt = eventExecutionInfo.Timestamp;
         generalPolicies.AgentFamilies[AgentFamilyName].Policies.Remove(
             PolicyId
         );

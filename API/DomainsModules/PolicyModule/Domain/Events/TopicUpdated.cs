@@ -21,7 +21,8 @@ public readonly record struct TopicUpdatedV1(
         var updatedTopic = new Topic
         {
             TopicName = TopicName,
-            Description = Description
+            Description = Description,
+            UpdatedAt = eventExecutionInfo.Timestamp
         };
 
         foreach (var policy in existingTopic.Policies)
@@ -50,7 +51,8 @@ public readonly record struct TopicUpdatedV2(
         var updatedTopic = new Topic
         {
             TopicName = TopicName,
-            Description = Description
+            Description = Description,
+            UpdatedAt = eventExecutionInfo.Timestamp
         };
 
         foreach (var policy in existingTopic.Policies)

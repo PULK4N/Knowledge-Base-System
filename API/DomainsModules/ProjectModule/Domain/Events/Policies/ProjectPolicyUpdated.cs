@@ -15,7 +15,8 @@ public readonly record struct ProjectPolicyUpdatedV1(
     )
     {
         var project = (ProjectStateData)stateData;
-        project.Policies[Policy.PolicyId] = Policy;
+        project.Policies[Policy.PolicyId] =
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         return project;
     }
@@ -33,7 +34,8 @@ public readonly record struct ProjectPolicyUpdatedV2(
     )
     {
         var project = (ProjectStateData)stateData;
-        project.Policies[Policy.PolicyId] = Policy;
+        project.Policies[Policy.PolicyId] =
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp };
 
         project.MemoryHistory.Add(
             new MemoryHistoryRecord(

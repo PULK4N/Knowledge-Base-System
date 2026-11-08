@@ -118,6 +118,12 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .HasIndex(project => project.ProjectName)
                     .IsUnique();
                 summary.Property(project => project.ProjectName).IsRequired();
+                summary.HasIndex(project => new
+                {
+                    project.UpdatedAt,
+                    project.ProjectName,
+                    project.ProjectAggregateId
+                }).IsDescending(true, false, false);
                 summary
                     .Property(project => project.RepositoryPathsJson)
                     .IsRequired();

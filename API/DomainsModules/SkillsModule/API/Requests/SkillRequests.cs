@@ -7,6 +7,11 @@ namespace SkillsModule.API.Requests;
 
 public sealed record SearchSkillsRequest : PagedSearchRequest
 {
+    public SearchSkillsRequest()
+    {
+        SortDirection = SortDirection.Descending;
+    }
+
     [StringLength(EntityQueryLimits.MaximumSearchLength)]
     public string? Tag { get; init; }
 
@@ -16,7 +21,7 @@ public sealed record SearchSkillsRequest : PagedSearchRequest
 
     [EnumDataType(typeof(SkillSearchSortField))]
     public SkillSearchSortField SortBy { get; init; } =
-        SkillSearchSortField.Name;
+        SkillSearchSortField.UpdatedAt;
 }
 
 public sealed record AddSkillAttachmentsRequest

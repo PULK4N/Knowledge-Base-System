@@ -134,7 +134,8 @@ public sealed class SearchPolicyTopicsQuery(
         }
 
         var ordered = topics
-            .OrderBy(
+            .OrderByDescending(topic => topic.UpdatedAt)
+            .ThenBy(
                 topic => topic.TopicName.Name,
                 StringComparer.OrdinalIgnoreCase
             )
@@ -243,7 +244,8 @@ public sealed class SearchPolicyAgentFamiliesQuery(
         }
 
         var ordered = agentFamilies
-            .OrderBy(
+            .OrderByDescending(agentFamily => agentFamily.UpdatedAt)
+            .ThenBy(
                 agentFamily => agentFamily.AgentFamilyName.Name,
                 StringComparer.OrdinalIgnoreCase
             )

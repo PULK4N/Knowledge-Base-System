@@ -10,7 +10,10 @@ public readonly record struct ProjectPolicyAddedV1(Policy Policy) : IProjectPoli
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (ProjectStateData)stateData;
-        generalPoliciesStateData.Policies.Add(Policy.PolicyId, Policy);
+        generalPoliciesStateData.Policies.Add(
+            Policy.PolicyId,
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp }
+        );
 
         return generalPoliciesStateData;
     }
@@ -25,7 +28,10 @@ public readonly record struct ProjectPolicyAddedV2(
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (ProjectStateData)stateData;
-        generalPoliciesStateData.Policies.Add(Policy.PolicyId, Policy);
+        generalPoliciesStateData.Policies.Add(
+            Policy.PolicyId,
+            Policy with { UpdatedAt = eventExecutionInfo.Timestamp }
+        );
 
         generalPoliciesStateData.MemoryHistory.Add(
             new MemoryHistoryRecord(

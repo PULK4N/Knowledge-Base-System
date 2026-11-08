@@ -22,8 +22,8 @@ public sealed class FeaturesControllerTests
 
         Assert.Equal(Pagination.DefaultPage, request.Page);
         Assert.Equal(Pagination.DefaultPageSize, request.PageSize);
-        Assert.Equal(FeatureSearchSortField.Name, request.SortBy);
-        Assert.Equal(SortDirection.Ascending, request.SortDirection);
+        Assert.Equal(FeatureSearchSortField.UpdatedAt, request.SortBy);
+        Assert.Equal(SortDirection.Descending, request.SortDirection);
     }
 
     [Fact]

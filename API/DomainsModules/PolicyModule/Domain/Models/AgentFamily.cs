@@ -15,5 +15,6 @@ public sealed class AgentFamily
 {
     public AgentFamilyName AgentFamilyName { get; init; }
     public required string Description { get; init; }
+    public DateTime UpdatedAt { get; set; }
     public Dictionary<PolicyId, Policy> Policies { get; } = [];
 }

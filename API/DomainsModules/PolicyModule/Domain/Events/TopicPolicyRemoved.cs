@@ -12,6 +12,7 @@ public readonly record struct TopicPolicyRemovedV1(TopicName TopicName, PolicyId
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
+        generalPoliciesStateData.Topics[TopicName].UpdatedAt = eventExecutionInfo.Timestamp;
 
         generalPoliciesStateData.Topics[TopicName].Policies.Remove(PolicyId);
 
@@ -29,6 +30,7 @@ public readonly record struct TopicPolicyRemovedV2(
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var generalPoliciesStateData = (GeneralPoliciesStateData)stateData;
+        generalPoliciesStateData.Topics[TopicName].UpdatedAt = eventExecutionInfo.Timestamp;
 
         generalPoliciesStateData.Topics[TopicName].Policies.Remove(PolicyId);
 
