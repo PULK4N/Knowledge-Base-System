@@ -1,8 +1,33 @@
 .project-card-section {
   display: grid;
   gap: 14px;
+  min-width: 0;
   margin-top: 24px;
   padding: 24px 28px;
+}
+
+/* Grid items keep their content width unless allowed to shrink; without this a
+   wide Markdown table pushes the whole tab past the card edge. */
+.project-card-section > *,
+.item,
+.item > *,
+.stacked-form > * {
+  min-width: 0;
+}
+
+app-markdown-content {
+  display: block;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .project-card-section h2 {
@@ -226,4 +251,106 @@ button:disabled {
   .project-card-section {
     padding: 18px 20px;
   }
+}
+
+/* Lists styled like the Policies directory lists. */
+.implicit-skills {
+  margin-top: 24px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 19px;
+}
+
+.implicit-skills .toolbar {
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.entry-icon.skill {
+  color: var(--indigo);
+  background: #f0efff;
+  font-size: 18px;
+}
+
+.reviewer-toolbar {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.reviewer-toolbar .search-box {
+  width: min(420px, 100%);
+}
+
+.toolbar-field {
+  display: grid;
+  flex: 1 1 200px;
+  gap: 4px;
+  color: #27335a;
+  font-size: 13px;
+}
+
+.toolbar-field.narrow {
+  flex: 0 0 150px;
+}
+
+.row-editor {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  align-items: end;
+  gap: 10px;
+  padding: 4px 0 4px 76px;
+}
+
+@media (max-width: 720px) {
+  .row-editor {
+    padding-left: 0;
+  }
+}
+
+/* Proposal notes hold long Markdown such as tables, so the editor gets room. */
+.note-content {
+  min-height: 26rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.toolbar-field.full-width {
+  flex: 1 1 100%;
+}
+
+.reviewer-notes {
+  min-height: 6rem;
+  line-height: 1.5;
+}
+
+.row-editor .reviewer-notes {
+  min-height: 12rem;
+}
+
+/* Controls next to the search box take its height, border and text size. */
+.toolbar select,
+.toolbar input[type='text'],
+.toolbar .primary-button {
+  height: 58px;
+  min-height: 58px;
+  border-radius: 9px;
+  font-size: 17px;
+}
+
+.toolbar select,
+.toolbar input[type='text'] {
+  padding: 0 14px;
+  border-color: #d6dce7;
+}
+
+.toolbar .primary-button {
+  padding: 0 20px;
+}
+
+.toolbar .toolbar-field {
+  align-self: center;
 }

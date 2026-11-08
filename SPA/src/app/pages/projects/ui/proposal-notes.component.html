@@ -18,7 +18,7 @@
         </label>
         <label>
           <span>Content (Markdown)</span>
-          <textarea #newContent rows="5"></textarea>
+          <textarea #newContent class="note-content" rows="18"></textarea>
         </label>
         <div class="item-actions">
           <button
@@ -71,7 +71,7 @@
               </label>
               <label>
                 <span>Content (Markdown)</span>
-                <textarea #editContent rows="5" [value]="note.content"></textarea>
+                <textarea #editContent class="note-content" rows="18" [value]="note.content"></textarea>
               </label>
               <div class="item-actions">
                 <button
