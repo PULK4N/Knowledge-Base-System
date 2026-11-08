@@ -55,6 +55,24 @@ export interface ProjectSkillReview {
   readonly reviewLevel: ReviewLevel | null;
 }
 
+export interface ProposalNote {
+  readonly noteId: string;
+  readonly title: string;
+  /** Markdown. */
+  readonly content: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface ProposalNoteRequest {
+  readonly title: string;
+  readonly content: string;
+}
+
+export interface ProposalNoteAddedCommandResult extends PolicyCommandResult {
+  readonly noteId: string;
+}
+
 export interface ProjectSkill extends ProjectSkillReview {
   readonly skillId: string;
   readonly name: string;
@@ -66,6 +84,7 @@ export interface PolicyProjectDetails extends PolicyProjectSummary {
   readonly topicNames: readonly string[];
   readonly skills: readonly ProjectSkill[];
   readonly reviewLevelModels: ReviewLevelModels;
+  readonly proposalNotes: readonly ProposalNote[];
 }
 
 export type PolicyScope =
@@ -119,6 +138,7 @@ export interface PolicyProjectDetailsDto extends PolicyProjectSummaryDto {
   readonly topicNames: readonly string[];
   readonly skills: readonly ProjectSkill[];
   readonly reviewLevelModels: ReviewLevelModels;
+  readonly proposalNotes: readonly ProposalNote[];
 }
 
 export interface PolicyCommandResult {

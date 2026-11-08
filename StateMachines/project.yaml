@@ -96,3 +96,17 @@ events:
     preEventValidators:
       - ProjectMustBeActiveValidator
       - ProjectReviewLevelModelsMustBeCompleteValidator
+  ProjectProposalNoteAddedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectProposalNoteMustNotExistValidator
+      - ProjectProposalNoteTitleRequiredValidator
+  ProjectProposalNoteUpdatedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectProposalNoteMustExistValidator
+      - ProjectProposalNoteTitleRequiredValidator
+  ProjectProposalNoteRemovedV1:
+    preEventValidators:
+      - ProjectMustBeActiveValidator
+      - ProjectProposalNoteMustExistValidator

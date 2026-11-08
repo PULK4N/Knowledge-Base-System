@@ -40,6 +40,8 @@ import {
   PolicyTopicSummaryDto,
   ProjectCreatedCommandResult,
   ProjectSkillReview,
+  ProposalNoteAddedCommandResult,
+  ProposalNoteRequest,
   ReviewLevelModels,
   PolicyWithHistory,
   UpdatePolicyRequest,
@@ -57,7 +59,8 @@ function isProjectDetails(
     'topicNames' in project &&
     'description' in project &&
     'skills' in project &&
-    'reviewLevelModels' in project
+    'reviewLevelModels' in project &&
+    'proposalNotes' in project
   );
 }
 
@@ -271,9 +274,62 @@ export class PolicyService {
           topicNames: [],
           skills: [],
           reviewLevelModels: {},
+          proposalNotes: [],
         })),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),
       );
+  }
+
+  /** Saves the project name and its overview, stored as the description. */
+  updateProject(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>('/api/policies/projects/update', {
+        projectId,
+        projectName,
+        projectDescription,
+      })
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  addProposalNote(
+    projectId: string,
+    request: ProposalNoteRequest,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<ProposalNoteAddedCommandResult>(
+        `/api/projects/${encodeURIComponent(projectId)}/proposal-notes`,
+        request,
+      )
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  updateProposalNote(
+    projectId: string,
+    noteId: string,
+    request: ProposalNoteRequest,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>(
+        `/api/projects/${encodeURIComponent(projectId)}/proposal-notes/${encodeURIComponent(noteId)}/update`,
+        request,
+      )
+      .pipe(switchMap(() => this.refreshProject(projectId)));
+  }
+
+  removeProposalNote(
+    projectId: string,
+    noteId: string,
+  ): Observable<PolicyProjectDetails> {
+    return this.http
+      .post<PolicyCommandResult>(
+        `/api/projects/${encodeURIComponent(projectId)}/proposal-notes/${encodeURIComponent(noteId)}/remove`,
+        null,
+      )
+      .pipe(switchMap(() => this.refreshProject(projectId)));
   }
 
   addProjectRepository(
@@ -312,14 +368,17 @@ export class PolicyService {
       .pipe(switchMap(() => this.refreshProject(projectId)));
   }
 
+  /** Links a skill; with review settings it is also added as a reviewer. */
   addProjectSkill(
     projectId: string,
     skillId: string,
+    review?: ProjectSkillReview,
   ): Observable<PolicyProjectDetails> {
     return this.http
       .post<PolicyCommandResult>('/api/policies/projects/skills', {
         projectId,
         skillId,
+        ...review,
       })
       .pipe(switchMap(() => this.refreshProject(projectId)));
   }
@@ -377,6 +436,7 @@ export class PolicyService {
             topicNames: project.topicNames,
             skills: project.skills,
             reviewLevelModels: project.reviewLevelModels,
+            proposalNotes: project.proposalNotes,
           }),
         ),
         tap(project => this.store.upsert(PROJECT_ENTITY_TYPE, project)),

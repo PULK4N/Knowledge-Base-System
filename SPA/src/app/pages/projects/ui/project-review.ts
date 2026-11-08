@@ -3,7 +3,7 @@ import {
   ReviewLevel,
   ReviewLevelModels,
   ReviewModel,
-} from '../data-access/policy.models';
+} from '../../policies/data-access/policy.models';
 
 export type ReviewLevelModelsResult =
   | { readonly status: 'valid'; readonly levelModels: ReviewLevelModels }

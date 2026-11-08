@@ -56,6 +56,7 @@ describe('PolicyListPage project topics', () => {
       topicNames: ['Angular'],
       skills: [],
       reviewLevelModels: {},
+      proposalNotes: [],
     });
     const policies = {
       searchPolicies: vi.fn(() =>

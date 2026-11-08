@@ -1,0 +1,46 @@
+<a class="back-link" routerLink="/projects">
+  <span aria-hidden="true">←</span> Back to projects
+</a>
+
+<header class="page-header">
+  <div>
+    <h1 class="page-heading">New project</h1>
+  </div>
+</header>
+
+@if (state$ | async; as state) {
+  <form
+    class="project-card-section surface-card stacked-form"
+    (ngSubmit)="create(name.value, overview.value, repositories.value)"
+  >
+    <label>
+      <span>Name</span>
+      <input #name type="text" name="name" required />
+    </label>
+    <label>
+      <span>Overview (Markdown)</span>
+      <textarea #overview name="overview" rows="6"></textarea>
+    </label>
+    <label>
+      <span>Repository paths, one per line</span>
+      <textarea
+        #repositories
+        name="repositories"
+        rows="3"
+        placeholder="/workspace/repository"
+      ></textarea>
+    </label>
+    @if (validationError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+    @if (state.status === 'error') {
+      <p class="form-error" role="alert">{{ state.message }}</p>
+    }
+    <div class="item-actions">
+      <button class="primary-button" type="submit" [disabled]="state.status === 'saving'">
+        {{ state.status === 'saving' ? 'Creating…' : 'Create project' }}
+      </button>
+      <a class="secondary-button" routerLink="/projects">Cancel</a>
+    </div>
+  </form>
+}

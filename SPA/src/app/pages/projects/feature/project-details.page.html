@@ -1,0 +1,76 @@
+<a class="back-link" routerLink="/projects">
+  <span aria-hidden="true">←</span> Back to projects
+</a>
+
+@if (vm$ | async; as vm) {
+  @switch (vm.state.status) {
+    @case ('loading') {
+      <div class="request-message">Loading project…</div>
+    }
+    @case ('error') {
+      <div class="request-message error">
+        <div>
+          <strong>Project could not be loaded</strong>
+          <p>{{ vm.state.message }}</p>
+        </div>
+      </div>
+    }
+    @case ('success') {
+      <header class="page-header">
+        <h1 class="page-heading">{{ vm.state.data.name }}</h1>
+      </header>
+
+      <nav class="project-tabs" role="tablist" aria-label="Project sections">
+        @for (tab of tabs; track tab.id) {
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: tab.id }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.activeTab === tab.id"
+            [class.active]="vm.activeTab === tab.id"
+          >
+            {{ tab.label }}
+            @switch (tab.id) {
+              @case ('implicit-skills') {
+                <span>{{ vm.state.data.skills.length }}</span>
+              }
+              @case ('proposal-notes') {
+                <span>{{ vm.state.data.proposalNotes.length }}</span>
+              }
+            }
+          </a>
+        }
+      </nav>
+
+      @switch (vm.activeTab) {
+        @case ('overview') {
+          <app-project-overview [project]="vm.state.data" />
+        }
+        @case ('policies') {
+          <div class="policies-toolbar">
+            <a
+              class="primary-link"
+              [routerLink]="['/policies', 'projects', vm.state.data.id, 'policies', 'new']"
+            >
+              Add policy
+            </a>
+          </div>
+          <app-policy-collection [scope]="{ kind: 'project', projectId: vm.state.data.id }" />
+        }
+        @case ('implicit-skills') {
+          <app-implicit-skills [project]="vm.state.data" />
+        }
+        @case ('reviewers') {
+          <app-project-reviewers [project]="vm.state.data" />
+        }
+        @case ('features') {
+          <app-project-features [projectId]="vm.state.data.id" />
+        }
+        @case ('proposal-notes') {
+          <app-proposal-notes [project]="vm.state.data" />
+        }
+      }
+    }
+  }
+}

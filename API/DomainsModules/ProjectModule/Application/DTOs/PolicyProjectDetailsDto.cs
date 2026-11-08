@@ -11,7 +11,8 @@ public sealed record PolicyProjectDetailsDto(
     List<string> RepositoryPaths,
     List<string> TopicNames,
     List<ProjectSkillDto> Skills,
-    Dictionary<ReviewLevel, ReviewModel> ReviewLevelModels
+    Dictionary<ReviewLevel, ReviewModel> ReviewLevelModels,
+    List<ProposalNoteDto> ProposalNotes
 )
 {
     public static PolicyProjectDetailsDto FromStateData(
@@ -38,7 +39,11 @@ public sealed record PolicyProjectDetailsDto(
                 )
                 .OrderBy(skill => skill.Name, StringComparer.Ordinal)
                 .ToList(),
-            state.ReviewLevelModels.ToDictionary()
+            state.ReviewLevelModels.ToDictionary(),
+            state.ProposalNotes.Values
+                .OrderByDescending(note => note.UpdatedAt)
+                .Select(ProposalNoteDto.FromModel)
+                .ToList()
         );
 }
 
@@ -63,4 +68,16 @@ public sealed record ProjectSkillDto(
             review?.ReviewNotes ?? string.Empty,
             review?.ReviewLevel
         );
+}
+
+public sealed record ProposalNoteDto(
+    Guid NoteId,
+    string Title,
+    string Content,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+)
+{
+    public static ProposalNoteDto FromModel(ProposalNote note) =>
+        new(note.Id.Value, note.Title, note.Content, note.CreatedAt, note.UpdatedAt);
 }

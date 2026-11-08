@@ -169,7 +169,7 @@ class WriteToolUseTests(unittest.TestCase):
             for name in re.findall(r'"((?:policy|project)_[a-z_]+)"', source.read_text(encoding="utf-8"))
             if name.endswith(("_add", "_update", "_remove", "_create", "_delete", "_set"))
         }
-        self.assertEqual(28, len(mutations))
+        self.assertEqual(31, len(mutations))
         self.assertEqual(mutations, write_tool_use.POLICY_MUTATION_TOOLS)
         for tool in mutations:
             with self.subTest(tool=tool):

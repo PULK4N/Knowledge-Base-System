@@ -22,7 +22,11 @@ public sealed class ProjectMcpFunctionsTests
         "project_skill_add",
         "project_skill_update",
         "project_skill_remove",
-        "project_review_level_models_set"
+        "project_review_level_models_set",
+        "project_proposal_note_list",
+        "project_proposal_note_add",
+        "project_proposal_note_update",
+        "project_proposal_note_remove"
     ];
 
     [Fact]

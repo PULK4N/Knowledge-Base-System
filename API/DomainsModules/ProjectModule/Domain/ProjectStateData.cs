@@ -20,4 +20,6 @@ public class ProjectStateData(AggregateId id) : ISharedStateData
     public Dictionary<AggregateId, ProjectSkillReview> SkillReviews { get; } = [];
 
     public Dictionary<ReviewLevel, ReviewModel> ReviewLevelModels { get; set; } = [];
+
+    public Dictionary<ProposalNoteId, ProposalNote> ProposalNotes { get; } = [];
 }

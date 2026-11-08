@@ -30,6 +30,7 @@ describe('OverviewService', () => {
       ['/api/policies/topics', 5],
       ['/api/policies/agent-families', 2],
       ['/api/memories', 7],
+      ['/api/features', 6],
     ]);
 
     for (const [path, totalCount] of counts) {
@@ -52,6 +53,8 @@ describe('OverviewService', () => {
       skills: 4,
       policies: 12,
       memories: 7,
+      projects: 2,
+      features: 6,
     });
   });
 });

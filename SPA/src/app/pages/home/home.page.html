@@ -72,6 +72,40 @@
           </span>
         </a>
       </section>
+
+      <section class="overview-grid secondary-grid" aria-label="Projects and features">
+        <a class="overview-card surface-card project-card" routerLink="/projects">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 7h7l2 2h9v10H3z" />
+            </svg>
+          </span>
+          <span class="card-copy">
+            <strong>Projects</strong>
+            <span class="count">{{ state.data.projects }}</span>
+            <span class="description">Repositories, reviewers and ideas</span>
+          </span>
+          <span class="card-action">
+            Browse projects <span aria-hidden="true">→</span>
+          </span>
+        </a>
+
+        <a class="overview-card surface-card feature-card" routerLink="/features">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 5h14v14H5zM9 9h6M9 13h6M9 17h4" />
+            </svg>
+          </span>
+          <span class="card-copy">
+            <strong>Features</strong>
+            <span class="count">{{ state.data.features }}</span>
+            <span class="description">Plans, records and progress</span>
+          </span>
+          <span class="card-action">
+            Browse features <span aria-hidden="true">→</span>
+          </span>
+        </a>
+      </section>
     }
   }
 }

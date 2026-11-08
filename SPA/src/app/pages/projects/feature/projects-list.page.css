@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.primary-link {
+  flex: 0 0 auto;
+  padding: 11px 17px;
+  border-radius: 9px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.project-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-list a {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 15px;
+  border: 1px solid #dfe4ed;
+  border-radius: 8px;
+  color: var(--navy);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.project-list a:hover {
+  border-color: #aab2ff;
+  color: var(--indigo);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  color: #33466f;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--indigo);
+}

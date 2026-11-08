@@ -1,0 +1,131 @@
+@if (mutation$ | async; as mutation) {
+  <section class="project-card-section surface-card" aria-labelledby="project-overview-title">
+    <div class="section-heading">
+      <h2 id="project-overview-title">Overview</h2>
+      @if (!editingOverview()) {
+        <button class="secondary-button" type="button" (click)="editingOverview.set(true)">
+          Edit overview
+        </button>
+      }
+    </div>
+    @if (editingOverview()) {
+      <div class="stacked-form">
+        <label>
+          <span class="sr-only">Overview (Markdown)</span>
+          <textarea #overview name="overview" rows="8" [value]="project().description"></textarea>
+        </label>
+        <div class="item-actions">
+          <button
+            class="primary-button"
+            type="button"
+            [disabled]="mutation.status === 'saving'"
+            (click)="saveOverview(project(), overview.value)"
+          >
+            {{ mutation.status === 'saving' && mutation.kind === 'overview' ? 'Saving…' : 'Save overview' }}
+          </button>
+          <button class="secondary-button" type="button" (click)="editingOverview.set(false)">
+            Cancel
+          </button>
+        </div>
+      </div>
+    } @else {
+      <app-markdown-content
+        [blocks]="emptyBlocks"
+        [markdown]="project().description"
+        emptyMessage="This project has no overview yet."
+      />
+    }
+    @if (mutation.status === 'error' && mutation.kind === 'overview') {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
+    }
+  </section>
+
+  <section class="project-card-section surface-card" aria-labelledby="project-repositories-title">
+    <div>
+      <p class="section-label">Repository mapping</p>
+      <h2 id="project-repositories-title">Repositories</h2>
+    </div>
+    <ul class="item-list">
+      @for (repositoryPath of project().repositoryPaths; track repositoryPath) {
+        <li class="item"><code>{{ repositoryPath }}</code></li>
+      } @empty {
+        <li class="muted">No repositories connected.</li>
+      }
+    </ul>
+    <div class="inline-form">
+      <label>
+        <span class="sr-only">Repository path</span>
+        <input #repositoryPath type="text" placeholder="/workspace/repository" />
+      </label>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="mutation.status === 'saving'"
+        (click)="addRepository(project().id, repositoryPath.value); repositoryPath.value = ''"
+      >
+        {{ mutation.status === 'saving' && mutation.kind === 'repository' ? 'Adding…' : 'Add repository' }}
+      </button>
+    </div>
+    @if (mutation.status === 'error' && mutation.kind === 'repository') {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
+    }
+  </section>
+
+  <section class="project-card-section surface-card" aria-labelledby="project-topics-title">
+    <div>
+      <p class="section-label">Connected knowledge</p>
+      <h2 id="project-topics-title">Topics</h2>
+    </div>
+    <ul class="item-list">
+      @for (topicName of project().topicNames; track topicName) {
+        <li class="item">
+          <div class="item-heading">
+            <a [routerLink]="['/policies', 'topics', topicName]">{{ topicName }}</a>
+            <span class="item-actions">
+              @if (confirmingTopic() === topicName) {
+                <span>Disconnect?</span>
+                <button
+                  class="danger-button"
+                  type="button"
+                  [disabled]="mutation.status === 'saving'"
+                  (click)="removeTopic(project().id, topicName)"
+                >
+                  Confirm
+                </button>
+                <button class="secondary-button" type="button" (click)="confirmingTopic.set(null)">
+                  Cancel
+                </button>
+              } @else {
+                <button class="link-button danger" type="button" (click)="confirmingTopic.set(topicName)">
+                  Remove
+                </button>
+              }
+            </span>
+          </div>
+        </li>
+      } @empty {
+        <li class="muted">No topics connected.</li>
+      }
+    </ul>
+    <div class="inline-form">
+      <label>
+        <span class="sr-only">Topic name</span>
+        <input #topicName type="text" placeholder="Topic name" />
+      </label>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="mutation.status === 'saving'"
+        (click)="addTopic(project().id, topicName.value); topicName.value = ''"
+      >
+        {{ mutation.status === 'saving' && mutation.kind === 'topic' ? 'Adding…' : 'Add topic' }}
+      </button>
+    </div>
+    @if (
+      mutation.status === 'error' &&
+      (mutation.kind === 'topic' || mutation.kind === 'remove-topic')
+    ) {
+      <p class="form-error" role="alert">{{ mutation.message }}</p>
+    }
+  </section>
+}

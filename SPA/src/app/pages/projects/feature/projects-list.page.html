@@ -1,0 +1,58 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-heading">Projects</h1>
+    <p class="page-subtitle">Repositories, policies, skills and reviewers per project</p>
+  </div>
+  <a class="primary-link" routerLink="/projects/new">New project</a>
+</header>
+
+<section class="project-card-section surface-card">
+  <label>
+    <span class="sr-only">Search projects</span>
+    <input
+      #searchInput
+      type="search"
+      placeholder="Search projects"
+      autocomplete="off"
+      (input)="search(searchInput.value)"
+    />
+  </label>
+
+  @if (state$ | async; as state) {
+    @switch (state.status) {
+      @case ('loading') {
+        <p class="muted">Loading projects…</p>
+      }
+      @case ('error') {
+        <p class="form-error" role="alert">{{ state.message }}</p>
+      }
+      @case ('success') {
+        <ul class="project-list" aria-label="Projects">
+          @for (project of state.data.items; track project.id) {
+            <li>
+              <a [routerLink]="['/projects', project.id]">
+                <span>{{ project.name }}</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            </li>
+          } @empty {
+            <li class="muted">No projects found.</li>
+          }
+        </ul>
+
+        @if (state.data.totalCount > 0) {
+          <app-pagination
+            [page]="state.data.page"
+            [pageSize]="state.data.pageSize"
+            [totalCount]="state.data.totalCount"
+            [totalPages]="state.data.totalPages"
+            [hasPreviousPage]="state.data.hasPreviousPage"
+            [hasNextPage]="state.data.hasNextPage"
+            label="Projects"
+            (pageRequested)="goToPage($event)"
+          />
+        }
+      }
+    }
+  }
+</section>
