@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { RouterLink } from '@angular/router';
 import { Subject, combineLatest } from 'rxjs';
 import { SkillListItem } from '../../skills/data-access/skill.models';
@@ -20,6 +21,7 @@ import {
 } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
 import { MutationRequest, mutationStates } from './mutation-state';
+import { pageOf } from './page-of';
 import { toReviewLevelModels } from './project-review';
 import { findSkillByName, loadSkillOptions } from './skill-options';
 
@@ -27,7 +29,7 @@ type ReviewerMutation = 'add' | 'update' | 'remove' | 'models';
 
 @Component({
   selector: 'app-project-reviewers',
-  imports: [AsyncPipe, FormsModule, RouterLink],
+  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink],
   templateUrl: './project-reviewers.component.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',
@@ -43,8 +45,13 @@ export class ProjectReviewersComponent {
   readonly project = input.required<PolicyProjectDetails>();
 
   protected readonly reviewLevels = REVIEW_LEVELS;
+  protected readonly page = signal(1);
   protected readonly reviewers = computed(() =>
-    this.project().skills.filter(skill => skill.usedForReview),
+    pageOf(
+      this.project().skills.filter(skill => skill.usedForReview),
+      this.page(),
+      10,
+    ),
   );
   protected readonly editingSkillId = signal<string | null>(null);
   protected readonly editingModels = signal(false);

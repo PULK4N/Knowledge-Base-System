@@ -317,3 +317,40 @@ button:disabled {
   font-size: 14px;
   line-height: 1.5;
 }
+
+.toolbar-field.full-width {
+  flex: 1 1 100%;
+}
+
+.reviewer-notes {
+  min-height: 6rem;
+  line-height: 1.5;
+}
+
+.row-editor .reviewer-notes {
+  min-height: 12rem;
+}
+
+/* Controls next to the search box take its height, border and text size. */
+.toolbar select,
+.toolbar input[type='text'],
+.toolbar .primary-button {
+  height: 58px;
+  min-height: 58px;
+  border-radius: 9px;
+  font-size: 17px;
+}
+
+.toolbar select,
+.toolbar input[type='text'] {
+  padding: 0 14px;
+  border-color: #d6dce7;
+}
+
+.toolbar .primary-button {
+  padding: 0 20px;
+}
+
+.toolbar .toolbar-field {
+  align-self: center;
+}

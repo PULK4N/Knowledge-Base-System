@@ -34,10 +34,6 @@
           }
         </select>
       </label>
-      <label class="toolbar-field">
-        <span class="sr-only">Notes</span>
-        <input #reviewerNotes type="text" placeholder="Notes (optional)" />
-      </label>
       <button
         class="primary-button"
         type="button"
@@ -54,6 +50,15 @@
       >
         {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
       </button>
+      <label class="toolbar-field full-width">
+        <span class="sr-only">Notes</span>
+        <textarea
+          #reviewerNotes
+          class="reviewer-notes"
+          rows="4"
+          placeholder="Notes for the reviewer (optional)"
+        ></textarea>
+      </label>
     </div>
     @if (formError(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
@@ -69,7 +74,7 @@
     </div>
 
     <div class="directory-list" aria-label="Reviewers">
-      @for (reviewer of reviewers(); track reviewer.skillId) {
+      @for (reviewer of reviewers().items; track reviewer.skillId) {
         <article class="directory-row with-actions">
           <a class="directory-entry-link" [routerLink]="['/skills', reviewer.skillId]">
             <span class="entry-copy">
@@ -107,9 +112,14 @@
                   }
                 </select>
               </label>
-              <label class="toolbar-field">
+              <label class="toolbar-field full-width">
                 <span>Notes</span>
-                <input #editNotes type="text" [value]="reviewer.reviewNotes" />
+                <textarea
+                  #editNotes
+                  class="reviewer-notes"
+                  rows="8"
+                  [value]="reviewer.reviewNotes"
+                ></textarea>
               </label>
               <button
                 class="primary-button"
@@ -132,6 +142,19 @@
         </div>
       }
     </div>
+
+    @if (reviewers().totalCount > 0) {
+      <app-pagination
+        [page]="reviewers().page"
+        [pageSize]="reviewers().pageSize"
+        [totalCount]="reviewers().totalCount"
+        [totalPages]="reviewers().totalPages"
+        [hasPreviousPage]="reviewers().hasPreviousPage"
+        [hasNextPage]="reviewers().hasNextPage"
+        label="Reviewers"
+        (pageRequested)="page.set($event)"
+      />
+    }
   </section>
 
   <section class="project-card-section surface-card" aria-labelledby="review-models-title">

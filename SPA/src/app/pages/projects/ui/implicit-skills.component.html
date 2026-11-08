@@ -48,7 +48,7 @@
     </div>
 
     <div class="directory-list" aria-label="Implicit skills">
-      @for (skill of project().skills; track skill.skillId) {
+      @for (skill of skills().items; track skill.skillId) {
         <article class="directory-row with-actions">
           <a class="directory-entry-link" [routerLink]="['/skills', skill.skillId]">
             <span class="entry-copy">
@@ -95,5 +95,18 @@
         </div>
       }
     </div>
+
+    @if (skills().totalCount > 0) {
+      <app-pagination
+        [page]="skills().page"
+        [pageSize]="skills().pageSize"
+        [totalCount]="skills().totalCount"
+        [totalPages]="skills().totalPages"
+        [hasPreviousPage]="skills().hasPreviousPage"
+        [hasNextPage]="skills().hasNextPage"
+        label="Implicit skills"
+        (pageRequested)="page.set($event)"
+      />
+    }
   </section>
 }

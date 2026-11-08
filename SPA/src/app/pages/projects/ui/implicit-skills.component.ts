@@ -2,24 +2,27 @@ import { AsyncPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { Subject, combineLatest } from 'rxjs';
 import { SkillListItem } from '../../skills/data-access/skill.models';
 import { SkillService } from '../../skills/data-access/skill.service';
 import { PolicyProjectDetails } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
 import { MutationRequest, mutationStates } from './mutation-state';
+import { pageOf } from './page-of';
 import { findSkillByName, loadSkillOptions } from './skill-options';
 
 type SkillMutation = 'add' | 'remove';
 
 @Component({
   selector: 'app-implicit-skills',
-  imports: [AsyncPipe, RouterLink],
+  imports: [AsyncPipe, PaginationComponent, RouterLink],
   templateUrl: './implicit-skills.component.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',
@@ -34,6 +37,10 @@ export class ImplicitSkillsComponent {
 
   readonly project = input.required<PolicyProjectDetails>();
 
+  protected readonly page = signal(1);
+  protected readonly skills = computed(() =>
+    pageOf(this.project().skills, this.page(), 10),
+  );
   protected readonly confirmingSkillId = signal<string | null>(null);
   protected readonly nameError = signal<string | null>(null);
   protected readonly vm$ = combineLatest({
