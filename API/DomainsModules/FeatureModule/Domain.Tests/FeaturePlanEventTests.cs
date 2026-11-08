@@ -194,6 +194,28 @@ public sealed class FeaturePlanEventTests
     }
 
     [Theory]
+    [InlineData("add")]
+    [InlineData("update")]
+    public void Branch_name_validator_rejects_names_used_by_another_plan(string operation)
+    {
+        var state = StateWithPlan();
+        var otherPlanId = new FeaturePlanId(Guid.NewGuid());
+        state.Plans.Add(new FeaturePlan
+        {
+            Id = otherPlanId, Title = "Other plan", Content = "content", AdditionalInfo = "info",
+            Branches = [Branch("feature/other")]
+        });
+        IEvent eventData = operation == "add"
+            ? new FeaturePlanBranchAddedV1(otherPlanId, ApiTests, "", "feature/other", SessionId, MemoryId)
+            : new FeaturePlanBranchUpdatedV1(otherPlanId, "feature/other", ApiTests, "", SessionId, MemoryId);
+
+        var result = new FeaturePlanBranchNameMustBeAvailableValidator().Validate(state, Payload(eventData));
+
+        Assert.False(result.Succeded);
+        Assert.Contains("Plan 'Plan' already has a branch named", result.FailureReason);
+    }
+
+    [Theory]
     [InlineData(ApiTests, true)]
     [InlineData("feature/missing", false)]
     public void Branch_must_exist_validator_checks_update_and_remove(string branchName, bool succeeds)
