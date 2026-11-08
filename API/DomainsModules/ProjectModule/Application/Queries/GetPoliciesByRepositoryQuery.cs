@@ -98,6 +98,7 @@ public sealed class GetPoliciesByRepositoryQuery(
                     sessionText.AgentFamilyText
                 }
                 .Concat(sessionText.TopicTexts)
+                .Append(ProjectSkillsTextCompiler.CompileUseScenariosPolicy(projectSkills))
                 .Append(ProjectSkillsTextCompiler.Compile(projectSkills))
                 .Where(text => !string.IsNullOrWhiteSpace(text))
         );
