@@ -35,7 +35,7 @@ public sealed class GetProjectPolicyHistoryQuery(
         return project is null
             || project.IsDeleted
             || !project.Policies.TryGetValue(
-                SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId),
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId),
                 out var policy
             )
             ? null

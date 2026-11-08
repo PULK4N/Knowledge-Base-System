@@ -27,7 +27,7 @@ public sealed class RemoveProjectPolicyCommand(
         return await ExecuteProjectEvent(
             executor,
             new ProjectPolicyRemovedV2(
-                SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,

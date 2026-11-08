@@ -63,7 +63,7 @@ public sealed class UpdateGeneralPolicyCommand(
             executor,
             new GeneralPolicyUpdatedV2(
                 CreatePolicy(
-                    SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,
@@ -93,7 +93,7 @@ public sealed class RemoveGeneralPolicyCommand(
         return await ExecuteGeneralPoliciesEvent(
             executor,
             new GeneralPolicyRemovedV2(
-                SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,

@@ -1,6 +1,6 @@
 using ActionModule.Shared.Models;
 
-namespace SharedModule.Policies;
+namespace PolicyModule.Shared;
 
 public static class PolicySearch
 {

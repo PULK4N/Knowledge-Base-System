@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="SharedModule.Policies" />
+    <Using Include="PolicyModule.Shared" />
   </ItemGroup>
 
 </Project>

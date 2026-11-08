@@ -1,3 +1,3 @@
-namespace SharedModule.Policies;
+namespace PolicyModule.Shared;
 
 public readonly record struct TopicName(string Name);

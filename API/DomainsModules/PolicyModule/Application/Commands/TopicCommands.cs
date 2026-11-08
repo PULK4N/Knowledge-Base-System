@@ -146,7 +146,7 @@ public sealed class RemoveTopicPolicyCommand(
             executor,
             new TopicPolicyRemovedV2(
                 new TopicName(TopicName),
-                SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                     PolicyId
                 ),
                 SessionId,
@@ -182,7 +182,7 @@ public sealed class UpdateTopicPolicyCommand(
             new TopicPolicyUpdatedV2(
                 new TopicName(TopicName),
                 CreatePolicy(
-                    SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,

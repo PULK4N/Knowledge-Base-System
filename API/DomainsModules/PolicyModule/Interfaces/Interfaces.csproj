@@ -9,11 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
+    <ProjectReference Include="../Shared/Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="SharedModule.Policies" />
+    <Using Include="PolicyModule.Shared" />
   </ItemGroup>
 
 </Project>

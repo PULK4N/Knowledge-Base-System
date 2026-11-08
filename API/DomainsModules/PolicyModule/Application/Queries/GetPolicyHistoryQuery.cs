@@ -47,7 +47,7 @@ public sealed class GetPolicyHistoryQuery(
         Executor executor
     )
     {
-        var policyId = SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId);
+        var policyId = PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId);
         var generalId = AggregateId.FromDatabaseGuid(
             StateDataAggregateIds.GeneralPolicies
         );

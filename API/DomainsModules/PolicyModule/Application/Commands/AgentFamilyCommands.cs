@@ -160,7 +160,7 @@ public sealed class UpdateAgentFamilyPolicyCommand(
                     AgentFamilyName
                 ),
                 CreatePolicy(
-                    SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId),
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId),
                     Title,
                     Description
                 ),
@@ -195,7 +195,7 @@ public sealed class RemoveAgentFamilyPolicyCommand(
                 Domain.Models.AgentFamilyName.Normalized(
                     AgentFamilyName
                 ),
-                SharedModule.Policies.PolicyId.FromDatabaseGuid(PolicyId),
+                PolicyModule.Shared.PolicyId.FromDatabaseGuid(PolicyId),
                 SessionId,
                 memoryAggregateId
             ),

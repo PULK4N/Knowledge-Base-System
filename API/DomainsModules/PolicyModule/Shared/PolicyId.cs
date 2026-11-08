@@ -1,6 +1,6 @@
 using EventSourcing.Shared.Models;
 
-namespace SharedModule.Policies;
+namespace PolicyModule.Shared;
 
 public readonly record struct PolicyId(Guid Value)
 {

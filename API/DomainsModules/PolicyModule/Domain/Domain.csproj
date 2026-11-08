@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
+    <ProjectReference Include="../Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Core/Core.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
     <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Using Include="SharedModule.Policies" />
+    <Using Include="PolicyModule.Shared" />
   </ItemGroup>
 
 </Project>

@@ -25,7 +25,7 @@
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
     <ProjectReference Include="../../SharedModule/Constants/Constants.csproj" />
     <ProjectReference Include="../../SharedModule/Exceptions/Exceptions.csproj" />
-    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
+    <ProjectReference Include="../../PolicyModule/Shared/Shared.csproj" />
     <ProjectReference Include="../../PolicyModule/Application/Application.csproj" />
     <ProjectReference Include="../../PolicyModule/Domain/Domain.csproj" />
     <ProjectReference Include="../../PolicyModule/Interfaces/Interfaces.csproj" />
@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="SharedModule.Policies" />
+    <Using Include="PolicyModule.Shared" />
   </ItemGroup>
 
   <ItemGroup>

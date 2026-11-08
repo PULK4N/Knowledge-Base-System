@@ -31,7 +31,7 @@ public sealed class UpdateProjectPolicyCommand(
             executor,
             new ProjectPolicyUpdatedV2(
                 CreatePolicy(
-                    SharedModule.Policies.PolicyId.FromDatabaseGuid(
+                    PolicyModule.Shared.PolicyId.FromDatabaseGuid(
                         PolicyId
                     ),
                     Title,

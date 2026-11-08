@@ -1,4 +1,4 @@
-namespace SharedModule.Policies;
+namespace PolicyModule.Shared;
 
 public sealed record Policy
 {

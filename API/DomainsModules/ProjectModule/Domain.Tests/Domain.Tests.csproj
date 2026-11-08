@@ -20,11 +20,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../Domain/Domain.csproj" />
-    <ProjectReference Include="../../SharedModule/Policies/Policies.csproj" />
+    <ProjectReference Include="../../PolicyModule/Shared/Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="SharedModule.Policies" />
+    <Using Include="PolicyModule.Shared" />
   </ItemGroup>
 
 </Project>
