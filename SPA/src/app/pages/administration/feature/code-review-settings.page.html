@@ -1,23 +1,32 @@
-<h2>Code reviewers</h2>
-<p>Configure how code reviews run across projects. Changes apply to new review runs.</p>
-@if (vm$ | async; as vm) {
-  @if (vm.load.status === 'loading') {
-    <p role="status">Loading reviewer settings…</p>
-  } @else if (vm.load.status === 'error') {
-    <p role="alert">{{ vm.load.message }}</p>
-    <button type="button" (click)="reload()">Try again</button>
-  } @else {
-    <app-code-review-settings-form
-      [settings]="vm.load.data"
-      [saving]="vm.save.status === 'saving'"
-      (saveRequested)="save($event)"
-    />
+<section class="settings-panel surface-card">
+  <div class="panel-heading">
+    <h2>Code reviewers</h2>
+    <p>Configure how code reviews run across projects. Changes apply to new review runs.</p>
+  </div>
+
+  @if (vm$ | async; as vm) {
+    @if (vm.load.status === 'loading') {
+      <p class="panel-message" role="status">Loading reviewer settings…</p>
+    } @else if (vm.load.status === 'error') {
+      <div class="panel-result error" role="alert">
+        <strong>Reviewer settings could not be loaded</strong>
+        <span>{{ vm.load.message }}</span>
+        <button type="button" class="retry-button" (click)="reload()">Try again</button>
+      </div>
+    } @else {
+      <app-code-review-settings-form
+        [settings]="vm.load.data"
+        [saving]="vm.save.status === 'saving'"
+        (saveRequested)="save($event)"
+      />
+    }
+
+    @if (vm.save.status === 'saved') {
+      <p class="panel-result success" role="status">
+        Settings saved. New review runs will use these values.
+      </p>
+    } @else if (vm.save.status === 'error') {
+      <p class="panel-result error" role="alert">{{ vm.save.message }}</p>
+    }
   }
-  @if (vm.save.status === 'saved') {
-    <p role="status">Settings saved. New review runs will use these values.</p>
-  } @else if (vm.save.status === 'saving') {
-    <p role="status">Saving settings…</p>
-  } @else if (vm.save.status === 'error') {
-    <p role="alert">{{ vm.save.message }}</p>
-  }
-}
+</section>

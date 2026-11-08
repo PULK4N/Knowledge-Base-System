@@ -16,6 +16,7 @@ type SaveState =
   selector: 'app-code-review-settings-page',
   imports: [AsyncPipe, CodeReviewSettingsFormComponent],
   templateUrl: './code-review-settings.page.html',
+  styleUrl: './code-review-settings.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeReviewSettingsPage {

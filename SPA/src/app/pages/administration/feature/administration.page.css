@@ -21,10 +21,13 @@
   border: 1px solid var(--line);
   border-radius: 11px;
   background: #f2f4f8;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .administration-tabs a {
   display: block;
+  flex: 0 0 auto;
   min-width: 150px;
   padding: 11px 18px;
   border: 0;
@@ -35,6 +38,7 @@
   cursor: pointer;
   text-align: center;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .administration-tabs a:hover {
@@ -51,6 +55,6 @@
 @media (max-width: 560px) {
   .administration-tabs a {
     min-width: 0;
-    flex: 1;
+    padding: 10px 14px;
   }
 }

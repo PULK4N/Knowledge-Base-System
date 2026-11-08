@@ -1,10 +1,104 @@
-form { max-width: 56rem; }
-fieldset { display: grid; gap: .75rem; border: 0; padding: 1rem 0; margin: 0; }
-label { font-weight: 600; }
-input, textarea { font: inherit; color: inherit; background: var(--surface, transparent); border: 1px solid var(--border-color, #7b8494); border-radius: .5rem; padding: .75rem; box-sizing: border-box; }
-input { width: 9rem; }
-textarea { width: 100%; resize: vertical; line-height: 1.5; }
-p { margin: 0 0 1rem; }
-button { justify-self: start; padding: .65rem 1rem; cursor: pointer; }
-button:disabled { cursor: default; opacity: .6; }
-[role="alert"] { color: var(--danger, #c44); }
+:host {
+  display: block;
+}
+
+.settings-form {
+  max-width: 780px;
+  padding-top: 28px;
+}
+
+fieldset {
+  display: grid;
+  gap: 26px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-field label {
+  color: var(--text-strong);
+  font-weight: 680;
+}
+
+input,
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: var(--control);
+  font: inherit;
+}
+
+.batch-input {
+  max-width: 140px;
+}
+
+textarea {
+  min-height: 180px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.field-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.form-actions {
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+button {
+  min-width: 190px;
+  min-height: 46px;
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #222dce;
+}
+
+button:disabled,
+fieldset:disabled input,
+fieldset:disabled textarea {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  button {
+    width: 100%;
+  }
+}

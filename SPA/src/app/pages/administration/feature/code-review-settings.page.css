@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  margin-top: 24px;
+}
+
+.settings-panel {
+  padding: 32px 34px;
+}
+
+.panel-heading {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 23px;
+}
+
+.panel-heading p {
+  max-width: 700px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.panel-message {
+  margin: 24px 0 0;
+  color: var(--muted);
+}
+
+.panel-result {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  max-width: 780px;
+  margin: 26px 0 0;
+  padding: 15px 17px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+
+.panel-result.success {
+  color: var(--success);
+  border-color: #b9ddc9;
+  background: var(--success-surface);
+}
+
+.panel-result.error {
+  color: var(--danger);
+  border-color: #edc5ca;
+  background: var(--danger-surface);
+}
+
+.retry-button {
+  margin-top: 8px;
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid currentColor;
+  border-radius: 9px;
+  color: inherit;
+  background: transparent;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .settings-panel {
+    padding: 24px 20px;
+  }
+}
