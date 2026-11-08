@@ -354,3 +354,19 @@ button:disabled {
 .toolbar .toolbar-field {
   align-self: center;
 }
+
+/* Bordered row actions, the same as Edit and Delete on the Policies lists. */
+.row-button {
+  padding: 8px 11px;
+  border: 1px solid #cbd2df;
+  border-radius: 7px;
+  color: #273860;
+  background: white;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.row-button.danger {
+  color: #a6293b;
+  border-color: #e0b1b8;
+}
