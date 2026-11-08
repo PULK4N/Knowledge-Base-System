@@ -5,6 +5,7 @@ using ActionModule.Shared.Models;
 using FeatureModule.API.Requests;
 using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
+using FeatureModule.Application.Exceptions;
 using FeatureModule.Application.Models;
 using FeatureModule.Application.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ public sealed class FeaturesController(
             var context = await Execute(query);
             return context is null ? NotFound() : Ok(context);
         }
-        catch (InvalidOperationException error)
+        catch (FeatureReviewContextConflictException error)
         {
             return Conflict(new { message = error.Message });
         }

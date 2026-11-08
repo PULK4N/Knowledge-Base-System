@@ -1,4 +1,5 @@
 using FeatureModule.Application.DTOs;
+using FeatureModule.Application.Exceptions;
 using FeatureModule.Domain;
 using FeatureModule.Domain.Models;
 
@@ -10,19 +11,26 @@ public static class FeatureReviewContextResolver
     {
         if (state.IsDeleted || state.ProjectId.Value != projectId)
             return null;
-        var plans = state.Plans.Where(plan => plan.FindBranch(branchName) is not null).ToList();
+        var plans = state.Plans.Where(plan => plan.AllBranches().Any(branch => branch.Name == branchName)).ToList();
         if (plans.Count == 0)
             return null;
         if (plans.Count != 1)
-            throw new InvalidOperationException($"Branch '{branchName}' belongs to several plans; fix its KB branch association.");
+            throw new FeatureReviewContextConflictException(
+                $"Branch '{branchName}' is set on several plans of feature '{state.Name}' ({Titles(plans)}). "
+                + "Keep it on one plan only.");
         var plan = plans[0];
+        if (plan.AllBranches().Count(branch => branch.Name == branchName) > 1)
+            throw new FeatureReviewContextConflictException(
+                $"Branch '{branchName}' appears more than once in plan '{plan.Title}'. Remove the duplicate branch.");
         var baseBranch = plan.FindBaseBranch(branchName);
         if (baseBranch is not null)
         {
             foreach (var recordedSource in baseBranch.Sources.Where(value => value.PlanId is not null))
             {
                 if (state.Plans.SingleOrDefault(value => value.Id == recordedSource.PlanId)?.FindBranch(recordedSource.BranchName) is null)
-                    throw new InvalidOperationException($"The recorded origin of '{branchName}' is missing from the KB.");
+                    throw new FeatureReviewContextConflictException(
+                        $"Branch '{branchName}' in plan '{plan.Title}' was created from '{recordedSource.BranchName}', "
+                        + "which no longer exists in the feature. Update the branch source.");
             }
             if (baseBranch.Sources.Count == 0)
             {
@@ -32,7 +40,9 @@ public static class FeatureReviewContextResolver
                 {
                     var previous = state.Plans.SingleOrDefault(value => value.Id == id);
                     if (previous is null || !visited.Add(id))
-                        throw new InvalidOperationException($"The previous-plan origin of '{branchName}' is invalid.");
+                        throw new FeatureReviewContextConflictException(
+                            $"The previous plan of '{plan.Title}' is missing or the previous-plan chain loops back. "
+                            + "Fix the previous plan so the origin of branch '" + branchName + "' can be found.");
                     if (previous.Branches.Count > 0)
                         break;
                     previousId = previous.PreviousPlanId;
@@ -42,14 +52,20 @@ public static class FeatureReviewContextResolver
         var edge = FeatureBranchGraph.Build(state.Plans)
             .Single(value => value.Branch.PlanId == plan.Id && value.Branch.BranchName == branchName);
         if (edge.From.Count != 1)
-            throw new InvalidOperationException($"Branch '{branchName}' needs exactly one recorded origin for code review.");
+            throw new FeatureReviewContextConflictException(
+                $"Branch '{branchName}' in plan '{plan.Title}' was created from {edge.From.Count} branches. "
+                + "Code review needs exactly one origin branch to compare against.");
         var source = edge.From[0];
         var origin = source.PlanId is null ? state.Branch?.Name : source.BranchName;
         if (string.IsNullOrWhiteSpace(origin))
-            throw new InvalidOperationException($"The origin of '{branchName}' has no branch name in the KB.");
+            throw new FeatureReviewContextConflictException(
+                $"The origin of branch '{branchName}' has no branch name. Set the branch name of feature '{state.Name}'.");
         return new(new(state.Id.Value, state.ProjectId.Value, state.Name, state.Summary, state.Status),
             FeaturePlanDto.FromModel(plan), origin,
             state.ReviewNotes.Select(FeatureReviewNoteDto.FromModel).ToList(),
             state.Reviewers.Select(FeatureReviewerDto.FromModel).ToList());
     }
+
+    private static string Titles(List<FeaturePlan> plans) =>
+        string.Join(", ", plans.Select(plan => "'" + plan.Title + "'"));
 }

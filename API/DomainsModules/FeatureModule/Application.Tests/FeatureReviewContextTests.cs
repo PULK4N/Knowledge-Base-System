@@ -1,4 +1,5 @@
 using EventSourcing.Shared.Models;
+using FeatureModule.Application.Exceptions;
 using FeatureModule.Application.Services;
 using FeatureModule.Domain;
 using FeatureModule.Domain.Models;
@@ -54,7 +55,7 @@ public sealed class FeatureReviewContextTests
         else
             plan.PreviousPlanId = missing;
         state.Plans.Add(plan);
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<FeatureReviewContextConflictException>(() =>
             FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation"));
     }
 
@@ -72,8 +73,20 @@ public sealed class FeatureReviewContextTests
             second.Branches[0].Sources.Add(new(first.Id, "first"));
         }
         state.Plans.AddRange([first, second]);
-        Assert.Throws<InvalidOperationException>(() => FeatureReviewContextResolver.Resolve(
+        Assert.Throws<FeatureReviewContextConflictException>(() => FeatureReviewContextResolver.Resolve(
             state, state.ProjectId.Value, multipleOrigins ? "second" : "first"));
+    }
+
+    [Fact]
+    public void Resolve_RejectsDuplicateBranchNameInOnePlanWithClearMessage()
+    {
+        var state = State();
+        var plan = Plan("implementation");
+        plan.Branches[0].SubBranches.Add(new() { Name = "implementation" });
+        state.Plans.Add(plan);
+        var error = Assert.Throws<FeatureReviewContextConflictException>(() =>
+            FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation"));
+        Assert.Contains("more than once in plan 'implementation'", error.Message);
     }
 
     private static FeatureStateData State() => new(AggregateId.FromDatabaseGuid(Guid.NewGuid()))

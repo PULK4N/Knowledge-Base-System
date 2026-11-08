@@ -4,6 +4,7 @@ using EventSourcing.Core;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
 using FeatureModule.Application.DTOs;
+using FeatureModule.Application.Exceptions;
 using FeatureModule.Application.Services;
 using FeatureModule.Domain;
 using FeatureModule.Persistence.Interfaces;
@@ -36,7 +37,10 @@ public sealed class ResolveFeatureReviewContextQuery(
                 matches.Add(context);
         }
         if (matches.Count > 1)
-            throw new InvalidOperationException($"Branch '{BranchName}' belongs to several features in this project.");
+            throw new FeatureReviewContextConflictException(
+                $"Branch '{BranchName}' is set on several features of this project ("
+                + string.Join(", ", matches.Select(match => "'" + match.Feature.Name + "'"))
+                + "). Keep it on one feature only.");
         return matches.SingleOrDefault();
     }
 }
