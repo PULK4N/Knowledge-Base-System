@@ -18,6 +18,7 @@ import shutil
 import sys
 import tempfile
 import threading
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -82,6 +83,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def http_error_detail(error: urllib.error.HTTPError) -> str:
+    """Return the API's error message, so KB conflicts explain what to fix."""
+    try:
+        body = error.read().decode("utf-8", errors="replace").strip()
+    except Exception:
+        body = ""
+    try:
+        value = json.loads(body) if body else None
+    except ValueError:
+        value = None
+    if isinstance(value, dict):
+        body = str(value.get("message") or value.get("detail") or value.get("title") or body)
+    return f"HTTP {error.code} {error.reason}" + (f": {body}" if body else "")
+
+
 def get_json(base_url: str, path: str, timeout: float, cancellation: Cancellation) -> dict:
     """Wait for the HTTP worker or cancellation, without a periodic check loop."""
     cancellation.check()
@@ -102,6 +118,8 @@ def get_json(base_url: str, path: str, timeout: float, cancellation: Cancellatio
                 result.append(value)
                 cancellation.condition.notify_all()
         except Exception as error:
+            if isinstance(error, urllib.error.HTTPError):
+                error = RuntimeError(http_error_detail(error))
             with cancellation.condition:
                 result.append(error)
                 cancellation.condition.notify_all()
