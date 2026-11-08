@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, catchError, combineLatest, map, of, startWith } from 'rxjs';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { PolicyProjectDetails } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
@@ -19,7 +19,7 @@ type OverviewMutation = 'overview' | 'repository' | 'topic' | 'remove-topic';
   selector: 'app-project-overview',
   imports: [AsyncPipe, MarkdownContentComponent, RouterLink],
   templateUrl: './project-overview.component.html',
-  styleUrl: './project-pages.css',
+  styleUrls: ['./project-pages.css', '../../policies/feature/policy-list.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectOverviewComponent {
@@ -31,7 +31,24 @@ export class ProjectOverviewComponent {
   protected readonly emptyBlocks = [];
   protected readonly editingOverview = signal(false);
   protected readonly confirmingTopic = signal<string | null>(null);
-  protected readonly mutation$ = mutationStates(this.mutations);
+  protected readonly vm$ = combineLatest({
+    mutation: mutationStates(this.mutations),
+    topicNames: this.projects
+      .searchTopics({ page: 1, pageSize: 100, search: '' })
+      .pipe(
+        map(result => result.items.map(topic => topic.name)),
+        catchError(() => of([] as string[])),
+        startWith([] as string[]),
+      ),
+  });
+
+  /** Topics created under Policies that the project is not connected to yet. */
+  protected availableTopics(
+    allTopics: readonly string[],
+    project: PolicyProjectDetails,
+  ): readonly string[] {
+    return allTopics.filter(topic => !project.topicNames.includes(topic));
+  }
 
   protected saveOverview(project: PolicyProjectDetails, overview: string): void {
     this.mutations.next({

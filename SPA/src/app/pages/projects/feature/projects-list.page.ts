@@ -21,7 +21,10 @@ import { policySearchRequests } from '../../policies/feature/policy-search-reque
   selector: 'app-projects-list-page',
   imports: [AsyncPipe, PaginationComponent, RouterLink],
   templateUrl: './projects-list.page.html',
-  styleUrls: ['./projects-list.page.css', '../ui/project-pages.css'],
+  styleUrls: [
+    '../../policies/feature/policy-directory-list.page.css',
+    '../../policies/ui/knowledge-list.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsListPage {
@@ -31,7 +34,6 @@ export class ProjectsListPage {
 
   protected readonly state$: Observable<LoadState<PolicyProjectSearchResult>> =
     policySearchRequests(this.searchRequests, this.pageRequests).pipe(
-      map(request => ({ ...request, pageSize: 20 })),
       switchMap(request =>
         this.projects.searchProjects(request).pipe(
           map(data => ({ status: 'success', data }) as const),

@@ -1,4 +1,4 @@
-@if (mutation$ | async; as mutation) {
+@if (vm$ | async; as vm) {
   <section class="project-card-section surface-card" aria-labelledby="project-overview-title">
     <div class="section-heading">
       <h2 id="project-overview-title">Overview</h2>
@@ -18,10 +18,10 @@
           <button
             class="primary-button"
             type="button"
-            [disabled]="mutation.status === 'saving'"
+            [disabled]="vm.mutation.status === 'saving'"
             (click)="saveOverview(project(), overview.value)"
           >
-            {{ mutation.status === 'saving' && mutation.kind === 'overview' ? 'Saving…' : 'Save overview' }}
+            {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'overview' ? 'Saving…' : 'Save overview' }}
           </button>
           <button class="secondary-button" type="button" (click)="editingOverview.set(false)">
             Cancel
@@ -35,97 +35,103 @@
         emptyMessage="This project has no overview yet."
       />
     }
-    @if (mutation.status === 'error' && mutation.kind === 'overview') {
-      <p class="form-error" role="alert">{{ mutation.message }}</p>
+    @if (vm.mutation.status === 'error' && vm.mutation.kind === 'overview') {
+      <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
     }
   </section>
 
-  <section class="project-card-section surface-card" aria-labelledby="project-repositories-title">
-    <div>
-      <p class="section-label">Repository mapping</p>
-      <h2 id="project-repositories-title">Repositories</h2>
-    </div>
-    <ul class="item-list">
-      @for (repositoryPath of project().repositoryPaths; track repositoryPath) {
-        <li class="item"><code>{{ repositoryPath }}</code></li>
-      } @empty {
-        <li class="muted">No repositories connected.</li>
-      }
-    </ul>
-    <div class="inline-form">
-      <label>
-        <span class="sr-only">Repository path</span>
-        <input #repositoryPath type="text" placeholder="/workspace/repository" />
-      </label>
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="mutation.status === 'saving'"
-        (click)="addRepository(project().id, repositoryPath.value); repositoryPath.value = ''"
-      >
-        {{ mutation.status === 'saving' && mutation.kind === 'repository' ? 'Adding…' : 'Add repository' }}
-      </button>
-    </div>
-    @if (mutation.status === 'error' && mutation.kind === 'repository') {
-      <p class="form-error" role="alert">{{ mutation.message }}</p>
-    }
-  </section>
-
-  <section class="project-card-section surface-card" aria-labelledby="project-topics-title">
+  <section class="project-topics surface-card" aria-labelledby="project-topics-title">
     <div>
       <p class="section-label">Connected knowledge</p>
-      <h2 id="project-topics-title">Topics</h2>
+      <h2 id="project-topics-title">Topics used by this project</h2>
     </div>
-    <ul class="item-list">
-      @for (topicName of project().topicNames; track topicName) {
-        <li class="item">
-          <div class="item-heading">
-            <a [routerLink]="['/policies', 'topics', topicName]">{{ topicName }}</a>
-            <span class="item-actions">
-              @if (confirmingTopic() === topicName) {
+    <div class="connection-management">
+      <div class="topic-chips">
+        @for (topicName of project().topicNames; track topicName) {
+          <span class="topic-connection">
+            <a class="topic-chip" [routerLink]="['/policies', 'topics', topicName]">
+              <span>{{ topicName }}</span>
+              <span aria-hidden="true">→</span>
+            </a>
+            @if (confirmingTopic() === topicName) {
+              <span class="topic-removal-confirmation">
                 <span>Disconnect?</span>
                 <button
-                  class="danger-button"
+                  class="danger-action"
                   type="button"
-                  [disabled]="mutation.status === 'saving'"
+                  [disabled]="vm.mutation.status === 'saving'"
                   (click)="removeTopic(project().id, topicName)"
                 >
-                  Confirm
+                  {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'remove-topic' ? 'Removing…' : 'Confirm' }}
                 </button>
-                <button class="secondary-button" type="button" (click)="confirmingTopic.set(null)">
-                  Cancel
-                </button>
-              } @else {
-                <button class="link-button danger" type="button" (click)="confirmingTopic.set(topicName)">
-                  Remove
-                </button>
-              }
-            </span>
-          </div>
-        </li>
-      } @empty {
-        <li class="muted">No topics connected.</li>
+                <button type="button" (click)="confirmingTopic.set(null)">Cancel</button>
+              </span>
+            } @else {
+              <button class="topic-remove-button" type="button" (click)="confirmingTopic.set(topicName)">
+                Remove
+              </button>
+            }
+          </span>
+        } @empty {
+          <span class="no-topics">No topics connected.</span>
+        }
+      </div>
+      <div class="connection-form">
+        <label>
+          <span class="sr-only">Topic</span>
+          <select #topicName>
+            <option value="">Choose a topic…</option>
+            @for (topic of availableTopics(vm.topicNames, project()); track topic) {
+              <option [value]="topic">{{ topic }}</option>
+            }
+          </select>
+        </label>
+        <button
+          type="button"
+          [disabled]="vm.mutation.status === 'saving'"
+          (click)="addTopic(project().id, topicName.value); topicName.value = ''"
+        >
+          {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'topic' ? 'Adding…' : 'Add topic' }}
+        </button>
+      </div>
+      @if (
+        vm.mutation.status === 'error' &&
+        (vm.mutation.kind === 'topic' || vm.mutation.kind === 'remove-topic')
+      ) {
+        <p class="connection-error" role="alert">{{ vm.mutation.message }}</p>
       }
-    </ul>
-    <div class="inline-form">
-      <label>
-        <span class="sr-only">Topic name</span>
-        <input #topicName type="text" placeholder="Topic name" />
-      </label>
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="mutation.status === 'saving'"
-        (click)="addTopic(project().id, topicName.value); topicName.value = ''"
-      >
-        {{ mutation.status === 'saving' && mutation.kind === 'topic' ? 'Adding…' : 'Add topic' }}
-      </button>
     </div>
-    @if (
-      mutation.status === 'error' &&
-      (mutation.kind === 'topic' || mutation.kind === 'remove-topic')
-    ) {
-      <p class="form-error" role="alert">{{ mutation.message }}</p>
-    }
+  </section>
+
+  <section class="project-topics surface-card" aria-labelledby="project-repositories-title">
+    <div>
+      <p class="section-label">Repository mapping</p>
+      <h2 id="project-repositories-title">Repositories in this project</h2>
+    </div>
+    <div class="connection-management">
+      <div class="repository-list">
+        @for (repositoryPath of project().repositoryPaths; track repositoryPath) {
+          <code>{{ repositoryPath }}</code>
+        } @empty {
+          <span class="no-topics">No repositories connected.</span>
+        }
+      </div>
+      <div class="connection-form">
+        <label>
+          <span class="sr-only">Repository path</span>
+          <input #repositoryPath type="text" placeholder="/workspace/repository" />
+        </label>
+        <button
+          type="button"
+          [disabled]="vm.mutation.status === 'saving'"
+          (click)="addRepository(project().id, repositoryPath.value); repositoryPath.value = ''"
+        >
+          {{ vm.mutation.status === 'saving' && vm.mutation.kind === 'repository' ? 'Adding…' : 'Add repository' }}
+        </button>
+      </div>
+      @if (vm.mutation.status === 'error' && vm.mutation.kind === 'repository') {
+        <p class="connection-error" role="alert">{{ vm.mutation.message }}</p>
+      }
+    </div>
   </section>
 }
