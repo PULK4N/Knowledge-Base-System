@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../DomainsModules/AdministrationModule/Persistence/Persistence.csproj" />
-    <ProjectReference Include="../../DomainsModules/SettingsModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/AttachmentsModule/Application/Application.csproj" />
     <ProjectReference Include="../../DomainsModules/AttachmentsModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/FeatureModule/Persistence/Persistence.csproj" />

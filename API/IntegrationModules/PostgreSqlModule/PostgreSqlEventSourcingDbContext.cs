@@ -1,6 +1,4 @@
 using EventSourcing.Persistence;
-using SettingsModule.Persistence;
-using SettingsModule.Persistence.Models;
 using EventSourcing.Persistence.Models;
 using FeatureModule.Persistence;
 using FeatureModule.Persistence.Models;
@@ -22,10 +20,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     IFeatureModuleDbContext,
     IPolicyModuleDbContext,
     IProjectModuleDbContext,
-    ISkillsModuleDbContext,
-    ISettingsModuleDbContext
+    ISkillsModuleDbContext
 {
-    public DbSet<CodeReviewSettingsEntry> CodeReviewSettings => Set<CodeReviewSettingsEntry>();
     public DbSet<EntityRelation> EntityRelations => Set<EntityRelation>();
     public DbSet<FeatureSummaryEntry> FeatureSummaries =>
         Set<FeatureSummaryEntry>();
@@ -53,15 +49,6 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<CodeReviewSettingsEntry>(entry =>
-        {
-            entry.ToTable("CodeReviewSettings", table =>
-                table.HasCheckConstraint("CK_CodeReviewSettings_BatchSize", "\"BatchSize\" > 0"));
-            entry.HasKey(value => value.AggregateId);
-            entry.Property(value => value.TaskMessage).IsRequired();
-            entry.Property(value => value.OrderNumber).HasConversion<long>().IsConcurrencyToken();
-        });
-
         modelBuilder.HasPostgresExtension("vector");
         modelBuilder.HasPostgresExtension("pg_trgm");
 

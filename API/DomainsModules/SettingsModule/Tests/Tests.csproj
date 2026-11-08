@@ -4,10 +4,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.16" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.16" />
     <ProjectReference Include="../API/API.csproj" />
-    <ProjectReference Include="../Persistence/Persistence.csproj" />
   </ItemGroup>
   <ItemGroup><None Include="../../../../StateMachines/settings.yaml" Link="StateMachines/settings.yaml" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

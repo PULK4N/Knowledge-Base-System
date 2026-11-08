@@ -885,31 +885,6 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("ProjectPolicyTopics");
                 });
 
-            modelBuilder.Entity("SettingsModule.Persistence.Models.CodeReviewSettingsEntry", b =>
-                {
-                    b.Property<Guid>("AggregateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("BatchSize")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("OrderNumber")
-                        .IsConcurrencyToken()
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("TaskMessage")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("AggregateId");
-
-                    b.ToTable("CodeReviewSettings", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_CodeReviewSettings_BatchSize", "\"BatchSize\" > 0");
-                        });
-                });
-
             modelBuilder.Entity("SharedModule.Persistence.EntityRelation", b =>
                 {
                     b.Property<long>("Id")

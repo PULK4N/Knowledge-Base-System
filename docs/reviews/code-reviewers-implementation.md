@@ -17,16 +17,15 @@ flowchart TD
 
 ## Settings
 
-Settings are event-sourced, with initial values delivered through the outbox rather than inserted directly into the read table.
+Settings are event-sourced without a projection: the settings query replays the singleton settings aggregate. The initial values are seeded as a paired event and outbox row; the outbox row is completed without publishing because the state machine declares no projections.
 
 ```mermaid
 flowchart LR
     A[Migration: SettingsInitializedV1 and outbox row] --> B[settings-state-machine]
     C[Administration: Code reviewers] --> D[Settings update API]
     D --> B
-    B --> E[CodeReviewSettingsProjector]
-    E --> F[(CodeReviewSettings table)]
-    F --> G[Settings query API]
+    B --> E[(Settings event stream)]
+    E -->|replay| G[Settings query API]
     G --> C
     G --> H[Coordinator]
 ```
@@ -48,7 +47,7 @@ flowchart LR
 
 | Check | Result |
 | --- | --- |
-| Settings domain, projection and real HTTP API | 8 tests passed |
+| Settings domain, event-replay query and real HTTP API | 8 tests passed |
 | Feature application, including origin resolution | 68 tests passed |
 | Feature API regression checks | 4 tests passed |
 | Administration frontend | 32 tests passed |

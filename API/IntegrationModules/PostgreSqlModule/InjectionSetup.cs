@@ -1,5 +1,4 @@
 using AdministrationModule.Application.Persistence;
-using SettingsModule.Persistence;
 using AdministrationModule.Persistence;
 using AttachmentsModule.Application;
 using AttachmentsModule.Persistence;
@@ -47,9 +46,6 @@ public static class InjectionSetup
         services.AddScoped<IEntityRelationRepository, EntityRelationRepository>();
         services.RegisterAdministrationModulePersistence();
         services.RegisterFeatureModulePersistence();
-        services.RegisterSettingsModulePersistence();
-        services.AddScoped<ISettingsModuleDbContext>(provider =>
-            (ISettingsModuleDbContext)provider.GetRequiredService<EventSourcingDbContext>());
         services.AddScoped<
             IFeatureRecordSearchRepository,
             PostgreSqlFeatureRecordSearchRepository
