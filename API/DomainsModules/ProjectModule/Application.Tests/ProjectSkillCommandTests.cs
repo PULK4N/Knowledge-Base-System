@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using System.Collections.Immutable;
 using EventSourcing.Core;
 using EventSourcing.Shared.Exceptions;

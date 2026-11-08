@@ -37,7 +37,7 @@ const feature: FeatureDto = {
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
-  reviewNotes: [
+  reviewers: [], reviewNotes: [
     {
       id: 'review-note-1',
       title: 'Replay reloads state',
@@ -104,6 +104,22 @@ describe('FeatureService', () => {
   });
 
   afterEach(() => http.verify());
+
+  it.each(['add', 'update', 'remove'] as const)('refreshes the store after a reviewer %s', async operation => {
+    const request = { title: 'Security', description: 'Check access', reviewLevel: 'Heavy' as const };
+    const mutation$ = operation === 'add' ? service.addReviewer(feature.id, request)
+      : operation === 'update' ? service.updateReviewer(feature.id, { ...request, reviewerId: 'reviewer-1' })
+      : service.removeReviewer(feature.id, 'reviewer-1');
+    const result = firstValueFrom(mutation$);
+    const path = operation === 'add' ? '' : `/${operation}`;
+    const mutation = http.expectOne(`/api/features/${feature.id}/reviewers${path}`);
+    expect(mutation.request.body).toEqual(operation === 'remove' ? { reviewerId: 'reviewer-1' }
+      : operation === 'add' ? request : { ...request, reviewerId: 'reviewer-1' });
+    mutation.flush({ status: 'OK', reviewerId: 'reviewer-1' });
+    const reviewers = operation === 'remove' ? [] : [{ ...request, id: 'reviewer-1', createdAt: '2026-11-08', updatedAt: '2026-11-08' }];
+    http.expectOne(`/api/features/${feature.id}`).flush({ ...feature, reviewers });
+    expect((await result).reviewers).toEqual(reviewers);
+  });
 
   it('searches feature summaries and maps aggregate IDs', async () => {
     const resultPromise = firstValueFrom(

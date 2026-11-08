@@ -16,7 +16,7 @@ const plan: FeaturePlan = {
 const feature: Feature = {
   id: 'feature-1', isDeleted: false, projectId: 'project-1', name: 'Feature',
   summary: '', status: '', planCount: 2, recordCount: 0,
-  records: [], reviewNotes: [], branch: { name: 'main', description: '' },
+  records: [], reviewers: [], reviewNotes: [], branch: { name: 'main', description: '' },
   branchGraph: [], memoryHistory: [],
   plans: [
     { ...plan, id: 'x1', title: 'X1', previousPlanId: null,

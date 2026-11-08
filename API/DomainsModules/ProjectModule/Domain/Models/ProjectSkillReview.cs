@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 namespace ProjectModule.Domain.Models;
 
 /// <summary>How a linked skill takes part in the project's code review.</summary>

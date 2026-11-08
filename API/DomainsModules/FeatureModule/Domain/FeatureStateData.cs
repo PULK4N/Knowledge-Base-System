@@ -42,6 +42,8 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     /// </summary>
     public List<FeatureReviewNote> ReviewNotes { get; set; } = [];
 
+    public List<FeatureReviewer> Reviewers { get; set; } = [];
+
     public List<FeaturePlan> Plans { get; set; } = [];
 
     /// <summary>

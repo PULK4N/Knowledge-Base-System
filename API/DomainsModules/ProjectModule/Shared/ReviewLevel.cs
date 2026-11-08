@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 
-namespace ProjectModule.Domain.Models;
+namespace ProjectModule.Shared;
 
 /// <summary>
-/// How demanding a skill's review is. Stored by name, so new levels can be
+/// How demanding a review is. Stored by name, so new levels can be
 /// added without a new event version.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]

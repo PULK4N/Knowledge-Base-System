@@ -20,6 +20,7 @@ public sealed class FeatureMcpFunctionsTests
         "feature_record_get",
         "feature_record_list",
         "feature_review_note_list",
+        "feature_reviewer_list",
         "feature_add",
         "feature_remove",
         "feature_status_update",
@@ -30,6 +31,9 @@ public sealed class FeatureMcpFunctionsTests
         "feature_review_note_add",
         "feature_review_note_update",
         "feature_review_note_remove",
+        "feature_reviewer_add",
+        "feature_reviewer_update",
+        "feature_reviewer_remove",
         "feature_plan_add",
         "feature_plan_update",
         "feature_plan_status_update",
@@ -376,4 +380,18 @@ public sealed class FeatureMcpFunctionsTests
         Assert.Contains("featureId", required);
         Assert.DoesNotContain("orderNumber", required);
     }
+    [Theory]
+    [InlineData("feature_reviewer_add", false)]
+    [InlineData("feature_reviewer_update", true)]
+    public void Reviewer_mutations_require_content_and_review_level_without_a_skill(string name, bool requiresId)
+    {
+        var schema = FeatureMcpFunctions.Create().Single(function => function.Name == name).JsonSchema;
+        var required = schema.GetProperty("required").EnumerateArray().Select(item => item.GetString()).ToList();
+        Assert.Contains("title", required);
+        Assert.Contains("description", required);
+        Assert.Contains("reviewLevel", required);
+        Assert.Equal(requiresId, required.Contains("reviewerId"));
+        Assert.False(schema.GetProperty("properties").TryGetProperty("skillId", out _));
+    }
+
 }

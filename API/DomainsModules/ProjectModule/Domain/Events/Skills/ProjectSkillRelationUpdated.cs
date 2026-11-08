@@ -1,3 +1,4 @@
+using ProjectModule.Shared;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using ProjectModule.Domain.Models;
