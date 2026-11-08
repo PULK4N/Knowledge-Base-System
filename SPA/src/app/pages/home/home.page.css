@@ -68,8 +68,8 @@ a.overview-card:hover {
 }
 
 .project-card .card-icon {
-  color: var(--indigo);
-  background: #f0efff;
+  color: #2f7d4f;
+  background: #eaf7ef;
 }
 
 .feature-card .card-icon {
@@ -105,7 +105,7 @@ a.overview-card:hover {
 
 .project-card .card-copy strong,
 .project-card .count {
-  color: var(--indigo);
+  color: #2f7d4f;
 }
 
 .feature-card .card-copy strong,
