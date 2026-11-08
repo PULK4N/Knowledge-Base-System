@@ -59,3 +59,13 @@ events:
   SkillAttachmentDeletedV2:
     preEventValidators:
       - SkillAttachmentMustExistValidator
+  SkillProjectRelationAddedV1:
+    preEventValidators:
+      - SkillMustBeActiveValidator
+      - SkillProjectMustNotExistValidator
+  SkillProjectRelationRemovedV1:
+    preEventValidators:
+      - SkillProjectMustExistValidator
+  SkillUseScenariosSetV1:
+    preEventValidators:
+      - SkillMustBeActiveValidator

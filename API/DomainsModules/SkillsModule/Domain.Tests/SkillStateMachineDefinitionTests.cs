@@ -58,7 +58,10 @@ public sealed class SkillStateMachineDefinitionTests
                 nameof(SkillAttachmentAddedV1),
                 nameof(SkillAttachmentAddedV2),
                 nameof(SkillAttachmentDeletedV1),
-                nameof(SkillAttachmentDeletedV2)
+                nameof(SkillAttachmentDeletedV2),
+                nameof(SkillProjectRelationAddedV1),
+                nameof(SkillProjectRelationRemovedV1),
+                nameof(SkillUseScenariosSetV1)
             ],
             definition.Events.Keys
         );
@@ -119,6 +122,23 @@ public sealed class SkillStateMachineDefinitionTests
         Assert.Equal(
             [nameof(SkillAttachmentMustExistValidator)],
             definition.Events[nameof(SkillAttachmentDeletedV2)].PreEventValidators
+        );
+        Assert.Equal(
+            [
+                nameof(SkillMustBeActiveValidator),
+                nameof(SkillProjectMustNotExistValidator)
+            ],
+            definition.Events[nameof(SkillProjectRelationAddedV1)]
+                .PreEventValidators
+        );
+        Assert.Equal(
+            [nameof(SkillProjectMustExistValidator)],
+            definition.Events[nameof(SkillProjectRelationRemovedV1)]
+                .PreEventValidators
+        );
+        Assert.Equal(
+            [nameof(SkillMustBeActiveValidator)],
+            definition.Events[nameof(SkillUseScenariosSetV1)].PreEventValidators
         );
         Assert.All(
             definition.Events.Values,
@@ -289,7 +309,11 @@ public sealed class SkillStateMachineDefinitionTests
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV1));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentAddedV2));
             EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV1));
-            EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV2));            EventValidatorContainer.AddEventValidator(
+            EventTypeContainer.AddEventType(typeof(SkillAttachmentDeletedV2));
+            EventTypeContainer.AddEventType(typeof(SkillProjectRelationAddedV1));
+            EventTypeContainer.AddEventType(typeof(SkillProjectRelationRemovedV1));
+            EventTypeContainer.AddEventType(typeof(SkillUseScenariosSetV1));
+            EventValidatorContainer.AddEventValidator(
                 typeof(SkillReferenceMustNotExistValidator)
             );
             EventValidatorContainer.AddEventValidator(
@@ -300,6 +324,15 @@ public sealed class SkillStateMachineDefinitionTests
             );
             EventValidatorContainer.AddEventValidator(
                 typeof(SkillAttachmentMustExistValidator)
+            );
+            EventValidatorContainer.AddEventValidator(
+                typeof(SkillMustBeActiveValidator)
+            );
+            EventValidatorContainer.AddEventValidator(
+                typeof(SkillProjectMustNotExistValidator)
+            );
+            EventValidatorContainer.AddEventValidator(
+                typeof(SkillProjectMustExistValidator)
             );
 
             _typesRegistered = true;

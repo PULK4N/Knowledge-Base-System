@@ -14,8 +14,6 @@ public sealed record FeatureMcpDto
 
     public required string Status { get; init; }
 
-    public required IReadOnlyCollection<Guid> RelatedSkillIds { get; init; }
-
     /// <summary>
     /// The feature branch and the branches of plans not yet completed, one per
     /// line with the branches each came from.
@@ -47,7 +45,6 @@ public sealed record FeatureMcpDto
             Name = feature.Name,
             Summary = feature.Summary,
             Status = feature.Status,
-            RelatedSkillIds = feature.RelatedSkillIds,
             BranchGraph = FeatureBranchGraphFormatter.Format(feature),
             CompositeBranch = feature.CompositeBranchName is { } compositeBranchName
                 ? $"Branch for Analyst checking all functionalities together:\n{compositeBranchName}"

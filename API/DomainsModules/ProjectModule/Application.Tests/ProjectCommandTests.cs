@@ -120,7 +120,8 @@ public sealed partial class ProjectCommandTests
             eventStore,
             policyTextRepository,
             policyTextRepository,
-            new StubPolicyProjectSummaryRepository()
+            new StubPolicyProjectSummaryRepository(),
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath,
@@ -136,7 +137,7 @@ public sealed partial class ProjectCommandTests
         Assert.Null(typeof(GetPoliciesByRepositoryResult).GetProperty("RepositoryPaths"));
         var resolvedProject = Assert.IsType<PolicyProjectDetailsDto>(
             await new GetPolicyProjectByRepositoryQuery(
-                CreateCalculator(), eventStore
+                CreateCalculator(), eventStore, new StubSkillSummaryRepository()
             ) { RepositoryPath = secondRepositoryPath }.Execute(Executor)
         );
         Assert.Equal(project.ProjectId, resolvedProject.ProjectId);
@@ -167,8 +168,8 @@ public sealed partial class ProjectCommandTests
             await ExecuteAsUser(new DeleteProjectCommand(handler) { ProjectId = project.ProjectId });
         }
         var result = await new GetPolicyProjectByRepositoryQuery(
-            CreateCalculator(), eventStore
-        ) { RepositoryPath = path }.Execute(Executor);
+                CreateCalculator(), eventStore, new StubSkillSummaryRepository()
+            ) { RepositoryPath = path }.Execute(Executor);
         Assert.Null(result);
     }
 
@@ -196,7 +197,8 @@ public sealed partial class ProjectCommandTests
             eventStore,
             policyTextRepository,
             policyTextRepository,
-            new StubPolicyProjectSummaryRepository()
+            new StubPolicyProjectSummaryRepository(),
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath,
@@ -224,7 +226,8 @@ public sealed partial class ProjectCommandTests
             new CapturingEventStoreWithOutbox(),
             new StubPolicyText(),
             new StubPolicyText(),
-            new StubPolicyProjectSummaryRepository()
+            new StubPolicyProjectSummaryRepository(),
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = "/workspace/agent-family-project",
@@ -564,7 +567,8 @@ public sealed partial class ProjectCommandTests
             eventStore,
             policyTextRepository,
             policyTextRepository,
-            new StubPolicyProjectSummaryRepository()
+            new StubPolicyProjectSummaryRepository(),
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath,
@@ -646,7 +650,8 @@ public sealed partial class ProjectCommandTests
         var projectDetails = Assert.IsType<PolicyProjectDetailsDto>(
             await new GetPolicyProjectQuery(
                 CreateCalculator(),
-                eventStore
+                eventStore,
+                new StubSkillSummaryRepository()
             )
             {
                 ProjectId = project.ProjectId
@@ -681,7 +686,8 @@ public sealed partial class ProjectCommandTests
             eventStore,
             policyTextRepository,
             policyTextRepository,
-            new StubPolicyProjectSummaryRepository()
+            new StubPolicyProjectSummaryRepository(),
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath,
@@ -702,7 +708,8 @@ public sealed partial class ProjectCommandTests
         Assert.Null(
             await new GetPolicyProjectQuery(
                 CreateCalculator(),
-                eventStore
+                eventStore,
+                new StubSkillSummaryRepository()
             )
             {
                 ProjectId = project.ProjectId
@@ -723,7 +730,8 @@ public sealed partial class ProjectCommandTests
             eventStore,
             policyTextRepository,
             policyTextRepository,
-            projectSummaryRepository
+            projectSummaryRepository,
+            new StubSkillSummaryRepository()
         )
         {
             RepositoryPath = repositoryPath,
@@ -813,6 +821,7 @@ public sealed partial class ProjectCommandTests
             new ServiceCollection().RegisterEventSourcingCore(
                 typeof(GeneralPoliciesStateData).Assembly,
                 typeof(ProjectStateData).Assembly,
+                typeof(SkillsModule.Domain.SkillStateData).Assembly,
                 typeof(MemoryModule.Domain.MemoryStateData).Assembly
             );
             _typesRegistered = true;
@@ -919,6 +928,8 @@ public sealed partial class ProjectCommandTests
                         new ProjectStateData(aggregateId),
                     ProjectModule.Application.Constants.StateMachineIds.RepositoryToProjectMap =>
                         new RepositoryToProjectMapStateData(aggregateId),
+                    ProjectModule.Application.Constants.StateMachineIds.Skills =>
+                        new SkillsModule.Domain.SkillStateData(aggregateId),
                     MemoryModule.Application.Constants.StateMachineIds.Memory =>
                         new MemoryModule.Domain.MemoryStateData(aggregateId),
                     MemoryModule.Application.Constants.StateMachineIds.SessionAggregateMap =>
@@ -971,6 +982,12 @@ public sealed partial class ProjectCommandTests
     private sealed class StubPolicyProjectSummaryRepository
         : IPolicyProjectSummaryRepository
     {
+        public Task<List<Guid>> GetSkillIds(
+            Guid projectId,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(new List<Guid>());
+
         public List<PolicyProjectSummary> Projects { get; } = [];
 
         public Task<List<PolicyProjectSummary>> List() =>

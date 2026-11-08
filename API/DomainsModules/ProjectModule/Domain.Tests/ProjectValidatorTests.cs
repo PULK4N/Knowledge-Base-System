@@ -115,6 +115,31 @@ public sealed class ProjectValidatorTests
         Assert.False(validator.Validate(state, payload).Succeded);
     }
 
+    [Fact]
+    public void ProjectSkillRelation_RequiresUniqueExistingRelation()
+    {
+        var state = CreateProjectState();
+        var skillId = AggregateId.FromDatabaseGuid(
+            Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd")
+        );
+        var addPayload = CreatePayload(
+            new ProjectSkillRelationAddedV1(skillId, Guid.Empty, ProjectId)
+        );
+        var removePayload = CreatePayload(
+            new ProjectSkillRelationRemovedV1(skillId, Guid.Empty, ProjectId)
+        );
+        var mustNotExist = new ProjectSkillMustNotExistValidator();
+        var mustExist = new ProjectSkillMustExistValidator();
+
+        Assert.True(mustNotExist.Validate(state, addPayload).Succeded);
+        Assert.False(mustExist.Validate(state, removePayload).Succeded);
+
+        state.RelatedSkillIds.Add(skillId);
+
+        Assert.False(mustNotExist.Validate(state, addPayload).Succeded);
+        Assert.True(mustExist.Validate(state, removePayload).Succeded);
+    }
+
     private static ProjectStateData CreateProjectState() =>
         new(ProjectId)
         {

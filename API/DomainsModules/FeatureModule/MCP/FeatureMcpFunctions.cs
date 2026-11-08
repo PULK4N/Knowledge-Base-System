@@ -73,16 +73,6 @@ public static class FeatureMcpFunctions
             "Replaces a feature's overview summary of what the feature is and does. Optional compositeBranchName also sets the branch for Analyst checking all functionality together; omit it to keep the branch or pass an empty string to clear it."
         ),
         CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)AddSkill,
-            "feature_skill_add",
-            "Adds a skill ID that provides useful context for the feature."
-        ),
-        CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveSkill,
-            "feature_skill_remove",
-            "Removes a related skill ID from the feature."
-        ),
-        CreateFunction(
             (Func<IServiceProvider, Guid, string, string, string, FeatureRecordSourceType?, string, List<Guid>?, Guid?, Guid?, Task<FeatureRecordCreatedCommandResult>>)AddRecord,
             "feature_record_add",
             "Adds a titled Markdown record to a feature. type is free text stored in lower case: use conversation for a curated user and AI exchange, research for a research finding, or another short type. Optional sourceType and sourceReference give provenance, such as a code path, URL, or MCP tool name. Optional planIds link the new record to those plans of the same feature."
@@ -410,48 +400,6 @@ public static class FeatureMcpFunctions
                 command.FeatureId = featureId;
                 command.Summary = summary;
                 command.CompositeBranchName = compositeBranchName;
-                command.SessionId = sessionId.GetValueOrDefault();
-                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
-            }
-        );
-
-    private static Task<FeatureCommandResult> AddSkill(
-        IServiceProvider services,
-        Guid featureId,
-        Guid skillId,
-        Guid? sessionId = null,
-        Guid? memoryAggregateId = null
-    ) =>
-        FeatureMcpActionExecutor.ExecuteCommand<
-            AddFeatureSkillCommand,
-            FeatureCommandResult
-        >(
-            services,
-            command =>
-            {
-                command.FeatureId = featureId;
-                command.SkillId = skillId;
-                command.SessionId = sessionId.GetValueOrDefault();
-                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
-            }
-        );
-
-    private static Task<FeatureCommandResult> RemoveSkill(
-        IServiceProvider services,
-        Guid featureId,
-        Guid skillId,
-        Guid? sessionId = null,
-        Guid? memoryAggregateId = null
-    ) =>
-        FeatureMcpActionExecutor.ExecuteCommand<
-            RemoveFeatureSkillCommand,
-            FeatureCommandResult
-        >(
-            services,
-            command =>
-            {
-                command.FeatureId = featureId;
-                command.SkillId = skillId;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

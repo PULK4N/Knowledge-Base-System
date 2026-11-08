@@ -97,6 +97,12 @@ public sealed class SearchProjectQueryTests
         PolicyProjectSummarySearchResult result
     ) : IPolicyProjectSummaryRepository
     {
+        public Task<List<Guid>> GetSkillIds(
+            Guid projectId,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(new List<Guid>());
+
         public (int Page, int PageSize, string? Search)? LastSearchRequest { get; private set; }
 
         public Task<List<PolicyProjectSummary>> List() =>

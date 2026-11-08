@@ -107,7 +107,6 @@ export interface FeatureMemoryHistoryEntry {
 
 export interface Feature extends FeatureSummary {
   readonly isDeleted: boolean;
-  readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly plans: readonly FeaturePlan[];
@@ -157,7 +156,6 @@ export interface FeatureDto {
   readonly name: string;
   readonly summary: string;
   readonly status: string;
-  readonly relatedSkillIds: readonly string[];
   readonly records: readonly FeatureRecord[];
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly plans: readonly FeaturePlan[];

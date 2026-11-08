@@ -130,6 +130,20 @@ public sealed class SkillsController(
         return Ok((SkillCommandResult)await Execute(command));
     }
 
+    [HttpPost("{skillId:guid}/use-scenarios")]
+    public async Task<ActionResult<SkillCommandResult>> SetUseScenarios(
+        Guid skillId,
+        [FromBody] SetSkillUseScenariosRequest body,
+        [FromServices] SetSkillUseScenariosCommand command
+    )
+    {
+        command.SkillId = skillId;
+        command.Scenarios = body.Scenarios;
+        command.UseUserOrigin();
+
+        return Ok((SkillCommandResult)await Execute(command));
+    }
+
     [HttpPost("{skillId:guid}/delete")]
     public async Task<ActionResult<SkillCommandResult>> Delete(
         Guid skillId,

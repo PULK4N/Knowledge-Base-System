@@ -18,7 +18,9 @@ public sealed class ProjectMcpFunctionsTests
         "policy_project_policy_update",
         "policy_project_policy_remove",
         "policy_project_topic_add",
-        "policy_project_topic_remove"
+        "policy_project_topic_remove",
+        "project_skill_add",
+        "project_skill_remove"
     ];
 
     [Fact]

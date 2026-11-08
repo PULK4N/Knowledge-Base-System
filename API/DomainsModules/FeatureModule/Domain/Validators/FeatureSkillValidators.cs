@@ -4,6 +4,7 @@ using Shared.Interfaces;
 
 namespace FeatureModule.Domain.Validators;
 
+[Obsolete(FeatureSkillLinks.Retired)]
 public sealed class FeatureSkillMustNotExistValidator : IPreEventValidator
 {
     public EventValidationResult Validate(
@@ -40,6 +41,7 @@ public sealed class FeatureSkillMustNotExistValidator : IPreEventValidator
     }
 }
 
+[Obsolete(FeatureSkillLinks.Retired)]
 public sealed class FeatureSkillMustExistValidator : IPreEventValidator
 {
     public EventValidationResult Validate(

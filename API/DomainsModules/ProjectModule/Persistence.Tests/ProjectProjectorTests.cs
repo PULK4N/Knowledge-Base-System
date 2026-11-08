@@ -55,6 +55,47 @@ public sealed class ProjectProjectorTests
     }
 
     [Fact]
+    public async Task ProjectSummaryProjection_RefreshesBothRowsOfEachSkillLink()
+    {
+        await using var context = TestKnowledgeBaseDbContext.Create();
+        var repository = new PolicyProjectSummaryRepository(context);
+        var projector = new PolicyProjectSummaryProjector(repository);
+        var project = CreateProject();
+        var keptSkillId = Guid.Parse("21212121-0000-0000-0000-000000000001");
+        var removedSkillId = Guid.Parse("21212121-0000-0000-0000-000000000002");
+        project.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(keptSkillId));
+        project.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(removedSkillId));
+
+        await projector.Update([CreateStateInfo(project)]);
+
+        Assert.Equal(4, context.EntityRelations.Count());
+        Assert.Equal(
+            [keptSkillId, removedSkillId],
+            (await repository.GetSkillIds(ProjectId.Value)).Order().ToList()
+        );
+        Assert.Equal(
+            "Policy project",
+            context.EntityRelations
+                .Single(
+                    relation => relation.EntityId == keptSkillId
+                        && relation.RelationType == ProjectEntityRelationTypes.Project
+                )
+                .RelatedEntitySummary
+        );
+
+        project.RelatedSkillIds.RemoveAt(1);
+        await projector.Update([CreateStateInfo(project)]);
+
+        Assert.Equal(2, context.EntityRelations.Count());
+        Assert.Equal([keptSkillId], await repository.GetSkillIds(ProjectId.Value));
+
+        project.IsDeleted = true;
+        await projector.Update([CreateStateInfo(project)]);
+
+        Assert.Empty(context.EntityRelations);
+    }
+
+    [Fact]
     public async Task ProjectSummaryProjection_ListsNamesAndRepositoryPaths()
     {
         await using var context = TestKnowledgeBaseDbContext.Create();

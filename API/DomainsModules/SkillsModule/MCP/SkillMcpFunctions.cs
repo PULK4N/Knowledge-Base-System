@@ -43,6 +43,11 @@ public static class SkillMcpFunctions
             "Replaces an existing skill's name, description, content, and tags."
         ),
         CreateFunction(
+            (Func<IServiceProvider, Guid, List<string>, Guid?, Guid?, Task<SkillCommandResult>>)SetUseScenarios,
+            "skill_use_scenarios_set",
+            "Replaces a skill's use scenarios: the ordered list of short lines naming the kinds of work the skill applies to. Pass an empty list to clear them."
+        ),
+        CreateFunction(
             (Func<IServiceProvider, Guid, Guid?, Guid?, Task<SkillCommandResult>>)Delete,
             "skill_delete",
             "Deletes an existing skill."
@@ -233,6 +238,27 @@ public static class SkillMcpFunctions
                 command.Description = description;
                 command.Content = content;
                 command.Tags = tags;
+                command.SessionId = sessionId.GetValueOrDefault();
+                command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
+            }
+        );
+
+    private static Task<SkillCommandResult> SetUseScenarios(
+        IServiceProvider services,
+        Guid skillId,
+        List<string> scenarios,
+        Guid? sessionId = null,
+        Guid? memoryAggregateId = null
+    ) =>
+        SkillMcpActionExecutor.ExecuteCommand<
+            SetSkillUseScenariosCommand,
+            SkillCommandResult
+        >(
+            services,
+            command =>
+            {
+                command.SkillId = skillId;
+                command.Scenarios = scenarios;
                 command.SessionId = sessionId.GetValueOrDefault();
                 command.MemoryAggregateId = memoryAggregateId.GetValueOrDefault();
             }

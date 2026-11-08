@@ -13,6 +13,7 @@ using ProjectModule.Domain;
 using ProjectModule.Domain.Events;
 using SharedModule.Constants;
 using SharedModule.Exceptions;
+using SkillsModule.Persistence.Interfaces;
 
 namespace ProjectModule.Persistence.Tests;
 
@@ -62,6 +63,30 @@ public sealed class AgentsMdGoldenTests
         + "## Project one\nProject one text.\n\n"
         + "## Project two\nProject two text.";
 
+    private static readonly SkillUseScenarios AngularSkill = new(
+        Guid.Parse("21212121-0000-0000-0000-000000000001"),
+        "angular-code-writter",
+        ["Writing or reviewing Angular code"]
+    );
+    private static readonly SkillUseScenarios PlanSkill = new(
+        Guid.Parse("21212121-0000-0000-0000-000000000002"),
+        "how-to-grill-user-to-write-a-better-plan",
+        ["Writing a plan", "Reviewing or stress-testing a plan"]
+    );
+    private static readonly SkillUseScenarios PlainSkill = new(
+        Guid.Parse("21212121-0000-0000-0000-000000000003"),
+        "some-skill-without-scenarios",
+        []
+    );
+    private static readonly Guid DeletedSkillId =
+        Guid.Parse("21212121-0000-0000-0000-000000000004");
+
+    private const string ProjectSkillsText =
+        "# Project skills\n"
+        + "- angular-code-writter — Writing or reviewing Angular code\n"
+        + "- how-to-grill-user-to-write-a-better-plan — Writing a plan; Reviewing or stress-testing a plan\n"
+        + "- some-skill-without-scenarios";
+
     private const string TopicsText =
         "# Topic \"dotnet\" policies\n\n"
         + "## Dotnet one\nDotnet one text.\n\n"
@@ -77,7 +102,7 @@ public sealed class AgentsMdGoldenTests
                 GeneralText + "\n\n" + ProjectText + "\n\n"
                     + "# Agent family \"claude\" policies\n\n"
                     + "## Claude one\nClaude one text.\n\n"
-                    + TopicsText
+                    + TopicsText + "\n\n" + ProjectSkillsText
             },
             {
                 "codex",
@@ -85,11 +110,12 @@ public sealed class AgentsMdGoldenTests
                     + "# Agent family \"codex\" policies\n\n"
                     + "## Codex one\nCodex one text.\n\n"
                     + "## Codex two\nCodex two text.\n\n"
-                    + TopicsText
+                    + TopicsText + "\n\n" + ProjectSkillsText
             },
             {
                 "empty-family",
                 GeneralText + "\n\n" + ProjectText + "\n\n" + TopicsText
+                    + "\n\n" + ProjectSkillsText
             }
         };
 
@@ -111,10 +137,10 @@ public sealed class AgentsMdGoldenTests
     }
 
     [Fact]
-    public async Task ProjectWithoutPolicies_StillReturnsTheOtherSections()
+    public async Task ProjectWithoutPoliciesOrSkills_StillReturnsTheOtherSections()
     {
         await using var context = await CreateProjectedContext(
-            CreateProject(withPolicies: false)
+            CreateProject(withPolicies: false, withSkills: false)
         );
 
         Assert.Equal(
@@ -195,7 +221,8 @@ public sealed class AgentsMdGoldenTests
             new RepositoryMapEventStore(),
             new ProjectPolicyTextRepository(context),
             new PolicyTextRepository(context),
-            new PolicyProjectSummaryRepository(context)
+            new PolicyProjectSummaryRepository(context),
+            new StubSkillSummaryRepository([AngularSkill, PlanSkill, PlainSkill])
         )
         {
             RepositoryPath = repositoryPath,
@@ -276,7 +303,10 @@ public sealed class AgentsMdGoldenTests
         return state;
     }
 
-    private static ProjectStateData CreateProject(bool withPolicies)
+    private static ProjectStateData CreateProject(
+        bool withPolicies,
+        bool withSkills = true
+    )
     {
         var state = new ProjectStateData(ProjectId)
         {
@@ -297,6 +327,16 @@ public sealed class AgentsMdGoldenTests
         state.RelatedTopics.Add(new TopicName("empty-topic"));
         state.RelatedTopics.Add(new TopicName("missing-topic"));
         state.RelatedTopics.Add(new TopicName("cloud"));
+
+        // Listed by skill name, not link order; a deleted skill has no summary
+        // and must not leave a line.
+        if (withSkills)
+        {
+            state.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(PlainSkill.SkillId));
+            state.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(DeletedSkillId));
+            state.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(AngularSkill.SkillId));
+            state.RelatedSkillIds.Add(AggregateId.FromDatabaseGuid(PlanSkill.SkillId));
+        }
 
         return state;
     }
@@ -356,4 +396,36 @@ public sealed class AgentsMdGoldenTests
 
     private static StateInfo CreateStateInfo(ISharedStateData stateData) =>
         StateInfo.Create(stateData, "test-state-machine", stateData.Id);
+
+    /// <summary>Returns the active skills among the requested IDs, ordered by name like the read model.</summary>
+    private sealed class StubSkillSummaryRepository(
+        List<SkillUseScenarios> skills
+    ) : ISkillSummaryRepository
+    {
+        public Task<List<SkillSummary>> List() =>
+            throw new NotSupportedException();
+
+        public Task<SkillSummary?> GetByName(
+            string name,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<SkillSummarySearchResult> Search(
+            int page,
+            int pageSize,
+            string? search,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<List<SkillUseScenarios>> GetUseScenarios(
+            List<Guid> skillIds,
+            CancellationToken cancellationToken = default
+        ) =>
+            Task.FromResult(
+                skills
+                    .Where(skill => skillIds.Contains(skill.SkillId))
+                    .OrderBy(skill => skill.Name, StringComparer.Ordinal)
+                    .ToList()
+            );
+    }
 }

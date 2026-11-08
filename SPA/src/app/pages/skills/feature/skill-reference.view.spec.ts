@@ -8,6 +8,8 @@ const skill: Skill = {
   description: 'Angular guidance',
   content: '# Skill',
   tags: [],
+  useScenarios: [],
+  relatedProjectIds: [],
   referenceCount: 1,
   attachmentCount: 0,
   references: {

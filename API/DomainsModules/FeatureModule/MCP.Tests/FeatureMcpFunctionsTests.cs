@@ -24,8 +24,6 @@ public sealed class FeatureMcpFunctionsTests
         "feature_remove",
         "feature_status_update",
         "feature_summary_update",
-        "feature_skill_add",
-        "feature_skill_remove",
         "feature_record_add",
         "feature_record_update",
         "feature_record_remove",

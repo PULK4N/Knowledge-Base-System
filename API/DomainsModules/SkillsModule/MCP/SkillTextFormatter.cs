@@ -9,9 +9,16 @@ internal static class SkillTextFormatter
         var tags = skill.Tags.Count == 0
             ? string.Empty
             : $"\n\nTags: {string.Join(", ", skill.Tags)}";
+        var useScenarios = skill.UseScenarios.Count == 0
+            ? string.Empty
+            : "\n\nUse scenarios:\n"
+                + string.Join(
+                    "\n",
+                    skill.UseScenarios.Select(scenario => $"- {scenario}")
+                );
         var sections = new List<string>
         {
-            $"# {skill.Name}\n\n{skill.Description}{tags}\n\n## Skill content\n\n{skill.Content}"
+            $"# {skill.Name}\n\n{skill.Description}{tags}{useScenarios}\n\n## Skill content\n\n{skill.Content}"
         };
 
         sections.AddRange(

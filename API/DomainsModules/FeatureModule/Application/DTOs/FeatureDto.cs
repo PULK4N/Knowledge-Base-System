@@ -17,8 +17,6 @@ public sealed record FeatureDto
 
     public required string Status { get; init; }
 
-    public required IReadOnlyCollection<Guid> RelatedSkillIds { get; init; }
-
     public required IReadOnlyCollection<FeatureRecordDto> Records { get; init; }
 
     public required IReadOnlyCollection<FeatureReviewNoteDto>
@@ -51,9 +49,6 @@ public sealed record FeatureDto
             Name = state.Name,
             Summary = state.Summary,
             Status = state.Status,
-            RelatedSkillIds = state.RelatedSkillIds
-                .Select(skillId => skillId.Value)
-                .ToList(),
             Records = state.Records
                 .Select(FeatureRecordDto.FromModel)
                 .ToList(),

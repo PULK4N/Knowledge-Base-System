@@ -30,6 +30,7 @@
     <ProjectReference Include="../../PolicyModule/Domain/Domain.csproj" />
     <ProjectReference Include="../../PolicyModule/Interfaces/Interfaces.csproj" />
     <ProjectReference Include="../Application/Application.csproj" />
+    <ProjectReference Include="../../SkillsModule/Application/Application.csproj" />
     <ProjectReference Include="../Domain/Domain.csproj" />
     <ProjectReference Include="../Persistence.Interfaces/Persistence.Interfaces.csproj" />
   </ItemGroup>
@@ -44,6 +45,7 @@
     <None Include="../../../../StateMachines/general-policies.yaml" Link="StateMachines/general-policies.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/project.yaml" Link="StateMachines/project.yaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../../StateMachines/repository-to-project-map.yaml" Link="StateMachines/repository-to-project-map.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../StateMachines/skills.yaml" Link="StateMachines/skills.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

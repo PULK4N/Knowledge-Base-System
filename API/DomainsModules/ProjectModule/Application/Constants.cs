@@ -8,5 +8,7 @@ public static class Constants
 
         public const string RepositoryToProjectMap =
             "repository-to-project-map-state-machine";
+
+        public const string Skills = "skills-state-machine";
     }
 }

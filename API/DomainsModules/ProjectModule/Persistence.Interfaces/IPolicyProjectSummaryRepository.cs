@@ -15,4 +15,9 @@ public interface IPolicyProjectSummaryRepository
         string? search,
         CancellationToken cancellationToken = default
     );
+
+    Task<List<Guid>> GetSkillIds(
+        Guid projectId,
+        CancellationToken cancellationToken = default
+    );
 }

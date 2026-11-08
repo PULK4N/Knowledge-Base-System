@@ -12,6 +12,7 @@ public sealed class SkillMcpFunctionsTests
         "skill_get",
         "skill_add",
         "skill_update",
+        "skill_use_scenarios_set",
         "skill_delete",
         "skill_reference_get",
         "skill_reference_add",

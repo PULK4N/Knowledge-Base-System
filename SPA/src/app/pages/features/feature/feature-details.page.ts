@@ -30,8 +30,6 @@ import {
 } from '../../../shared/list-controls/list-controls.component';
 import { omitDefault, omitEmpty } from '../../../shared/list-state/list-route-state';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
-import { SkillSearchResult } from '../../skills/data-access/skill.models';
-import { SkillService } from '../../skills/data-access/skill.service';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
 import {
@@ -101,8 +99,6 @@ const REVIEW_NOTE_SORT_OPTIONS: readonly ListControlOption[] = [
 type FeatureAction =
   | { readonly kind: 'status'; readonly featureId: string; readonly status: string }
   | { readonly kind: 'summary'; readonly featureId: string; readonly summary: string }
-  | { readonly kind: 'add-skill'; readonly featureId: string; readonly skillId: string }
-  | { readonly kind: 'remove-skill'; readonly featureId: string; readonly skillId: string }
   | {
       readonly kind: 'add-record';
       readonly featureId: string;
@@ -183,7 +179,6 @@ export class FeatureDetailsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly features = inject(FeatureService);
-  private readonly skills = inject(SkillService);
   private readonly actions = new Subject<FeatureAction>();
 
   protected readonly editingSummary = signal(false);
@@ -242,24 +237,6 @@ export class FeatureDetailsPage {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-  private readonly skillsState$: Observable<LoadState<SkillSearchResult>> =
-    this.skills.search({
-      page: 1,
-      pageSize: 100,
-      search: '',
-      tag: '',
-      hasReferences: null,
-      hasAttachments: null,
-      sortBy: 'Name',
-      sortDirection: 'Ascending',
-    }).pipe(
-      map(data => ({ status: 'success', data }) as const),
-      startWith({ status: 'loading' } as const),
-      catchError(error =>
-        of({ status: 'error', message: toUserMessage(error) } as const),
-      ),
-    );
-
   private readonly mutation$: Observable<MutationState> = this.actions.pipe(
     exhaustMap(action =>
       this.execute(action).pipe(
@@ -308,16 +285,10 @@ export class FeatureDetailsPage {
   protected readonly vm$ = combineLatest({
     state: this.state$,
     listState: this.listState$,
-    skills: this.skillsState$,
     mutation: this.mutation$,
   }).pipe(
     map(vm => ({
       ...vm,
-      skillNames: new Map(
-        vm.skills.status === 'success'
-          ? vm.skills.data.items.map(skill => [skill.id, skill.name] as const)
-          : [],
-      ),
       collections:
         vm.state.status === 'success'
           ? {
@@ -445,14 +416,6 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'summary', featureId, summary: summary.trim() });
   }
 
-  protected addSkill(featureId: string, skillId: string): void {
-    this.actions.next({ kind: 'add-skill', featureId, skillId });
-  }
-
-  protected removeSkill(featureId: string, skillId: string): void {
-    this.actions.next({ kind: 'remove-skill', featureId, skillId });
-  }
-
   protected addRecord(
     featureId: string,
     type: string,
@@ -577,10 +540,6 @@ export class FeatureDetailsPage {
         return this.features.updateStatus(action.featureId, action.status);
       case 'summary':
         return this.features.updateSummary(action.featureId, action.summary);
-      case 'add-skill':
-        return this.features.addSkill(action.featureId, action.skillId);
-      case 'remove-skill':
-        return this.features.removeSkill(action.featureId, action.skillId);
       case 'add-record':
         return this.features.addRecord(action.featureId, action.request);
       case 'update-record':

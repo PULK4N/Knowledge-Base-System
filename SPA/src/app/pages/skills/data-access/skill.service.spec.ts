@@ -15,6 +15,8 @@ const skill: SkillDto = {
   description: 'Writes Angular features.',
   content: '# Angular',
   tags: ['angular'],
+  useScenarios: ['Writing Angular code'],
+  relatedProjectIds: [],
   references: {
     'references/architecture.md': {
       content: '# Architecture',
@@ -153,6 +155,25 @@ describe('SkillService', () => {
       ...request,
       referenceCount: 1,
       attachmentCount: 0,
+    });
+  });
+
+  it('replaces the use scenarios and refreshes the skill', async () => {
+    const scenarios = ['Writing Angular code', 'Reviewing Angular code'];
+    const resultPromise = firstValueFrom(
+      service.setUseScenarios(skill.id, scenarios),
+    );
+    const mutation = http.expectOne('/api/skills/skill-1/use-scenarios');
+
+    expect(mutation.request.method).toBe('POST');
+    expect(mutation.request.body).toEqual({ scenarios });
+    mutation.flush({ status: 'OK' });
+
+    http.expectOne('/api/skills/skill-1').flush({ ...skill, useScenarios: scenarios });
+
+    await expect(resultPromise).resolves.toMatchObject({
+      id: skill.id,
+      useScenarios: scenarios,
     });
   });
 

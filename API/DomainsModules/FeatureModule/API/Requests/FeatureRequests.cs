@@ -27,11 +27,6 @@ public sealed record UpdateFeatureSummaryRequest
     public string? CompositeBranchName { get; init; }
 }
 
-public sealed record FeatureSkillRequest
-{
-    public required Guid SkillId { get; init; }
-}
-
 public sealed record FeatureReviewNoteContentRequest
 {
     public required string Title { get; init; }

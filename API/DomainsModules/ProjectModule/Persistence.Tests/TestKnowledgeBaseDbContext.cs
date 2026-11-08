@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
 using ProjectModule.Persistence.Models;
+using SharedModule.Persistence;
 
 namespace ProjectModule.Persistence.Tests;
 
@@ -25,6 +26,8 @@ internal sealed class TestKnowledgeBaseDbContext(
         Set<PolicyProjectSummaryEntry>();
     public DbSet<ProjectPolicyTopic> ProjectPolicyTopics =>
         Set<ProjectPolicyTopic>();
+    public DbSet<EntityRelation> EntityRelations =>
+        Set<EntityRelation>();
 
     public static TestKnowledgeBaseDbContext Create()
     {
@@ -47,6 +50,7 @@ internal sealed class TestKnowledgeBaseDbContext(
         modelBuilder.Entity<ProjectPolicyText>().HasKey(text => text.Id);
         modelBuilder.Entity<PolicyProjectSummaryEntry>().HasKey(summary => summary.Id);
         modelBuilder.Entity<ProjectPolicyTopic>().HasKey(relation => relation.Id);
+        modelBuilder.Entity<EntityRelation>().HasKey(relation => relation.Id);
         modelBuilder
             .Entity<ProjectPolicyTopic>()
             .HasIndex(

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ProjectModule.Domain;
 using ProjectModule.Persistence.Interfaces;
 using ProjectModule.Persistence.Models;
+using SharedModule.Persistence;
 
 namespace ProjectModule.Persistence;
 
@@ -77,6 +78,19 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
         return new PolicyProjectSummarySearchResult(items, totalCount);
     }
 
+    public Task<List<Guid>> GetSkillIds(
+        Guid projectId,
+        CancellationToken cancellationToken = default
+    ) =>
+        dbContext.EntityRelations
+            .AsNoTracking()
+            .Where(
+                relation => relation.EntityId == projectId
+                    && relation.RelationType == ProjectEntityRelationTypes.Skill
+            )
+            .Select(relation => relation.RelatedEntityId)
+            .ToListAsync(cancellationToken);
+
     public async Task Write(List<ProjectStateData> projects)
     {
         var context =
@@ -88,17 +102,25 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
             ? await context.Database.BeginTransactionAsync()
             : null;
         var projectIds = projects.Select(project => project.Id.Value).ToList();
+        var activeProjects = projects
+            .Where(project => !project.IsDeleted)
+            .ToList();
 
         await dbContext
             .PolicyProjectSummaries
             .Where(summary => projectIds.Contains(summary.ProjectAggregateId))
             .ExecuteDeleteAsync();
+        var skillRelations = await DeleteSkillRelations(projectIds);
 
+        dbContext.EntityRelations.AddRange(
+            activeProjects.SelectMany(
+                project => ToSkillRelations(project, skillRelations)
+            )
+        );
         await dbContext
             .PolicyProjectSummaries
             .AddRangeAsync(
-                projects
-                    .Where(project => !project.IsDeleted)
+                activeProjects
                     .Select(
                         project =>
                             new PolicyProjectSummaryEntry
@@ -116,6 +138,66 @@ public sealed class PolicyProjectSummaryRepository(IProjectModuleDbContext dbCon
         if (transaction is not null)
             await transaction.CommitAsync();
     }
+
+    /// <summary>
+    /// The project owns both rows of each project-skill relation, so it deletes
+    /// them all and re-adds the current ones. Returns the deleted rows so each
+    /// skill keeps the summary it was written with.
+    /// </summary>
+    private async Task<List<EntityRelation>> DeleteSkillRelations(
+        List<Guid> projectIds
+    )
+    {
+        var relations = await dbContext.EntityRelations
+            .Where(
+                relation =>
+                    (
+                        relation.RelationType == ProjectEntityRelationTypes.Skill
+                        && projectIds.Contains(relation.EntityId)
+                    )
+                    || (
+                        relation.RelationType == ProjectEntityRelationTypes.Project
+                        && projectIds.Contains(relation.RelatedEntityId)
+                    )
+            )
+            .ToListAsync();
+
+        dbContext.EntityRelations.RemoveRange(relations);
+        await dbContext.SaveChangesAsync();
+
+        return relations;
+    }
+
+    private static List<EntityRelation> ToSkillRelations(
+        ProjectStateData project,
+        List<EntityRelation> previousRelations
+    ) =>
+        project.RelatedSkillIds
+            .SelectMany(
+                skillId => new List<EntityRelation>
+                {
+                    new()
+                    {
+                        EntityId = project.Id.Value,
+                        RelatedEntityId = skillId.Value,
+                        RelationType = ProjectEntityRelationTypes.Skill,
+                        RelatedEntitySummary = previousRelations
+                            .FirstOrDefault(
+                                relation => relation.EntityId == project.Id.Value
+                                    && relation.RelatedEntityId == skillId.Value
+                            )
+                            ?.RelatedEntitySummary ?? string.Empty
+                    },
+                    new()
+                    {
+                        EntityId = skillId.Value,
+                        RelatedEntityId = project.Id.Value,
+                        RelationType = ProjectEntityRelationTypes.Project,
+                        RelatedEntitySummary = project.ProjectName
+                    }
+                }
+            )
+            .ToList();
 
     private static PolicyProjectSummary ToReadModel(
         PolicyProjectSummaryEntry summary

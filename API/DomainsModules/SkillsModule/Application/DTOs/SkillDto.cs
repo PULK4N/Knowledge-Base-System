@@ -11,6 +11,8 @@ public sealed record SkillDto
     public required string Description { get; init; }
     public required string Content { get; init; }
     public required IReadOnlyCollection<string> Tags { get; init; }
+    public required IReadOnlyCollection<string> UseScenarios { get; init; }
+    public required IReadOnlyCollection<Guid> RelatedProjectIds { get; init; }
     public required IReadOnlyDictionary<string, SkillReferenceDto> References
     {
         get;
@@ -44,6 +46,10 @@ public sealed record SkillDto
             Description = stateData.Description,
             Content = stateData.Content,
             Tags = stateData.Tags.ToList(),
+            UseScenarios = stateData.UseScenarios.ToList(),
+            RelatedProjectIds = stateData.RelatedProjectIds
+                .Select(projectId => projectId.Value)
+                .ToList(),
             References = stateData.References
                 .Where(
                     reference =>

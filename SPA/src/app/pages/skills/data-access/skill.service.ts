@@ -33,7 +33,12 @@ import {
 const SKILL_ENTITY_TYPE = 'skill';
 
 function isSkill(entity: SkillSummary | undefined): entity is Skill {
-  return !!entity && 'description' in entity && 'content' in entity;
+  return (
+    !!entity &&
+    'description' in entity &&
+    'content' in entity &&
+    'useScenarios' in entity
+  );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -127,6 +132,15 @@ export class SkillService {
       .post<SkillCommandResult>(
         `${this.controllerPath}/${encodeURIComponent(id)}/update`,
         request,
+      )
+      .pipe(switchMap(() => this.refresh(id)));
+  }
+
+  setUseScenarios(id: string, scenarios: readonly string[]): Observable<Skill> {
+    return this.http
+      .post<SkillCommandResult>(
+        `${this.controllerPath}/${encodeURIComponent(id)}/use-scenarios`,
+        { scenarios },
       )
       .pipe(switchMap(() => this.refresh(id)));
   }

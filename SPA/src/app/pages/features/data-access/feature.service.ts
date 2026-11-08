@@ -156,14 +156,6 @@ export class FeatureService {
     return this.postAndRefresh(id, 'composite-branch', request);
   }
 
-  addSkill(id: string, skillId: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'skills', { skillId });
-  }
-
-  removeSkill(id: string, skillId: string): Observable<Feature> {
-    return this.postAndRefresh(id, 'skills/remove', { skillId });
-  }
-
   addRecord(
     id: string,
     request: AddFeatureRecordRequest,

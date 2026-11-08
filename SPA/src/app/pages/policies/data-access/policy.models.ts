@@ -37,9 +37,16 @@ export interface PolicyProjectSummary {
   readonly repositoryPaths: readonly string[];
 }
 
+export interface ProjectSkill {
+  readonly skillId: string;
+  readonly name: string;
+  readonly useScenarios: readonly string[];
+}
+
 export interface PolicyProjectDetails extends PolicyProjectSummary {
   readonly description: string;
   readonly topicNames: readonly string[];
+  readonly skills: readonly ProjectSkill[];
 }
 
 export type PolicyScope =
@@ -91,6 +98,7 @@ export interface PolicyProjectSummaryDto {
 export interface PolicyProjectDetailsDto extends PolicyProjectSummaryDto {
   readonly projectDescription: string;
   readonly topicNames: readonly string[];
+  readonly skills: readonly ProjectSkill[];
 }
 
 export interface PolicyCommandResult {

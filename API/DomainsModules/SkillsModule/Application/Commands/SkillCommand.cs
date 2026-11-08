@@ -8,6 +8,7 @@ using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
 using SkillsModule.Application.Models;
+using SkillsModule.Domain;
 
 namespace SkillsModule.Application.Commands;
 
@@ -15,6 +16,7 @@ public abstract class SkillCommand(StateMachineHandler stateMachineHandler)
     : Command<object>
 {
     protected const string StateMachineId = "skills-state-machine";
+    protected const string ProjectStateMachineId = "project-state-machine";
 
     private bool _isUserOriginated;
 
@@ -122,6 +124,43 @@ public abstract class SkillCommand(StateMachineHandler stateMachineHandler)
         );
         await stateMachineHandler.ExecuteEvents(
             new List<EventPayload> { skillPayload, relationPayload }
+        );
+        return SkillCommandResult.Ok;
+    }
+
+    protected async Task<object> ExecuteEvents(
+        Executor executor,
+        AggregateId skillId,
+        IEvent eventData,
+        Func<SkillStateData, List<EventPayload>> dependentEvents,
+        AggregateId memoryAggregateId
+    )
+    {
+        var skillPayload = EventPayload.Create(
+            executor.Id,
+            skillId,
+            StateMachineId,
+            eventData
+        );
+        await stateMachineHandler.ExecuteEvents(
+            skillPayload,
+            stateInfos =>
+            {
+                var payloads = dependentEvents(
+                    (SkillStateData)stateInfos[0].StateData
+                );
+                if (!_isUserOriginated)
+                {
+                    payloads.Add(EventPayload.Create(
+                        executor.Id,
+                        memoryAggregateId,
+                        Constants.StateMachineIds.Memory,
+                        new MemoryRelationAddedV1(eventData.GetType().Name, skillId)
+                    ));
+                }
+
+                return payloads;
+            }
         );
         return SkillCommandResult.Ok;
     }
