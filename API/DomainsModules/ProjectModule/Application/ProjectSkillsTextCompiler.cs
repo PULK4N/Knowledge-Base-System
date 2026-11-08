@@ -8,19 +8,6 @@ namespace ProjectModule.Application;
 /// </summary>
 public static class ProjectSkillsTextCompiler
 {
-    public static string CompileUseScenariosPolicy(List<SkillUseScenarios> skills)
-    {
-        var lines = skills.SelectMany(
-            skill => skill.UseScenarios.Select(
-                scenario => $"- {scenario} - {skill.Name}"
-            )
-        ).ToList();
-
-        return lines.Count == 0
-            ? string.Empty
-            : $"# Project skill use scenarios\n{string.Join("\n", lines)}";
-    }
-
     public static string Compile(List<SkillUseScenarios> skills)
     {
         if (skills.Count == 0)

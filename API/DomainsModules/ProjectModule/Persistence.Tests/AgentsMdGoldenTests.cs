@@ -87,12 +87,6 @@ public sealed class AgentsMdGoldenTests
         + "- how-to-grill-user-to-write-a-better-plan — Writing a plan; Reviewing or stress-testing a plan\n"
         + "- some-skill-without-scenarios";
 
-    private const string ProjectSkillUseScenariosText =
-        "# Project skill use scenarios\n"
-        + "- Writing or reviewing Angular code - angular-code-writter\n"
-        + "- Writing a plan - how-to-grill-user-to-write-a-better-plan\n"
-        + "- Reviewing or stress-testing a plan - how-to-grill-user-to-write-a-better-plan";
-
     private const string TopicsText =
         "# Topic \"dotnet\" policies\n\n"
         + "## Dotnet one\nDotnet one text.\n\n"
@@ -108,8 +102,7 @@ public sealed class AgentsMdGoldenTests
                 GeneralText + "\n\n" + ProjectText + "\n\n"
                     + "# Agent family \"claude\" policies\n\n"
                     + "## Claude one\nClaude one text.\n\n"
-                    + TopicsText + "\n\n" + ProjectSkillUseScenariosText
-                    + "\n\n" + ProjectSkillsText
+                    + TopicsText + "\n\n" + ProjectSkillsText
             },
             {
                 "codex",
@@ -117,13 +110,11 @@ public sealed class AgentsMdGoldenTests
                     + "# Agent family \"codex\" policies\n\n"
                     + "## Codex one\nCodex one text.\n\n"
                     + "## Codex two\nCodex two text.\n\n"
-                    + TopicsText + "\n\n" + ProjectSkillUseScenariosText
-                    + "\n\n" + ProjectSkillsText
+                    + TopicsText + "\n\n" + ProjectSkillsText
             },
             {
                 "empty-family",
                 GeneralText + "\n\n" + ProjectText + "\n\n" + TopicsText
-                    + "\n\n" + ProjectSkillUseScenariosText
                     + "\n\n" + ProjectSkillsText
             }
         };
@@ -154,7 +145,6 @@ public sealed class AgentsMdGoldenTests
 
         Assert.Equal(
             GeneralText + "\n\n" + TopicsText
-                + "\n\n" + ProjectSkillUseScenariosText
                 + "\n\n" + ProjectSkillsText,
             (await CreateQuery(context, "empty-family").Execute(Executor)).Policies
         );
