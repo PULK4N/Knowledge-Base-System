@@ -24,6 +24,7 @@ import {
   tap,
 } from 'rxjs';
 import { toUserMessage } from '../../../core/http/load-state';
+import { ListControlsComponent } from '../../../shared/list-controls/list-controls.component';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import {
@@ -75,6 +76,7 @@ const EMPTY_RESULT: PolicySearchResult = {
   imports: [
     AsyncPipe,
     FormsModule,
+    ListControlsComponent,
     MarkdownContentComponent,
     PaginationComponent,
     RouterLink,

@@ -12,6 +12,8 @@ import {
   switchMap,
 } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
+import { ListControlsComponent } from '../../../shared/list-controls/list-controls.component';
+import { ListRowComponent } from '../../../shared/list-row/list-row.component';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { PolicyProjectSearchResult } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
@@ -19,7 +21,13 @@ import { policySearchRequests } from '../../policies/feature/policy-search-reque
 
 @Component({
   selector: 'app-projects-list-page',
-  imports: [AsyncPipe, PaginationComponent, RouterLink],
+  imports: [
+    AsyncPipe,
+    ListControlsComponent,
+    ListRowComponent,
+    PaginationComponent,
+    RouterLink,
+  ],
   templateUrl: './projects-list.page.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',

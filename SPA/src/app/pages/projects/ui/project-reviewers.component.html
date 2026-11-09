@@ -1,57 +1,80 @@
 @if (mutation$ | async; as mutation) {
   <section class="list-panel surface-card implicit-skills" aria-labelledby="reviewers-title">
-    <div>
-      <h2 id="reviewers-title" class="panel-title">Reviewers</h2>
-      <p class="section-hint">Skills a review script runs, each at its review level.</p>
+    <div class="section-heading">
+      <div>
+        <h2 id="reviewers-title" class="panel-title">Reviewers</h2>
+        <p class="section-hint">Skills a review script runs, each at its review level.</p>
+      </div>
+      @if (!adding()) {
+        <button class="primary-button" type="button" (click)="adding.set(true)">Add reviewer</button>
+      }
     </div>
 
-    <div class="toolbar reviewer-toolbar">
-      <app-skill-picker
-        #picker
-        placeholder="Search skills by name"
-        [takenSkillIds]="reviewerSkillIds()"
-        (skillPicked)="pickedSkill.set($event)"
-      />
-      <label class="toolbar-field narrow">
-        <span class="sr-only">Level</span>
-        <select #reviewerLevel>
-          <option value="">Level…</option>
-          @for (level of reviewLevels; track level) {
-            <option [value]="level">{{ level }}</option>
-          }
-        </select>
-      </label>
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="mutation.status === 'saving'"
-        (click)="
-          addReviewer(
-            project(),
-            picker,
-            $any(reviewerLevel.value),
-            reviewerNotes.value
-          )
-        "
-      >
-        {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
-      </button>
-      <label class="toolbar-field full-width">
-        <span class="sr-only">Notes</span>
-        <textarea
-          #reviewerNotes
-          class="reviewer-notes"
-          rows="4"
-          placeholder="Notes for the reviewer (optional)"
-        ></textarea>
-      </label>
-    </div>
+    @if (adding()) {
+      <div class="toolbar reviewer-toolbar add-panel">
+        <app-skill-picker
+          #picker
+          placeholder="Find a skill to add by name"
+          [takenSkillIds]="reviewerSkillIds()"
+          (skillPicked)="pickedSkill.set($event)"
+        />
+        <label class="toolbar-field narrow">
+          <span class="sr-only">Level</span>
+          <select #reviewerLevel>
+            <option value="">Level…</option>
+            @for (level of reviewLevels; track level) {
+              <option [value]="level">{{ level }}</option>
+            }
+          </select>
+        </label>
+        <button
+          class="primary-button"
+          type="button"
+          [disabled]="mutation.status === 'saving'"
+          (click)="
+            addReviewer(
+              project(),
+              picker,
+              $any(reviewerLevel.value),
+              reviewerNotes.value
+            )
+          "
+        >
+          {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add reviewer' }}
+        </button>
+        <button class="secondary-button" type="button" (click)="cancelAdding()">Cancel</button>
+        <label class="toolbar-field full-width">
+          <span class="sr-only">Notes</span>
+          <textarea
+            #reviewerNotes
+            class="reviewer-notes"
+            rows="4"
+            placeholder="Notes for the reviewer (optional)"
+          ></textarea>
+        </label>
+      </div>
+    }
     @if (formError(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
     }
     @if (mutation.status === 'error') {
       <p class="form-error" role="alert">{{ mutation.message }}</p>
     }
+
+    <div class="list-toolbar">
+      <app-list-controls
+        [search]="listState().search"
+        searchLabel="Search reviewers"
+        searchPlaceholder="Search names, notes and use scenarios"
+        [sortBy]="listState().sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="listState().sortDirection"
+        (searchChanged)="search($event)"
+        (sortByChanged)="sort($event)"
+        (sortDirectionChanged)="changeDirection($event)"
+      />
+      <app-list-filters [filters]="filters()" (selectFilterChanged)="filter($event)" />
+    </div>
 
     <div class="list-heading" aria-hidden="true">
       <span>Reviewer</span>
@@ -61,21 +84,15 @@
 
     <div class="directory-list" aria-label="Reviewers">
       @for (reviewer of reviewers().items; track reviewer.skillId) {
-        <article class="directory-row with-actions">
-          <a class="directory-entry-link" [routerLink]="['/skills', reviewer.skillId]">
-            <span class="entry-copy">
-              <span class="entry-icon skill" aria-hidden="true">&lt;/&gt;</span>
-              <span>
-                <strong>{{ reviewer.name }}</strong>
-                <small [title]="reviewer.reviewNotes">{{ reviewer.reviewNotes || 'No notes' }}</small>
-              </span>
-            </span>
-            <span class="metadata">{{ reviewer.reviewLevel }}</span>
-            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m9 5 7 7-7 7" />
-            </svg>
-          </a>
-          <div class="directory-actions">
+        <app-list-row
+          icon="&lt;/&gt;"
+          tone="indigo"
+          [title]="reviewer.name"
+          [subtitle]="reviewer.reviewNotes || 'No notes'"
+          [metadata]="reviewer.reviewLevel ?? '—'"
+          [link]="['/skills', reviewer.skillId]"
+        >
+          <div class="row-actions" listRowActions>
             <button type="button" (click)="editingSkillId.set(reviewer.skillId)">Edit</button>
             <button
               class="danger-link"
@@ -120,11 +137,16 @@
               </button>
             </div>
           }
-        </article>
+        </app-list-row>
       } @empty {
         <div class="empty-state">
-          <strong>No reviewers yet</strong>
-          <span>Add a skill with a review level.</span>
+          @if (reviewerSkillIds().length === 0) {
+            <strong>No reviewers yet</strong>
+            <span>Add a skill with a review level.</span>
+          } @else {
+            <strong>No reviewers found</strong>
+            <span>Try different search or filter values.</span>
+          }
         </div>
       }
     </div>

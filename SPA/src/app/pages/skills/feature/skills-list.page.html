@@ -43,40 +43,18 @@
         </div>
       }
       @case ('success') {
-        <div class="skill-grid" aria-label="Skills">
+        <div class="directory-list" aria-label="Skills">
           @for (skill of vm.state.data.items; track skill.id) {
-            <a class="skill-card" [routerLink]="['/skills', skill.id]">
-              <header class="skill-card-heading">
-                <span class="skill-icon" aria-hidden="true">&lt;/&gt;</span>
-                <span>
-                  <strong>{{ skill.name }}</strong>
-                </span>
-              </header>
-
-              <p class="skill-description">
-                {{ skill.description || 'No description provided.' }}
-              </p>
-
-              <div class="tag-list" aria-label="Tags">
-                @for (tag of skill.tags; track tag) {
-                  <span>{{ tag }}</span>
-                } @empty {
-                  <span class="empty-tag">No tags</span>
-                }
-              </div>
-
-              <footer>
-                <span>
-                  {{ skill.referenceCount }}
-                  {{ skill.referenceCount === 1 ? 'reference' : 'references' }}
-                </span>
-                <span>
-                  {{ skill.attachmentCount }}
-                  {{ skill.attachmentCount === 1 ? 'attachment' : 'attachments' }}
-                </span>
-                <span class="open-skill" aria-hidden="true">→</span>
-              </footer>
-            </a>
+            <app-list-row
+              icon="&lt;/&gt;"
+              tone="indigo"
+              [title]="skill.name"
+              [metadata]="
+                skill.referenceCount + (skill.referenceCount === 1 ? ' reference · ' : ' references · ') +
+                skill.attachmentCount + (skill.attachmentCount === 1 ? ' attachment' : ' attachments')
+              "
+              [link]="['/skills', skill.id]"
+            />
           } @empty {
             <div class="empty-state">
               <strong>No skills found</strong>

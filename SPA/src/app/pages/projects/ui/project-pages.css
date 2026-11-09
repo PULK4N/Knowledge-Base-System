@@ -370,3 +370,22 @@ button:disabled {
   color: #a6293b;
   border-color: #e0b1b8;
 }
+
+/* Add panel opened by the Add button above a project list. */
+.toolbar.add-panel {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.add-panel app-skill-picker {
+  flex: 1 1 320px;
+}
+
+.add-panel .secondary-button {
+  height: 58px;
+  border-radius: 9px;
+}
+
+.implicit-skills .list-toolbar {
+  margin-top: 20px;
+}

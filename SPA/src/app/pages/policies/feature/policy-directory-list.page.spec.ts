@@ -54,7 +54,7 @@ describe('PolicyDirectoryListPage topic deletion', () => {
     const harness = await RouterTestingHarness.create('/policies/topics');
     const element = harness.routeNativeElement as HTMLElement;
     const deleteButton = element.querySelector(
-      '.directory-actions .danger-link',
+      '.row-actions .danger-link',
     ) as HTMLButtonElement;
 
     deleteButton.click();
@@ -64,7 +64,7 @@ describe('PolicyDirectoryListPage topic deletion', () => {
     expect(policies.removeTopic).not.toHaveBeenCalled();
 
     const confirmButton = element.querySelector(
-      '.directory-actions .danger-action',
+      '.row-actions .danger-action',
     ) as HTMLButtonElement;
     confirmButton.click();
     harness.detectChanges();

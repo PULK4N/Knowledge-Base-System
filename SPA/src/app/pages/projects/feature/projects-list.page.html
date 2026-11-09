@@ -7,21 +7,12 @@
 </header>
 
 <section class="list-panel surface-card">
-  <div class="toolbar">
-    <label class="search-box">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="10.5" cy="10.5" r="6.5" />
-        <path d="m15.5 15.5 5 5" />
-      </svg>
-      <span class="sr-only">Search projects</span>
-      <input
-        #searchInput
-        type="search"
-        placeholder="Search projects"
-        autocomplete="off"
-        (input)="search(searchInput.value)"
-      />
-    </label>
+  <div class="list-toolbar">
+    <app-list-controls
+      searchLabel="Search projects"
+      searchPlaceholder="Search projects"
+      (searchChanged)="search($event)"
+    />
   </div>
 
   @if (state$ | async; as state) {
@@ -46,24 +37,21 @@
 
         <div class="directory-list" aria-label="Projects">
           @for (project of state.data.items; track project.id) {
-            <article class="directory-row">
-              <a class="directory-entry-link" [routerLink]="['/projects', project.id]">
-                <span class="entry-copy">
-                  <span class="entry-icon project" aria-hidden="true">▤</span>
-                  <span>
-                    <strong>{{ project.name }}</strong>
-                    <small>{{ project.repositoryPaths.length > 0 ? project.repositoryPaths[0] : 'No repositories connected' }}</small>
-                  </span>
-                </span>
-                <span class="metadata">
-                  {{ project.repositoryPaths.length }}
-                  {{ project.repositoryPaths.length === 1 ? 'repository' : 'repositories' }}
-                </span>
-                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m9 5 7 7-7 7" />
-                </svg>
-              </a>
-            </article>
+            <app-list-row
+              icon="▤"
+              tone="amber"
+              [title]="project.name"
+              [subtitle]="
+                project.repositoryPaths.length > 0
+                  ? project.repositoryPaths[0]
+                  : 'No repositories connected'
+              "
+              [metadata]="
+                project.repositoryPaths.length +
+                (project.repositoryPaths.length === 1 ? ' repository' : ' repositories')
+              "
+              [link]="['/projects', project.id]"
+            />
           } @empty {
             <div class="empty-state">
               <strong>No projects found</strong>

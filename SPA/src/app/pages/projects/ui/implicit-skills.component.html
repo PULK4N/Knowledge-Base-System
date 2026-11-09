@@ -1,32 +1,55 @@
 @if (mutation$ | async; as mutation) {
   <section class="list-panel surface-card implicit-skills" aria-labelledby="implicit-skills-title">
-    <div>
-      <h2 id="implicit-skills-title" class="panel-title">Implicit skills</h2>
-      <p class="section-hint">Listed in Agents.MD, so agents load them in these scenarios.</p>
+    <div class="section-heading">
+      <div>
+        <h2 id="implicit-skills-title" class="panel-title">Implicit skills</h2>
+        <p class="section-hint">Listed in Agents.MD, so agents load them in these scenarios.</p>
+      </div>
+      @if (!adding()) {
+        <button class="primary-button" type="button" (click)="adding.set(true)">Add skill</button>
+      }
     </div>
 
-    <div class="toolbar">
-      <app-skill-picker
-        #picker
-        placeholder="Search skills by name"
-        [takenSkillIds]="linkedSkillIds()"
-        (skillPicked)="pickedSkill.set($event)"
-      />
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="mutation.status === 'saving'"
-        (click)="addSkill(project().id, picker)"
-      >
-        {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add skill' }}
-      </button>
-    </div>
+    @if (adding()) {
+      <div class="toolbar add-panel">
+        <app-skill-picker
+          #picker
+          placeholder="Find a skill to add by name"
+          [takenSkillIds]="linkedSkillIds()"
+          (skillPicked)="pickedSkill.set($event)"
+        />
+        <button
+          class="primary-button"
+          type="button"
+          [disabled]="mutation.status === 'saving'"
+          (click)="addSkill(project().id, picker)"
+        >
+          {{ mutation.status === 'saving' && mutation.kind === 'add' ? 'Adding…' : 'Add skill' }}
+        </button>
+        <button class="secondary-button" type="button" (click)="cancelAdding()">Cancel</button>
+      </div>
+    }
     @if (nameError(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
     }
     @if (mutation.status === 'error') {
       <p class="form-error" role="alert">{{ mutation.message }}</p>
     }
+
+    <div class="list-toolbar">
+      <app-list-controls
+        [search]="listState().search"
+        searchLabel="Search implicit skills"
+        searchPlaceholder="Search names and use scenarios"
+        [sortBy]="listState().sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="listState().sortDirection"
+        (searchChanged)="search($event)"
+        (sortByChanged)="sort($event)"
+        (sortDirectionChanged)="changeDirection($event)"
+      />
+      <app-list-filters [filters]="filters()" (selectFilterChanged)="filter($event)" />
+    </div>
 
     <div class="list-heading" aria-hidden="true">
       <span>Skill</span>
@@ -36,25 +59,17 @@
 
     <div class="directory-list" aria-label="Implicit skills">
       @for (skill of skills().items; track skill.skillId) {
-        <article class="directory-row with-actions">
-          <a class="directory-entry-link" [routerLink]="['/skills', skill.skillId]">
-            <span class="entry-copy">
-              <span class="entry-icon skill" aria-hidden="true">&lt;/&gt;</span>
-              <span>
-                <strong>{{ skill.name }}</strong>
-                <small [title]="skill.useScenarios.join('; ')">
-                  {{ skill.useScenarios.length > 0 ? skill.useScenarios.join('; ') : 'No use scenarios yet' }}
-                </small>
-              </span>
-            </span>
-            <span class="metadata">
-              {{ skill.usedForReview ? 'Reviewer · ' + skill.reviewLevel : '—' }}
-            </span>
-            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m9 5 7 7-7 7" />
-            </svg>
-          </a>
-          <div class="directory-actions">
+        <app-list-row
+          icon="&lt;/&gt;"
+          tone="indigo"
+          [title]="skill.name"
+          [subtitle]="
+            skill.useScenarios.length > 0 ? skill.useScenarios.join('; ') : 'No use scenarios yet'
+          "
+          [metadata]="skill.usedForReview ? 'Reviewer · ' + skill.reviewLevel : '—'"
+          [link]="['/skills', skill.skillId]"
+        >
+          <div class="row-actions" listRowActions>
             @if (confirmingSkillId() === skill.skillId) {
               <span>
                 Unlink?{{ skill.usedForReview ? ' Also removes it from Reviewers.' : '' }}
@@ -74,11 +89,16 @@
               </button>
             }
           </div>
-        </article>
+        </app-list-row>
       } @empty {
         <div class="empty-state">
-          <strong>No skills linked</strong>
-          <span>Add a skill by name to list it in Agents.MD.</span>
+          @if (project().skills.length === 0) {
+            <strong>No skills linked</strong>
+            <span>Add a skill by name to list it in Agents.MD.</span>
+          } @else {
+            <strong>No skills found</strong>
+            <span>Try different search or filter values.</span>
+          }
         </div>
       }
     </div>

@@ -24,7 +24,9 @@
           (change)="requestSelection(filter.key, selectInput.value)"
         >
           @for (option of filter.options; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
+            <option [value]="option.value" [selected]="option.value === filter.value">
+              {{ option.label }}
+            </option>
           }
         </select>
       }

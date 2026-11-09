@@ -1,0 +1,55 @@
+/*
+ * Buttons projected into app-list-row with the listRowActions attribute.
+ * Projected elements carry the parent's style scope, so every parent that
+ * projects row actions adds this file to its styleUrls.
+ */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: end;
+  gap: 8px;
+}
+
+.row-actions > span,
+.row-error {
+  color: #842936;
+  font-size: 13px;
+}
+
+.row-actions button {
+  padding: 8px 11px;
+  border: 1px solid #cbd2df;
+  border-radius: 7px;
+  color: #344260;
+  background: white;
+  cursor: pointer;
+  font-weight: 640;
+}
+
+.row-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.row-actions .danger-link {
+  color: #a6293b;
+  border-color: #e0b1b8;
+}
+
+.row-actions .danger-action {
+  color: white;
+  border-color: #a6293b;
+  background: #a6293b;
+}
+
+.row-error {
+  margin: -4px 0 4px;
+  padding-left: 76px;
+}
+
+@media (max-width: 720px) {
+  .row-actions {
+    justify-content: start;
+  }
+}

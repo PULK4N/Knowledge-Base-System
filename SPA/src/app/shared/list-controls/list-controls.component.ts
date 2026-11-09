@@ -35,9 +35,10 @@ export class ListControlsComponent {
   readonly filterTextLabel = input('Filter text');
   readonly filterTextPlaceholder = input('Filter');
   readonly filterDisabled = input(false);
-  readonly sortBy = input.required<string>();
-  readonly sortOptions = input.required<readonly ListControlOption[]>();
-  readonly sortDirection = input.required<ListSortDirection>();
+  /** Sort and direction are shown only when sort options are given. */
+  readonly sortBy = input('');
+  readonly sortOptions = input<readonly ListControlOption[]>([]);
+  readonly sortDirection = input<ListSortDirection>('Descending');
 
   private readonly searchRequests = new Subject<string>();
   private readonly secondarySearchRequests = new Subject<string>();

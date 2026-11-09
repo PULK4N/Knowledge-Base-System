@@ -33,6 +33,30 @@ describe('ListControlsComponent', () => {
     vi.useRealTimers();
   });
 
+  it.each([
+    [[], 0],
+    [[{ value: 'Name', label: 'Name' }], 2],
+  ])('shows sort and direction only with sort options %j', (options, selects) => {
+    const fixture = TestBed.createComponent(ListControlsComponent);
+    fixture.componentRef.setInput('sortOptions', options);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('select')).toHaveLength(selects);
+  });
+
+  it('shows a sort value that is not the first option', () => {
+    const fixture = TestBed.createComponent(ListControlsComponent);
+    fixture.componentRef.setInput('sortBy', 'ReviewLevel');
+    fixture.componentRef.setInput('sortOptions', [
+      { value: 'Name', label: 'Name' },
+      { value: 'ReviewLevel', label: 'Review level' },
+    ]);
+    fixture.detectChanges();
+
+    const sort = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+    expect(sort.value).toBe('ReviewLevel');
+  });
+
   it('renders and independently emits the optional semantic search', () => {
     vi.useFakeTimers();
     const fixture = TestBed.createComponent(ListControlsComponent);

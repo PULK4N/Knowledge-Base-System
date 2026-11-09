@@ -102,3 +102,10 @@
     width: 100%;
   }
 }
+
+/* Toolbar holding app-list-controls and app-list-filters above a list. */
+.list-toolbar {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 26px;
+}

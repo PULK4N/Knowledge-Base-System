@@ -780,14 +780,28 @@
                   </div>
                 </details>
                 @if (vm.collections.plansByRecordId.get(record.id); as linkedPlans) {
-                  <div class="record-plans">
-                    <span>Used by</span>
-                    @for (plan of linkedPlans; track plan.id) {
-                      <a [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]">
-                        {{ plan.title }}
-                      </a>
-                    }
-                  </div>
+                  <footer class="record-plans">
+                    <span class="record-plans-label">
+                      Used by {{ linkedPlans.length === 1 ? 'plan' : 'plans' }}
+                    </span>
+                    <ul class="record-plan-list">
+                      @for (plan of linkedPlans; track plan.id) {
+                        <li>
+                          <a
+                            class="record-plan-link"
+                            [routerLink]="['/features', vm.state.data.id, 'plans', plan.id]"
+                            [title]="plan.title"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M7 3h7l5 5v13H7z" />
+                              <path d="M14 3v5h5M10 13h6M10 17h6" />
+                            </svg>
+                            <span>{{ plan.title }}</span>
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  </footer>
                 }
               }
             </article>

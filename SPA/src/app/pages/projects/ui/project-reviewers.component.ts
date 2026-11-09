@@ -8,9 +8,19 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
+import { ListControlsComponent } from '../../../shared/list-controls/list-controls.component';
+import {
+  ListFilter,
+  ListFilterChange,
+  ListFiltersComponent,
+} from '../../../shared/list-filters/list-filters.component';
+import { ListRowComponent } from '../../../shared/list-row/list-row.component';
+import {
+  ListSortDirection,
+  selectClientList,
+} from '../../../shared/list-state/list-state';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { SkillListItem } from '../../skills/data-access/skill.models';
 import {
   PolicyProjectDetails,
@@ -21,6 +31,14 @@ import {
 import { PolicyService } from '../../policies/data-access/policy.service';
 import { MutationRequest, mutationStates } from './mutation-state';
 import { pageOf } from './page-of';
+import {
+  DEFAULT_PROJECT_SKILL_LIST_STATE,
+  PROJECT_SKILL_SORT_OPTIONS,
+  ProjectSkillListState,
+  REVIEWER_LIST,
+  REVIEW_LEVEL_FILTER_OPTIONS,
+  isProjectSkillSort,
+} from './project-skill-list';
 import { toReviewLevelModels } from './project-review';
 import { SkillPickerComponent } from './skill-picker.component';
 
@@ -28,11 +46,20 @@ type ReviewerMutation = 'add' | 'update' | 'remove' | 'models';
 
 @Component({
   selector: 'app-project-reviewers',
-  imports: [AsyncPipe, FormsModule, PaginationComponent, RouterLink, SkillPickerComponent],
+  imports: [
+    AsyncPipe,
+    FormsModule,
+    ListControlsComponent,
+    ListFiltersComponent,
+    ListRowComponent,
+    PaginationComponent,
+    SkillPickerComponent,
+  ],
   templateUrl: './project-reviewers.component.html',
   styleUrls: [
     '../../policies/feature/policy-directory-list.page.css',
     '../../policies/ui/knowledge-list.css',
+    '../../../shared/list-row/list-row-actions.css',
     './project-pages.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,14 +71,33 @@ export class ProjectReviewersComponent {
   readonly project = input.required<PolicyProjectDetails>();
 
   protected readonly reviewLevels = REVIEW_LEVELS;
+  protected readonly sortOptions = PROJECT_SKILL_SORT_OPTIONS;
+  protected readonly listState = signal<ProjectSkillListState>({
+    ...DEFAULT_PROJECT_SKILL_LIST_STATE,
+    sortBy: 'ReviewLevel',
+  });
+  protected readonly filters = computed<readonly ListFilter[]>(() => [
+    {
+      kind: 'select',
+      key: 'level',
+      label: 'Level',
+      value: this.listState().filter,
+      options: REVIEW_LEVEL_FILTER_OPTIONS,
+    },
+  ]);
   protected readonly page = signal(1);
   protected readonly reviewers = computed(() =>
     pageOf(
-      this.project().skills.filter(skill => skill.usedForReview),
+      selectClientList(
+        this.project().skills.filter(skill => skill.usedForReview),
+        this.listState(),
+        REVIEWER_LIST,
+      ),
       this.page(),
       10,
     ),
   );
+  protected readonly adding = signal(false);
   protected readonly editingSkillId = signal<string | null>(null);
   protected readonly editingModels = signal(false);
   protected readonly formError = signal<string | null>(null);
@@ -62,6 +108,28 @@ export class ProjectReviewersComponent {
       .map(skill => skill.skillId),
   );
   protected readonly mutation$ = mutationStates(this.mutations);
+
+  protected search(search: string): void {
+    this.changeList({ search });
+  }
+
+  protected filter(change: ListFilterChange): void {
+    this.changeList({ filter: change.value });
+  }
+
+  protected sort(sortBy: string): void {
+    if (isProjectSkillSort(sortBy)) this.changeList({ sortBy });
+  }
+
+  protected changeDirection(sortDirection: ListSortDirection): void {
+    this.changeList({ sortDirection });
+  }
+
+  protected cancelAdding(): void {
+    this.adding.set(false);
+    this.formError.set(null);
+    this.pickedSkill.set(null);
+  }
 
   /** Links the skill when needed and switches review on with the level and notes. */
   protected addReviewer(
@@ -88,7 +156,10 @@ export class ProjectReviewersComponent {
       request: linked
         ? this.projects.updateProjectSkill(project.id, skill.id, review)
         : this.projects.addProjectSkill(project.id, skill.id, review),
-      done: () => picker.clear(),
+      done: () => {
+        picker.clear();
+        this.adding.set(false);
+      },
     });
   }
 
@@ -137,5 +208,10 @@ export class ProjectReviewersComponent {
       request: this.projects.setProjectReviewLevelModels(projectId, result.levelModels),
       done: () => this.editingModels.set(false),
     });
+  }
+
+  private changeList(change: Partial<ProjectSkillListState>): void {
+    this.listState.update(state => ({ ...state, ...change }));
+    this.page.set(1);
   }
 }
