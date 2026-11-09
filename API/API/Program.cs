@@ -6,6 +6,9 @@ using AdministrationModule.Application.Services;
 using AttachmentsModule.API.Controllers;
 using AttachmentsModule.Application.Queries;
 using Api.Settings;
+using SettingsModule.Domain;
+using SettingsModule.Application.Commands;
+using SettingsModule.API.Controllers;
 using EventSourcing.Core;
 using EventSourcing.Core.Providers;
 using EventSourcing.Optimizations;
@@ -64,6 +67,7 @@ builder.Services
 
 builder.Services
     .AddControllers()
+    .AddApplicationPart(typeof(CodeReviewSettingsController).Assembly)
     .AddApplicationPart(typeof(AdministrationController).Assembly)
     .AddApplicationPart(typeof(AttachmentsController).Assembly)
     .AddApplicationPart(typeof(FeaturesController).Assembly)
@@ -100,7 +104,8 @@ builder.Services.RegisterEventSourcingCore(
     typeof(FeatureStateData).Assembly,
     typeof(MemoryStateData).Assembly,
     typeof(GeneralPoliciesStateData).Assembly,
-    typeof(ProjectStateData).Assembly
+    typeof(ProjectStateData).Assembly,
+    typeof(SettingsStateData).Assembly
 );
 builder.Services.RegisterActions(
     typeof(QueueProjectionReplayCommand).Assembly,
@@ -110,7 +115,8 @@ builder.Services.RegisterActions(
     typeof(RecordCodexPromptHookCommand).Assembly,
     typeof(SearchKnowledgeQuery).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly,
-    typeof(CreateProjectCommand).Assembly
+    typeof(CreateProjectCommand).Assembly,
+    typeof(UpdateCodeReviewSettingsCommand).Assembly
 );
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();

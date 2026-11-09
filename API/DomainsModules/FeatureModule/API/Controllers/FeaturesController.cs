@@ -5,6 +5,7 @@ using ActionModule.Shared.Models;
 using FeatureModule.API.Requests;
 using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
+using FeatureModule.Application.Exceptions;
 using FeatureModule.Application.Models;
 using FeatureModule.Application.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,25 @@ public sealed class FeaturesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
+    [HttpGet("review-context")]
+    public async Task<ActionResult<FeatureReviewContextDto>> ResolveReviewContext(
+        [FromQuery, Required] Guid projectId,
+        [FromQuery, Required] string branchName,
+        [FromServices] ResolveFeatureReviewContextQuery query)
+    {
+        query.ProjectId = projectId;
+        query.BranchName = branchName;
+        try
+        {
+            var context = await Execute(query);
+            return context is null ? NotFound() : Ok(context);
+        }
+        catch (FeatureReviewContextConflictException error)
+        {
+            return Conflict(new { message = error.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResult<FeatureSummaryDto>>> List(
         [FromServices] SearchFeaturesQuery query,

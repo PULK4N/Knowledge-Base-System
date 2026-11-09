@@ -49,7 +49,6 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
         modelBuilder.HasPostgresExtension("vector");
         modelBuilder.HasPostgresExtension("pg_trgm");
 

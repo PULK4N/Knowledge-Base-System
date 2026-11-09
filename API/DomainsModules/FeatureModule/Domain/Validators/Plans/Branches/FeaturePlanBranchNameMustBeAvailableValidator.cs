@@ -33,17 +33,23 @@ public sealed class FeaturePlanBranchNameMustBeAvailableValidator : IPreEventVal
             );
         }
 
+        // A branch belongs to one plan only, so every plan of the feature is checked.
         var (planId, branchName) = target.Value;
-        var plan = ((FeatureStateData)stateData).Plans
-            .SingleOrDefault(item => item.Id == planId);
-        var taken = branchName is not null
-            && plan?.FindBranch(branchName) is not null;
+        var owner = branchName is null
+            ? null
+            : ((FeatureStateData)stateData).Plans.FirstOrDefault(
+                plan => plan.AllBranches().Any(branch => branch.Name == branchName)
+            );
 
         return EventValidationResult.FromPayload(
             payload,
             nameof(FeaturePlanBranchNameMustBeAvailableValidator),
-            !taken,
-            taken ? $"The plan already has a branch named '{branchName}'." : null
+            owner is null,
+            owner is null
+                ? null
+                : owner.Id == planId
+                    ? $"The plan already has a branch named '{branchName}'."
+                    : $"Plan '{owner.Title}' already has a branch named '{branchName}'. A branch can belong to only one plan."
         );
     }
 }

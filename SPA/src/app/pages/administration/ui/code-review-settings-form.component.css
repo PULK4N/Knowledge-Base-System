@@ -1,0 +1,104 @@
+:host {
+  display: block;
+}
+
+.settings-form {
+  max-width: 780px;
+  padding-top: 28px;
+}
+
+fieldset {
+  display: grid;
+  gap: 26px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-field label {
+  color: var(--text-strong);
+  font-weight: 680;
+}
+
+input,
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  outline: 0;
+  color: var(--navy);
+  background: var(--control);
+  font: inherit;
+}
+
+.batch-input {
+  max-width: 140px;
+}
+
+textarea {
+  min-height: 180px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #8790ff;
+  box-shadow: 0 0 0 3px rgb(48 60 255 / 10%);
+}
+
+.field-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.form-actions {
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+button {
+  min-width: 190px;
+  min-height: 46px;
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: var(--indigo);
+  font-weight: 680;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #222dce;
+}
+
+button:disabled,
+fieldset:disabled input,
+fieldset:disabled textarea {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  button {
+    width: 100%;
+  }
+}

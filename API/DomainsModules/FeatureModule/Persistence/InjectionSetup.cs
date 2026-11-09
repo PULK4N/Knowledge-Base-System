@@ -11,6 +11,8 @@ public static class InjectionSetup
     )
     {
         services.AddScoped<FeatureSummaryRepository>();
+        services.AddScoped<IFeatureReviewCandidateReader>(provider =>
+            provider.GetRequiredService<FeatureSummaryRepository>());
         services.AddScoped<IFeatureSummaryRepository>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<
