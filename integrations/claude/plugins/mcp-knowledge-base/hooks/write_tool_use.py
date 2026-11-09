@@ -21,6 +21,7 @@ from write_memory import (
     _tool_use_hook_url as _shared_tool_use_hook_url,
     _turn_directory,
     drain_queue,
+    read_event,
 )
 
 
@@ -180,7 +181,7 @@ def main() -> int:
         return 0
 
     try:
-        event = json.load(sys.stdin)
+        event = read_event(sys.stdin.buffer)
         if not isinstance(event, dict):
             raise MemoryHookError("Claude hook input was not a JSON object.")
         output = process_hook(event)

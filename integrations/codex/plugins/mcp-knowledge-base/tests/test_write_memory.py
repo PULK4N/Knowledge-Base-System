@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
@@ -31,6 +32,15 @@ class FailingClient:
 
 
 class WriteMemoryTests(unittest.TestCase):
+    def test_hook_input_is_read_as_utf8_with_or_without_bom(self):
+        event = {"cwd": "C:\\Users\\Đorđe Á", "prompt": "Zdravo 😀 ’"}
+        encoded = json.dumps(event, ensure_ascii=False).encode("utf-8")
+        for raw in (encoded, b"\xef\xbb\xbf" + encoded):
+            with self.subTest(bom=raw != encoded):
+                self.assertEqual(event, write_memory.read_event(io.BytesIO(raw)))
+        with self.assertRaises(write_memory.MemoryHookError):
+            write_memory.read_event(io.BytesIO(b'{"cwd": "\xff"}'))
+
     def test_delivery_filters_invalid_unicode_including_existing_queue_records(self):
         cases = [
             ("before\udc9dafter", "beforeafter"),

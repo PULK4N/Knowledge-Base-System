@@ -14,7 +14,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, BinaryIO, Callable
 
 
 DEFAULT_MCP_URL = "http://localhost:5231/mcp"
@@ -570,9 +570,21 @@ def _get_case_insensitive(value: Any, key: str) -> Any:
     )
 
 
+def _read_event(stream: BinaryIO) -> Any:
+    """Parse hook input as UTF-8, which Codex sends on every platform.
+
+    Text-mode stdin on Windows uses the console code page, which garbles
+    non-ASCII paths and prompts or fails on bytes that page cannot decode.
+    """
+    try:
+        return json.loads(stream.read().decode("utf-8-sig"))
+    except UnicodeDecodeError as error:
+        raise PolicyBootstrapError("Codex hook input was not UTF-8.") from error
+
+
 def main() -> int:
     try:
-        event = json.load(sys.stdin)
+        event = _read_event(sys.stdin.buffer)
         if not isinstance(event, dict):
             raise PolicyBootstrapError("Codex hook input was not a JSON object.")
         output = process_hook(event)

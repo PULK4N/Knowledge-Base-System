@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import io
 import tempfile
 import unittest
 import uuid
@@ -46,6 +48,15 @@ class RejectingClient:
 
 
 class WriteMemoryTests(unittest.TestCase):
+    def test_hook_input_is_read_as_utf8_with_or_without_bom(self):
+        event = {"cwd": "C:\\Users\\Đorđe Á", "prompt": "Zdravo 😀 ’"}
+        encoded = json.dumps(event, ensure_ascii=False).encode("utf-8")
+        for raw in (encoded, b"\xef\xbb\xbf" + encoded):
+            with self.subTest(bom=raw != encoded):
+                self.assertEqual(event, write_memory.read_event(io.BytesIO(raw)))
+        with self.assertRaises(write_memory.MemoryHookError):
+            write_memory.read_event(io.BytesIO(b'{"cwd": "\xff"}'))
+
     def test_memory_hook_url_uses_knowledge_base_override(self):
         with mock.patch.dict(
             write_memory.os.environ,

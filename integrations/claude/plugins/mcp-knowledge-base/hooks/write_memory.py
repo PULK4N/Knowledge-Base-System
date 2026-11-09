@@ -621,6 +621,18 @@ def _detached_process_options() -> dict[str, Any]:
     return {"start_new_session": True}
 
 
+def read_event(stream: IO[bytes]) -> Any:
+    """Parse hook input as UTF-8, which Claude sends on every platform.
+
+    Text-mode stdin on Windows uses the console code page, which garbles
+    non-ASCII prompts and responses before they are stored.
+    """
+    try:
+        return json.loads(stream.read().decode("utf-8-sig"))
+    except UnicodeDecodeError as error:
+        raise MemoryHookError("Claude hook input was not UTF-8.") from error
+
+
 def main() -> int:
     if len(sys.argv) == 2 and sys.argv[1] == "--drain":
         drain_queue()
@@ -628,7 +640,7 @@ def main() -> int:
 
     event_name = ""
     try:
-        event = json.load(sys.stdin)
+        event = read_event(sys.stdin.buffer)
         if not isinstance(event, dict):
             raise MemoryHookError("Claude hook input was not a JSON object.")
         event_name = str(event.get("hook_event_name", ""))
