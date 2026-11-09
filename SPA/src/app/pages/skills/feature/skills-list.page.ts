@@ -22,6 +22,7 @@ import {
   ListFilterChange,
   ListFiltersComponent,
 } from '../../../shared/list-filters/list-filters.component';
+import { ListRowComponent } from '../../../shared/list-row/list-row.component';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import {
@@ -55,6 +56,7 @@ const PRESENCE_FILTER_OPTIONS: readonly ListControlOption[] = [
     AsyncPipe,
     ListControlsComponent,
     ListFiltersComponent,
+    ListRowComponent,
     PaginationComponent,
     RouterLink,
   ],

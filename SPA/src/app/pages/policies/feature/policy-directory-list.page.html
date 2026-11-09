@@ -23,23 +23,13 @@
       </header>
 
       <section class="list-panel surface-card">
-        <div class="toolbar">
-          <label class="search-box">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="10.5" cy="10.5" r="6.5" />
-              <path d="m15.5 15.5 5 5" />
-            </svg>
-            <span class="sr-only">Search {{ vm.state.data.title.toLowerCase() }}</span>
-            <input
-              #searchInput
-              type="search"
-              [placeholder]="'Search ' + vm.state.data.title.toLowerCase()"
-              autocomplete="off"
-              [value]="searchText()"
-              (input)="search(searchInput.value)"
-            />
-          </label>
-
+        <div class="list-toolbar">
+          <app-list-controls
+            [search]="searchText()"
+            [searchLabel]="'Search ' + vm.state.data.title.toLowerCase()"
+            [searchPlaceholder]="'Search ' + vm.state.data.title.toLowerCase()"
+            (searchChanged)="search($event)"
+          />
         </div>
 
         <div class="list-heading" aria-hidden="true">
@@ -50,32 +40,16 @@
 
         <div class="directory-list" [attr.aria-label]="vm.state.data.title">
           @for (entry of vm.state.data.result.items; track entry.id) {
-            <article
-              class="directory-row"
-              [class.with-actions]="vm.state.data.kind === 'topics'"
+            <app-list-row
+              [icon]="vm.state.data.icon"
+              [tone]="vm.state.data.tone"
+              [title]="entry.name"
+              [subtitle]="entry.description"
+              [metadata]="entry.metadata"
+              [link]="entry.route"
             >
-              <a class="directory-entry-link" [routerLink]="entry.route">
-                <span class="entry-copy">
-                  <span
-                    class="entry-icon"
-                    [class.project]="vm.state.data.kind === 'projects'"
-                    [class.agent-family]="vm.state.data.kind === 'agent-families'"
-                    aria-hidden="true"
-                  >
-                    {{ vm.state.data.icon }}
-                  </span>
-                  <span>
-                    <strong>{{ entry.name }}</strong>
-                    <small>{{ entry.description }}</small>
-                  </span>
-                </span>
-                <span class="metadata">{{ entry.metadata }}</span>
-                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m9 5 7 7-7 7" />
-                </svg>
-              </a>
               @if (vm.state.data.kind === 'topics') {
-                <div class="directory-actions">
+                <div class="row-actions" listRowActions>
                   @if (confirmingTopicName() === entry.name) {
                     <span>Delete this topic?</span>
                     <button
@@ -104,16 +78,17 @@
                     </button>
                   }
                 </div>
-                @if (
-                  vm.topicRemoval.status === 'error' &&
-                  vm.topicRemoval.topicName === entry.name
-                ) {
-                  <p class="directory-error" role="alert">
-                    {{ vm.topicRemoval.message }}
-                  </p>
-                }
               }
-            </article>
+              @if (
+                vm.state.data.kind === 'topics' &&
+                vm.topicRemoval.status === 'error' &&
+                vm.topicRemoval.topicName === entry.name
+              ) {
+                <p class="row-error" role="alert">
+                  {{ vm.topicRemoval.message }}
+                </p>
+              }
+            </app-list-row>
           } @empty {
             <div class="empty-state">
               <strong>No {{ vm.state.data.title.toLowerCase() }} found</strong>

@@ -396,21 +396,78 @@ button:disabled {
   font-weight: 700;
 }
 
+/* Plans that use a record, as a footer strip of the record card. */
 .record-plans {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
   font-size: 13px;
 }
 
-.record-plans > span {
+.record-plans-label {
   color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.record-plans a {
+.record-plan-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record-plan-list li {
+  min-width: 0;
+}
+
+.record-plan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 11px 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
   color: var(--indigo);
+  background: var(--surface-soft);
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.record-plan-link:hover,
+.record-plan-link:focus-visible {
+  border-color: var(--indigo);
+  background: var(--control);
+}
+
+.record-plan-link svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.record-plan-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .source-type[data-source='Code'] {

@@ -29,6 +29,15 @@ describe('selectProposalNotes', () => {
     ]);
   });
 
+  it.each([
+    ['title', 'Descending', ['Skill visibility', 'Retire tags', 'Archive projects']],
+    ['updatedAt', 'Ascending', ['Skill visibility', 'Archive projects', 'Retire tags']],
+  ] as const)('sorts by %s %s', (sort, direction, expected) => {
+    expect(selectProposalNotes(notes, '', sort, direction).map(item => item.title)).toEqual(
+      expected,
+    );
+  });
+
   it('matches the search in the title or content, ignoring case', () => {
     expect(selectProposalNotes(notes, 'SCENARIOS', 'title').map(item => item.title)).toEqual([
       'Retire tags',

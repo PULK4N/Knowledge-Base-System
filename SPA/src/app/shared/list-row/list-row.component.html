@@ -1,0 +1,31 @@
+<ng-template #entry>
+  <span class="entry-copy">
+    <span class="entry-icon" [attr.data-tone]="tone()" aria-hidden="true">{{ icon() }}</span>
+    <span class="entry-text">
+      <strong [title]="title()">{{ title() }}</strong>
+      @if (subtitle()) {
+        <small [title]="subtitle()">{{ subtitle() }}</small>
+      }
+    </span>
+  </span>
+  <span class="metadata">{{ metadata() }}</span>
+  @if (link() !== null) {
+    <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9 5 7 7-7 7" />
+    </svg>
+  }
+</ng-template>
+
+<article class="directory-row">
+  @if (link(); as link) {
+    <a class="directory-entry-link" [routerLink]="link">
+      <ng-container [ngTemplateOutlet]="entry" />
+    </a>
+  } @else {
+    <div class="directory-entry-link static">
+      <ng-container [ngTemplateOutlet]="entry" />
+    </div>
+  }
+  <div class="row-actions-slot"><ng-content select="[listRowActions]" /></div>
+  <div class="row-extra"><ng-content /></div>
+</article>

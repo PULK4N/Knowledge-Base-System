@@ -48,28 +48,17 @@
         </div>
       }
       @case ('success') {
-        <div class="feature-grid" aria-label="Features">
+        <div class="directory-list" aria-label="Features">
           @for (feature of vm.state.data.items; track feature.id) {
-            <a class="feature-card" [routerLink]="['/features', feature.id]">
-              <div class="feature-card-heading">
-                <span class="feature-icon" aria-hidden="true">◇</span>
-                <div>
-                  <h2>{{ feature.name }}</h2>
-                </div>
-              </div>
-              <p class="feature-summary">{{ feature.summary }}</p>
-              <p class="feature-status">
-                <span>Status</span>
-                <span class="feature-status-text" [title]="feature.status">
-                  {{ feature.status || 'No progress update yet.' }}
-                </span>
-              </p>
-              <footer>
-                <span>{{ feature.planCount }} {{ feature.planCount === 1 ? 'plan' : 'plans' }}</span>
-                <span>{{ feature.recordCount }} {{ feature.recordCount === 1 ? 'record' : 'records' }}</span>
-                <span class="open-feature" aria-hidden="true">→</span>
-              </footer>
-            </a>
+            <app-list-row
+              icon="◇"
+              [title]="feature.name"
+              [metadata]="
+                feature.planCount + (feature.planCount === 1 ? ' plan · ' : ' plans · ') +
+                feature.recordCount + (feature.recordCount === 1 ? ' record' : ' records')
+              "
+              [link]="['/features', feature.id]"
+            />
           } @empty {
             <div class="empty-state">
               <strong>No features found</strong>

@@ -40,25 +40,17 @@
       <p class="form-error" role="alert">{{ mutation.message }}</p>
     }
 
-    <div class="inline-form">
-      <label>
-        <span class="sr-only">Search proposal notes</span>
-        <input
-          #searchInput
-          type="search"
-          placeholder="Search notes"
-          [value]="search()"
-          (input)="search.set(searchInput.value)"
-        />
-      </label>
-      <label class="narrow">
-        <span class="sr-only">Sort notes</span>
-        <select #sortSelect (change)="sort.set($any(sortSelect.value))">
-          <option value="updatedAt" [selected]="sort() === 'updatedAt'">Last updated</option>
-          <option value="title" [selected]="sort() === 'title'">Title</option>
-        </select>
-      </label>
-    </div>
+    <app-list-controls
+      [search]="search()"
+      searchLabel="Search proposal notes"
+      searchPlaceholder="Search note titles and content"
+      [sortBy]="sort()"
+      [sortOptions]="sortOptions"
+      [sortDirection]="direction()"
+      (searchChanged)="search.set($event)"
+      (sortByChanged)="changeSort($event)"
+      (sortDirectionChanged)="direction.set($event)"
+    />
 
     <ul class="item-list" aria-label="Proposal notes">
       @for (note of notes(); track note.noteId) {

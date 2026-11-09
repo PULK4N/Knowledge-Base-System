@@ -1,22 +1,12 @@
 @if (vm$ | async; as vm) {
   <section class="list-panel surface-card">
-    <div class="toolbar">
-      <label class="search-box">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m15.5 15.5 5 5" />
-        </svg>
-        <span class="sr-only">Search policies</span>
-        <input
-          #searchInput
-          type="search"
-          placeholder="Search policies"
-          autocomplete="off"
-          [value]="searchText()"
-          (input)="search(searchInput.value)"
-        />
-      </label>
-
+    <div class="list-toolbar">
+      <app-list-controls
+        [search]="searchText()"
+        searchLabel="Search policies"
+        searchPlaceholder="Search policies"
+        (searchChanged)="search($event)"
+      />
     </div>
 
     <div class="policy-list" aria-label="Policies">

@@ -47,7 +47,9 @@
         (change)="requestFilter(filterSelect.value)"
       >
         @for (option of filterOptions(); track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
+          <option [value]="option.value" [selected]="option.value === filter()">
+            {{ option.label }}
+          </option>
         }
       </select>
     </label>
@@ -65,28 +67,32 @@
     </label>
   }
 
-  <label class="select-control">
-    <span>Sort by</span>
-    <select
-      #sortSelect
-      [value]="sortBy()"
-      (change)="requestSort(sortSelect.value)"
-    >
-      @for (option of sortOptions(); track option.value) {
-        <option [value]="option.value">{{ option.label }}</option>
-      }
-    </select>
-  </label>
+  @if (sortOptions().length > 0) {
+    <label class="select-control">
+      <span>Sort by</span>
+      <select
+        #sortSelect
+        [value]="sortBy()"
+        (change)="requestSort(sortSelect.value)"
+      >
+        @for (option of sortOptions(); track option.value) {
+          <option [value]="option.value" [selected]="option.value === sortBy()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
 
-  <label class="select-control direction-control">
-    <span>Direction</span>
-    <select
-      #directionSelect
-      [value]="sortDirection()"
-      (change)="requestDirection(directionSelect.value)"
-    >
-      <option value="Ascending">Ascending</option>
-      <option value="Descending">Descending</option>
-    </select>
-  </label>
+    <label class="select-control direction-control">
+      <span>Direction</span>
+      <select
+        #directionSelect
+        [value]="sortDirection()"
+        (change)="requestDirection(directionSelect.value)"
+      >
+        <option value="Ascending">Ascending</option>
+        <option value="Descending">Descending</option>
+      </select>
+    </label>
+  }
 </div>

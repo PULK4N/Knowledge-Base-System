@@ -17,6 +17,7 @@ import {
   ListControlOption,
   ListControlsComponent,
 } from '../../../shared/list-controls/list-controls.component';
+import { ListRowComponent } from '../../../shared/list-row/list-row.component';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { PolicyService } from '../../policies/data-access/policy.service';
@@ -51,6 +52,7 @@ type ProjectFilterState = LoadState<readonly ListControlOption[]>;
   imports: [
     AsyncPipe,
     ListControlsComponent,
+    ListRowComponent,
     PaginationComponent,
     RouterLink,
   ],

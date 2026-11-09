@@ -8,6 +8,11 @@ import {
   signal,
 } from '@angular/core';
 import { Subject } from 'rxjs';
+import {
+  ListControlOption,
+  ListControlsComponent,
+} from '../../../shared/list-controls/list-controls.component';
+import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { PolicyProjectDetails } from '../../policies/data-access/policy.models';
 import { PolicyService } from '../../policies/data-access/policy.service';
@@ -16,9 +21,14 @@ import { ProposalNoteSort, selectProposalNotes } from './proposal-notes';
 
 type NoteMutation = 'add' | 'update' | 'remove';
 
+const NOTE_SORT_OPTIONS: readonly ListControlOption[] = [
+  { value: 'updatedAt', label: 'Last updated' },
+  { value: 'title', label: 'Title' },
+];
+
 @Component({
   selector: 'app-proposal-notes',
-  imports: [AsyncPipe, DatePipe, MarkdownContentComponent],
+  imports: [AsyncPipe, DatePipe, ListControlsComponent, MarkdownContentComponent],
   templateUrl: './proposal-notes.component.html',
   styleUrl: './project-pages.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,15 +41,26 @@ export class ProposalNotesComponent {
 
   protected readonly emptyBlocks = [];
   protected readonly search = signal('');
+  protected readonly sortOptions = NOTE_SORT_OPTIONS;
   protected readonly sort = signal<ProposalNoteSort>('updatedAt');
+  protected readonly direction = signal<ListSortDirection>('Descending');
   protected readonly adding = signal(false);
   protected readonly editingNoteId = signal<string | null>(null);
   protected readonly confirmingNoteId = signal<string | null>(null);
   protected readonly titleError = signal<string | null>(null);
   protected readonly notes = computed(() =>
-    selectProposalNotes(this.project().proposalNotes, this.search(), this.sort()),
+    selectProposalNotes(
+      this.project().proposalNotes,
+      this.search(),
+      this.sort(),
+      this.direction(),
+    ),
   );
   protected readonly mutation$ = mutationStates(this.mutations);
+
+  protected changeSort(sort: string): void {
+    if (sort === 'updatedAt' || sort === 'title') this.sort.set(sort);
+  }
 
   protected addNote(projectId: string, title: string, content: string): void {
     if (!this.checkTitle(title)) return;

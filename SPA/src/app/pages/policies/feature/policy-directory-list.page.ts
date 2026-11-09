@@ -24,6 +24,11 @@ import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import { PagedResult } from '../../../core/store/entity-store.service';
 import { PolicySearchRequest } from '../data-access/policy.models';
 import { PolicyService } from '../data-access/policy.service';
+import { ListControlsComponent } from '../../../shared/list-controls/list-controls.component';
+import {
+  ListRowComponent,
+  ListRowTone,
+} from '../../../shared/list-row/list-row.component';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import {
   DirectoryKind,
@@ -49,6 +54,7 @@ interface DirectoryListView {
   readonly entryHeading: string;
   readonly metadataHeading: string;
   readonly icon: string;
+  readonly tone: ListRowTone;
   readonly addRoute: readonly string[];
   readonly result: PagedResult<DirectoryEntry>;
 }
@@ -69,11 +75,18 @@ function policyCountLabel(policyCount: number): string {
 
 @Component({
   selector: 'app-policy-directory-list-page',
-  imports: [AsyncPipe, PaginationComponent, RouterLink],
+  imports: [
+    AsyncPipe,
+    ListControlsComponent,
+    ListRowComponent,
+    PaginationComponent,
+    RouterLink,
+  ],
   templateUrl: './policy-directory-list.page.html',
   styleUrls: [
     './policy-directory-list.page.css',
     '../ui/knowledge-list.css',
+    '../../../shared/list-row/list-row-actions.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -178,6 +191,7 @@ export class PolicyDirectoryListPage {
           entryHeading: 'Topic',
           metadataHeading: 'Policies',
           icon: '#',
+          tone: 'teal',
           addRoute: ['/policies', 'topics', 'new'],
           result: {
             ...result,
@@ -204,6 +218,7 @@ export class PolicyDirectoryListPage {
           entryHeading: 'Agent family',
           metadataHeading: 'Policies',
           icon: '◆',
+          tone: 'violet',
           addRoute: ['/policies', 'agent-families', 'new'],
           result: {
             ...result,
@@ -229,6 +244,7 @@ export class PolicyDirectoryListPage {
         entryHeading: 'Project',
         metadataHeading: 'Repositories',
         icon: '▤',
+        tone: 'amber',
         addRoute: ['/policies', 'projects', 'new'],
         result: {
           ...result,

@@ -4,7 +4,11 @@
 
 .list-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  /* At most three filters per line; a single filter keeps a third of the width. */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(190px, calc((100% - 28px) / 3)), 1fr)
+  );
   gap: 14px;
 }
 

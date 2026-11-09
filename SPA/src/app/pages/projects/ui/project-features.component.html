@@ -1,41 +1,60 @@
-<section class="project-card-section surface-card" aria-labelledby="project-features-title">
-  <h2 id="project-features-title">Features</h2>
-  <label>
-    <span class="sr-only">Search features</span>
-    <input
-      #searchInput
-      type="search"
-      placeholder="Search feature names and summaries"
-      autocomplete="off"
-      (input)="search(searchInput.value)"
-    />
-  </label>
+<section class="list-panel surface-card implicit-skills" aria-labelledby="project-features-title">
+  <h2 id="project-features-title" class="panel-title">Features</h2>
 
   @if (state$ | async; as state) {
+    <div class="list-toolbar">
+      <app-list-controls
+        [search]="request().search"
+        searchLabel="Search features"
+        searchPlaceholder="Search feature names and summaries"
+        [sortBy]="request().sortBy"
+        [sortOptions]="sortOptions"
+        [sortDirection]="request().sortDirection"
+        (searchChanged)="search($event)"
+        (sortByChanged)="sort($event)"
+        (sortDirectionChanged)="changeDirection($event)"
+      />
+    </div>
+
     @switch (state.status) {
       @case ('loading') {
-        <p class="muted">Loading features…</p>
+        <div class="request-message">Loading features…</div>
       }
       @case ('error') {
-        <p class="form-error" role="alert">{{ state.message }}</p>
+        <div class="request-message error">
+          <div>
+            <strong>Features could not be loaded</strong>
+            <p>{{ state.message }}</p>
+          </div>
+        </div>
       }
       @case ('success') {
-        <ul class="item-list" aria-label="Project features">
+        <div class="list-heading" aria-hidden="true">
+          <span>Feature</span>
+          <span>Plans and records</span>
+          <span></span>
+        </div>
+
+        <div class="directory-list" aria-label="Project features">
           @for (feature of state.data.items; track feature.id) {
-            <li class="item">
-              <div class="item-heading">
-                <a [routerLink]="['/features', feature.id]">{{ feature.name }}</a>
-                <span class="muted">
-                  {{ feature.planCount }} {{ feature.planCount === 1 ? 'plan' : 'plans' }} ·
-                  {{ feature.recordCount }} {{ feature.recordCount === 1 ? 'record' : 'records' }}
-                </span>
-              </div>
-              <span class="muted">{{ feature.summary }}</span>
-            </li>
+            <app-list-row
+              icon="◇"
+              [title]="feature.name"
+              [metadata]="
+                feature.planCount + (feature.planCount === 1 ? ' plan · ' : ' plans · ') +
+                feature.recordCount + (feature.recordCount === 1 ? ' record' : ' records')
+              "
+              [link]="['/features', feature.id]"
+            />
           } @empty {
-            <li class="muted">No features in this project.</li>
+            <div class="empty-state">
+              <strong>No features found</strong>
+              <span>
+                {{ request().search ? 'Try a different search term.' : 'No features in this project.' }}
+              </span>
+            </div>
           }
-        </ul>
+        </div>
 
         @if (state.data.totalCount > 0) {
           <app-pagination
