@@ -1,0 +1,145 @@
+<section class="spec-section surface-card" aria-label="Requirements">
+  <div class="spec-heading">
+    <div>
+      <span class="eyebrow">Specification</span>
+      <h2>Requirements</h2>
+    </div>
+    <div class="spec-actions">
+      <span class="count-badge">{{ specification().requirements.length }}</span>
+      <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="adding.set(!adding())">
+        {{ adding() ? 'Cancel' : 'Add requirement' }}
+      </button>
+    </div>
+  </div>
+
+  @if (adding()) {
+    <form
+      class="spec-editor"
+      #addForm="ngForm"
+      (ngSubmit)="add(newType.value, newDescription.value, newExternalId.value ?? '', newSource.value ?? '')"
+    >
+      <div class="editor-row">
+        <label>
+          <span>Type</span>
+          <select #newType="ngModel" name="type" required [ngModel]="'Functional'">
+            @for (type of types; track type.value) {
+              <option [ngValue]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>External ID (optional)</span>
+          <input #newExternalId="ngModel" name="externalId" type="text" placeholder="For example a Confluence ID" ngModel />
+        </label>
+        <label>
+          <span>Source (optional)</span>
+          <input #newSource="ngModel" name="source" type="text" placeholder="Link or text" ngModel />
+        </label>
+      </div>
+      <label>
+        <span>Description</span>
+        <textarea #newDescription="ngModel" name="description" rows="3" required ngModel></textarea>
+      </label>
+      <div class="editor-actions">
+        <button type="submit" class="primary-button" [disabled]="addForm.invalid || saving()">Add requirement</button>
+      </div>
+    </form>
+  }
+
+  @for (group of groups(); track group.type) {
+    <h3 class="spec-group-title">{{ group.label }}</h3>
+    <div class="spec-list">
+      @for (requirement of group.requirements; track requirement.id) {
+        <article
+          class="spec-item"
+          [id]="anchor(requirement.id)"
+          [appScrollIntoView]="fragment() === anchor(requirement.id)"
+        >
+          <header>
+            <div class="spec-item-meta">
+              <span class="label-chip">{{ requirement.label }}</span>
+              @if (requirement.externalId) {
+                <span class="detail-chip">{{ requirement.externalId }}</span>
+              }
+              <app-origin-link
+                [featureId]="feature()?.id ?? ''"
+                [origin]="requirement.origin | originLink: feature()"
+              />
+            </div>
+            <div class="item-actions">
+              <button type="button" (click)="editingId.set(editingId() === requirement.id ? null : requirement.id)">
+                {{ editingId() === requirement.id ? 'Cancel' : 'Edit' }}
+              </button>
+              @if (confirmingRemovalId() === requirement.id) {
+                <button type="button" class="danger-text" [disabled]="saving()" (click)="remove(requirement.id)">
+                  Confirm remove
+                </button>
+              } @else {
+                <button type="button" class="danger-text" (click)="confirmingRemovalId.set(requirement.id)">Remove</button>
+              }
+            </div>
+          </header>
+
+          @if (editingId() === requirement.id) {
+            <form
+              class="spec-editor"
+              #editForm="ngForm"
+              (ngSubmit)="update(requirement.id, editType.value, editDescription.value, editExternalId.value ?? '', editSource.value ?? '')"
+            >
+              <div class="editor-row">
+                <label>
+                  <span>Type</span>
+                  <select #editType="ngModel" name="type" required [ngModel]="requirement.type">
+                    @for (type of types; track type.value) {
+                      <option [ngValue]="type.value">{{ type.label }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  <span>External ID</span>
+                  <input #editExternalId="ngModel" name="externalId" type="text" [ngModel]="requirement.externalId" />
+                </label>
+                <label>
+                  <span>Source</span>
+                  <input #editSource="ngModel" name="source" type="text" [ngModel]="requirement.source" />
+                </label>
+              </div>
+              <label>
+                <span>Description</span>
+                <textarea #editDescription="ngModel" name="description" rows="3" required [ngModel]="requirement.description"></textarea>
+              </label>
+              <p class="spec-description">Changing the type gives the requirement the next number of the new type.</p>
+              <div class="editor-actions">
+                <button type="submit" class="primary-button" [disabled]="editForm.invalid || saving()">Save requirement</button>
+              </div>
+            </form>
+          } @else {
+            <div class="spec-item-body">
+              <p>{{ requirement.description }}</p>
+              @if (requirement.source) {
+                <div class="links-row">
+                  <span>Source:</span>
+                  @if (isWebLink(requirement.source)) {
+                    <a [href]="requirement.source" target="_blank" rel="noopener noreferrer">{{ requirement.source }}</a>
+                  } @else {
+                    <span>{{ requirement.source }}</span>
+                  }
+                </div>
+              }
+              <div class="links-row">
+                <span>Fulfilled by:</span>
+                @for (label of fulfilledBy().get(requirement.id) ?? []; track label) {
+                  <span class="link-chip">{{ label }}</span>
+                } @empty {
+                  <span class="muted">no definition of done yet</span>
+                }
+              </div>
+            </div>
+          }
+        </article>
+      }
+    </div>
+  } @empty {
+    <div class="empty-section">No requirements yet.</div>
+  }
+</section>

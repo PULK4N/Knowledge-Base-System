@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION, PlanReviewAction, SpecificationAction } from './feature.models';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -57,12 +58,16 @@ const feature: FeatureDto = {
       branches: [{ name: 'feature/plans', description: '', subBranches: [], sources: [] }],
       previousPlanId: null,
       recordIds: ['discovery-1'],
+      specification: EMPTY_SPECIFICATION,
+      reviewNotes: [],
+      reviewers: [],
       createdAt: '2026-08-22T10:00:00Z',
       updatedAt: '2026-08-22T11:00:00Z',
     },
   ],
   branch: null,
   compositeBranchName: 'feature/testing',
+  specification: EMPTY_SPECIFICATION,
   branchGraph: [],
   memoryHistory: [],
 };
@@ -81,6 +86,9 @@ const addPlanRequest = {
   branchDescription: 'Plan rework',
   previousPlanId: 'plan-1',
   recordIds: ['record-1'],
+  specification: EMPTY_SPECIFICATION,
+  reviewNotes: [],
+  reviewers: [],
 } as const;
 
 const recordContent = {
@@ -119,6 +127,43 @@ describe('FeatureService', () => {
     const reviewers = operation === 'remove' ? [] : [{ ...request, id: 'reviewer-1', createdAt: '2026-11-08', updatedAt: '2026-11-08' }];
     http.expectOne(`/api/features/${feature.id}`).flush({ ...feature, reviewers });
     expect((await result).reviewers).toEqual(reviewers);
+  });
+
+  it.each([
+    [null, { kind: 'add-requirements', requirements: [{ type: 'Functional', description: 'Copy' }] },
+      'requirements', { requirements: [{ type: 'Functional', description: 'Copy' }] }],
+    ['plan-1', { kind: 'set-definition-of-done-states', states: [{ id: 'd1', state: 'Confirmed', stateDescription: 'Tested' }] },
+      'plans/plan-1/definitions-of-done/states', { states: [{ id: 'd1', state: 'Confirmed', stateDescription: 'Tested' }] }],
+    ['plan-1', { kind: 'move-definitions-of-done', targetPlanId: 'plan-2', definitionOfDoneIds: ['d1'] },
+      'plans/plan-1/definitions-of-done/move', { targetPlanId: 'plan-2', definitionOfDoneIds: ['d1'] }],
+    [null, { kind: 'set-snapshots', snapshots: [{ id: 's1', content: null }] },
+      'playwright-scripts/snapshots', { snapshots: [{ id: 's1', content: null }] }],
+  ] as const)('posts a %s specification change to its path and refreshes', async (planId, action, path, body) => {
+    const result = firstValueFrom(service.changeSpecification(feature.id, planId, action as SpecificationAction));
+    const mutation = http.expectOne(`/api/features/${feature.id}/${path}`);
+    expect(mutation.request.body).toEqual(body);
+    mutation.flush({ status: 'OK' });
+    http.expectOne(`/api/features/${feature.id}`).flush({ ...feature, specification: undefined });
+    expect((await result).specification).toEqual(EMPTY_SPECIFICATION);
+  });
+
+  it.each([
+    [{ kind: 'add-review-note', request: { title: 'T', content: 'C' } }, 'review-notes', { title: 'T', content: 'C' }],
+    [{ kind: 'remove-reviewer', reviewerId: 'r1' }, 'reviewers/remove', { reviewerId: 'r1' }],
+  ] as const)('posts plan review change %#', async (action, path, body) => {
+    const result = firstValueFrom(service.changePlanReviews(feature.id, 'plan-1', action as PlanReviewAction));
+    const mutation = http.expectOne(`/api/features/${feature.id}/plans/plan-1/${path}`);
+    expect(mutation.request.body).toEqual(body);
+    mutation.flush({ status: 'OK' });
+    http.expectOne(`/api/features/${feature.id}`).flush(feature);
+    await result;
+  });
+
+  it('reads a plan script snapshot', async () => {
+    const result = firstValueFrom(service.getScriptSnapshot(feature.id, 'plan-1', 's1'));
+    http.expectOne(`/api/features/${feature.id}/plans/plan-1/playwright-scripts/s1/snapshot`)
+      .flush({ scriptId: 's1', path: 'a.spec.ts', content: 'test()', updatedAt: '2026-11-13' });
+    expect((await result).content).toBe('test()');
   });
 
   it('searches feature summaries and maps aggregate IDs', async () => {

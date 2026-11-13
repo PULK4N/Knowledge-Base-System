@@ -42,6 +42,10 @@ import {
   UpdateFeaturePlanBranchRequest,
   UpdateFeatureRecordRequest,
   UpdateFeatureReviewNoteRequest,
+  EMPTY_SPECIFICATION,
+  PlanReviewAction,
+  PlaywrightScriptSnapshot,
+  SpecificationAction,
 } from './feature.models';
 
 const FEATURE_ENTITY_TYPE = 'feature';
@@ -326,6 +330,59 @@ export class FeatureService {
     );
   }
 
+  /**
+   * Changes the specification of a plan, or of the feature when planId is null,
+   * and refreshes the feature.
+   */
+  changeSpecification(
+    id: string,
+    planId: string | null,
+    action: SpecificationAction,
+  ): Observable<Feature> {
+    const scope = planId === null ? '' : `${this.planPath(planId)}/`;
+    const [path, body] = specificationRequest(action);
+    return this.postAndRefresh(id, scope + path, body);
+  }
+
+  /** Reads one script's snapshot code, which feature reads leave out. */
+  getScriptSnapshot(
+    id: string,
+    planId: string | null,
+    scriptId: string,
+  ): Observable<PlaywrightScriptSnapshot> {
+    const scope = planId === null ? '' : `${this.planPath(planId)}/`;
+    return this.http.get<PlaywrightScriptSnapshot>(
+      `${this.featurePath(id)}/${scope}playwright-scripts/${encodeURIComponent(scriptId)}/snapshot`,
+    );
+  }
+
+  /** Changes a plan's own review notes or reviewers and refreshes the feature. */
+  changePlanReviews(
+    id: string,
+    planId: string,
+    action: PlanReviewAction,
+  ): Observable<Feature> {
+    const plan = this.planPath(planId);
+    switch (action.kind) {
+      case 'add-review-note':
+        return this.postAndRefresh(id, `${plan}/review-notes`, action.request);
+      case 'update-review-note':
+        return this.postAndRefresh(id, `${plan}/review-notes/update`, action.request);
+      case 'remove-review-note':
+        return this.postAndRefresh(id, `${plan}/review-notes/remove`, {
+          reviewNoteId: action.reviewNoteId,
+        });
+      case 'add-reviewer':
+        return this.postAndRefresh(id, `${plan}/reviewers`, action.request);
+      case 'update-reviewer':
+        return this.postAndRefresh(id, `${plan}/reviewers/update`, action.request);
+      case 'remove-reviewer':
+        return this.postAndRefresh(id, `${plan}/reviewers/remove`, {
+          reviewerId: action.reviewerId,
+        });
+    }
+  }
+
   private postAndRefresh(
     id: string,
     path: string,
@@ -352,11 +409,51 @@ export class FeatureService {
       .pipe(
         map(feature => ({
           ...feature,
+          specification: feature.specification ?? EMPTY_SPECIFICATION,
+          plans: feature.plans.map(plan => ({
+            ...plan,
+            specification: plan.specification ?? EMPTY_SPECIFICATION,
+            reviewNotes: plan.reviewNotes ?? [],
+            reviewers: plan.reviewers ?? [],
+          })),
           reviewers: feature.reviewers ?? [],
           planCount: feature.plans.length,
           recordCount: feature.records.length,
         })),
         tap(feature => this.store.upsert(FEATURE_ENTITY_TYPE, feature)),
       );
+  }
+}
+
+/** The REST path below the plan or feature and the body of a specification change. */
+function specificationRequest(action: SpecificationAction): readonly [string, object] {
+  switch (action.kind) {
+    case 'add-requirements':
+      return ['requirements', { requirements: action.requirements }];
+    case 'update-requirements':
+      return ['requirements/update', { requirements: action.requirements }];
+    case 'remove-requirements':
+      return ['requirements/remove', { requirementIds: action.requirementIds }];
+    case 'add-definitions-of-done':
+      return ['definitions-of-done', { definitionsOfDone: action.definitionsOfDone }];
+    case 'update-definitions-of-done':
+      return ['definitions-of-done/update', { definitionsOfDone: action.definitionsOfDone }];
+    case 'remove-definitions-of-done':
+      return ['definitions-of-done/remove', { definitionOfDoneIds: action.definitionOfDoneIds }];
+    case 'set-definition-of-done-states':
+      return ['definitions-of-done/states', { states: action.states }];
+    case 'move-definitions-of-done':
+      return [
+        'definitions-of-done/move',
+        { targetPlanId: action.targetPlanId, definitionOfDoneIds: action.definitionOfDoneIds },
+      ];
+    case 'add-scripts':
+      return ['playwright-scripts', { scripts: action.scripts }];
+    case 'update-scripts':
+      return ['playwright-scripts/update', { scripts: action.scripts }];
+    case 'remove-scripts':
+      return ['playwright-scripts/remove', { scriptIds: action.scriptIds }];
+    case 'set-snapshots':
+      return ['playwright-scripts/snapshots', { snapshots: action.snapshots }];
   }
 }

@@ -1,0 +1,115 @@
+<section class="spec-section surface-card" aria-label="Plan reviewers">
+  <div class="spec-heading">
+    <div>
+      <span class="eyebrow">Plan reviews</span>
+      <h2>Reviewers</h2>
+    </div>
+    <div class="spec-actions">
+      <span class="count-badge">{{ reviewers().length }}</span>
+      <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="adding.set(!adding())">
+        {{ adding() ? 'Cancel' : 'Add reviewer' }}
+      </button>
+    </div>
+  </div>
+  <p class="spec-description">
+    Reviews of this plan run these reviewers with the feature's reviewers. They are copied to the feature when the
+    plan completes.
+  </p>
+
+  @if (adding()) {
+    <form class="spec-editor" #addForm="ngForm" (ngSubmit)="add(newTitle.value, newDescription.value, newLevel.value)">
+      <div class="editor-row">
+        <label>
+          <span>Title</span>
+          <input #newTitle="ngModel" name="title" type="text" required ngModel />
+        </label>
+        <label>
+          <span>Review level</span>
+          <select #newLevel="ngModel" name="reviewLevel" required [ngModel]="'Medium'">
+            @for (level of reviewLevels; track level) {
+              <option [ngValue]="level">{{ level }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <label>
+        <span>Description (Markdown)</span>
+        <textarea
+          #newDescription="ngModel"
+          name="description"
+          rows="8"
+          required
+          placeholder="Describe what this reviewer should check."
+          ngModel
+        ></textarea>
+      </label>
+      <div class="editor-actions">
+        <button type="submit" class="primary-button" [disabled]="addForm.invalid || saving()">Add reviewer</button>
+      </div>
+    </form>
+  }
+
+  <div class="spec-list">
+    @for (reviewer of reviewers(); track reviewer.id) {
+      <article class="spec-item" [id]="anchor(reviewer.id)" [appScrollIntoView]="fragment() === anchor(reviewer.id)">
+        <header>
+          <div class="spec-item-meta">
+            <strong>{{ reviewer.title }}</strong>
+            <span class="detail-chip">{{ reviewer.reviewLevel }}</span>
+            <span>Updated {{ reviewer.updatedAt | date: 'medium' }}</span>
+          </div>
+          <div class="item-actions">
+            <button type="button" (click)="editingId.set(editingId() === reviewer.id ? null : reviewer.id)">
+              {{ editingId() === reviewer.id ? 'Cancel' : 'Edit' }}
+            </button>
+            @if (confirmingRemovalId() === reviewer.id) {
+              <button type="button" class="danger-text" [disabled]="saving()" (click)="remove(reviewer.id)">Confirm remove</button>
+            } @else {
+              <button type="button" class="danger-text" (click)="confirmingRemovalId.set(reviewer.id)">Remove</button>
+            }
+          </div>
+        </header>
+        @if (editingId() === reviewer.id) {
+          <form
+            class="spec-editor"
+            #editForm="ngForm"
+            (ngSubmit)="update(reviewer.id, editTitle.value, editDescription.value, editLevel.value)"
+          >
+            <div class="editor-row">
+              <label>
+                <span>Title</span>
+                <input #editTitle="ngModel" name="title" type="text" required [ngModel]="reviewer.title" />
+              </label>
+              <label>
+                <span>Review level</span>
+                <select #editLevel="ngModel" name="reviewLevel" required [ngModel]="reviewer.reviewLevel">
+                  @for (level of reviewLevels; track level) {
+                    <option [ngValue]="level">{{ level }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>Description (Markdown)</span>
+              <textarea #editDescription="ngModel" name="description" rows="8" required [ngModel]="reviewer.description"></textarea>
+            </label>
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="editForm.invalid || saving()">Save reviewer</button>
+            </div>
+          </form>
+        } @else {
+          <div class="spec-item-body">
+            <app-markdown-content
+              class="readme-document"
+              [blocks]="emptyBlocks"
+              [markdown]="reviewer.description"
+              emptyMessage="This reviewer has no description."
+            />
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="empty-section">This plan has no reviewers.</div>
+    }
+  </div>
+</section>

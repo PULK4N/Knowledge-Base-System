@@ -117,145 +117,216 @@
         <p class="form-error" role="alert">{{ vm.mutation.message }}</p>
       }
 
-      @if (plan.additionalInfo && !editing()) {
-        <section class="plan-info surface-card">
-          <span class="eyebrow">Additional info</span>
-          <p class="plan-additional-info">{{ plan.additionalInfo }}</p>
-        </section>
-      }
+      <app-specification-warnings class="plan-warnings" [warnings]="plan.specification.warnings" />
 
-      <section class="plan-branches surface-card">
-        <label class="previous-plan-control">
-          <span>Previous plan</span>
-          <select
-            name="previousPlan"
-            [disabled]="saving"
-            [ngModel]="plan.previousPlanId ?? ''"
-            (ngModelChange)="setPreviousPlan(target, $event)"
-          >
-            <option value="">
-              None (default branches come from {{ feature.branch?.name ?? 'the feature branch' }})
-            </option>
-            @for (option of vm.state.data.previousPlanOptions; track option.id) {
-              <option [value]="option.id">
-                After {{ option.title }}{{ option.branches.length > 0 ? ' (' + option.branches[0].name + ')' : '' }}
-              </option>
+      <div class="plan-layout">
+        <div class="plan-main">
+          @switch (vm.location.tab) {
+            @case ('review-notes') {
+              <app-plan-review-notes
+                [reviewNotes]="plan.reviewNotes"
+                [saving]="saving"
+                [fragment]="vm.location.fragment"
+                (action)="changeReviews(target, $event)"
+              />
             }
-          </select>
-        </label>
-        <app-feature-plan-branch-tree
-          [branches]="plan.branches"
-          [sourceOptions]="vm.state.data.sourceOptions"
-          [describeSources]="vm.state.data.describeSources"
-          [saving]="saving"
-          (branchAdded)="addBranch(target, $event)"
-          (branchUpdated)="updateBranch(target, $event)"
-          (branchRemoved)="removeBranch(target, $event)"
-          (sourcesSet)="setBranchSources(target, $event)"
-        />
-      </section>
+            @case ('reviewers') {
+              <app-plan-reviewers
+                [reviewers]="plan.reviewers"
+                [saving]="saving"
+                [fragment]="vm.location.fragment"
+                (action)="changeReviews(target, $event)"
+              />
+            }
+            @default {
+              <app-specification-requirements
+                [specification]="plan.specification"
+                [saving]="saving"
+                [fragment]="vm.location.fragment"
+                (action)="changeSpecification(target, $event)"
+              />
 
-      <section class="plan-records surface-card">
-        <div class="plan-records-heading">
-          <span class="eyebrow">Linked records</span>
-          @if (editingRecords()) {
-            <button type="button" (click)="editingRecords.set(false)">Cancel</button>
-          } @else {
-            <button type="button" [disabled]="saving" (click)="startEditingRecords(plan)">
-              Edit links
-            </button>
+              @if (editing()) {
+                <form
+                  class="plan-editor surface-card"
+                  #planForm="ngForm"
+                  (ngSubmit)="updatePlan(
+                    target,
+                    title.value,
+                    status.value,
+                    additionalInfo.value,
+                    contentType.value,
+                    content.value
+                  )"
+                >
+                  <label>
+                    <span>Title</span>
+                    <input #title="ngModel" name="title" type="text" required [ngModel]="plan.title" />
+                  </label>
+                  <div class="plan-editor-row">
+                    <label>
+                      <span>Status</span>
+                      <select #status="ngModel" name="status" required [ngModel]="plan.status">
+                        @for (option of statusOptions; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label>
+                      <span>Content type</span>
+                      <select #contentType="ngModel" name="contentType" required [ngModel]="plan.contentType">
+                        <option value="Markdown">Markdown</option>
+                        <option value="Html">HTML</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label>
+                    <span>Additional info</span>
+                    <textarea
+                      #additionalInfo="ngModel"
+                      name="additionalInfo"
+                      rows="3"
+                      placeholder="What the plan is for, for example research only or production implementation"
+                      [ngModel]="plan.additionalInfo"
+                    ></textarea>
+                  </label>
+                  <label>
+                    <span>Plan content</span>
+                    <textarea #content="ngModel" name="content" rows="20" required [ngModel]="plan.content"></textarea>
+                  </label>
+                  <button
+                    type="submit"
+                    [disabled]="planForm.invalid || saving"
+                  >
+                    Save plan
+                  </button>
+                </form>
+              } @else {
+                <section class="plan-document surface-card">
+                  <app-feature-plan-content [plan]="plan" />
+                </section>
+              }
+
+              <app-specification-definitions-of-done
+                [specification]="plan.specification"
+                [saving]="saving"
+                [fragment]="vm.location.fragment"
+                [moveTargets]="vm.state.data.moveTargets"
+                (action)="changeSpecification(target, $event)"
+              />
+
+              <app-specification-scripts
+                [specification]="plan.specification"
+                [saving]="saving"
+                [fragment]="vm.location.fragment"
+                [loadSnapshot]="vm.state.data.loadSnapshot"
+                (action)="changeSpecification(target, $event)"
+              />
+
+              @if (plan.additionalInfo && !editing()) {
+                <section class="plan-info surface-card">
+                  <span class="eyebrow">Additional info</span>
+                  <p class="plan-additional-info">{{ plan.additionalInfo }}</p>
+                </section>
+              }
+
+              <section class="plan-branches surface-card">
+                <label class="previous-plan-control">
+                  <span>Previous plan</span>
+                  <select
+                    name="previousPlan"
+                    [disabled]="saving"
+                    [ngModel]="plan.previousPlanId ?? ''"
+                    (ngModelChange)="setPreviousPlan(target, $event)"
+                  >
+                    <option value="">
+                      None (default branches come from {{ feature.branch?.name ?? 'the feature branch' }})
+                    </option>
+                    @for (option of vm.state.data.previousPlanOptions; track option.id) {
+                      <option [value]="option.id">
+                        After {{ option.title }}{{ option.branches.length > 0 ? ' (' + option.branches[0].name + ')' : '' }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <app-feature-plan-branch-tree
+                  [branches]="plan.branches"
+                  [sourceOptions]="vm.state.data.sourceOptions"
+                  [describeSources]="vm.state.data.describeSources"
+                  [saving]="saving"
+                  (branchAdded)="addBranch(target, $event)"
+                  (branchUpdated)="updateBranch(target, $event)"
+                  (branchRemoved)="removeBranch(target, $event)"
+                  (sourcesSet)="setBranchSources(target, $event)"
+                />
+              </section>
+
+              <section class="plan-records surface-card">
+                <div class="plan-records-heading">
+                  <span class="eyebrow">Linked records</span>
+                  @if (editingRecords()) {
+                    <button type="button" (click)="editingRecords.set(false)">Cancel</button>
+                  } @else {
+                    <button type="button" [disabled]="saving" (click)="startEditingRecords(plan)">
+                      Edit links
+                    </button>
+                  }
+                </div>
+                @if (editingRecords()) {
+                  <app-feature-link-picker
+                    legend="Records of this feature"
+                    emptyMessage="This feature has no records yet."
+                    [options]="vm.state.data.recordOptions"
+                    [selectedIds]="pickedRecordIds()"
+                    (selectedIdsChange)="pickedRecordIds.set($event)"
+                  />
+                  <button type="button" [disabled]="saving" (click)="saveRecordLinks(target, plan)">
+                    Save links
+                  </button>
+                } @else {
+                  <ul class="plan-record-list">
+                    @for (record of vm.state.data.linkedRecords; track record.id) {
+                      <li>
+                        <a
+                          [routerLink]="['/features', feature.id]"
+                          [queryParams]="{ tab: 'records', recordSearch: record.title }"
+                        >
+                          {{ record.title }}
+                        </a>
+                        <span class="plan-record-type">{{ record.type }}</span>
+                      </li>
+                    } @empty {
+                      <li class="plan-record-empty">No records are linked to this plan.</li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
           }
         </div>
-        @if (editingRecords()) {
-          <app-feature-link-picker
-            legend="Records of this feature"
-            emptyMessage="This feature has no records yet."
-            [options]="vm.state.data.recordOptions"
-            [selectedIds]="pickedRecordIds()"
-            (selectedIdsChange)="pickedRecordIds.set($event)"
-          />
-          <button type="button" [disabled]="saving" (click)="saveRecordLinks(target, plan)">
-            Save links
-          </button>
-        } @else {
-          <ul class="plan-record-list">
-            @for (record of vm.state.data.linkedRecords; track record.id) {
-              <li>
-                <a
-                  [routerLink]="['/features', feature.id]"
-                  [queryParams]="{ tab: 'records', recordSearch: record.title }"
-                >
-                  {{ record.title }}
-                </a>
-                <span class="plan-record-type">{{ record.type }}</span>
-              </li>
-            } @empty {
-              <li class="plan-record-empty">No records are linked to this plan.</li>
-            }
-          </ul>
-        }
-      </section>
 
-      @if (editing()) {
-        <form
-          class="plan-editor surface-card"
-          #planForm="ngForm"
-          (ngSubmit)="updatePlan(
-            target,
-            title.value,
-            status.value,
-            additionalInfo.value,
-            contentType.value,
-            content.value
-          )"
-        >
-          <label>
-            <span>Title</span>
-            <input #title="ngModel" name="title" type="text" required [ngModel]="plan.title" />
-          </label>
-          <div class="plan-editor-row">
-            <label>
-              <span>Status</span>
-              <select #status="ngModel" name="status" required [ngModel]="plan.status">
-                @for (option of statusOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
+        <nav class="plan-tabs" aria-label="Plan sections">
+          @for (tab of planTabs; track tab.value) {
+            <a
+              class="plan-tab"
+              [routerLink]="[]"
+              [queryParams]="{ tab: tab.value }"
+              [class.active]="vm.location.tab === tab.value"
+              [attr.aria-current]="vm.location.tab === tab.value ? 'page' : null"
+            >
+              {{ tab.label }}
+              @switch (tab.value) {
+                @case ('review-notes') {
+                  <span class="plan-tab-count">{{ plan.reviewNotes.length }}</span>
                 }
-              </select>
-            </label>
-            <label>
-              <span>Content type</span>
-              <select #contentType="ngModel" name="contentType" required [ngModel]="plan.contentType">
-                <option value="Markdown">Markdown</option>
-                <option value="Html">HTML</option>
-              </select>
-            </label>
-          </div>
-          <label>
-            <span>Additional info</span>
-            <textarea
-              #additionalInfo="ngModel"
-              name="additionalInfo"
-              rows="3"
-              placeholder="What the plan is for, for example research only or production implementation"
-              [ngModel]="plan.additionalInfo"
-            ></textarea>
-          </label>
-          <label>
-            <span>Plan content</span>
-            <textarea #content="ngModel" name="content" rows="20" required [ngModel]="plan.content"></textarea>
-          </label>
-          <button
-            type="submit"
-            [disabled]="planForm.invalid || saving"
-          >
-            Save plan
-          </button>
-        </form>
-      } @else {
-        <section class="plan-document surface-card">
-          <app-feature-plan-content [plan]="plan" />
-        </section>
-      }
+                @case ('reviewers') {
+                  <span class="plan-tab-count">{{ plan.reviewers.length }}</span>
+                }
+              }
+            </a>
+          }
+        </nav>
+      </div>
     }
   }
 }

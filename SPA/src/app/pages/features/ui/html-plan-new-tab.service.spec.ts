@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION } from '../data-access/feature.models';
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { FeaturePlan } from '../data-access/feature.models';
@@ -15,6 +16,9 @@ describe('HtmlPlanNewTabService', () => {
       branches: [],
       previousPlanId: null,
       recordIds: [],
+      specification: EMPTY_SPECIFICATION,
+      reviewNotes: [],
+      reviewers: [],
       createdAt: '2026-08-26T10:00:00Z',
       updatedAt: '2026-08-26T10:00:00Z',
     };

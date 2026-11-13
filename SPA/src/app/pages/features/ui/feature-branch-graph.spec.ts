@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION } from '../data-access/feature.models';
 import {
   Feature,
   FeatureBranchGraphNode,
@@ -66,6 +67,9 @@ function plan(
     })),
     previousPlanId,
     recordIds: [],
+    specification: EMPTY_SPECIFICATION,
+    reviewNotes: [],
+    reviewers: [],
     createdAt: '2026-10-01T00:00:00Z',
     updatedAt: '2026-10-01T00:00:00Z',
   };

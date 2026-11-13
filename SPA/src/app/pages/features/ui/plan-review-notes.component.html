@@ -1,0 +1,83 @@
+<section class="spec-section surface-card" aria-label="Plan review notes">
+  <div class="spec-heading">
+    <div>
+      <span class="eyebrow">Plan reviews</span>
+      <h2>Review notes</h2>
+    </div>
+    <div class="spec-actions">
+      <span class="count-badge">{{ reviewNotes().length }}</span>
+      <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="adding.set(!adding())">
+        {{ adding() ? 'Cancel' : 'Add review note' }}
+      </button>
+    </div>
+  </div>
+  <p class="spec-description">
+    Decisions that intended behaviour is not a defect. Reviews of this plan use them with the feature's notes,
+    and they are copied to the feature when the plan completes.
+  </p>
+
+  @if (adding()) {
+    <form class="spec-editor" #addForm="ngForm" (ngSubmit)="add(newTitle.value, newContent.value)">
+      <label>
+        <span>Title</span>
+        <input #newTitle="ngModel" name="title" type="text" required ngModel />
+      </label>
+      <label>
+        <span>Decision (Markdown)</span>
+        <textarea #newContent="ngModel" name="content" rows="8" required ngModel></textarea>
+      </label>
+      <div class="editor-actions">
+        <button type="submit" class="primary-button" [disabled]="addForm.invalid || saving()">Add review note</button>
+      </div>
+    </form>
+  }
+
+  <div class="spec-list">
+    @for (reviewNote of reviewNotes(); track reviewNote.id) {
+      <article class="spec-item" [id]="anchor(reviewNote.id)" [appScrollIntoView]="fragment() === anchor(reviewNote.id)">
+        <header>
+          <div class="spec-item-meta">
+            <strong>{{ reviewNote.title }}</strong>
+            <span>Updated {{ reviewNote.updatedAt | date: 'medium' }}</span>
+          </div>
+          <div class="item-actions">
+            <button type="button" (click)="editingId.set(editingId() === reviewNote.id ? null : reviewNote.id)">
+              {{ editingId() === reviewNote.id ? 'Cancel' : 'Edit' }}
+            </button>
+            @if (confirmingRemovalId() === reviewNote.id) {
+              <button type="button" class="danger-text" [disabled]="saving()" (click)="remove(reviewNote.id)">Confirm remove</button>
+            } @else {
+              <button type="button" class="danger-text" (click)="confirmingRemovalId.set(reviewNote.id)">Remove</button>
+            }
+          </div>
+        </header>
+        @if (editingId() === reviewNote.id) {
+          <form class="spec-editor" #editForm="ngForm" (ngSubmit)="update(reviewNote.id, editTitle.value, editContent.value)">
+            <label>
+              <span>Title</span>
+              <input #editTitle="ngModel" name="title" type="text" required [ngModel]="reviewNote.title" />
+            </label>
+            <label>
+              <span>Decision (Markdown)</span>
+              <textarea #editContent="ngModel" name="content" rows="8" required [ngModel]="reviewNote.content"></textarea>
+            </label>
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="editForm.invalid || saving()">Save review note</button>
+            </div>
+          </form>
+        } @else {
+          <div class="spec-item-body">
+            <app-markdown-content
+              class="readme-document"
+              [blocks]="emptyBlocks"
+              [markdown]="reviewNote.content"
+              emptyMessage="This review note has no content."
+            />
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="empty-section">This plan has no review notes.</div>
+    }
+  </div>
+</section>

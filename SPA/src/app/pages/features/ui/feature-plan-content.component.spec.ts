@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION } from '../data-access/feature.models';
 import { TestBed } from '@angular/core/testing';
 import { FeaturePlan } from '../data-access/feature.models';
 import { FeaturePlanContentComponent } from './feature-plan-content.component';
@@ -14,6 +15,9 @@ const htmlPlan: FeaturePlan = {
   branches: [],
   previousPlanId: null,
   recordIds: [],
+  specification: EMPTY_SPECIFICATION,
+  reviewNotes: [],
+  reviewers: [],
   createdAt: '2026-08-26T10:00:00Z',
   updatedAt: '2026-08-26T10:00:00Z',
 };
