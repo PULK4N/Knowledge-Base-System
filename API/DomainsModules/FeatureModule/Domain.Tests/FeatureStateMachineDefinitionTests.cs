@@ -95,7 +95,26 @@ public sealed class FeatureStateMachineDefinitionTests
                 nameof(FeatureCompositeBranchSetV1),
                 nameof(FeatureReviewerAddedV1),
                 nameof(FeatureReviewerUpdatedV1),
-                nameof(FeatureReviewerRemovedV1)
+                nameof(FeatureReviewerRemovedV1),
+                nameof(FeatureRequirementsAddedV1),
+                nameof(FeatureRequirementsUpdatedV1),
+                nameof(FeatureRequirementsRemovedV1),
+                nameof(FeatureDefinitionsOfDoneAddedV1),
+                nameof(FeatureDefinitionsOfDoneUpdatedV1),
+                nameof(FeatureDefinitionsOfDoneRemovedV1),
+                nameof(FeatureDefinitionsOfDoneStateSetV1),
+                nameof(FeaturePlaywrightScriptsAddedV1),
+                nameof(FeaturePlaywrightScriptsUpdatedV1),
+                nameof(FeaturePlaywrightScriptsRemovedV1),
+                nameof(FeaturePlaywrightScriptSnapshotsSetV1),
+                nameof(FeatureDefinitionsOfDoneMovedV1),
+                nameof(FeaturePlanReviewNoteAddedV1),
+                nameof(FeaturePlanReviewNoteUpdatedV1),
+                nameof(FeaturePlanReviewNoteRemovedV1),
+                nameof(FeaturePlanReviewerAddedV1),
+                nameof(FeaturePlanReviewerUpdatedV1),
+                nameof(FeaturePlanReviewerRemovedV1),
+                nameof(FeaturePlanCopiedToFeatureV1)
             ],
             definition.Events.Keys
         );
@@ -373,7 +392,26 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureCompositeBranchSetV1),
         typeof(FeatureReviewerAddedV1),
         typeof(FeatureReviewerUpdatedV1),
-        typeof(FeatureReviewerRemovedV1)
+        typeof(FeatureReviewerRemovedV1),
+        typeof(FeatureRequirementsAddedV1),
+        typeof(FeatureRequirementsUpdatedV1),
+        typeof(FeatureRequirementsRemovedV1),
+        typeof(FeatureDefinitionsOfDoneAddedV1),
+        typeof(FeatureDefinitionsOfDoneUpdatedV1),
+        typeof(FeatureDefinitionsOfDoneRemovedV1),
+        typeof(FeatureDefinitionsOfDoneStateSetV1),
+        typeof(FeaturePlaywrightScriptsAddedV1),
+        typeof(FeaturePlaywrightScriptsUpdatedV1),
+        typeof(FeaturePlaywrightScriptsRemovedV1),
+        typeof(FeaturePlaywrightScriptSnapshotsSetV1),
+        typeof(FeatureDefinitionsOfDoneMovedV1),
+        typeof(FeaturePlanReviewNoteAddedV1),
+        typeof(FeaturePlanReviewNoteUpdatedV1),
+        typeof(FeaturePlanReviewNoteRemovedV1),
+        typeof(FeaturePlanReviewerAddedV1),
+        typeof(FeaturePlanReviewerUpdatedV1),
+        typeof(FeaturePlanReviewerRemovedV1),
+        typeof(FeaturePlanCopiedToFeatureV1)
     ];
 
     private static List<Type> ValidatorTypes { get; } =
@@ -400,6 +438,14 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeaturePlanBranchSourcesValidator),
         typeof(FeatureReviewerMustNotExistValidator),
         typeof(FeatureReviewerMustExistValidator),
-        typeof(FeatureReviewerContentValidator)
+        typeof(FeatureReviewerContentValidator),
+        typeof(FeatureRequirementsValidator),
+        typeof(FeatureDefinitionsOfDoneValidator),
+        typeof(FeaturePlaywrightScriptsValidator),
+        typeof(FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator),
+        typeof(FeatureDefinitionsOfDoneMoveValidator),
+        typeof(FeaturePlanReviewNoteValidator),
+        typeof(FeaturePlanReviewerValidator),
+        typeof(FeaturePlanCopyToFeatureValidator)
     ];
 }

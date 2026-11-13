@@ -47,6 +47,24 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     public List<FeaturePlan> Plans { get; set; } = [];
 
     /// <summary>
+    /// Feature-wide requirements, definitions of done and Playwright scripts:
+    /// copies from completed plans plus items added directly on the feature.
+    /// </summary>
+    public Specification Specification { get; set; } = new();
+
+    /// <summary>The plan's specification, or the feature's when no plan is given.</summary>
+    public Specification SpecificationOf(FeaturePlanId? planId) =>
+        planId is { } id
+            ? Plans.Single(plan => plan.Id == id).Specification
+            : Specification;
+
+    /// <summary>Like <see cref="SpecificationOf"/>, but null when the plan does not exist.</summary>
+    public Specification? FindSpecification(FeaturePlanId? planId) =>
+        planId is { } id
+            ? Plans.SingleOrDefault(plan => plan.Id == id)?.Specification
+            : Specification;
+
+    /// <summary>
     /// Null until the feature branch is created; features are often written before it.
     /// </summary>
     public FeatureBranch? Branch { get; set; }

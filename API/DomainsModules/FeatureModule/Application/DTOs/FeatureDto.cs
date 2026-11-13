@@ -26,6 +26,9 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
+    /// <summary>Feature-wide requirements, definitions of done and Playwright scripts.</summary>
+    public required SpecificationDto Specification { get; init; }
+
     public FeatureBranchDto? Branch { get; init; }
 
     /// <summary>
@@ -58,6 +61,7 @@ public sealed record FeatureDto
                 .Select(FeatureReviewNoteDto.FromModel)
                 .ToList(),
             Reviewers = state.Reviewers.Select(FeatureReviewerDto.FromModel).ToList(),
+            Specification = SpecificationDto.FromModel(state.Specification),
             Plans = state.Plans
                 .Select(FeaturePlanDto.FromModel)
                 .ToList(),
@@ -131,6 +135,9 @@ public sealed record FeatureReviewNoteDto
 
     public required DateTime UpdatedAt { get; init; }
 
+    /// <summary>Set on feature copies: the plan review note this was copied from.</summary>
+    public ItemOriginDto? Origin { get; init; }
+
     public static FeatureReviewNoteDto FromModel(
         FeatureReviewNote reviewNote
     ) =>
@@ -140,7 +147,8 @@ public sealed record FeatureReviewNoteDto
             Title = reviewNote.Title,
             Content = reviewNote.Content,
             CreatedAt = reviewNote.CreatedAt,
-            UpdatedAt = reviewNote.UpdatedAt
+            UpdatedAt = reviewNote.UpdatedAt,
+            Origin = ItemOriginDto.FromModel(reviewNote.Origin)
         };
 }
 

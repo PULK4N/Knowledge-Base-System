@@ -31,7 +31,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
             "feature_plan_get",
-            "Gets one feature plan with its content by feature ID and plan ID, plus the ID, title, and type of each record it links; load those records with feature_record_get when needed."
+            "Gets one feature plan with its content by feature ID and plan ID, plus the ID, title, and type of each record it links; load those records with feature_record_get when needed. Also returns the plan's specification: requirements (labels such as FR-3), definitions of done (DOD-n with state and linked requirement IDs), Playwright scripts (path, linked definition-of-done IDs, snapshot time without code; read code with feature_script_snapshot_get), and warnings about missing links."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, List<string>, int, Task<FeatureRecordSearchResultsDto>>)SearchRecords,
@@ -177,10 +177,12 @@ public static class FeatureMcpFunctions
             (Func<IServiceProvider, Guid, Guid, Guid?, Guid?, Task<FeatureCommandResult>>)RemovePlan,
             "feature_plan_remove",
             "Removes a plan from the current feature state while retaining event history."
-        )
+        ),
+        .. FeatureSpecificationMcpFunctions.Create(),
+        .. FeaturePlanReviewMcpFunctions.Create()
     ];
 
-    private static AIFunction CreateFunction(
+    internal static AIFunction CreateFunction(
         Delegate method,
         string name,
         string description
@@ -327,7 +329,7 @@ public static class FeatureMcpFunctions
             .ThenBy(reviewer => reviewer.Id)
             .ToList() ?? [];
 
-    private static Task<FeatureDto?> GetFullFeature(
+    internal static Task<FeatureDto?> GetFullFeature(
         IServiceProvider services,
         Guid featureId,
         uint orderNumber

@@ -62,8 +62,8 @@ public static class FeatureReviewContextResolver
                 $"The origin of branch '{branchName}' has no branch name. Set the branch name of feature '{state.Name}'.");
         return new(new(state.Id.Value, state.ProjectId.Value, state.Name, state.Summary, state.Status),
             FeaturePlanDto.FromModel(plan), origin,
-            state.ReviewNotes.Select(FeatureReviewNoteDto.FromModel).ToList(),
-            state.Reviewers.Select(FeatureReviewerDto.FromModel).ToList());
+            state.ReviewNotes.Concat(plan.ReviewNotes).Select(FeatureReviewNoteDto.FromModel).ToList(),
+            state.Reviewers.Concat(plan.Reviewers).Select(FeatureReviewerDto.FromModel).ToList());
     }
 
     private static string Titles(List<FeaturePlan> plans) =>

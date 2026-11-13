@@ -108,6 +108,18 @@ public sealed class FeaturePlan
     /// </summary>
     public List<FeatureRecordId> RecordIds { get; set; } = [];
 
+    /// <summary>
+    /// Requirements, definitions of done and Playwright scripts of this plan,
+    /// kept beside the Markdown content and always read with the plan.
+    /// </summary>
+    public Specification Specification { get; set; } = new();
+
+    /// <summary>Review notes of this plan, used in its reviews and copied to the feature when it completes.</summary>
+    public List<FeatureReviewNote> ReviewNotes { get; set; } = [];
+
+    /// <summary>Reviewers of this plan, run with the feature reviewers and copied to the feature when it completes.</summary>
+    public List<FeatureReviewer> Reviewers { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

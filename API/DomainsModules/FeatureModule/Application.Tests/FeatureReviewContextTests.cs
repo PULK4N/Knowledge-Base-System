@@ -42,6 +42,28 @@ public sealed class FeatureReviewContextTests
         Assert.Null(FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation"));
     }
 
+    [Fact]
+    public void Resolve_MergesFeatureAndPlanReviewInputsAndIncludesOnlyThePlanSpecification()
+    {
+        var state = State();
+        var plan = Plan("implementation");
+        var other = Plan("other");
+        state.ReviewNotes.Add(new() { Id = FeatureReviewNoteId.FromDatabaseGuid(Guid.NewGuid()), Title = "Feature note" });
+        state.Reviewers.Add(new() { Id = FeatureReviewerId.FromDatabaseGuid(Guid.NewGuid()), Title = "Feature reviewer" });
+        state.Specification.Requirements.Add(new() { Id = RequirementId.FromDatabaseGuid(Guid.NewGuid()), Number = 1 });
+        plan.ReviewNotes.Add(new() { Id = FeatureReviewNoteId.FromDatabaseGuid(Guid.NewGuid()), Title = "Plan note" });
+        plan.Reviewers.Add(new() { Id = FeatureReviewerId.FromDatabaseGuid(Guid.NewGuid()), Title = "Plan reviewer" });
+        plan.Specification.Requirements.Add(new() { Id = RequirementId.FromDatabaseGuid(Guid.NewGuid()), Type = RequirementType.Functional, Number = 4 });
+        other.ReviewNotes.Add(new() { Id = FeatureReviewNoteId.FromDatabaseGuid(Guid.NewGuid()), Title = "Other plan note" });
+        state.Plans.AddRange([plan, other]);
+
+        var result = FeatureReviewContextResolver.Resolve(state, state.ProjectId.Value, "implementation")!;
+
+        Assert.Equal(["Feature note", "Plan note"], result.ReviewNotes.Select(note => note.Title));
+        Assert.Equal(["Feature reviewer", "Plan reviewer"], result.Reviewers.Select(reviewer => reviewer.Title));
+        Assert.Equal(["FR-4"], result.Plan.Specification.Requirements.Select(requirement => requirement.Label));
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
