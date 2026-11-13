@@ -45,7 +45,153 @@ export interface FeatureReviewNote {
   readonly content: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** Set on feature copies: the plan review note this was copied from. */
+  readonly origin?: ItemOrigin | null;
 }
+
+/** The plan item a feature copy came from when its plan completed. */
+export interface ItemOrigin {
+  readonly planId: string;
+  readonly planItemId: string;
+}
+
+export type RequirementType = 'Business' | 'Functional' | 'NonFunctional' | 'Technical';
+
+export type DefinitionOfDoneState = 'NotConfirmed' | 'Confirmed' | 'Failed' | 'Postponed';
+
+export interface Requirement {
+  readonly id: string;
+  /** Readable label such as FR-3. */
+  readonly label: string;
+  readonly type: RequirementType;
+  readonly number: number;
+  readonly description: string;
+  /** ID in an outside system such as Confluence; not unique. */
+  readonly externalId: string;
+  /** Where the requirement comes from, as a link or text. */
+  readonly source: string;
+  readonly origin?: ItemOrigin | null;
+}
+
+export interface DefinitionOfDone {
+  readonly id: string;
+  /** Readable label such as DOD-2. */
+  readonly label: string;
+  readonly number: number;
+  readonly description: string;
+  readonly requirementIds: readonly string[];
+  readonly state: DefinitionOfDoneState;
+  /** How it was checked, or why it could not be checked yet. */
+  readonly stateDescription: string;
+  readonly stateCheckedAt: string | null;
+  readonly origin?: ItemOrigin | null;
+}
+
+/** A script without its snapshot code; read the code with the snapshot request. */
+export interface PlaywrightScript {
+  readonly id: string;
+  readonly path: string;
+  readonly definitionOfDoneIds: readonly string[];
+  readonly hasSnapshot: boolean;
+  readonly snapshotUpdatedAt: string | null;
+  readonly origin?: ItemOrigin | null;
+}
+
+export interface PlaywrightScriptSnapshot {
+  readonly scriptId: string;
+  readonly path: string;
+  readonly content: string;
+  readonly updatedAt: string;
+}
+
+/** Requirements, definitions of done and scripts of a plan or of the feature. */
+export interface Specification {
+  readonly requirements: readonly Requirement[];
+  readonly definitionsOfDone: readonly DefinitionOfDone[];
+  readonly playwrightScripts: readonly PlaywrightScript[];
+  /** Missing links, such as "FR-2 has no definition of done". */
+  readonly warnings: readonly string[];
+}
+
+export const EMPTY_SPECIFICATION: Specification = {
+  requirements: [],
+  definitionsOfDone: [],
+  playwrightScripts: [],
+  warnings: [],
+};
+
+export interface RequirementInput {
+  readonly type: RequirementType;
+  readonly description: string;
+  readonly externalId?: string;
+  readonly source?: string;
+}
+
+/** Omitted values keep the current value. */
+export interface RequirementChangeInput extends Partial<RequirementInput> {
+  readonly id: string;
+}
+
+export interface DefinitionOfDoneInput {
+  readonly description: string;
+  readonly requirementIds: readonly string[];
+}
+
+export interface DefinitionOfDoneChangeInput extends Partial<DefinitionOfDoneInput> {
+  readonly id: string;
+}
+
+export interface DefinitionOfDoneStateInput {
+  readonly id: string;
+  readonly state: DefinitionOfDoneState;
+  readonly stateDescription: string;
+}
+
+export interface PlaywrightScriptInput {
+  readonly path: string;
+  readonly definitionOfDoneIds: readonly string[];
+  readonly snapshotContent?: string | null;
+}
+
+export interface PlaywrightScriptChangeInput {
+  readonly id: string;
+  readonly path?: string;
+  readonly definitionOfDoneIds?: readonly string[];
+}
+
+/** Null content removes the snapshot. */
+export interface PlaywrightScriptSnapshotInput {
+  readonly id: string;
+  readonly content: string | null;
+}
+
+/** A change to a plan's or the feature's specification. */
+export type SpecificationAction =
+  | { readonly kind: 'add-requirements'; readonly requirements: readonly RequirementInput[] }
+  | { readonly kind: 'update-requirements'; readonly requirements: readonly RequirementChangeInput[] }
+  | { readonly kind: 'remove-requirements'; readonly requirementIds: readonly string[] }
+  | { readonly kind: 'add-definitions-of-done'; readonly definitionsOfDone: readonly DefinitionOfDoneInput[] }
+  | { readonly kind: 'update-definitions-of-done'; readonly definitionsOfDone: readonly DefinitionOfDoneChangeInput[] }
+  | { readonly kind: 'remove-definitions-of-done'; readonly definitionOfDoneIds: readonly string[] }
+  | { readonly kind: 'set-definition-of-done-states'; readonly states: readonly DefinitionOfDoneStateInput[] }
+  | {
+      readonly kind: 'move-definitions-of-done';
+      readonly targetPlanId: string;
+      readonly definitionOfDoneIds: readonly string[];
+    }
+  | { readonly kind: 'add-scripts'; readonly scripts: readonly PlaywrightScriptInput[] }
+  | { readonly kind: 'update-scripts'; readonly scripts: readonly PlaywrightScriptChangeInput[] }
+  | { readonly kind: 'remove-scripts'; readonly scriptIds: readonly string[] }
+  | { readonly kind: 'set-snapshots'; readonly snapshots: readonly PlaywrightScriptSnapshotInput[] };
+
+/** A change to a plan's own review notes or reviewers. */
+export type PlanReviewAction =
+  | { readonly kind: 'add-review-note'; readonly request: FeatureReviewNoteContentRequest }
+  | { readonly kind: 'update-review-note'; readonly request: UpdateFeatureReviewNoteRequest }
+  | { readonly kind: 'remove-review-note'; readonly reviewNoteId: string }
+  | { readonly kind: 'add-reviewer'; readonly request: FeatureReviewerContentRequest }
+  | { readonly kind: 'update-reviewer'; readonly request: UpdateFeatureReviewerRequest }
+  | { readonly kind: 'remove-reviewer'; readonly reviewerId: string };
 
 /** The feature branch when planId is null, otherwise a branch of another plan. */
 export interface FeaturePlanBranchSource {
@@ -95,6 +241,12 @@ export interface FeaturePlan {
   readonly previousPlanId: string | null;
   /** Records of the feature this plan links, in link order. */
   readonly recordIds: readonly string[];
+  /** Requirements, definitions of done and Playwright scripts of this plan. */
+  readonly specification: Specification;
+  /** The plan's own review notes; copied to the feature when the plan completes. */
+  readonly reviewNotes: readonly FeatureReviewNote[];
+  /** The plan's own reviewers; copied to the feature when the plan completes. */
+  readonly reviewers: readonly FeatureReviewer[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -112,6 +264,8 @@ export interface Feature extends FeatureSummary {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly reviewers: readonly FeatureReviewer[];
   readonly plans: readonly FeaturePlan[];
+  /** Feature-wide requirements, definitions of done and scripts. */
+  readonly specification: Specification;
   /** Null until the feature branch is set; features are often written before it exists. */
   readonly branch: FeatureBranch | null;
   /** Branch for Analyst checking all functionalities together before review finishes. */
@@ -162,6 +316,8 @@ export interface FeatureDto {
   readonly reviewNotes: readonly FeatureReviewNote[];
   readonly reviewers: readonly FeatureReviewer[];
   readonly plans: readonly FeaturePlan[];
+  /** Missing in responses from an API built before specifications existed. */
+  readonly specification?: Specification;
   readonly branch: FeatureBranch | null;
   readonly compositeBranchName?: string | null;
   readonly branchGraph: readonly FeatureBranchGraphNode[];
@@ -296,6 +452,8 @@ export interface FeatureReviewer extends FeatureReviewerContentRequest {
   readonly id: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** Set on feature copies: the plan reviewer this was copied from. */
+  readonly origin?: ItemOrigin | null;
 }
 
 export interface UpdateFeatureReviewerRequest extends FeatureReviewerContentRequest {

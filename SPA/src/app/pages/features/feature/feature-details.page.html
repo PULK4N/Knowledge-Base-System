@@ -76,6 +76,36 @@
         <a
           role="tab"
           [routerLink]="[]"
+          [queryParams]="{ tab: 'requirements' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'requirements'"
+          [class.active]="vm.listState.activeTab === 'requirements'"
+        >
+          Requirements <span>{{ vm.state.data.specification.requirements.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'definitions-of-done' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'definitions-of-done'"
+          [class.active]="vm.listState.activeTab === 'definitions-of-done'"
+        >
+          Definitions of done <span>{{ vm.state.data.specification.definitionsOfDone.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
+          [queryParams]="{ tab: 'playwright-scripts' }"
+          queryParamsHandling="merge"
+          [attr.aria-selected]="vm.listState.activeTab === 'playwright-scripts'"
+          [class.active]="vm.listState.activeTab === 'playwright-scripts'"
+        >
+          Playwright scripts <span>{{ vm.state.data.specification.playwrightScripts.length }}</span>
+        </a>
+        <a
+          role="tab"
+          [routerLink]="[]"
           [queryParams]="{ tab: 'history' }"
           queryParamsHandling="merge"
           [attr.aria-selected]="vm.listState.activeTab === 'history'"
@@ -909,7 +939,10 @@
           @for (reviewNote of vm.collections.reviewNotes; track reviewNote.id) {
             <article class="review-note-item">
               <header>
-                <span>Updated {{ reviewNote.updatedAt | date: 'medium' }}</span>
+                <span class="review-item-meta">
+                  Updated {{ reviewNote.updatedAt | date: 'medium' }}
+                  <app-origin-link [featureId]="vm.state.data.id" [origin]="reviewNote.origin | originLink: vm.state.data" />
+                </span>
                 <div class="record-actions">
                   <button
                     type="button"
@@ -1011,6 +1044,40 @@
         </section>
       }
 
+      @if (vm.listState.activeTab === 'requirements') {
+        <app-specification-warnings class="tab-section" [warnings]="vm.state.data.specification.warnings" />
+        <app-specification-requirements
+          class="tab-section"
+          [specification]="vm.state.data.specification"
+          [feature]="vm.state.data"
+          [saving]="vm.mutation.status === 'saving'"
+          (action)="changeSpecification(vm.state.data.id, $event)"
+        />
+      }
+
+      @if (vm.listState.activeTab === 'definitions-of-done') {
+        <app-specification-warnings class="tab-section" [warnings]="vm.state.data.specification.warnings" />
+        <app-specification-definitions-of-done
+          class="tab-section"
+          [specification]="vm.state.data.specification"
+          [feature]="vm.state.data"
+          [saving]="vm.mutation.status === 'saving'"
+          (action)="changeSpecification(vm.state.data.id, $event)"
+        />
+      }
+
+      @if (vm.listState.activeTab === 'playwright-scripts') {
+        <app-specification-warnings class="tab-section" [warnings]="vm.state.data.specification.warnings" />
+        <app-specification-scripts
+          class="tab-section"
+          [specification]="vm.state.data.specification"
+          [feature]="vm.state.data"
+          [saving]="vm.mutation.status === 'saving'"
+          [loadSnapshot]="loadSnapshot(vm.state.data.id)"
+          (action)="changeSpecification(vm.state.data.id, $event)"
+        />
+      }
+
       @if (vm.listState.activeTab === 'reviewers') {
         <section class="section-card surface-card review-notes tab-section">
         <div class="section-heading">
@@ -1107,7 +1174,10 @@
           @for (reviewer of vm.collections.reviewers; track reviewer.id) {
             <article class="review-note-item">
               <header>
-                <span>{{ reviewer.reviewLevel }} · Updated {{ reviewer.updatedAt | date: 'medium' }}</span>
+                <span class="review-item-meta">
+                  {{ reviewer.reviewLevel }} · Updated {{ reviewer.updatedAt | date: 'medium' }}
+                  <app-origin-link [featureId]="vm.state.data.id" [origin]="reviewer.origin | originLink: vm.state.data" />
+                </span>
                 <div class="record-actions">
                   <button
                     type="button"

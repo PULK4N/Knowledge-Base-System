@@ -118,6 +118,7 @@ public sealed class FeatureMcpDtoTests
             Records = records,
             ReviewNotes = [ReviewNote("Intended behaviour", now)],
             Plans = plans,
+            Specification = SpecificationDto.FromModel(new Specification()),
             BranchGraph = [],
             MemoryHistory = []
         };
@@ -136,6 +137,7 @@ public sealed class FeatureMcpDtoTests
             AdditionalInfo = string.Empty,
             Status = FeaturePlanStatus.NotStarted,
             RecordIds = recordIds,
+            Specification = SpecificationDto.FromModel(new Specification()),
             Branches = [],
             CreatedAt = updatedAt,
             UpdatedAt = updatedAt

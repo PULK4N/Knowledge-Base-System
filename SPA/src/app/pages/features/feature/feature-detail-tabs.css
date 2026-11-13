@@ -283,3 +283,14 @@
 .feature-branch-section {
   margin-bottom: 20px;
 }
+
+app-specification-warnings.tab-section + .tab-section {
+  margin-top: 14px;
+}
+
+.review-item-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}

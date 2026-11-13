@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION } from '../data-access/feature.models';
 import { convertToParamMap } from '@angular/router';
 import { FeaturePlan, FeatureRecord } from '../data-access/feature.models';
 import {
@@ -19,6 +20,9 @@ const plans: readonly FeaturePlan[] = [
     branches: [],
     previousPlanId: null,
     recordIds: [],
+    specification: EMPTY_SPECIFICATION,
+    reviewNotes: [],
+    reviewers: [],
     createdAt: '2026-08-20T10:00:00Z',
     updatedAt: '2026-08-21T10:00:00Z',
   },
@@ -32,6 +36,9 @@ const plans: readonly FeaturePlan[] = [
     branches: [],
     previousPlanId: null,
     recordIds: [],
+    specification: EMPTY_SPECIFICATION,
+    reviewNotes: [],
+    reviewers: [],
     createdAt: '2026-08-22T10:00:00Z',
     updatedAt: '2026-08-23T10:00:00Z',
   },

@@ -23,6 +23,9 @@ public sealed class FeatureReviewNote
 
     public string Content { get; set; } = string.Empty;
 
+    /// <summary>Set on feature copies: the plan item this was copied from when its plan completed.</summary>
+    public ItemOrigin? Origin { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

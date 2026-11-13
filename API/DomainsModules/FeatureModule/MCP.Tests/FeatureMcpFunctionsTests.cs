@@ -44,7 +44,29 @@ public sealed class FeatureMcpFunctionsTests
         "feature_plan_branch_sources_set",
         "feature_plan_branch_update",
         "feature_plan_branch_remove",
-        "feature_plan_remove"
+        "feature_plan_remove",
+        "feature_specification_get",
+        "feature_requirement_add",
+        "feature_requirement_update",
+        "feature_requirement_remove",
+        "feature_dod_add",
+        "feature_dod_update",
+        "feature_dod_remove",
+        "feature_dod_state_set",
+        "feature_dod_move",
+        "feature_script_add",
+        "feature_script_update",
+        "feature_script_remove",
+        "feature_script_snapshot_set",
+        "feature_script_snapshot_get",
+        "feature_plan_review_note_list",
+        "feature_plan_review_note_add",
+        "feature_plan_review_note_update",
+        "feature_plan_review_note_remove",
+        "feature_plan_reviewer_list",
+        "feature_plan_reviewer_add",
+        "feature_plan_reviewer_update",
+        "feature_plan_reviewer_remove"
     ];
 
     [Theory]

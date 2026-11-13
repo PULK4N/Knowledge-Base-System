@@ -23,7 +23,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { LoadState, toUserMessage } from '../../../core/http/load-state';
+import { LoadState, toCommandErrorMessage, toUserMessage } from '../../../core/http/load-state';
 import { ClampOverflowDirective } from '../../../shared/clamp-overflow/clamp-overflow.directive';
 import {
   ListControlOption,
@@ -44,8 +44,16 @@ import {
   SetFeatureBranchRequest,
   SetFeatureCompositeBranchRequest,
   UpdateFeatureRecordRequest,
+  PlaywrightScriptSnapshot,
+  SpecificationAction,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
+import { OriginLinkComponent } from '../ui/origin-link.component';
+import { OriginLinkPipe } from '../ui/origin-link.pipe';
+import { SpecificationDefinitionsOfDoneComponent } from '../ui/specification-definitions-of-done.component';
+import { SpecificationRequirementsComponent } from '../ui/specification-requirements.component';
+import { SpecificationScriptsComponent } from '../ui/specification-scripts.component';
+import { SpecificationWarningsComponent } from '../ui/specification-warnings.component';
 import { FeatureBranchOverviewComponent } from '../ui/feature-branch-overview.component';
 import { FeatureBranchSettingsComponent } from '../ui/feature-branch-settings.component';
 import {
@@ -166,7 +174,12 @@ type FeatureAction =
       readonly featureId: string;
       readonly request: SetFeatureCompositeBranchRequest;
     }
-  | { readonly kind: 'remove-feature'; readonly featureId: string };
+  | { readonly kind: 'remove-feature'; readonly featureId: string }
+  | {
+      readonly kind: 'specification';
+      readonly featureId: string;
+      readonly change: SpecificationAction;
+    };
 
 type MutationState =
   | { readonly status: 'idle' }
@@ -186,8 +199,14 @@ type MutationState =
     FormsModule,
     ListControlsComponent,
     MarkdownContentComponent,
+    OriginLinkComponent,
+    OriginLinkPipe,
     RouterLink,
     ShortIdPipe,
+    SpecificationDefinitionsOfDoneComponent,
+    SpecificationRequirementsComponent,
+    SpecificationScriptsComponent,
+    SpecificationWarningsComponent,
   ],
   templateUrl: './feature-details.page.html',
   styleUrls: [
@@ -306,7 +325,7 @@ export class FeatureDetailsPage {
         map(() => ({ status: 'idle' }) as const),
         startWith({ status: 'saving', kind: action.kind } as const),
         catchError(error =>
-          of({ status: 'error', message: toUserMessage(error) } as const),
+          of({ status: 'error', message: toCommandErrorMessage(error) } as const),
         ),
       ),
     ),
@@ -622,6 +641,26 @@ export class FeatureDetailsPage {
     this.actions.next({ kind: 'remove-feature', featureId });
   }
 
+  /** Changes the feature-wide specification. */
+  protected changeSpecification(featureId: string, change: SpecificationAction): void {
+    this.actions.next({ kind: 'specification', featureId, change });
+  }
+
+  /** Reads feature-level script snapshots; the same function is returned for a feature so inputs stay stable. */
+  protected loadSnapshot(featureId: string): (scriptId: string) => Observable<PlaywrightScriptSnapshot> {
+    if (this.snapshotLoader?.featureId !== featureId)
+      this.snapshotLoader = {
+        featureId,
+        load: scriptId => this.features.getScriptSnapshot(featureId, null, scriptId),
+      };
+    return this.snapshotLoader.load;
+  }
+
+  private snapshotLoader?: {
+    readonly featureId: string;
+    readonly load: (scriptId: string) => Observable<PlaywrightScriptSnapshot>;
+  };
+
   private updateListQuery(queryParams: Params, replaceUrl = false): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -687,6 +726,8 @@ export class FeatureDetailsPage {
         return this.features.setCompositeBranch(action.featureId, action.request);
       case 'remove-feature':
         return this.features.remove(action.featureId);
+      case 'specification':
+        return this.features.changeSpecification(action.featureId, null, action.change);
     }
   }
 }

@@ -1,0 +1,179 @@
+<section class="spec-section surface-card" aria-label="Definitions of done">
+  <div class="spec-heading">
+    <div>
+      <span class="eyebrow">Specification</span>
+      <h2>Definitions of done</h2>
+    </div>
+    <div class="spec-actions">
+      <span class="count-badge">{{ specification().definitionsOfDone.length }}</span>
+      <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="startAdding()">
+        {{ adding() ? 'Cancel' : 'Add definition of done' }}
+      </button>
+    </div>
+  </div>
+  <p class="spec-description">How to confirm that the work is done, with the requirements each one fulfils.</p>
+
+  @if (adding()) {
+    <form class="spec-editor" #addForm="ngForm" (ngSubmit)="add(newDescription.value)">
+      <label>
+        <span>Description</span>
+        <textarea #newDescription="ngModel" name="description" rows="3" required ngModel></textarea>
+      </label>
+      <app-feature-link-picker
+        legend="Fulfils requirements"
+        emptyMessage="Add requirements first to link them."
+        [options]="requirementOptions()"
+        [selectedIds]="pickedRequirementIds()"
+        (selectedIdsChange)="pickedRequirementIds.set($event)"
+      />
+      <div class="editor-actions">
+        <button type="submit" class="primary-button" [disabled]="addForm.invalid || saving()">
+          Add definition of done
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (moveTargets().length > 0 && selectedIds().length > 0) {
+    <div class="selection-bar" role="group" aria-label="Move definitions of done">
+      <span>{{ selectedIds().length }} selected. Move with their requirements and scripts to</span>
+      <select name="moveTarget" [ngModel]="moveTargetId()" (ngModelChange)="moveTargetId.set($event)">
+        <option value="">Choose a plan</option>
+        @for (target of moveTargets(); track target.id) {
+          <option [value]="target.id">{{ target.title }}</option>
+        }
+      </select>
+      <button type="button" class="primary-button" [disabled]="!moveTargetId() || saving()" (click)="move()">Move</button>
+      <button type="button" class="secondary-button" (click)="selectedIds.set([])">Clear</button>
+    </div>
+  }
+
+  <div class="spec-list">
+    @for (definitionOfDone of definitionsOfDone(); track definitionOfDone.id) {
+      <article
+        class="spec-item"
+        [id]="anchor(definitionOfDone.id)"
+        [appScrollIntoView]="fragment() === anchor(definitionOfDone.id)"
+      >
+        <header>
+          <div class="spec-item-meta">
+            @if (moveTargets().length > 0) {
+              <label class="select-toggle">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Select ' + definitionOfDone.label + ' to move'"
+                  [checked]="selectedIds().includes(definitionOfDone.id)"
+                  (change)="toggleSelected(definitionOfDone.id, $any($event.target).checked)"
+                />
+              </label>
+            }
+            <span class="label-chip">{{ definitionOfDone.label }}</span>
+            <span class="state-badge" [class]="'state-badge state-' + definitionOfDone.state">
+              {{ stateLabel(definitionOfDone.state) }}
+            </span>
+            @if (definitionOfDone.stateCheckedAt) {
+              <span>Checked {{ definitionOfDone.stateCheckedAt | date: 'medium' }}</span>
+            }
+            <app-origin-link
+              [featureId]="feature()?.id ?? ''"
+              [origin]="definitionOfDone.origin | originLink: feature()"
+            />
+          </div>
+          <div class="item-actions">
+            <button
+              type="button"
+              (click)="isEditing('state', definitionOfDone.id) ? editor.set(null) : editor.set({ mode: 'state', id: definitionOfDone.id })"
+            >
+              {{ isEditing('state', definitionOfDone.id) ? 'Cancel' : 'Set state' }}
+            </button>
+            <button
+              type="button"
+              (click)="isEditing('edit', definitionOfDone.id) ? editor.set(null) : startEditing(definitionOfDone)"
+            >
+              {{ isEditing('edit', definitionOfDone.id) ? 'Cancel' : 'Edit' }}
+            </button>
+            @if (confirmingRemovalId() === definitionOfDone.id) {
+              <button type="button" class="danger-text" [disabled]="saving()" (click)="remove(definitionOfDone.id)">
+                Confirm remove
+              </button>
+            } @else {
+              <button type="button" class="danger-text" (click)="confirmingRemovalId.set(definitionOfDone.id)">Remove</button>
+            }
+          </div>
+        </header>
+
+        @if (isEditing('edit', definitionOfDone.id)) {
+          <form class="spec-editor" #editForm="ngForm" (ngSubmit)="update(definitionOfDone.id, editDescription.value)">
+            <label>
+              <span>Description</span>
+              <textarea #editDescription="ngModel" name="description" rows="3" required [ngModel]="definitionOfDone.description"></textarea>
+            </label>
+            <app-feature-link-picker
+              legend="Fulfils requirements"
+              emptyMessage="There are no requirements to link."
+              [options]="requirementOptions()"
+              [selectedIds]="pickedRequirementIds()"
+              (selectedIdsChange)="pickedRequirementIds.set($event)"
+            />
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="editForm.invalid || saving()">Save</button>
+            </div>
+          </form>
+        } @else if (isEditing('state', definitionOfDone.id)) {
+          <form
+            class="spec-editor"
+            #stateForm="ngForm"
+            (ngSubmit)="setState(definitionOfDone.id, newState.value, newStateDescription.value ?? '')"
+          >
+            <label>
+              <span>State</span>
+              <select #newState="ngModel" name="state" required [ngModel]="definitionOfDone.state">
+                @for (state of states; track state.value) {
+                  <option [ngValue]="state.value">{{ state.label }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              <span>State description</span>
+              <textarea
+                #newStateDescription="ngModel"
+                name="stateDescription"
+                rows="2"
+                placeholder="How it was checked, or why it could not be checked yet"
+                [ngModel]="definitionOfDone.stateDescription"
+              ></textarea>
+            </label>
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="stateForm.invalid || saving()">Save state</button>
+            </div>
+          </form>
+        } @else {
+          <div class="spec-item-body">
+            <p>{{ definitionOfDone.description }}</p>
+            @if (definitionOfDone.stateDescription) {
+              <p class="muted">{{ definitionOfDone.stateDescription }}</p>
+            }
+            <div class="links-row">
+              <span>Fulfils:</span>
+              @for (label of requirementLabels(definitionOfDone); track label) {
+                <span class="link-chip">{{ label }}</span>
+              } @empty {
+                <span class="muted">no requirement</span>
+              }
+            </div>
+            <div class="links-row">
+              <span>Confirmed by:</span>
+              @for (path of confirmedBy().get(definitionOfDone.id) ?? []; track $index) {
+                <span class="link-chip code-path">{{ path }}</span>
+              } @empty {
+                <span class="muted">no Playwright script</span>
+              }
+            </div>
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="empty-section">No definitions of done yet.</div>
+    }
+  </div>
+</section>

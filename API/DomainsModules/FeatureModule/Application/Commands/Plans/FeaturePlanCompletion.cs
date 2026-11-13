@@ -10,8 +10,10 @@ namespace FeatureModule.Application.Commands;
 /// <summary>
 /// Builds the follow-up events of a status change: once a plan is completed,
 /// plans whose base branches came from its branches now come from where those
-/// branches were merged. Nothing changes while the plan is not completed, and
-/// running it again for a completed plan only updates plans added since.
+/// branches were merged, and the plan's specification, review notes and
+/// reviewers are copied to the feature. Nothing changes while the plan is not
+/// completed, and running it again for a completed plan only updates plans
+/// added since and copies items not yet copied.
 /// </summary>
 internal static class FeaturePlanCompletion
 {
@@ -27,7 +29,7 @@ internal static class FeaturePlanCompletion
         if (plan.Status != FeaturePlanStatus.Completed)
             return [];
 
-        return FeaturePlanMerge
+        var events = FeaturePlanMerge
             .RewriteFollowers(
                 feature.Plans,
                 planId,
@@ -46,5 +48,9 @@ internal static class FeaturePlanCompletion
                 )
             )
             .ToList();
+
+        if (FeaturePlanFeatureCopy.Create(feature, plan, sessionId, memoryAggregateId) is { } copy)
+            events.Add(copy);
+        return events;
     }
 }

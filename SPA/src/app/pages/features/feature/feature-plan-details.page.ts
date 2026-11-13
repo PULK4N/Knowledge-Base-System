@@ -22,7 +22,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { LoadState, toUserMessage } from '../../../core/http/load-state';
+import { LoadState, toCommandErrorMessage, toUserMessage } from '../../../core/http/load-state';
 import {
   AddFeaturePlanBranchRequest,
   Feature,
@@ -33,6 +33,9 @@ import {
   FeaturePlanStatus,
   SetFeaturePlanBranchSourcesRequest,
   FeatureRecord,
+  PlanReviewAction,
+  PlaywrightScriptSnapshot,
+  SpecificationAction,
   UpdateFeaturePlanBranchRequest,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
@@ -53,6 +56,22 @@ import {
   FeaturePlanStatusPipe,
 } from '../ui/feature-plan-status';
 import { toRecordOptions } from '../ui/feature-link-options';
+import { PlanReviewNotesComponent } from '../ui/plan-review-notes.component';
+import { PlanReviewersComponent } from '../ui/plan-reviewers.component';
+import {
+  MoveTargetOption,
+  SpecificationDefinitionsOfDoneComponent,
+} from '../ui/specification-definitions-of-done.component';
+import { PlanTab } from '../ui/specification-origin';
+import { SpecificationRequirementsComponent } from '../ui/specification-requirements.component';
+import { SpecificationScriptsComponent } from '../ui/specification-scripts.component';
+import { SpecificationWarningsComponent } from '../ui/specification-warnings.component';
+
+const PLAN_TABS: readonly { readonly value: PlanTab; readonly label: string }[] = [
+  { value: 'plan', label: 'Plan' },
+  { value: 'review-notes', label: 'Review notes' },
+  { value: 'reviewers', label: 'Reviewers' },
+];
 
 interface FeaturePlanDetailsView {
   readonly feature: Feature;
@@ -64,6 +83,15 @@ interface FeaturePlanDetailsView {
   /** Branches this plan's base branches may come from. */
   readonly sourceOptions: readonly FeatureLinkOption[];
   readonly describeSources: (branch: FeaturePlanBranch) => string;
+  /** Other plans of the feature, not completed, that definitions of done can move to. */
+  readonly moveTargets: readonly MoveTargetOption[];
+  readonly loadSnapshot: (scriptId: string) => Observable<PlaywrightScriptSnapshot>;
+}
+
+/** The tab and item the page was opened with, for example from an origin link. */
+interface PlanLocation {
+  readonly tab: PlanTab;
+  readonly fragment: string | null;
 }
 
 interface PlanTarget {
@@ -84,7 +112,9 @@ type PlanAction =
   | ({ readonly kind: 'add-branch'; readonly request: AddFeaturePlanBranchRequest } & PlanTarget)
   | ({ readonly kind: 'update-branch'; readonly request: UpdateFeaturePlanBranchRequest } & PlanTarget)
   | ({ readonly kind: 'remove-branch'; readonly branchName: string } & PlanTarget)
-  | ({ readonly kind: 'branch-sources'; readonly request: SetFeaturePlanBranchSourcesRequest } & PlanTarget);
+  | ({ readonly kind: 'branch-sources'; readonly request: SetFeaturePlanBranchSourcesRequest } & PlanTarget)
+  | ({ readonly kind: 'specification'; readonly change: SpecificationAction } & PlanTarget)
+  | ({ readonly kind: 'reviews'; readonly change: PlanReviewAction } & PlanTarget);
 
 type MutationState =
   | { readonly status: 'idle' }
@@ -101,7 +131,13 @@ type MutationState =
     FeaturePlanContentComponent,
     FeaturePlanStatusPipe,
     FormsModule,
+    PlanReviewNotesComponent,
+    PlanReviewersComponent,
     RouterLink,
+    SpecificationDefinitionsOfDoneComponent,
+    SpecificationRequirementsComponent,
+    SpecificationScriptsComponent,
+    SpecificationWarningsComponent,
   ],
   templateUrl: './feature-plan-details.page.html',
   styleUrls: ['./feature-plan-details.page.css', '../ui/feature-pages.css'],
@@ -123,6 +159,17 @@ export class FeaturePlanDetailsPage {
   protected readonly pickedRecordIds = signal<readonly string[]>([]);
   protected readonly confirmingRemoval = signal(false);
   protected readonly statusOptions = FEATURE_PLAN_STATUS_OPTIONS;
+  protected readonly planTabs = PLAN_TABS;
+
+  private readonly location$: Observable<PlanLocation> = combineLatest({
+    tab: this.route.queryParamMap.pipe(map(params => params.get('tab'))),
+    fragment: this.route.fragment,
+  }).pipe(
+    map(({ tab, fragment }) => ({
+      tab: PLAN_TABS.find(item => item.value === tab)?.value ?? 'plan',
+      fragment,
+    })),
+  );
 
   private readonly state$: Observable<LoadState<FeaturePlanDetailsView>> =
     this.route.paramMap.pipe(
@@ -164,6 +211,11 @@ export class FeaturePlanDetailsPage {
                     sourceOptions: branchSourceOptions(feature, plan.id),
                     describeSources: (branch: FeaturePlanBranch) =>
                       describeSources(branch.sources, feature),
+                    moveTargets: feature.plans
+                      .filter(item => item.id !== plan.id && item.status !== 'Completed')
+                      .map(item => ({ id: item.id, title: item.title })),
+                    loadSnapshot: (scriptId: string) =>
+                      this.features.getScriptSnapshot(featureId, planId, scriptId),
                   },
                 } as const)
               : ({
@@ -199,7 +251,7 @@ export class FeaturePlanDetailsPage {
         map(() => ({ status: 'idle' }) as const),
         startWith({ status: 'saving', kind: action.kind } as const),
         catchError(error =>
-          of({ status: 'error', message: toUserMessage(error) } as const),
+          of({ status: 'error', message: toCommandErrorMessage(error) } as const),
         ),
       ),
     ),
@@ -209,7 +261,16 @@ export class FeaturePlanDetailsPage {
   protected readonly vm$ = combineLatest({
     state: this.state$,
     mutation: this.mutation$,
+    location: this.location$,
   }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
+  protected changeSpecification(target: PlanTarget, change: SpecificationAction): void {
+    this.actions.next({ kind: 'specification', ...target, change });
+  }
+
+  protected changeReviews(target: PlanTarget, change: PlanReviewAction): void {
+    this.actions.next({ kind: 'reviews', ...target, change });
+  }
 
   protected updatePlan(
     target: PlanTarget,
@@ -376,6 +437,18 @@ export class FeaturePlanDetailsPage {
           action.featureId,
           action.planId,
           action.request,
+        );
+      case 'specification':
+        return this.features.changeSpecification(
+          action.featureId,
+          action.planId,
+          action.change,
+        );
+      case 'reviews':
+        return this.features.changePlanReviews(
+          action.featureId,
+          action.planId,
+          action.change,
         );
     }
   }

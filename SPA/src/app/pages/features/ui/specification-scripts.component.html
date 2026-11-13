@@ -1,0 +1,137 @@
+<section class="spec-section surface-card" aria-label="Playwright scripts">
+  <div class="spec-heading">
+    <div>
+      <span class="eyebrow">Specification</span>
+      <h2>Playwright scripts</h2>
+    </div>
+    <div class="spec-actions">
+      <span class="count-badge">{{ specification().playwrightScripts.length }}</span>
+      <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="startAdding()">
+        {{ adding() ? 'Cancel' : 'Add script' }}
+      </button>
+    </div>
+  </div>
+  <p class="spec-description">Script paths with the definitions of done each one confirms.</p>
+
+  @if (adding()) {
+    <form class="spec-editor" #addForm="ngForm" (ngSubmit)="add(newPath.value, newSnapshot.value ?? '')">
+      <label>
+        <span>Path</span>
+        <input #newPath="ngModel" name="path" type="text" required placeholder="e2e/feature.spec.ts" ngModel />
+      </label>
+      <app-feature-link-picker
+        legend="Confirms definitions of done"
+        emptyMessage="Add definitions of done first to link them."
+        [options]="definitionOfDoneOptions()"
+        [selectedIds]="pickedDefinitionOfDoneIds()"
+        (selectedIdsChange)="pickedDefinitionOfDoneIds.set($event)"
+      />
+      <label>
+        <span>Snapshot code (optional)</span>
+        <textarea #newSnapshot="ngModel" name="snapshot" rows="6" ngModel></textarea>
+      </label>
+      <div class="editor-actions">
+        <button type="submit" class="primary-button" [disabled]="addForm.invalid || saving()">Add script</button>
+      </div>
+    </form>
+  }
+
+  @let snapshot = snapshot$ | async;
+  <div class="spec-list">
+    @for (script of specification().playwrightScripts; track script.id) {
+      <article class="spec-item" [id]="anchor(script.id)" [appScrollIntoView]="fragment() === anchor(script.id)">
+        <header>
+          <div class="spec-item-meta">
+            <span class="code-path">{{ script.path }}</span>
+            @if (script.hasSnapshot) {
+              <span class="detail-chip">Snapshot {{ script.snapshotUpdatedAt | date: 'medium' }}</span>
+            }
+            <app-origin-link [featureId]="feature()?.id ?? ''" [origin]="script.origin | originLink: feature()" />
+          </div>
+          <div class="item-actions">
+            @if (script.hasSnapshot) {
+              <button type="button" (click)="toggleSnapshot(script.id)">
+                {{ openSnapshotId() === script.id ? 'Hide code' : 'Show code' }}
+              </button>
+            }
+            <button
+              type="button"
+              (click)="isEditing('snapshot', script.id) ? editor.set(null) : editor.set({ mode: 'snapshot', id: script.id })"
+            >
+              {{ isEditing('snapshot', script.id) ? 'Cancel' : 'Set snapshot' }}
+            </button>
+            <button type="button" (click)="isEditing('edit', script.id) ? editor.set(null) : startEditing(script)">
+              {{ isEditing('edit', script.id) ? 'Cancel' : 'Edit' }}
+            </button>
+            @if (confirmingRemovalId() === script.id) {
+              <button type="button" class="danger-text" [disabled]="saving()" (click)="remove(script.id)">Confirm remove</button>
+            } @else {
+              <button type="button" class="danger-text" (click)="confirmingRemovalId.set(script.id)">Remove</button>
+            }
+          </div>
+        </header>
+
+        @if (isEditing('edit', script.id)) {
+          <form class="spec-editor" #editForm="ngForm" (ngSubmit)="update(script.id, editPath.value)">
+            <label>
+              <span>Path</span>
+              <input #editPath="ngModel" name="path" type="text" required [ngModel]="script.path" />
+            </label>
+            <app-feature-link-picker
+              legend="Confirms definitions of done"
+              emptyMessage="There are no definitions of done to link."
+              [options]="definitionOfDoneOptions()"
+              [selectedIds]="pickedDefinitionOfDoneIds()"
+              (selectedIdsChange)="pickedDefinitionOfDoneIds.set($event)"
+            />
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="editForm.invalid || saving()">Save script</button>
+            </div>
+          </form>
+        } @else if (isEditing('snapshot', script.id)) {
+          <form class="spec-editor" (ngSubmit)="saveSnapshot(script.id, snapshotCode.value ?? '')">
+            <label>
+              <span>Snapshot code</span>
+              <textarea
+                #snapshotCode="ngModel"
+                name="snapshot"
+                rows="10"
+                placeholder="Paste the script code; leave empty to remove the snapshot"
+                ngModel
+              ></textarea>
+            </label>
+            <div class="editor-actions">
+              <button type="submit" class="primary-button" [disabled]="saving()">Save snapshot</button>
+            </div>
+          </form>
+        } @else {
+          <div class="spec-item-body">
+            <div class="links-row">
+              <span>Confirms:</span>
+              @for (label of definitionOfDoneLabels(script); track label) {
+                <span class="link-chip">{{ label }}</span>
+              } @empty {
+                <span class="muted">no definition of done</span>
+              }
+            </div>
+            @if (openSnapshotId() === script.id && snapshot) {
+              @switch (snapshot.status) {
+                @case ('loading') {
+                  <p class="muted">Loading snapshot…</p>
+                }
+                @case ('error') {
+                  <p class="muted" role="alert">{{ snapshot.message }}</p>
+                }
+                @case ('success') {
+                  <pre class="snapshot-code"><code>{{ snapshot.data.content }}</code></pre>
+                }
+              }
+            }
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="empty-section">No Playwright scripts yet.</div>
+    }
+  </div>
+</section>

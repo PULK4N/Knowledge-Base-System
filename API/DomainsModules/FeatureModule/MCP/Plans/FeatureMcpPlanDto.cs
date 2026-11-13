@@ -28,6 +28,8 @@ public sealed record FeatureMcpPlanDto
     public required IReadOnlyCollection<FeatureRecordReferenceDto>
         Records { get; init; }
 
+    public required SpecificationDto Specification { get; init; }
+
     public required FeaturePlanContentType ContentType { get; init; }
 
     public required string Content { get; init; }
@@ -54,6 +56,7 @@ public sealed record FeatureMcpPlanDto
                     recordsById[recordId]
                 ))
                 .ToList(),
+            Specification = plan.Specification,
             ContentType = plan.ContentType,
             Content = plan.Content,
             CreatedAt = plan.CreatedAt,

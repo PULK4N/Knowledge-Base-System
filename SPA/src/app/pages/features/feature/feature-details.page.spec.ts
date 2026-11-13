@@ -1,3 +1,4 @@
+import { EMPTY_SPECIFICATION } from '../data-access/feature.models';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -51,6 +52,7 @@ const feature: Feature = {
   ],
   plans: [],
   branch: null,
+  specification: EMPTY_SPECIFICATION,
   branchGraph: [],
   memoryHistory: [
     {
@@ -91,6 +93,9 @@ const featureWithPlans: Feature = {
       ],
       previousPlanId: null,
       recordIds: ['discovery-1'],
+      specification: EMPTY_SPECIFICATION,
+      reviewNotes: [],
+      reviewers: [],
       createdAt: '2026-08-20T10:00:00Z',
       updatedAt: '2026-08-22T10:00:00Z',
     },
@@ -104,6 +109,9 @@ const featureWithPlans: Feature = {
       branches: [],
       previousPlanId: null,
       recordIds: [],
+      specification: EMPTY_SPECIFICATION,
+      reviewNotes: [],
+      reviewers: [],
       createdAt: '2026-08-18T10:00:00Z',
       updatedAt: '2026-08-19T10:00:00Z',
     },

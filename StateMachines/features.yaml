@@ -176,10 +176,12 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
+      - FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator
   FeaturePlanStatusChangedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
+      - FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator
   FeaturePlanBranchAddedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
@@ -238,3 +240,79 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeatureReviewerMustExistValidator
+  FeatureRequirementsAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRequirementsValidator
+  FeatureRequirementsUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRequirementsValidator
+  FeatureRequirementsRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureRequirementsValidator
+  FeatureDefinitionsOfDoneAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureDefinitionsOfDoneValidator
+  FeatureDefinitionsOfDoneUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureDefinitionsOfDoneValidator
+  FeatureDefinitionsOfDoneRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureDefinitionsOfDoneValidator
+  FeatureDefinitionsOfDoneStateSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureDefinitionsOfDoneValidator
+  FeaturePlaywrightScriptsAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlaywrightScriptsValidator
+  FeaturePlaywrightScriptsUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlaywrightScriptsValidator
+  FeaturePlaywrightScriptsRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlaywrightScriptsValidator
+  FeaturePlaywrightScriptSnapshotsSetV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlaywrightScriptsValidator
+  FeatureDefinitionsOfDoneMovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeatureDefinitionsOfDoneMoveValidator
+  FeaturePlanReviewNoteAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewNoteValidator
+  FeaturePlanReviewNoteUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewNoteValidator
+  FeaturePlanReviewNoteRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewNoteValidator
+  FeaturePlanReviewerAddedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewerValidator
+  FeaturePlanReviewerUpdatedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewerValidator
+  FeaturePlanReviewerRemovedV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanReviewerValidator
+  FeaturePlanCopiedToFeatureV1:
+    preEventValidators:
+      - FeatureMustBeActiveValidator
+      - FeaturePlanCopyToFeatureValidator
