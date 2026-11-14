@@ -13,9 +13,6 @@ The application combines an Angular frontend, an ASP.NET Core API, an event-sour
 - [Service addresses](#service-addresses)
 - [Configuration](#configuration)
 - [MCP and agent integrations](#mcp-and-agent-integrations)
-- [Local development](#local-development)
-- [Tests](#tests)
-- [Operations and troubleshooting](#operations-and-troubleshooting)
 - [Repository structure](#repository-structure)
 - [License](#license)
 
