@@ -23,6 +23,11 @@ public sealed record ChatSummaryAddedV1(
             Summary = Summary,
             SummaryTimestamp = eventExecutionInfo.Timestamp
         };
+        state.ChatSummaries.Add(new ChatSummary
+        {
+            Summary = Summary,
+            SummaryTimestamp = eventExecutionInfo.Timestamp
+        });
 
         return state;
     }
@@ -45,6 +50,11 @@ public sealed record ChatSummaryAddedV2(
             Summary = Summary,
             SummaryTimestamp = eventExecutionInfo.Timestamp
         };
+        state.ChatSummaries.Add(new ChatSummary
+        {
+            Summary = Summary,
+            SummaryTimestamp = eventExecutionInfo.Timestamp
+        });
         state.RelatedEntities.UnionWith(RelatedEntities);
 
         return state;

@@ -171,11 +171,20 @@ public sealed class SearchMemoryQuery(
             result.Memory.PromptStartTimestamp,
             matchedSummary,
             budget.Take(state.ChatSummary.Summary) ?? string.Empty,
-            matchedSummary
+            matchedSummary && IsLatestSummary(result, state)
                 ? null
                 : budget.Take(result.Memory.Text)
         );
     }
+
+    /// <summary>
+    /// The latest summary is already returned as the session summary, so only
+    /// a match on an older summary also returns the matched text.
+    /// </summary>
+    private static bool IsLatestSummary(
+        MemorySearchResult result,
+        MemoryStateData state
+    ) => result.Memory.HookIndex >= state.ChatSummaries.Count - 1;
 
     private static HashSet<string> GetTerms(string text) =>
         text.Split(

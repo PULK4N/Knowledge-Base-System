@@ -57,6 +57,7 @@ public sealed class MemorySearchProjectorTests
                 DateTimeKind.Utc
             )
         };
+        state.ChatSummaries.Add(state.ChatSummary);
         var embeddingGenerator = new FakeEmbeddingGenerator();
         var repository = new FakeRepository();
         var knowledgeRepository = new FakeKnowledgeRepository();
@@ -83,6 +84,49 @@ public sealed class MemorySearchProjectorTests
         Assert.Contains(state.ChatSummary.Summary, document.Text);
         Assert.Equal([1f, 2f], document.Embedding.ToArray());
         Assert.Contains(document.Text, embeddingGenerator.LastInputs);
+    }
+
+    [Fact]
+    public async Task Update_projects_every_summary_with_its_own_source_key()
+    {
+        var state = CreateMemory();
+        var firstTimestamp = new DateTime(2026, 8, 8, 11, 0, 0, DateTimeKind.Utc);
+        var secondTimestamp = firstTimestamp.AddHours(1);
+        state.ChatSummaries.Add(
+            new ChatSummary { Summary = "Older summary", SummaryTimestamp = firstTimestamp }
+        );
+        state.ChatSummaries.Add(
+            new ChatSummary { Summary = " ", SummaryTimestamp = firstTimestamp }
+        );
+        state.ChatSummaries.Add(
+            new ChatSummary { Summary = "Latest summary", SummaryTimestamp = secondTimestamp }
+        );
+        var repository = new FakeRepository();
+        var knowledgeRepository = new FakeKnowledgeRepository();
+        var projector = new MemorySearchProjector(
+            new FakeEmbeddingGenerator(),
+            new FakeProjectionWriter(repository, knowledgeRepository)
+        );
+
+        await projector.Update([CreateStateInfo(state)]);
+
+        var summaries = repository.Documents
+            .Where(document => document.HookEventName == MemorySearchDocumentSources.ChatSummary)
+            .OrderBy(document => document.HookIndex)
+            .ToList();
+        Assert.Equal([0, 2], summaries.Select(document => document.HookIndex).ToList());
+        Assert.Contains("Older summary", summaries[0].Text);
+        Assert.Equal(firstTimestamp, summaries[0].PromptStartTimestamp);
+        Assert.Contains("Latest summary", summaries[1].Text);
+        Assert.Equal(secondTimestamp, summaries[1].PromptStartTimestamp);
+        Assert.Equal(
+            ["summary:0", "summary:2"],
+            knowledgeRepository.Documents
+                .Where(document => document.SourceType == KnowledgeSearchSourceTypes.MemorySummary)
+                .Select(document => document.SourceKey)
+                .Order(StringComparer.Ordinal)
+                .ToList()
+        );
     }
 
     [Fact]
