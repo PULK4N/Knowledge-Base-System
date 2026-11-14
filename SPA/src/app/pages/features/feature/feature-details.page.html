@@ -22,98 +22,100 @@
         </div>
       </header>
 
-      <nav class="feature-tabs" role="tablist" aria-label="Feature sections">
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'overview' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'overview'"
-          [class.active]="vm.listState.activeTab === 'overview'"
-        >
-          Overview
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'plans' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'plans'"
-          [class.active]="vm.listState.activeTab === 'plans'"
-        >
-          Plans <span>{{ vm.state.data.plans.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'records' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'records'"
-          [class.active]="vm.listState.activeTab === 'records'"
-        >
-          Records <span>{{ vm.state.data.records.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'review-notes' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'review-notes'"
-          [class.active]="vm.listState.activeTab === 'review-notes'"
-        >
-          Review notes <span>{{ vm.state.data.reviewNotes.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'reviewers' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'reviewers'"
-          [class.active]="vm.listState.activeTab === 'reviewers'"
-        >
-          Reviewers <span>{{ vm.state.data.reviewers.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'requirements' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'requirements'"
-          [class.active]="vm.listState.activeTab === 'requirements'"
-        >
-          Requirements <span>{{ vm.state.data.specification.requirements.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'definitions-of-done' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'definitions-of-done'"
-          [class.active]="vm.listState.activeTab === 'definitions-of-done'"
-        >
-          Definitions of done <span>{{ vm.state.data.specification.definitionsOfDone.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'playwright-scripts' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'playwright-scripts'"
-          [class.active]="vm.listState.activeTab === 'playwright-scripts'"
-        >
-          Playwright scripts <span>{{ vm.state.data.specification.playwrightScripts.length }}</span>
-        </a>
-        <a
-          role="tab"
-          [routerLink]="[]"
-          [queryParams]="{ tab: 'history' }"
-          queryParamsHandling="merge"
-          [attr.aria-selected]="vm.listState.activeTab === 'history'"
-          [class.active]="vm.listState.activeTab === 'history'"
-        >
-          History <span>{{ vm.collections.history.length }}</span>
-        </a>
-      </nav>
+      <app-tab-scroller class="feature-tabs-scroller">
+        <nav #tabStrip class="feature-tabs" role="tablist" aria-label="Feature sections">
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'overview' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'overview'"
+            [class.active]="vm.listState.activeTab === 'overview'"
+          >
+            Overview
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'plans' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'plans'"
+            [class.active]="vm.listState.activeTab === 'plans'"
+          >
+            Plans <span>{{ vm.state.data.plans.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'records' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'records'"
+            [class.active]="vm.listState.activeTab === 'records'"
+          >
+            Records <span>{{ vm.state.data.records.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'review-notes' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'review-notes'"
+            [class.active]="vm.listState.activeTab === 'review-notes'"
+          >
+            Review notes <span>{{ vm.state.data.reviewNotes.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'reviewers' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'reviewers'"
+            [class.active]="vm.listState.activeTab === 'reviewers'"
+          >
+            Reviewers <span>{{ vm.state.data.reviewers.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'requirements' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'requirements'"
+            [class.active]="vm.listState.activeTab === 'requirements'"
+          >
+            Requirements <span>{{ vm.state.data.specification.requirements.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'definitions-of-done' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'definitions-of-done'"
+            [class.active]="vm.listState.activeTab === 'definitions-of-done'"
+          >
+            Definitions of done <span>{{ vm.state.data.specification.definitionsOfDone.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'playwright-scripts' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'playwright-scripts'"
+            [class.active]="vm.listState.activeTab === 'playwright-scripts'"
+          >
+            Playwright scripts <span>{{ vm.state.data.specification.playwrightScripts.length }}</span>
+          </a>
+          <a
+            role="tab"
+            [routerLink]="[]"
+            [queryParams]="{ tab: 'history' }"
+            queryParamsHandling="merge"
+            [attr.aria-selected]="vm.listState.activeTab === 'history'"
+            [class.active]="vm.listState.activeTab === 'history'"
+          >
+            History <span>{{ vm.collections.history.length }}</span>
+          </a>
+        </nav>
+      </app-tab-scroller>
 
       @if (vm.listState.activeTab === 'overview') {
         <app-feature-branch-settings

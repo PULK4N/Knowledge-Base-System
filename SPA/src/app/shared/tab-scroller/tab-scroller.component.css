@@ -1,0 +1,37 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+.scroll-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 4px;
+  z-index: 1;
+  display: grid;
+  width: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  color: var(--indigo);
+  cursor: pointer;
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.scroll-arrow.start {
+  left: 0;
+  justify-items: start;
+  background: linear-gradient(to right, var(--canvas) 55%, transparent);
+}
+
+.scroll-arrow.end {
+  right: 0;
+  justify-items: end;
+  background: linear-gradient(to left, var(--canvas) 55%, transparent);
+}
+
+.scroll-arrow:hover {
+  color: var(--navy);
+}

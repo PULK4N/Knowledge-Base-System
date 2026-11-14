@@ -30,6 +30,7 @@ import {
   ListControlsComponent,
 } from '../../../shared/list-controls/list-controls.component';
 import { omitDefault, omitEmpty } from '../../../shared/list-state/list-route-state';
+import { TabScrollerComponent } from '../../../shared/tab-scroller/tab-scroller.component';
 import { ListSortDirection } from '../../../shared/list-state/list-state';
 import { MarkdownContentComponent } from '../../skills/ui/markdown-content.component';
 import { ShortIdPipe } from '../../skills/ui/short-id.pipe';
@@ -207,6 +208,7 @@ type MutationState =
     SpecificationRequirementsComponent,
     SpecificationScriptsComponent,
     SpecificationWarningsComponent,
+    TabScrollerComponent,
   ],
   templateUrl: './feature-details.page.html',
   styleUrls: [

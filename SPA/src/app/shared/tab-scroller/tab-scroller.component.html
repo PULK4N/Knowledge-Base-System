@@ -1,0 +1,23 @@
+<ng-content />
+@if (canScrollStart()) {
+  <button
+    type="button"
+    class="scroll-arrow start"
+    tabindex="-1"
+    aria-label="Show previous tabs"
+    (click)="scroll(-1)"
+  >
+    ‹
+  </button>
+}
+@if (canScrollEnd()) {
+  <button
+    type="button"
+    class="scroll-arrow end"
+    tabindex="-1"
+    aria-label="Show next tabs"
+    (click)="scroll(1)"
+  >
+    ›
+  </button>
+}
