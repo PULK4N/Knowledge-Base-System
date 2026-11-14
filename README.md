@@ -7,13 +7,12 @@ The application combines an Angular frontend, an ASP.NET Core API, an event-sour
 ## Contents
 
 - [Features](#features)
-- [How it works](#how-it-works)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Service addresses](#service-addresses)
-- [Configuration](#configuration)
 - [MCP and agent integrations](#mcp-and-agent-integrations)
-- [Repository structure](#repository-structure)
+  - [Claude Code plugin](#claude-code-plugin)
+  - [Codex plugin](#codex-plugin)
+  - [Verify the connection](#verify-the-connection)
 - [License](#license)
 
 ## Features
@@ -26,31 +25,6 @@ The application combines an Angular frontend, an ASP.NET Core API, an event-sour
 - **Search:** keyword and semantic retrieval across stored knowledge, plus focused search tools for individual content types.
 - **Administration:** projection replay, outbox inspection, unique-constraint rebuilding, and code-review settings.
 - **Agent integrations:** MCP tools and repository-provided hooks for Claude and Codex.
-
-## How it works
-
-```mermaid
-flowchart LR
-    User[User] --> UI[Angular web interface]
-    UI --> Nginx[Nginx /api proxy]
-    Nginx --> API[ASP.NET Core REST API]
-    Agent[AI agent] --> MCP[HTTP MCP endpoint]
-    MCP --> Actions[Application commands and queries]
-    API --> Actions
-    Actions --> DB[(PostgreSQL + pgvector)]
-    DB --> Outbox[Outbox publisher]
-    Outbox --> Broker[ActiveMQ Artemis]
-    Broker --> Projectors[Projection workers]
-    Projectors --> DB
-    Projectors --> Ollama[Ollama embeddings]
-    Actions --> Ollama
-```
-
-Changes to event-sourced entities are stored as events. YAML state-machine definitions select event validators and projections. Events are authoritative; projections provide read models for lists, details, and search.
-
-Outbox processing publishes messages to ActiveMQ Artemis, and projection workers update the read models. Because this happens asynchronously, a successful write can take a short time to appear in lists or search results.
-
-Ollama runs `qwen3-embedding:0.6b` locally to generate 1,024-dimensional embeddings. Search uses PostgreSQL text search and vector similarity. The default setup does not require an external AI API key for embeddings.
 
 ## Requirements
 
@@ -70,18 +44,6 @@ The default Compose configuration **requires CUDA and deliberately refuses CPU f
 The commands below use Bash. On Windows, run them in a WSL environment with Docker integration and NVIDIA GPU access configured. Native macOS does not satisfy the supplied stack's NVIDIA requirement.
 
 The examples use `docker compose`. If Compose v2 is installed as the standalone `docker-compose` executable, replace `docker compose` with `docker-compose` throughout the commands. The rebuild scripts support either form.
-
-### Developing outside Docker
-
-Install these only for the parts you intend to run locally:
-
-| Tool | Repository target |
-| --- | --- |
-| .NET SDK | .NET 8 for the API and backend tests. |
-| Node.js and npm | The frontend Dockerfile uses Node.js `24.15.0`; use the same version to match the build environment. |
-| Angular CLI | Installed locally by `npm ci`; no global CLI installation is necessary. The frontend uses Angular 22.1. |
-| Python 3 | Optional, for Knowledge Base publishing scripts and agent integration tooling. |
-| Bash and curl | Required by the integration-test runner. |
 
 ## Installation
 
@@ -120,53 +82,64 @@ Open **[http://localhost:4200](http://localhost:4200)** for the web interface an
 
 The supplied Compose file is a local development configuration: it uses default database and broker credentials, exposes infrastructure ports, and runs the API in Development mode. The API startup does not configure authentication. Add access control, TLS, appropriate network restrictions, and deployment-specific credentials before exposing it beyond a trusted environment.
 
-## Service addresses
-
-| Service | Host address | Notes |
-| --- | --- | --- |
-| Web interface | `http://localhost:4200` | Nginx serves Angular and proxies `/api/` to the API. |
-| REST API / Swagger | `http://localhost:5231/swagger` | Swagger is enabled in Development mode. |
-| MCP | `http://localhost:5231/mcp` | Streamable HTTP transport. |
-| PostgreSQL | `localhost:5432` | Database, username, and password: `skill_memory`. |
-| PostgreSQL browser | `http://localhost:8081` | Also proxied through `http://localhost:4200/pgweb/`. |
-| Artemis AMQP | `localhost:5673` | Container port is `5672`; username/password: `artemis`. |
-| Artemis console | `http://localhost:8162/console/` | Also proxied through `http://localhost:4200/console/`. |
-| Ollama | `http://localhost:11435` | Container port is `11434`. |
-
-Inside the Docker network, services use Compose names such as `postgres`, `artemis`, and `ollama`, together with their container ports. Local processes use the host addresses above.
-
-## Configuration
-
-The main configuration files are:
-
-- [`docker-compose.yml`](docker-compose.yml): services, ports, volumes, and container environment variables.
-- [`API/API/appsettings.json`](API/API/appsettings.json): shared API settings.
-- [`API/API/appsettings.Development.json`](API/API/appsettings.Development.json): local database and embedding settings.
-- [`API/API/Properties/launchSettings.json`](API/API/Properties/launchSettings.json): local API launch profiles.
-- [`StateMachines/`](StateMachines/): events, validators, and projection selections.
-- [`SPA/nginx.conf`](SPA/nginx.conf): frontend serving and reverse proxies.
-
-ASP.NET Core environment variables use double underscores for nested configuration keys:
-
-| Key | Purpose |
-| --- | --- |
-| `ConnectionStrings__ApplicationDatabase` | PostgreSQL connection string. |
-| `Embeddings__BaseUrl` | Ollama server URL. |
-| `Embeddings__Model` | Embedding model; currently `qwen3-embedding:0.6b`. |
-| `Embeddings__Dimensions` | Vector size; currently `1024`. |
-| `Embeddings__NumGpu`, `Embeddings__MainGpu` | GPU allocation settings. |
-| `Embeddings__NumCtx` | Embedding context size; currently `4096`. |
-| `OutboxProcessing__BrokerUri` | Artemis AMQP connection URI. |
-| `OutboxProcessing__UserName`, `OutboxProcessing__Password` | Broker credentials. |
-| `ASPNETCORE_ENVIRONMENT` | Runtime environment, including whether Swagger is enabled. |
-
-Keep embedding model dimensions consistent with the database vector schema. Changing the model also requires regenerating affected search embeddings; changing only the model name does not update existing vectors.
-
 ## MCP and agent integrations
 
 Configure an MCP-compatible client to connect to `http://localhost:5231/mcp` using Streamable HTTP. Client configuration syntax varies; this is a server endpoint, not a browser page. A client running in another container or on another machine needs an address that reaches the API from that environment.
 
 The MCP server exposes skills, policies, projects, features, memories, and knowledge-search tools. Focused tools such as `skill_search` and `feature_record_search` retrieve particular content types, while `knowledge_search` searches across sources.
+
+### Before installing a plugin
+
+Start the Knowledge Base stack using the installation steps above. Install the client you use, and make sure **Python 3 is available as `python`** in that client's environment: the plugin hooks invoke that exact command. Git must also be available. No additional Python packages are required by the hooks.
+
+The plugins include the MCP connection and hooks for loading policies and saving conversation memory. **The policy hooks replace the target repository's `CLAUDE.md` (Claude) or `AGENTS.md` (Codex) with policies from the Knowledge Base.** Preserve any existing instructions you need before enabling the plugin.
+
+### Claude Code plugin
+
+Run this in a terminal from the root of this repository checkout, with Claude Code installed and signed in:
+
+```bash
+set -euo pipefail
+python --version
+claude plugin marketplace add .
+claude plugin install mcp-knowledge-base@knowledge-base-claude --scope user
+claude plugin list
+```
+
+This registers [the Claude marketplace](.claude-plugin/marketplace.json) and installs the plugin for your user. If `knowledge-base-claude` is already registered for this checkout, skip the marketplace-add command.
+
+Restart Claude Code in the repository you want to work on. Complete any plugin or hook trust prompts, then run `/mcp` to check that the plugin's Knowledge Base server is connected. See [Claude Code's plugin installation guide](https://code.claude.com/docs/en/discover-plugins) for installation scopes and plugin management.
+
+### Codex plugin
+
+Use a Codex CLI version that supports `codex plugin`. Run this in a terminal from the root of this repository checkout, with Codex installed and signed in:
+
+```bash
+set -euo pipefail
+python --version
+codex plugin marketplace add .
+codex plugin add mcp-knowledge-base@knowledge-base-codex
+codex plugin list --marketplace knowledge-base-codex
+```
+
+This registers [the Codex marketplace](.agents/plugins/marketplace.json) and installs its Codex-specific plugin. If `knowledge-base-codex` is already registered for this checkout, skip the marketplace-add command.
+
+Restart your Codex client and start a new session in the repository you want to work on. Complete any plugin or hook trust prompts. In the ChatGPT desktop app's Codex interface, local marketplaces can also be selected in the Plugins Directory; choose **Knowledge Base Codex** and install **MCP Knowledge Base**. See [OpenAI's local plugin setup guide](https://developers.openai.com/plugins/build/plugins) for marketplace and client details.
+
+### Verify the connection
+
+Ask your agent: **“Use the Knowledge Base MCP to list the available skills.”** It should call a Knowledge Base tool and return a result; an empty list is valid for a new installation.
+
+For project-specific policies and skills, create a project in the web interface, add the repository path used by your agent, and link the relevant policies and skills. Start a new agent session in that repository to load them.
+
+If setup fails:
+
+- **Python not found:** ensure `python` resolves to Python 3 in the environment that launches the client, including desktop or IDE clients.
+- **Connection refused:** check that the API is running at `http://localhost:5231`. `localhost` refers to the agent's environment, which matters when using containers, WSL, or a remote host.
+- **Different API address:** change the URL in the relevant plugin's `.mcp.json` before installing it. The hooks read that configuration too; reinstall or refresh the installed plugin after changing its source files.
+- **Tools work but policies or memory do not:** check that the full plugin is enabled and its hooks are trusted. Adding only an MCP server does not install the hooks.
+
+### Plugin sources
 
 Agent plugin sources live in:
 
@@ -174,27 +147,6 @@ Agent plugin sources live in:
 - [`integrations/codex/plugins/mcp-knowledge-base/`](integrations/codex/plugins/mcp-knowledge-base/)
 
 Both include MCP configuration pointing to the local API. Hook integrations provide additional agent-specific behavior, including conversation capture. See the [Codex memory attachment notes](integrations/codex/plugins/mcp-knowledge-base/README.md) and [prompt usage tooling](scripts/PROMPT_USAGE.md) for the corresponding repository tools.
-
-## Repository structure
-
-```text
-API/
-  API/                    ASP.NET Core host and configuration
-  ActionModule/           Shared command/query execution infrastructure
-  DomainsModules/         Skills, policies, projects, features, memories, and more
-  EventSourcing/           Event-sourcing framework (Git submodule)
-  IntegrationModules/     PostgreSQL, embeddings, and outbox processing
-  IntegrationTests/       HTTP MCP integration tests
-SPA/                      Angular web application and Nginx configuration
-StateMachines/            YAML event/validator/projection definitions
-integrations/             Agent plugins and Artemis configuration
-scripts/                  Rebuild, testing, publishing, and agent tooling
-docker-compose.yml        Main development stack
-docker-compose.integration-tests.yml
-                          Disposable integration-test stack
-```
-
-Domain modules generally separate domain behavior, application commands and queries, persistence, and REST/MCP adapters. Their tests sit alongside the relevant layer.
 
 ## License
 
