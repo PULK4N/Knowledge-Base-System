@@ -389,3 +389,33 @@ button:disabled {
 .implicit-skills .list-toolbar {
   margin-top: 20px;
 }
+
+.note-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-toggle:hover strong {
+  text-decoration: underline;
+}
+
+.note-chevron {
+  width: 12px;
+  color: var(--muted);
+}
+
+.note-expansion-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

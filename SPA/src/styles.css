@@ -534,7 +534,8 @@ a {
     .primary-action,
     .primary-link,
     .add-link,
-    .no-projects a
+    .no-projects a,
+    .welcome a
   ) {
   color: #fff;
   background: var(--indigo);
@@ -696,4 +697,77 @@ a {
   border-color: var(--line);
   background: var(--surface-soft);
   color: var(--text-strong);
+}
+
+/* Mermaid keeps its light "neutral" theme, so node and edge labels stay dark
+   instead of taking the dark-mode span color. */
+:root[data-theme="dark"] .workspace .markdown-content .mermaid svg :is(span, p, div) {
+  color: #172039 !important;
+}
+
+:root[data-theme="dark"] .workspace .plan-tab {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .workspace .plan-tab.active {
+  color: #fff;
+  background: var(--indigo);
+}
+
+:root[data-theme="dark"] .workspace .plan-tab-count {
+  color: var(--text-strong) !important;
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .plan-tab.active .plan-tab-count {
+  color: #fff !important;
+  background: rgb(255 255 255 / 0.2);
+}
+
+:root[data-theme="dark"] .workspace .welcome a span {
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .workspace .pagination button:not(.current) {
+  color: var(--text-strong);
+  border-color: var(--line);
+  background: var(--control);
+}
+
+:root[data-theme="dark"] .workspace .pagination button.current span {
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .workspace .execution-mode {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .workspace .topic-chip > span:first-child {
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .workspace .topic-chip > span:last-child {
+  background: rgb(0 0 0 / 0.25);
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .workspace button.danger-text {
+  border-color: #733d4b;
+  background: var(--control);
+}
+
+:root[data-theme="dark"] .workspace .project-tabs a span {
+  color: var(--text-strong) !important;
+  background: var(--surface-soft) !important;
+}
+
+:root[data-theme="dark"] .workspace .history-icon {
+  color: var(--indigo) !important;
+  background: #293650;
+}
+
+:root[data-theme="dark"] .workspace .item .note-toggle {
+  border: 0;
+  background: transparent;
 }

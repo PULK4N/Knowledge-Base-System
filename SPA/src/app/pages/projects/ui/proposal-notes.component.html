@@ -52,6 +52,13 @@
       (sortDirectionChanged)="direction.set($event)"
     />
 
+    @if (notes().length > 0) {
+      <div class="note-expansion-actions">
+        <button class="row-button" type="button" (click)="expandAll()">Expand all</button>
+        <button class="row-button" type="button" (click)="collapseAll()">Collapse all</button>
+      </div>
+    }
+
     <ul class="item-list" aria-label="Proposal notes">
       @for (note of notes(); track note.noteId) {
         <li class="item">
@@ -81,7 +88,16 @@
             </div>
           } @else {
             <div class="item-heading">
-              <strong>{{ note.title }}</strong>
+              <button
+                class="note-toggle"
+                type="button"
+                [attr.aria-expanded]="expandedNoteIds().has(note.noteId)"
+                [attr.aria-controls]="'proposal-note-' + note.noteId"
+                (click)="toggleNote(note.noteId)"
+              >
+                <span class="note-chevron" aria-hidden="true">{{ expandedNoteIds().has(note.noteId) ? '▾' : '▸' }}</span>
+                <strong>{{ note.title }}</strong>
+              </button>
               <span class="item-actions">
                 <span class="muted">{{ note.updatedAt | date: 'medium' }}</span>
                 @if (confirmingNoteId() === note.noteId) {
@@ -111,11 +127,14 @@
                 }
               </span>
             </div>
-            <app-markdown-content
-              [blocks]="emptyBlocks"
-              [markdown]="note.content"
-              emptyMessage="This note has no content."
-            />
+            @if (expandedNoteIds().has(note.noteId)) {
+              <app-markdown-content
+                [attr.id]="'proposal-note-' + note.noteId"
+                [blocks]="emptyBlocks"
+                [markdown]="note.content"
+                emptyMessage="This note has no content."
+              />
+            }
           }
         </li>
       } @empty {

@@ -139,6 +139,37 @@
               />
             }
             @default {
+              <section class="plan-branches surface-card">
+                <label class="previous-plan-control">
+                  <span>Previous plan</span>
+                  <select
+                    name="previousPlan"
+                    [disabled]="saving"
+                    [ngModel]="plan.previousPlanId ?? ''"
+                    (ngModelChange)="setPreviousPlan(target, $event)"
+                  >
+                    <option value="">
+                      None (default branches come from {{ feature.branch?.name ?? 'the feature branch' }})
+                    </option>
+                    @for (option of vm.state.data.previousPlanOptions; track option.id) {
+                      <option [value]="option.id">
+                        After {{ option.title }}{{ option.branches.length > 0 ? ' (' + option.branches[0].name + ')' : '' }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <app-feature-plan-branch-tree
+                  [branches]="plan.branches"
+                  [sourceOptions]="vm.state.data.sourceOptions"
+                  [describeSources]="vm.state.data.describeSources"
+                  [saving]="saving"
+                  (branchAdded)="addBranch(target, $event)"
+                  (branchUpdated)="updateBranch(target, $event)"
+                  (branchRemoved)="removeBranch(target, $event)"
+                  (sourcesSet)="setBranchSources(target, $event)"
+                />
+              </section>
+
               <app-specification-requirements
                 [specification]="plan.specification"
                 [saving]="saving"
@@ -229,37 +260,6 @@
                   <p class="plan-additional-info">{{ plan.additionalInfo }}</p>
                 </section>
               }
-
-              <section class="plan-branches surface-card">
-                <label class="previous-plan-control">
-                  <span>Previous plan</span>
-                  <select
-                    name="previousPlan"
-                    [disabled]="saving"
-                    [ngModel]="plan.previousPlanId ?? ''"
-                    (ngModelChange)="setPreviousPlan(target, $event)"
-                  >
-                    <option value="">
-                      None (default branches come from {{ feature.branch?.name ?? 'the feature branch' }})
-                    </option>
-                    @for (option of vm.state.data.previousPlanOptions; track option.id) {
-                      <option [value]="option.id">
-                        After {{ option.title }}{{ option.branches.length > 0 ? ' (' + option.branches[0].name + ')' : '' }}
-                      </option>
-                    }
-                  </select>
-                </label>
-                <app-feature-plan-branch-tree
-                  [branches]="plan.branches"
-                  [sourceOptions]="vm.state.data.sourceOptions"
-                  [describeSources]="vm.state.data.describeSources"
-                  [saving]="saving"
-                  (branchAdded)="addBranch(target, $event)"
-                  (branchUpdated)="updateBranch(target, $event)"
-                  (branchRemoved)="removeBranch(target, $event)"
-                  (sourcesSet)="setBranchSources(target, $event)"
-                />
-              </section>
 
               <section class="plan-records surface-card">
                 <div class="plan-records-heading">

@@ -48,6 +48,8 @@ export class ProposalNotesComponent {
   protected readonly editingNoteId = signal<string | null>(null);
   protected readonly confirmingNoteId = signal<string | null>(null);
   protected readonly titleError = signal<string | null>(null);
+  /** Notes start collapsed; long Markdown notes otherwise push the list off screen. */
+  protected readonly expandedNoteIds = signal<ReadonlySet<string>>(new Set());
   protected readonly notes = computed(() =>
     selectProposalNotes(
       this.project().proposalNotes,
@@ -57,6 +59,22 @@ export class ProposalNotesComponent {
     ),
   );
   protected readonly mutation$ = mutationStates(this.mutations);
+
+  protected toggleNote(noteId: string): void {
+    this.expandedNoteIds.update((expanded) => {
+      const next = new Set(expanded);
+      if (!next.delete(noteId)) next.add(noteId);
+      return next;
+    });
+  }
+
+  protected expandAll(): void {
+    this.expandedNoteIds.set(new Set(this.notes().map((note) => note.noteId)));
+  }
+
+  protected collapseAll(): void {
+    this.expandedNoteIds.set(new Set());
+  }
 
   protected changeSort(sort: string): void {
     if (sort === 'updatedAt' || sort === 'title') this.sort.set(sort);
