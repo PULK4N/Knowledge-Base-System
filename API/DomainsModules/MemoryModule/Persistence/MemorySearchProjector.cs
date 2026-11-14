@@ -42,29 +42,37 @@ public sealed class MemorySearchProjector(
                 )
             )
             .ToList();
+        // Every summary is indexed, not only the latest one. HookIndex holds
+        // the summary's position so each summary keeps its own rows; search
+        // still groups results by memory session.
         var summaryChunks = memories
-            .Where(
-                memory =>
-                    !memory.IsDeleted
-                    && !string.IsNullOrWhiteSpace(
-                        memory.ChatSummary.Summary
-                    )
-            )
+            .Where(memory => !memory.IsDeleted)
             .SelectMany(
-                memory => MemoryTextChunker
-                    .CompileSummaryChunks(memory.ChatSummary)
+                memory => memory.ChatSummaries
                     .Select(
-                        (text, chunkIndex) => new PendingDocument(
-                            memory.Id,
-                            memory.ThreadId,
-                            new PromptId(Guid.Empty),
-                            0,
-                            chunkIndex,
-                            memory.ChatSummary.SummaryTimestamp,
-                            MemorySearchDocumentSources.ChatSummary,
-                            null,
-                            text
+                        (summary, summaryIndex) => (summary, summaryIndex)
+                    )
+                    .Where(
+                        item => !string.IsNullOrWhiteSpace(
+                            item.summary.Summary
                         )
+                    )
+                    .SelectMany(
+                        item => MemoryTextChunker
+                            .CompileSummaryChunks(item.summary)
+                            .Select(
+                                (text, chunkIndex) => new PendingDocument(
+                                    memory.Id,
+                                    memory.ThreadId,
+                                    new PromptId(Guid.Empty),
+                                    item.summaryIndex,
+                                    chunkIndex,
+                                    item.summary.SummaryTimestamp,
+                                    MemorySearchDocumentSources.ChatSummary,
+                                    null,
+                                    text
+                                )
+                            )
                     )
             )
             .ToList();
@@ -121,7 +129,7 @@ public sealed class MemorySearchProjector(
                 ? KnowledgeSearchSourceTypes.MemorySummary
                 : KnowledgeSearchSourceTypes.MemoryPrompt,
             isSummary
-                ? "summary"
+                ? $"summary:{document.HookIndex}"
                 : $"{document.PromptId.Value:N}:{document.HookIndex}",
             document.ChunkIndex,
             document.PromptStartTimestamp,

@@ -48,6 +48,9 @@ public sealed class ChatSummaryAddedTests
             timestamp,
             state.ChatSummary.SummaryTimestamp
         );
+        var summary = Assert.Single(state.ChatSummaries);
+        Assert.Equal(state.ChatSummary.Summary, summary.Summary);
+        Assert.Equal(timestamp, summary.SummaryTimestamp);
     }
 
     [Fact]
@@ -83,6 +86,11 @@ public sealed class ChatSummaryAddedTests
             JsonSerializer.Deserialize<MemoryStateData>(JsonSerializer.Serialize(state))
         );
         Assert.True(restored.RelatedEntities.SetEquals([first, second]));
+        Assert.Equal("Legacy summary", restored.ChatSummary.Summary);
+        Assert.Equal(
+            ["Feature", "Feature", "Skill", "No additional changes", "Legacy summary"],
+            restored.ChatSummaries.Select(item => item.Summary).ToList()
+        );
     }
 
     [Fact]
@@ -92,5 +100,6 @@ public sealed class ChatSummaryAddedTests
             JsonSerializer.Deserialize<MemoryStateData>("{}")
         );
         Assert.Empty(state.RelatedEntities);
+        Assert.Empty(state.ChatSummaries);
     }
 }
