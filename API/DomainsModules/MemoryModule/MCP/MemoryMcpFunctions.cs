@@ -88,13 +88,13 @@ public static class MemoryMcpFunctions
             CreateFunction(
                 (Func<
                     IServiceProvider,
-                    Guid,
                     string,
                     List<MemoryRelatedEntityDto>?,
+                    Guid?,
                     Task<MemoryCommandResult>
                 >)AddSummary,
                 "memory_summary_add",
-                "Adds or replaces the summary for an existing chat memory identified by its session/thread ID. Write a summary with IDs of entities created or updated during this session. Exclude entities only read, consulted, or used. Related entities accumulate across summaries as a deduplicated set; an omitted or empty list preserves existing references."
+                "Adds or replaces the summary of the current chat's memory. Write a summary with IDs of entities created or updated during this session. Exclude entities only read, consulted, or used. Related entities accumulate across summaries as a deduplicated set; an omitted or empty list preserves existing references."
             )
         ];
 
@@ -108,7 +108,14 @@ public static class MemoryMcpFunctions
             new AIFunctionFactoryOptions
             {
                 Name = name,
-                Description = description
+                Description = description,
+                ConfigureParameterBinding = parameter =>
+                    parameter.Name is "sessionId"
+                        ? new AIFunctionFactoryOptions.ParameterBindingOptions
+                        {
+                            ExcludeFromSchema = true
+                        }
+                        : default
             }
         );
 
@@ -262,18 +269,29 @@ public static class MemoryMcpFunctions
             }
         );
 
+    /// <summary>
+    /// The chat comes from <paramref name="sessionId"/>, which is hidden from
+    /// the schema and filled in by the agent plugin's PreToolUse hook, so the
+    /// model never has to know or type its own session ID.
+    /// </summary>
     private static Task<MemoryCommandResult> AddSummary(
         IServiceProvider services,
-        Guid threadId,
         string summary,
         [Description("Entities created or updated in this session, each with its type and ID; exclude entities only read, consulted, or used.")]
-        List<MemoryRelatedEntityDto>? relatedEntities = null
+        List<MemoryRelatedEntityDto>? relatedEntities = null,
+        Guid? sessionId = null
     ) =>
         MemoryMcpActionExecutor.ExecuteCommand<AddChatSummaryCommand, MemoryCommandResult>(
             services,
             command =>
             {
-                command.ThreadId = new ThreadId(threadId);
+                command.ThreadId = new ThreadId(
+                    sessionId
+                        ?? throw new ArgumentException(
+                            "memory_summary_add did not receive the chat session. "
+                            + "The MCP Knowledge Base plugin adds it to the call, so use the tool with the plugin enabled."
+                        )
+                );
                 command.Summary = summary;
                 command.RelatedEntities = relatedEntities ?? [];
             }

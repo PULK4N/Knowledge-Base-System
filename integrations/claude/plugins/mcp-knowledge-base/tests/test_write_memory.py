@@ -315,7 +315,7 @@ class WriteMemoryTests(unittest.TestCase):
 
         context = output["hookSpecificOutput"]["additionalContext"]
         self.assertIn("memory_summary_add", context)
-        self.assertIn(SESSION_ID, context)
+        self.assertNotIn(SESSION_ID, context)
         self.assertIn("two-to-four paragraph", context)
 
     def test_session_start_without_compaction_records_nothing(self):

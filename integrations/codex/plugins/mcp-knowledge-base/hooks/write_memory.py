@@ -216,8 +216,8 @@ def process_hook(
     event_name = str(event.get("hook_event_name", ""))
 
     if event_name == "SessionStart" and event.get("source") == "compact":
-        session_id = _required_guid(event, "session_id")
-        return _summary_output(session_id)
+        _required_guid(event, "session_id")
+        return _summary_output()
 
     memory_queue = queue or MemoryHookQueue(_queue_directory())
     start_worker = worker_starter or _start_worker
@@ -430,12 +430,12 @@ def _required_guid(event: dict[str, Any], field: str) -> str:
         ) from error
 
 
-def _summary_output(session_id: str) -> dict[str, Any]:
+def _summary_output() -> dict[str, Any]:
     context = (
         "This chat has just been compacted. Before continuing normal work, "
         "write a concise two-to-four paragraph checkpoint from the compacted "
-        "conversation and call the MCP Knowledge Base tool memory_summary_add with "
-        f"threadId '{session_id}'. Capture goals, decisions, important changes, "
+        "conversation and call the MCP Knowledge Base tool memory_summary_add. "
+        "Capture goals, decisions, important changes, "
         "verification, unresolved work, and durable user preferences. Omit "
         "repetitive tool output, credentials, and other secrets."
     )

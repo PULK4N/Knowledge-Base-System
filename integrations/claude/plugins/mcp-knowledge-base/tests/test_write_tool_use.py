@@ -21,6 +21,43 @@ import write_memory
 
 
 SESSION_ID = "019fb72e-e0c3-7452-b32b-5bbf65433c98"
+TOOL_PREFIX = "mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__"
+
+API_MODULES = SCRIPT.parents[5] / "API" / "DomainsModules"
+READ_TOOLS = {
+    "feature_get",
+    "feature_get_by_name",
+    "feature_list",
+    "feature_plan_get",
+    "feature_record_search",
+    "feature_script_snapshot_get",
+    "memory_search_by_time",
+    "policy_get_by_repository",
+    "policy_project_get_by_name",
+    "skill_reference_get",
+}
+MUTATION_TOOLS = {
+    "feature_dod_add",
+    "feature_plan_reviewer_add",
+    "feature_requirement_add",
+    "feature_script_snapshot_set",
+    "memory_summary_add",
+    "policy_general_add",
+    "project_create",
+    "skill_add",
+}
+
+
+def knowledge_base_tools():
+    return {
+        name
+        for source in API_MODULES.glob("*/MCP/*McpFunctions.cs")
+        for name in re.findall(
+            r'^\s*"([a-z]+(?:_[a-z]+)+)",\s*$',
+            source.read_text(encoding="utf-8"),
+            re.MULTILINE,
+        )
+    }
 
 
 class WriteToolUseTests(unittest.TestCase):
@@ -96,15 +133,23 @@ class WriteToolUseTests(unittest.TestCase):
             turn_id = self.queued_payloads(data)[0]["turn_id"]
             self.assertEqual(turn_id, str(uuid.UUID(turn_id)))
 
-    def test_pre_tool_use_adds_the_session_to_every_skill_mutation(self):
-        for tool in write_tool_use.SKILL_MUTATION_TOOLS:
+    def test_pre_tool_use_adds_the_session_to_every_knowledge_base_mutation(self):
+        matcher = self.pre_tool_use_matcher()
+        tools = knowledge_base_tools()
+        reads = {tool for tool in tools if tool.endswith(write_tool_use.READ_TOOL_SUFFIXES)}
+        mutations = tools - reads
+        self.assertTrue("knowledge_search".endswith(write_tool_use.READ_TOOL_SUFFIXES))
+        self.assertLessEqual(READ_TOOLS, reads)
+        self.assertLessEqual(MUTATION_TOOLS, mutations)
+        for tool in mutations:
             with self.subTest(tool=tool):
                 event = self.event(
                     "PreToolUse",
-                    tool_name=f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}",
+                    tool_name=f"{TOOL_PREFIX}{tool}",
                     tool_input={"name": "example", "sessionId": "model-supplied"},
                 )
                 original = json.loads(json.dumps(event))
+                self.assertIsNotNone(re.search(matcher, event["tool_name"]))
 
                 output = write_tool_use.process_hook(event)
 
@@ -121,95 +166,27 @@ class WriteToolUseTests(unittest.TestCase):
                     output,
                 )
                 self.assertEqual(original, event)
-
-    def test_feature_mutations_receive_session_context_through_configured_matcher(self):
-        hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
-        matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
-        source = (
-            SCRIPT.parents[5] / "API" / "DomainsModules" / "FeatureModule" / "MCP" / "FeatureMcpFunctions.cs"
-        ).read_text(encoding="utf-8")
-        mutations = re.findall(r'Guid\?, Guid\?, Task<[^\n]+\n\s*"([^"]+)"', source)
-        self.assertEqual(21, len(mutations))
-        self.assertEqual(set(mutations), write_tool_use.FEATURE_MUTATION_TOOLS)
-        for tool in mutations:
-            with self.subTest(tool=tool):
-                event = self.event(
-                    "PreToolUse",
-                    tool_name=f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}",
-                    tool_input={"featureId": "feature-id", "sessionId": "stale"},
-                )
-                self.assertIsNotNone(re.search(matcher, event["tool_name"]))
-                result = write_tool_use.process_hook(event)["hookSpecificOutput"]
-                self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
-                self.assertEqual("feature-id", result["updatedInput"]["featureId"])
-                self.assertEqual("stale", event["tool_input"]["sessionId"])
-        for tool in (
-            "feature_get",
-            "feature_list",
-            "feature_plan_get",
-            "feature_record_list",
-            "feature_record_search",
-            "feature_record_get",
-        ):
+        for tool in reads:
             with self.subTest(read=tool):
-                name = f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}"
-                self.assertIsNone(re.search(matcher, name))
                 self.assertIsNone(write_tool_use.process_hook(
-                    self.event("PreToolUse", tool_name=name, tool_input={})
-                ))
-
-    def test_policy_mutations_receive_session_context_through_configured_matcher(self):
-        hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
-        matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
-        modules_directory = SCRIPT.parents[5] / "API" / "DomainsModules"
-        mutations = {
-            name
-            for module in ("PolicyModule", "ProjectModule")
-            for source in (modules_directory / module / "MCP").glob("*McpFunctions.cs")
-            for name in re.findall(r'"((?:policy|project)_[a-z_]+)"', source.read_text(encoding="utf-8"))
-            if name.endswith(("_add", "_update", "_remove", "_create", "_delete", "_set"))
-        }
-        self.assertEqual(31, len(mutations))
-        self.assertEqual(mutations, write_tool_use.POLICY_MUTATION_TOOLS)
-        for tool in mutations:
-            with self.subTest(tool=tool):
-                event = self.event(
-                    "PreToolUse",
-                    tool_name=f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}",
-                    tool_input={"title": "policy", "sessionId": "stale"},
-                )
-                self.assertIsNotNone(re.search(matcher, event["tool_name"]))
-                result = write_tool_use.process_hook(event)["hookSpecificOutput"]
-                self.assertEqual(SESSION_ID, result["updatedInput"]["sessionId"])
-                self.assertEqual("policy", result["updatedInput"]["title"])
-                self.assertEqual("stale", event["tool_input"]["sessionId"])
-        for tool in (
-            "policy_general_list",
-            "policy_project_list",
-            "policy_project_get_by_name",
-            "policy_topic_policy_list",
-            "policy_agent_family_list",
-        ):
-            with self.subTest(read=tool):
-                name = f"mcp__plugin_mcp-knowledge-base_mcp-knowledge-base__{tool}"
-                self.assertIsNone(re.search(matcher, name))
-                self.assertIsNone(write_tool_use.process_hook(
-                    self.event("PreToolUse", tool_name=name, tool_input={})
+                    self.event("PreToolUse", tool_name=f"{TOOL_PREFIX}{tool}", tool_input={})
                 ))
 
     def test_pre_tool_use_rejects_invalid_context(self):
         for values in ({"session_id": "invalid"}, {"tool_input": None}):
             with self.subTest(values=values):
                 event = self.event(
-                    "PreToolUse", tool_name="skill_add", tool_input={}
+                    "PreToolUse", tool_name=f"{TOOL_PREFIX}skill_add", tool_input={}
                 )
                 event.update(values)
                 with self.assertRaises(write_memory.MemoryHookError):
                     write_tool_use.process_hook(event)
 
     def test_pre_tool_use_ignores_other_tools(self):
-        for tool in ("skill_get", "skill_reference_get", "Bash"):
+        matcher = self.pre_tool_use_matcher()
+        for tool in ("Bash", "skill_add", "mcp__claude_ai_Claude_Docs__update"):
             with self.subTest(tool=tool):
+                self.assertIsNone(re.search(matcher, tool))
                 self.assertIsNone(write_tool_use.process_hook(
                     self.event("PreToolUse", tool_name=tool, tool_input={})
                 ))
@@ -315,6 +292,11 @@ class WriteToolUseTests(unittest.TestCase):
                     )
                     self.assertEqual([], list(queue._root.glob("*.json")))
                     self.assertIsNone(queue.last_failure())
+
+    @staticmethod
+    def pre_tool_use_matcher():
+        hooks = json.loads((HOOKS_DIRECTORY / "hooks.json").read_text(encoding="utf-8"))
+        return hooks["hooks"]["PreToolUse"][0]["matcher"]
 
     @staticmethod
     def storage(data):

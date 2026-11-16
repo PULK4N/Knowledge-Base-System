@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -25,84 +26,21 @@ from write_memory import (
 )
 
 
-SKILL_MUTATION_TOOLS = frozenset(
-    {
-        "skill_add",
-        "skill_update",
-        "skill_delete",
-        "skill_reference_add",
-        "skill_reference_update",
-        "skill_reference_auto_load_update",
-        "skill_reference_delete",
-        "skill_attachment_add",
-        "skill_attachment_delete",
-        "skill_use_scenarios_set",
-    }
+KNOWLEDGE_BASE_TOOL = re.compile(
+    r"^mcp__.*mcp[-_]knowledge[-_]base__(?P<name>[a-z_]+)$"
 )
+"""Matches tools of the knowledge base MCP server and captures the tool name."""
 
 
-FEATURE_MUTATION_TOOLS = frozenset(
-    {
-        "feature_add",
-        "feature_remove",
-        "feature_status_update",
-        "feature_summary_update",
-        "feature_record_add",
-        "feature_record_update",
-        "feature_record_remove",
-        "feature_review_note_add",
-        "feature_review_note_update",
-        "feature_review_note_remove",
-        "feature_plan_add",
-        "feature_plan_update",
-        "feature_plan_status_update",
-        "feature_plan_previous_set",
-        "feature_branch_set",
-        "feature_composite_branch_set",
-        "feature_plan_branch_add",
-        "feature_plan_branch_sources_set",
-        "feature_plan_branch_update",
-        "feature_plan_branch_remove",
-        "feature_plan_remove",
-    }
+READ_TOOL_SUFFIXES = (
+    "_get",
+    "_get_by_name",
+    "_get_by_repository",
+    "_list",
+    "_search",
+    "_search_by_time",
 )
-
-
-POLICY_MUTATION_TOOLS = frozenset(
-    {
-        "policy_agent_family_create",
-        "policy_agent_family_policy_add",
-        "policy_agent_family_policy_remove",
-        "policy_agent_family_policy_update",
-        "policy_agent_family_remove",
-        "policy_agent_family_update",
-        "policy_general_add",
-        "policy_general_remove",
-        "policy_general_update",
-        "project_create",
-        "policy_project_delete",
-        "policy_project_policy_add",
-        "policy_project_policy_remove",
-        "policy_project_policy_update",
-        "policy_project_repository_add",
-        "policy_project_topic_add",
-        "policy_project_topic_remove",
-        "project_skill_add",
-        "project_skill_update",
-        "project_skill_remove",
-        "project_review_level_models_set",
-        "project_proposal_note_add",
-        "project_proposal_note_update",
-        "project_proposal_note_remove",
-        "policy_project_update",
-        "policy_topic_create",
-        "policy_topic_policy_add",
-        "policy_topic_policy_remove",
-        "policy_topic_policy_update",
-        "policy_topic_remove",
-        "policy_topic_update",
-    }
-)
+"""Knowledge base tools with these endings only read, so they get no session."""
 
 
 def process_hook(
@@ -140,10 +78,7 @@ def _inject_mutation_session(event: dict[str, Any]) -> dict[str, Any] | None:
     ``updatedInput`` on its own, so the user's normal permission rules still
     decide whether the change may run.
     """
-    tool_name = str(event.get("tool_name", "")).rsplit("__", 1)[-1]
-    if tool_name not in (
-        SKILL_MUTATION_TOOLS | FEATURE_MUTATION_TOOLS | POLICY_MUTATION_TOOLS
-    ):
+    if not _is_knowledge_base_mutation(str(event.get("tool_name", ""))):
         return None
 
     session_id = _required_guid(event, "session_id")
@@ -157,6 +92,12 @@ def _inject_mutation_session(event: dict[str, Any]) -> dict[str, Any] | None:
             "updatedInput": {**tool_input, "sessionId": session_id},
         }
     }
+
+
+def _is_knowledge_base_mutation(tool_name: str) -> bool:
+    """Every knowledge base tool can change data unless its name marks it as a read."""
+    match = KNOWLEDGE_BASE_TOOL.match(tool_name)
+    return match is not None and not match.group("name").endswith(READ_TOOL_SUFFIXES)
 
 
 def _start_worker() -> None:

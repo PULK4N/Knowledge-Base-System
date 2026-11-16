@@ -191,7 +191,8 @@ public sealed class MemoryMcpFunctionsTests
         var required = function.JsonSchema.GetProperty("required")
             .EnumerateArray().Select(element => element.GetString()).ToList();
 
-        Assert.Contains("threadId", required);
+        Assert.False(properties.TryGetProperty("threadId", out _));
+        Assert.False(properties.TryGetProperty("sessionId", out _));
         Assert.Contains("summary", required);
         Assert.True(properties.TryGetProperty("relatedEntities", out var property));
         Assert.DoesNotContain("relatedEntities", required);
