@@ -82,7 +82,7 @@ public sealed class FeatureSpecificationCommandTests
         history.AddRange(store.Written.Select(payload => payload.EventData));
 
         var writesBefore = store.WriteCount;
-        await Run(new AddFeaturePlaywrightScriptsCommand(store.CreateHandler())
+        await Run(new AddFeatureScriptsCommand(store.CreateHandler())
         {
             FeatureId = FeatureId.Value,
             PlanId = PlanId.Value,
@@ -90,12 +90,12 @@ public sealed class FeatureSpecificationCommandTests
         });
 
         Assert.Equal(writesBefore + 1, store.WriteCount);
-        Assert.Equal([nameof(FeaturePlaywrightScriptsAddedV1), nameof(FeaturePlaywrightScriptSnapshotsSetV1)],
+        Assert.Equal([nameof(FeatureScriptsAddedV1), nameof(FeatureScriptSnapshotsSetV1)],
             store.Written.Select(payload => payload.EventData.GetType().Name));
         var dto = SpecificationDto.FromModel(Replay(history, store).SpecificationOf(PlanId));
-        Assert.Equal([true, false], dto.PlaywrightScripts.Select(script => script.HasSnapshot));
+        Assert.Equal([true, false], dto.Scripts.Select(script => script.HasSnapshot));
         Assert.Equal(
-            ["DOD-2 fulfils no requirement", "DOD-2 has no Playwright script", "e2e/b.spec.ts confirms no definition of done"],
+            ["DOD-2 fulfils no requirement", "DOD-2 has no script", "e2e/b.spec.ts confirms no definition of done"],
             dto.Warnings);
     }
 
@@ -104,7 +104,7 @@ public sealed class FeatureSpecificationCommandTests
     {
         var target = FeaturePlanId.FromDatabaseGuid(Guid.NewGuid());
         var dod = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
-        var script = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
+        var script = ScriptId.FromDatabaseGuid(Guid.NewGuid());
         var (_, history) = Store(true);
         history.AddRange(new List<IEvent>
         {
@@ -113,7 +113,7 @@ public sealed class FeatureSpecificationCommandTests
             new FeatureRequirementsAddedV1(target, [new(RequirementId.FromDatabaseGuid(Guid.NewGuid()), RequirementType.Functional, 1, "Taken", "", "")],
                 Guid.Empty, MemoryId),
             new FeatureDefinitionsOfDoneAddedV1(PlanId, [new(dod, 1, "Cannot confirm yet", [ExistingRequirement])], Guid.Empty, MemoryId),
-            new FeaturePlaywrightScriptsAddedV1(PlanId, [new(script, "e2e/a.spec.ts", [dod])], Guid.Empty, MemoryId)
+            new FeatureScriptsAddedV1(PlanId, [new(script, "e2e/a.spec.ts", [dod])], Guid.Empty, MemoryId)
         });
         var store = new FeatureCommandEventStore(FeatureId, [.. history]);
 

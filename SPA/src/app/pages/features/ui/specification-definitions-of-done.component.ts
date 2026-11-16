@@ -85,7 +85,7 @@ export class SpecificationDefinitionsOfDoneComponent {
   /** Paths of the scripts that confirm each definition of done. */
   protected readonly confirmedBy = computed(() => {
     const result = new Map<string, string[]>();
-    for (const script of this.specification().playwrightScripts)
+    for (const script of this.specification().scripts)
       for (const id of script.definitionOfDoneIds)
         result.set(id, [...(result.get(id) ?? []), script.path]);
     return result;

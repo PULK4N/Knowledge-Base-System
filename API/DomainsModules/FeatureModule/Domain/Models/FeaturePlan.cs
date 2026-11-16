@@ -109,7 +109,7 @@ public sealed class FeaturePlan
     public List<FeatureRecordId> RecordIds { get; set; } = [];
 
     /// <summary>
-    /// Requirements, definitions of done and Playwright scripts of this plan,
+    /// Requirements, definitions of done and scripts of this plan,
     /// kept beside the Markdown content and always read with the plan.
     /// </summary>
     public Specification Specification { get; set; } = new();

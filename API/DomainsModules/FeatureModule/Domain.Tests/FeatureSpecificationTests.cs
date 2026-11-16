@@ -22,7 +22,7 @@ public sealed class FeatureSpecificationTests
         var functional = RequirementId.FromDatabaseGuid(Guid.NewGuid());
         var technical = RequirementId.FromDatabaseGuid(Guid.NewGuid());
         var dod = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
-        var script = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
+        var script = ScriptId.FromDatabaseGuid(Guid.NewGuid());
 
         Replay(state, new FeatureRequirementsAddedV1(planId, [
             new(functional, RequirementType.Functional, 1, "Copy notes", "CONF-1", "https://wiki/1"),
@@ -33,8 +33,8 @@ public sealed class FeatureSpecificationTests
             Guid.Empty, MemoryId));
         Replay(state, new FeatureDefinitionsOfDoneStateSetV1(planId, [new(dod, DefinitionOfDoneState.Postponed, "Needs API")],
             Guid.Empty, MemoryId), Start.AddHours(1));
-        Replay(state, new FeaturePlaywrightScriptsAddedV1(planId, [new(script, "e2e/a.spec.ts", [dod])], Guid.Empty, MemoryId));
-        Replay(state, new FeaturePlaywrightScriptSnapshotsSetV1(planId, [new(script, "test()")], Guid.Empty, MemoryId),
+        Replay(state, new FeatureScriptsAddedV1(planId, [new(script, "e2e/a.spec.ts", [dod])], Guid.Empty, MemoryId));
+        Replay(state, new FeatureScriptSnapshotsSetV1(planId, [new(script, "test()")], Guid.Empty, MemoryId),
             Start.AddHours(2));
 
         var specification = state.SpecificationOf(planId);
@@ -45,16 +45,16 @@ public sealed class FeatureSpecificationTests
         var definitionOfDone = Assert.Single(specification.DefinitionsOfDone);
         Assert.Equal((DefinitionOfDoneState.Postponed, "Needs API", Start.AddHours(1)),
             (definitionOfDone.State, definitionOfDone.StateDescription, definitionOfDone.StateCheckedAt));
-        Assert.Equal(new ScriptSnapshot("test()", Start.AddHours(2)), Assert.Single(specification.PlaywrightScripts).Snapshot);
+        Assert.Equal(new ScriptSnapshot("test()", Start.AddHours(2)), Assert.Single(specification.Scripts).Snapshot);
         Assert.Equal(onPlan, state.Specification.Requirements.Count == 0);
 
         Replay(state, new FeatureRequirementsRemovedV1(planId, [technical], Guid.Empty, MemoryId));
         Assert.Equal([functional], definitionOfDone.RequirementIds);
         Replay(state, new FeatureDefinitionsOfDoneRemovedV1(planId, [dod], Guid.Empty, MemoryId));
-        Assert.Empty(specification.PlaywrightScripts[0].DefinitionOfDoneIds);
+        Assert.Empty(specification.Scripts[0].DefinitionOfDoneIds);
         Assert.Equal((1, 1), (specification.LastRequirementNumber(RequirementType.Technical), specification.LastDefinitionOfDoneNumber));
-        Replay(state, new FeaturePlaywrightScriptSnapshotsSetV1(planId, [new(script, null)], Guid.Empty, MemoryId));
-        Assert.Null(specification.PlaywrightScripts[0].Snapshot);
+        Replay(state, new FeatureScriptSnapshotsSetV1(planId, [new(script, null)], Guid.Empty, MemoryId));
+        Assert.Null(specification.Scripts[0].Snapshot);
         Assert.Equal(9, state.MemoryHistory.Count);
     }
 
@@ -172,10 +172,10 @@ public sealed class FeatureSpecificationTests
         var dod = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
         if (linkExists)
             state.SpecificationOf(planId).DefinitionsOfDone.Add(new DefinitionOfDone { Id = dod });
-        state.SpecificationOf(planId).PlaywrightScripts.Add(new PlaywrightScript { Path = path });
+        state.SpecificationOf(planId).Scripts.Add(new Script { Path = path });
 
-        Assert.Equal(expected, Validate(new FeaturePlaywrightScriptsValidator(), state,
-            new FeaturePlaywrightScriptsAddedV1(planId, [new(PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid()), path, [dod])], Guid.Empty, MemoryId)));
+        Assert.Equal(expected, Validate(new FeatureScriptsValidator(), state,
+            new FeatureScriptsAddedV1(planId, [new(ScriptId.FromDatabaseGuid(Guid.NewGuid()), path, [dod])], Guid.Empty, MemoryId)));
     }
 
     [Theory]
@@ -213,14 +213,14 @@ public sealed class FeatureSpecificationTests
         var own = RequirementId.FromDatabaseGuid(Guid.NewGuid());
         var moved = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
         var stays = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
-        var both = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
-        var other = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
+        var both = ScriptId.FromDatabaseGuid(Guid.NewGuid());
+        var other = ScriptId.FromDatabaseGuid(Guid.NewGuid());
         Replay(state, new FeatureRequirementsAddedV1(sourceId, [
             new(shared, RequirementType.Functional, 1, "Shared", "", ""),
             new(own, RequirementType.Functional, 2, "Own", "", "")], Guid.Empty, MemoryId));
         Replay(state, new FeatureDefinitionsOfDoneAddedV1(sourceId, [
             new(moved, 1, "Moved", [shared]), new(stays, 2, "Stays", [shared, own])], Guid.Empty, MemoryId));
-        Replay(state, new FeaturePlaywrightScriptsAddedV1(sourceId, [
+        Replay(state, new FeatureScriptsAddedV1(sourceId, [
             new(both, "e2e/both.spec.ts", [moved, stays]), new(other, "e2e/other.spec.ts", [stays])], Guid.Empty, MemoryId));
         var move = new FeatureDefinitionsOfDoneMovedV1(sourceId!.Value, target.Id, [new(moved, 3)], [new(shared, 5)], [both],
             Guid.Empty, MemoryId);
@@ -239,9 +239,9 @@ public sealed class FeatureSpecificationTests
         var source = state.SpecificationOf(sourceId);
         Assert.Equal([own], source.Requirements.Select(item => item.Id));
         Assert.Equal([own], Assert.Single(source.DefinitionsOfDone).RequirementIds);
-        Assert.Equal([other], source.PlaywrightScripts.Select(item => item.Id));
+        Assert.Equal([other], source.Scripts.Select(item => item.Id));
         Assert.Equal((5, 3), (target.Specification.Requirements.Single().Number, target.Specification.DefinitionsOfDone.Single().Number));
-        Assert.Equal([moved], target.Specification.PlaywrightScripts.Single().DefinitionOfDoneIds);
+        Assert.Equal([moved], target.Specification.Scripts.Single().DefinitionOfDoneIds);
         Assert.Equal((2, 2), (source.LastRequirementNumber(RequirementType.Functional), source.LastDefinitionOfDoneNumber));
     }
 

@@ -88,7 +88,7 @@ export interface DefinitionOfDone {
 }
 
 /** A script without its snapshot code; read the code with the snapshot request. */
-export interface PlaywrightScript {
+export interface Script {
   readonly id: string;
   readonly path: string;
   readonly definitionOfDoneIds: readonly string[];
@@ -97,7 +97,7 @@ export interface PlaywrightScript {
   readonly origin?: ItemOrigin | null;
 }
 
-export interface PlaywrightScriptSnapshot {
+export interface ScriptSnapshot {
   readonly scriptId: string;
   readonly path: string;
   readonly content: string;
@@ -108,7 +108,7 @@ export interface PlaywrightScriptSnapshot {
 export interface Specification {
   readonly requirements: readonly Requirement[];
   readonly definitionsOfDone: readonly DefinitionOfDone[];
-  readonly playwrightScripts: readonly PlaywrightScript[];
+  readonly scripts: readonly Script[];
   /** Missing links, such as "FR-2 has no definition of done". */
   readonly warnings: readonly string[];
 }
@@ -116,7 +116,7 @@ export interface Specification {
 export const EMPTY_SPECIFICATION: Specification = {
   requirements: [],
   definitionsOfDone: [],
-  playwrightScripts: [],
+  scripts: [],
   warnings: [],
 };
 
@@ -147,20 +147,20 @@ export interface DefinitionOfDoneStateInput {
   readonly stateDescription: string;
 }
 
-export interface PlaywrightScriptInput {
+export interface ScriptInput {
   readonly path: string;
   readonly definitionOfDoneIds: readonly string[];
   readonly snapshotContent?: string | null;
 }
 
-export interface PlaywrightScriptChangeInput {
+export interface ScriptChangeInput {
   readonly id: string;
   readonly path?: string;
   readonly definitionOfDoneIds?: readonly string[];
 }
 
 /** Null content removes the snapshot. */
-export interface PlaywrightScriptSnapshotInput {
+export interface ScriptSnapshotInput {
   readonly id: string;
   readonly content: string | null;
 }
@@ -179,10 +179,10 @@ export type SpecificationAction =
       readonly targetPlanId: string;
       readonly definitionOfDoneIds: readonly string[];
     }
-  | { readonly kind: 'add-scripts'; readonly scripts: readonly PlaywrightScriptInput[] }
-  | { readonly kind: 'update-scripts'; readonly scripts: readonly PlaywrightScriptChangeInput[] }
+  | { readonly kind: 'add-scripts'; readonly scripts: readonly ScriptInput[] }
+  | { readonly kind: 'update-scripts'; readonly scripts: readonly ScriptChangeInput[] }
   | { readonly kind: 'remove-scripts'; readonly scriptIds: readonly string[] }
-  | { readonly kind: 'set-snapshots'; readonly snapshots: readonly PlaywrightScriptSnapshotInput[] };
+  | { readonly kind: 'set-snapshots'; readonly snapshots: readonly ScriptSnapshotInput[] };
 
 /** A change to a plan's own review notes or reviewers. */
 export type PlanReviewAction =
@@ -241,7 +241,7 @@ export interface FeaturePlan {
   readonly previousPlanId: string | null;
   /** Records of the feature this plan links, in link order. */
   readonly recordIds: readonly string[];
-  /** Requirements, definitions of done and Playwright scripts of this plan. */
+  /** Requirements, definitions of done and scripts of this plan. */
   readonly specification: Specification;
   /** The plan's own review notes; copied to the feature when the plan completes. */
   readonly reviewNotes: readonly FeatureReviewNote[];

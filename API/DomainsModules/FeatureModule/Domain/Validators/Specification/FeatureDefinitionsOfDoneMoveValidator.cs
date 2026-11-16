@@ -44,7 +44,7 @@ public sealed class FeatureDefinitionsOfDoneMoveValidator : IPreEventValidator
             .Where(item => moved.Contains(item.Id))
             .SelectMany(item => item.RequirementIds)
             .ToHashSet();
-        var expectedScripts = source.PlaywrightScripts
+        var expectedScripts = source.Scripts
             .Where(item => item.DefinitionOfDoneIds.Any(moved.Contains))
             .Select(item => item.Id)
             .ToHashSet();
@@ -52,7 +52,7 @@ public sealed class FeatureDefinitionsOfDoneMoveValidator : IPreEventValidator
             || data.Requirements.Length != expectedRequirements.Count)
             return "A move must carry exactly the requirements the moved definitions of done link.";
         if (!expectedScripts.SetEquals(data.ScriptIds) || data.ScriptIds.Length != expectedScripts.Count)
-            return "A move must carry exactly the Playwright scripts that link the moved definitions of done.";
+            return "A move must carry exactly the scripts that link the moved definitions of done.";
 
         var requirementTypes = source.Requirements.ToDictionary(item => item.Id, item => item.Type);
         var requirementNumbers = data.Requirements

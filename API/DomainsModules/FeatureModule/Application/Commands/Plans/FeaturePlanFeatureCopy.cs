@@ -52,10 +52,10 @@ internal static class FeaturePlanFeatureCopy
                 item.State, item.StateDescription, item.StateCheckedAt))
             .ToList();
 
-        var copiedScripts = target.PlaywrightScripts.Select(item => item.Origin?.PlanItemId).OfType<Guid>().ToHashSet();
-        var scripts = source.PlaywrightScripts
+        var copiedScripts = target.Scripts.Select(item => item.Origin?.PlanItemId).OfType<Guid>().ToHashSet();
+        var scripts = source.Scripts
             .Where(item => !copiedScripts.Contains(item.Id.Value))
-            .Select(item => new CopiedPlaywrightScriptEntry(PlaywrightScriptId.New(), item.Id, item.Path,
+            .Select(item => new CopiedScriptEntry(ScriptId.New(), item.Id, item.Path,
                 [.. item.DefinitionOfDoneIds.Where(definitionOfDoneCopies.ContainsKey).Select(id => definitionOfDoneCopies[id])],
                 item.Snapshot))
             .ToList();

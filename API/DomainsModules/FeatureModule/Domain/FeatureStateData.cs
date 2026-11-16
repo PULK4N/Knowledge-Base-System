@@ -47,7 +47,7 @@ public sealed class FeatureStateData(AggregateId id) : ISharedStateData
     public List<FeaturePlan> Plans { get; set; } = [];
 
     /// <summary>
-    /// Feature-wide requirements, definitions of done and Playwright scripts:
+    /// Feature-wide requirements, definitions of done and scripts:
     /// copies from completed plans plus items added directly on the feature.
     /// </summary>
     public Specification Specification { get; set; } = new();

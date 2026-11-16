@@ -1,11 +1,11 @@
-<section class="spec-section surface-card" aria-label="Playwright scripts">
+<section class="spec-section surface-card" aria-label="Scripts">
   <div class="spec-heading">
     <div>
       <span class="eyebrow">Specification</span>
-      <h2>Playwright scripts</h2>
+      <h2>Scripts</h2>
     </div>
     <div class="spec-actions">
-      <span class="count-badge">{{ specification().playwrightScripts.length }}</span>
+      <span class="count-badge">{{ specification().scripts.length }}</span>
       <button type="button" class="add-toggle" [attr.aria-expanded]="adding()" (click)="startAdding()">
         {{ adding() ? 'Cancel' : 'Add script' }}
       </button>
@@ -38,7 +38,7 @@
 
   @let snapshot = snapshot$ | async;
   <div class="spec-list">
-    @for (script of specification().playwrightScripts; track script.id) {
+    @for (script of specification().scripts; track script.id) {
       <article class="spec-item" [id]="anchor(script.id)" [appScrollIntoView]="fragment() === anchor(script.id)">
         <header>
           <div class="spec-item-meta">
@@ -131,7 +131,7 @@
         }
       </article>
     } @empty {
-      <div class="empty-section">No Playwright scripts yet.</div>
+      <div class="empty-section">No scripts yet.</div>
     }
   </div>
 </section>

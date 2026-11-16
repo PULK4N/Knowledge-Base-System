@@ -7,7 +7,7 @@ const plan = {
   specification: {
     ...EMPTY_SPECIFICATION,
     requirements: [{ id: 'r1', label: 'FR-2' }],
-    playwrightScripts: [{ id: 's1', path: 'e2e/a.spec.ts' }],
+    scripts: [{ id: 's1', path: 'e2e/a.spec.ts' }],
   },
   reviewNotes: [{ id: 'n1', title: 'Retries are intended' }],
   reviewers: [],

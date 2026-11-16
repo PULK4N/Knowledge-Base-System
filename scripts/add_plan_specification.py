@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add requirements, definitions of done and Playwright scripts from a JSON file.
+"""Add requirements, definitions of done and scripts from a JSON file.
 
 The file uses local keys so items can link to each other before they have IDs:
 
@@ -11,7 +11,7 @@ The file uses local keys so items can link to each other before they have IDs:
     {"key": "copied", "description": "...", "requirements": ["copy"],
      "state": "Confirmed", "stateDescription": "How it was checked"}
   ],
-  "playwrightScripts": [
+  "scripts": [
     {"path": "e2e/copy.spec.ts", "definitionsOfDone": ["copied"], "snapshotFile": "e2e/copy.spec.ts"}
   ]
 }
@@ -76,9 +76,9 @@ def main(argv: list[str] | None = None) -> int:
             post("definitions-of-done/states", {"states": states})
             print(f"Set the state of {len(states)} definition(s) of done.")
 
-    scripts = spec.get("playwrightScripts", [])
+    scripts = spec.get("scripts", [])
     if scripts:
-        created(scripts, post("playwright-scripts", {"scripts": [
+        created(scripts, post("scripts", {"scripts": [
             {"path": item["path"],
              "definitionOfDoneIds": [dod_ids[key] for key in item.get("definitionsOfDone", [])],
              "snapshotContent": Path(item["snapshotFile"]).read_text(encoding="utf-8")

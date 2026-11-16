@@ -52,7 +52,7 @@ public sealed class MoveFeatureDefinitionsOfDoneCommand(StateMachineHandler stat
             .Select((item, index) => new MovedSpecificationItemEntry<DefinitionOfDoneId>(item.Id,
                 target.LastDefinitionOfDoneNumber + index + 1))
             .ToList();
-        var scriptIds = source.PlaywrightScripts
+        var scriptIds = source.Scripts
             .Where(item => item.DefinitionOfDoneIds.Any(moved.Contains))
             .Select(item => item.Id)
             .ToList();

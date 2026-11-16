@@ -45,7 +45,7 @@ import {
   SetFeatureBranchRequest,
   SetFeatureCompositeBranchRequest,
   UpdateFeatureRecordRequest,
-  PlaywrightScriptSnapshot,
+  ScriptSnapshot,
   SpecificationAction,
 } from '../data-access/feature.models';
 import { FeatureService } from '../data-access/feature.service';
@@ -649,7 +649,7 @@ export class FeatureDetailsPage {
   }
 
   /** Reads feature-level script snapshots; the same function is returned for a feature so inputs stay stable. */
-  protected loadSnapshot(featureId: string): (scriptId: string) => Observable<PlaywrightScriptSnapshot> {
+  protected loadSnapshot(featureId: string): (scriptId: string) => Observable<ScriptSnapshot> {
     if (this.snapshotLoader?.featureId !== featureId)
       this.snapshotLoader = {
         featureId,
@@ -660,7 +660,7 @@ export class FeatureDetailsPage {
 
   private snapshotLoader?: {
     readonly featureId: string;
-    readonly load: (scriptId: string) => Observable<PlaywrightScriptSnapshot>;
+    readonly load: (scriptId: string) => Observable<ScriptSnapshot>;
   };
 
   private updateListQuery(queryParams: Params, replaceUrl = false): void {

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FeatureModule.API.Controllers;
 
 /// <summary>
-/// Requirements, definitions of done and Playwright scripts. Each route exists
+/// Requirements, definitions of done and scripts. Each route exists
 /// for a plan (/plans/{planId}/...) and for the feature itself.
 /// </summary>
 [ApiController]
@@ -82,40 +82,40 @@ public sealed class FeatureSpecificationController(
             command.DefinitionOfDoneIds = request.DefinitionOfDoneIds;
         });
 
-    [HttpPost("playwright-scripts")]
-    [HttpPost("plans/{planId:guid}/playwright-scripts")]
-    public Task<ActionResult<FeatureSpecificationItemsCreatedCommandResult>> AddPlaywrightScripts(
-        Guid featureId, Guid? planId, [FromBody] AddPlaywrightScriptsRequest request,
-        [FromServices] AddFeaturePlaywrightScriptsCommand command) =>
+    [HttpPost("scripts")]
+    [HttpPost("plans/{planId:guid}/scripts")]
+    public Task<ActionResult<FeatureSpecificationItemsCreatedCommandResult>> AddScripts(
+        Guid featureId, Guid? planId, [FromBody] AddScriptsRequest request,
+        [FromServices] AddFeatureScriptsCommand command) =>
         Run<FeatureSpecificationItemsCreatedCommandResult>(command, featureId, planId,
             () => command.Scripts = request.Scripts);
 
-    [HttpPost("playwright-scripts/update")]
-    [HttpPost("plans/{planId:guid}/playwright-scripts/update")]
-    public Task<ActionResult<FeatureCommandResult>> UpdatePlaywrightScripts(
-        Guid featureId, Guid? planId, [FromBody] UpdatePlaywrightScriptsRequest request,
-        [FromServices] UpdateFeaturePlaywrightScriptsCommand command) =>
+    [HttpPost("scripts/update")]
+    [HttpPost("plans/{planId:guid}/scripts/update")]
+    public Task<ActionResult<FeatureCommandResult>> UpdateScripts(
+        Guid featureId, Guid? planId, [FromBody] UpdateScriptsRequest request,
+        [FromServices] UpdateFeatureScriptsCommand command) =>
         Run<FeatureCommandResult>(command, featureId, planId, () => command.Scripts = request.Scripts);
 
-    [HttpPost("playwright-scripts/remove")]
-    [HttpPost("plans/{planId:guid}/playwright-scripts/remove")]
-    public Task<ActionResult<FeatureCommandResult>> RemovePlaywrightScripts(
-        Guid featureId, Guid? planId, [FromBody] RemovePlaywrightScriptsRequest request,
-        [FromServices] RemoveFeaturePlaywrightScriptsCommand command) =>
+    [HttpPost("scripts/remove")]
+    [HttpPost("plans/{planId:guid}/scripts/remove")]
+    public Task<ActionResult<FeatureCommandResult>> RemoveScripts(
+        Guid featureId, Guid? planId, [FromBody] RemoveScriptsRequest request,
+        [FromServices] RemoveFeatureScriptsCommand command) =>
         Run<FeatureCommandResult>(command, featureId, planId, () => command.ScriptIds = request.ScriptIds);
 
-    [HttpPost("playwright-scripts/snapshots")]
-    [HttpPost("plans/{planId:guid}/playwright-scripts/snapshots")]
-    public Task<ActionResult<FeatureCommandResult>> SetPlaywrightScriptSnapshots(
-        Guid featureId, Guid? planId, [FromBody] SetPlaywrightScriptSnapshotsRequest request,
-        [FromServices] SetFeaturePlaywrightScriptSnapshotsCommand command) =>
+    [HttpPost("scripts/snapshots")]
+    [HttpPost("plans/{planId:guid}/scripts/snapshots")]
+    public Task<ActionResult<FeatureCommandResult>> SetScriptSnapshots(
+        Guid featureId, Guid? planId, [FromBody] SetScriptSnapshotsRequest request,
+        [FromServices] SetFeatureScriptSnapshotsCommand command) =>
         Run<FeatureCommandResult>(command, featureId, planId, () => command.Snapshots = request.Snapshots);
 
-    [HttpGet("playwright-scripts/{scriptId:guid}/snapshot")]
-    [HttpGet("plans/{planId:guid}/playwright-scripts/{scriptId:guid}/snapshot")]
-    public async Task<ActionResult<PlaywrightScriptSnapshotDto>> GetPlaywrightScriptSnapshot(
+    [HttpGet("scripts/{scriptId:guid}/snapshot")]
+    [HttpGet("plans/{planId:guid}/scripts/{scriptId:guid}/snapshot")]
+    public async Task<ActionResult<ScriptSnapshotDto>> GetScriptSnapshot(
         Guid featureId, Guid? planId, Guid scriptId,
-        [FromServices] GetFeaturePlaywrightScriptSnapshotQuery query)
+        [FromServices] GetFeatureScriptSnapshotQuery query)
     {
         query.FeatureId = featureId;
         query.PlanId = planId;

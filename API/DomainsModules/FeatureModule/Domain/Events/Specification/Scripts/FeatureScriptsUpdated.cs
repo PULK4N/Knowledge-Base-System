@@ -5,25 +5,28 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Domain.Events;
 
-public interface IFeaturePlaywrightScriptSnapshotsSet : IEvent;
+public interface IFeatureScriptsUpdated : IEvent;
 
 /// <summary>
-/// Sets or removes script snapshots, stamped with the event time. PlanId null means the feature's own specification.
+/// Replaces script paths and definition-of-done links; snapshots are unchanged. PlanId null means the feature's own specification.
 /// </summary>
-public sealed record FeaturePlaywrightScriptSnapshotsSetV1(
+public sealed record FeatureScriptsUpdatedV1(
     FeaturePlanId? PlanId,
-    ImmutableArray<PlaywrightScriptSnapshotEntry> Snapshots,
+    ImmutableArray<ScriptEntry> Scripts,
     Guid SessionId,
     AggregateId MemoryAggregateId
-) : IFeaturePlaywrightScriptSnapshotsSet
+) : IFeatureScriptsUpdated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (FeatureStateData)stateData;
         var specification = state.SpecificationOf(PlanId);
-        foreach (var entry in Snapshots)
-            specification.PlaywrightScripts.Single(item => item.Id == entry.Id).Snapshot =
-                entry.Content is null ? null : new ScriptSnapshot(entry.Content, eventExecutionInfo.Timestamp);
+        foreach (var entry in Scripts)
+        {
+            var script = specification.Scripts.Single(item => item.Id == entry.Id);
+            script.Path = entry.Path;
+            script.DefinitionOfDoneIds = entry.DefinitionOfDoneIds.ToList();
+        }
         SpecificationHistory.Record(state, eventExecutionInfo, MemoryAggregateId);
         return state;
     }

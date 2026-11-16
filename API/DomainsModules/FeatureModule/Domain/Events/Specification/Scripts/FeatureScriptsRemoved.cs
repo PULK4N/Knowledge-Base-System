@@ -5,29 +5,23 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Domain.Events;
 
-public interface IFeaturePlaywrightScriptsAdded : IEvent;
+public interface IFeatureScriptsRemoved : IEvent;
 
 /// <summary>
-/// Adds Playwright script paths with the definitions of done they confirm. PlanId null means the feature's own specification.
+/// Removes scripts. PlanId null means the feature's own specification.
 /// </summary>
-public sealed record FeaturePlaywrightScriptsAddedV1(
+public sealed record FeatureScriptsRemovedV1(
     FeaturePlanId? PlanId,
-    ImmutableArray<PlaywrightScriptEntry> Scripts,
+    ImmutableArray<ScriptId> ScriptIds,
     Guid SessionId,
     AggregateId MemoryAggregateId
-) : IFeaturePlaywrightScriptsAdded
+) : IFeatureScriptsRemoved
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
         var state = (FeatureStateData)stateData;
         var specification = state.SpecificationOf(PlanId);
-        foreach (var entry in Scripts)
-            specification.PlaywrightScripts.Add(new PlaywrightScript
-            {
-                Id = entry.Id,
-                Path = entry.Path,
-                DefinitionOfDoneIds = entry.DefinitionOfDoneIds.ToList()
-            });
+        specification.Scripts.RemoveAll(script => ScriptIds.Contains(script.Id));
         SpecificationHistory.Record(state, eventExecutionInfo, MemoryAggregateId);
         return state;
     }

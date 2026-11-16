@@ -7,11 +7,11 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Application.Commands;
 
-/// <summary>Adds Playwright scripts, saving a snapshot for those that include code.</summary>
-public sealed class AddFeaturePlaywrightScriptsCommand(StateMachineHandler stateMachineHandler)
+/// <summary>Adds scripts, saving a snapshot for those that include code.</summary>
+public sealed class AddFeatureScriptsCommand(StateMachineHandler stateMachineHandler)
     : FeatureSpecificationCommand(stateMachineHandler)
 {
-    public List<PlaywrightScriptInput> Scripts { get; set; } = [];
+    public List<ScriptInput> Scripts { get; set; } = [];
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(FeatureId != Guid.Empty && Scripts.Count > 0);
@@ -19,19 +19,19 @@ public sealed class AddFeaturePlaywrightScriptsCommand(StateMachineHandler state
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
-        var scripts = Scripts.Select(input => (Id: PlaywrightScriptId.New(), Input: input)).ToList();
-        var added = new FeaturePlaywrightScriptsAddedV1(ScopePlanId,
-            [.. scripts.Select(script => new PlaywrightScriptEntry(script.Id, script.Input.Path.Trim(),
+        var scripts = Scripts.Select(input => (Id: ScriptId.New(), Input: input)).ToList();
+        var added = new FeatureScriptsAddedV1(ScopePlanId,
+            [.. scripts.Select(script => new ScriptEntry(script.Id, script.Input.Path.Trim(),
                 [.. (script.Input.DefinitionOfDoneIds ?? []).Select(DefinitionOfDoneId.FromDatabaseGuid)]))],
             SessionId, memoryAggregateId);
         var snapshots = scripts
             .Where(script => script.Input.SnapshotContent is not null)
-            .Select(script => new PlaywrightScriptSnapshotEntry(script.Id, script.Input.SnapshotContent))
+            .Select(script => new ScriptSnapshotEntry(script.Id, script.Input.SnapshotContent))
             .ToList();
 
         await ExecuteEvents(executor, added, _ => snapshots.Count == 0
             ? []
-            : [new FeaturePlaywrightScriptSnapshotsSetV1(ScopePlanId, [.. snapshots], SessionId, memoryAggregateId)],
+            : [new FeatureScriptSnapshotsSetV1(ScopePlanId, [.. snapshots], SessionId, memoryAggregateId)],
             memoryAggregateId);
 
         return FeatureSpecificationItemsCreatedCommandResult.Ok(scripts

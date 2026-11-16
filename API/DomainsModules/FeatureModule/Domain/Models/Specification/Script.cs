@@ -1,11 +1,11 @@
 namespace FeatureModule.Domain.Models;
 
 /// <summary>
-/// A Playwright script path with the definitions of done it confirms. Paths need not be unique.
+/// A script path with the definitions of done it confirms. Paths need not be unique.
 /// </summary>
-public sealed class PlaywrightScript
+public sealed class Script
 {
-    public PlaywrightScriptId Id { get; init; }
+    public ScriptId Id { get; init; }
 
     public string Path { get; set; } = string.Empty;
 

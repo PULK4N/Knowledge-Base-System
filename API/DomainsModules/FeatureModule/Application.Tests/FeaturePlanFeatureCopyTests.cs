@@ -19,7 +19,7 @@ public sealed class FeaturePlanFeatureCopyTests
     private static readonly FeaturePlanId PlanId = FeaturePlanId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly RequirementId Requirement = RequirementId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly DefinitionOfDoneId Dod = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid());
-    private static readonly PlaywrightScriptId Script = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
+    private static readonly ScriptId Script = ScriptId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly FeatureReviewNoteId Note = FeatureReviewNoteId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly FeatureReviewerId Reviewer = FeatureReviewerId.FromDatabaseGuid(Guid.NewGuid());
 
@@ -41,7 +41,7 @@ public sealed class FeaturePlanFeatureCopyTests
         var feature = SpecificationDto.FromModel(state.Specification);
         var requirement = feature.Requirements.Single(item => item.Origin is not null);
         var dod = Assert.Single(feature.DefinitionsOfDone);
-        var script = Assert.Single(feature.PlaywrightScripts);
+        var script = Assert.Single(feature.Scripts);
         Assert.Equal(("FR-7", new ItemOriginDto(PlanId.Value, Requirement.Value)), (requirement.Label, requirement.Origin));
         Assert.NotEqual(Requirement.Value, requirement.Id);
         Assert.Equal(("DOD-1", DefinitionOfDoneState.Confirmed, "Checked"), (dod.Label, dod.State, dod.StateDescription));
@@ -61,9 +61,9 @@ public sealed class FeaturePlanFeatureCopyTests
         var first = new FeatureCommandEventStore(FeatureId, [.. history]);
         await Complete(first);
         history.AddRange(first.Written.Select(payload => payload.EventData));
-        var newScript = PlaywrightScriptId.FromDatabaseGuid(Guid.NewGuid());
+        var newScript = ScriptId.FromDatabaseGuid(Guid.NewGuid());
         history.Add(new FeaturePlanStatusChangedV1(PlanId, FeaturePlanStatus.InProgress, Guid.Empty, MemoryId));
-        history.Add(new FeaturePlaywrightScriptsAddedV1(PlanId, [new(newScript, "e2e/new.spec.ts", [Dod])], Guid.Empty, MemoryId));
+        history.Add(new FeatureScriptsAddedV1(PlanId, [new(newScript, "e2e/new.spec.ts", [Dod])], Guid.Empty, MemoryId));
         var second = new FeatureCommandEventStore(FeatureId, [.. history]);
 
         await Complete(second);
@@ -102,8 +102,8 @@ public sealed class FeaturePlanFeatureCopyTests
             Guid.Empty, MemoryId),
         new FeatureDefinitionsOfDoneAddedV1(PlanId, [new(Dod, 1, "Copied", [Requirement])], Guid.Empty, MemoryId),
         new FeatureDefinitionsOfDoneStateSetV1(PlanId, [new(Dod, DefinitionOfDoneState.Confirmed, "Checked")], Guid.Empty, MemoryId),
-        new FeaturePlaywrightScriptsAddedV1(PlanId, [new(Script, "e2e/copy.spec.ts", [Dod])], Guid.Empty, MemoryId),
-        new FeaturePlaywrightScriptSnapshotsSetV1(PlanId, [new(Script, "test()")], Guid.Empty, MemoryId),
+        new FeatureScriptsAddedV1(PlanId, [new(Script, "e2e/copy.spec.ts", [Dod])], Guid.Empty, MemoryId),
+        new FeatureScriptSnapshotsSetV1(PlanId, [new(Script, "test()")], Guid.Empty, MemoryId),
         new FeaturePlanReviewNoteAddedV1(PlanId, Note, "Retries", "Intended", Guid.Empty, MemoryId),
         new FeaturePlanReviewerAddedV1(PlanId, Reviewer, "Security", "Check access", ReviewLevel.Heavy, Guid.Empty, MemoryId)
     ];

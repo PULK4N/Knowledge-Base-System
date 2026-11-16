@@ -97,12 +97,12 @@
           <a
             role="tab"
             [routerLink]="[]"
-            [queryParams]="{ tab: 'playwright-scripts' }"
+            [queryParams]="{ tab: 'scripts' }"
             queryParamsHandling="merge"
-            [attr.aria-selected]="vm.listState.activeTab === 'playwright-scripts'"
-            [class.active]="vm.listState.activeTab === 'playwright-scripts'"
+            [attr.aria-selected]="vm.listState.activeTab === 'scripts'"
+            [class.active]="vm.listState.activeTab === 'scripts'"
           >
-            Playwright scripts <span>{{ vm.state.data.specification.playwrightScripts.length }}</span>
+            Scripts <span>{{ vm.state.data.specification.scripts.length }}</span>
           </a>
           <a
             role="tab"
@@ -1068,7 +1068,7 @@
         />
       }
 
-      @if (vm.listState.activeTab === 'playwright-scripts') {
+      @if (vm.listState.activeTab === 'scripts') {
         <app-specification-warnings class="tab-section" [warnings]="vm.state.data.specification.warnings" />
         <app-specification-scripts
           class="tab-section"

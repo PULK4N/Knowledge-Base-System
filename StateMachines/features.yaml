@@ -268,22 +268,22 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeatureDefinitionsOfDoneValidator
-  FeaturePlaywrightScriptsAddedV1:
+  FeatureScriptsAddedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
-      - FeaturePlaywrightScriptsValidator
-  FeaturePlaywrightScriptsUpdatedV1:
+      - FeatureScriptsValidator
+  FeatureScriptsUpdatedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
-      - FeaturePlaywrightScriptsValidator
-  FeaturePlaywrightScriptsRemovedV1:
+      - FeatureScriptsValidator
+  FeatureScriptsRemovedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
-      - FeaturePlaywrightScriptsValidator
-  FeaturePlaywrightScriptSnapshotsSetV1:
+      - FeatureScriptsValidator
+  FeatureScriptSnapshotsSetV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
-      - FeaturePlaywrightScriptsValidator
+      - FeatureScriptsValidator
   FeatureDefinitionsOfDoneMovedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator

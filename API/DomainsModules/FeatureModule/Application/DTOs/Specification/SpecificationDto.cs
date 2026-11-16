@@ -9,7 +9,7 @@ namespace FeatureModule.Application.DTOs;
 public sealed record SpecificationDto(
     List<RequirementDto> Requirements,
     List<DefinitionOfDoneDto> DefinitionsOfDone,
-    List<PlaywrightScriptDto> PlaywrightScripts,
+    List<ScriptDto> Scripts,
     List<string> Warnings
 )
 {
@@ -20,13 +20,13 @@ public sealed record SpecificationDto(
             specification.DefinitionsOfDone
                 .OrderBy(item => item.Number)
                 .Select(DefinitionOfDoneDto.FromModel).ToList(),
-            specification.PlaywrightScripts.Select(PlaywrightScriptDto.FromModel).ToList(),
+            specification.Scripts.Select(ScriptDto.FromModel).ToList(),
             CollectWarnings(specification));
 
     private static List<string> CollectWarnings(Specification specification)
     {
         var fulfilled = specification.DefinitionsOfDone.SelectMany(item => item.RequirementIds).ToHashSet();
-        var confirmed = specification.PlaywrightScripts.SelectMany(item => item.DefinitionOfDoneIds).ToHashSet();
+        var confirmed = specification.Scripts.SelectMany(item => item.DefinitionOfDoneIds).ToHashSet();
         return specification.Requirements
             .OrderBy(item => item.Type).ThenBy(item => item.Number)
             .Where(item => !fulfilled.Contains(item.Id))
@@ -35,9 +35,9 @@ public sealed record SpecificationDto(
                 new[]
                 {
                     item.RequirementIds.Count == 0 ? $"{SpecificationLabels.DefinitionOfDone(item.Number)} fulfils no requirement" : null,
-                    confirmed.Contains(item.Id) ? null : $"{SpecificationLabels.DefinitionOfDone(item.Number)} has no Playwright script"
+                    confirmed.Contains(item.Id) ? null : $"{SpecificationLabels.DefinitionOfDone(item.Number)} has no script"
                 }.OfType<string>()))
-            .Concat(specification.PlaywrightScripts
+            .Concat(specification.Scripts
                 .Where(item => item.DefinitionOfDoneIds.Count == 0)
                 .Select(item => $"{item.Path} confirms no definition of done"))
             .ToList();

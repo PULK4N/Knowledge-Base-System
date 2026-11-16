@@ -18,7 +18,7 @@ public sealed record FeatureDefinitionsOfDoneMovedV1(
     FeaturePlanId TargetPlanId,
     ImmutableArray<MovedSpecificationItemEntry<DefinitionOfDoneId>> DefinitionsOfDone,
     ImmutableArray<MovedSpecificationItemEntry<RequirementId>> Requirements,
-    ImmutableArray<PlaywrightScriptId> ScriptIds,
+    ImmutableArray<ScriptId> ScriptIds,
     Guid SessionId,
     AggregateId MemoryAggregateId
 ) : IFeatureDefinitionsOfDoneMoved
@@ -46,15 +46,15 @@ public sealed record FeatureDefinitionsOfDoneMovedV1(
             target.DefinitionsOfDone.Add(definitionOfDone);
             target.UseDefinitionOfDoneNumber(entry.Number);
         }
-        foreach (var script in source.PlaywrightScripts.Where(item => scriptIds.Contains(item.Id)))
+        foreach (var script in source.Scripts.Where(item => scriptIds.Contains(item.Id)))
         {
             script.DefinitionOfDoneIds.RemoveAll(id => !definitionOfDoneIds.Contains(id));
-            target.PlaywrightScripts.Add(script);
+            target.Scripts.Add(script);
         }
 
         source.Requirements.RemoveAll(item => requirementIds.Contains(item.Id));
         source.DefinitionsOfDone.RemoveAll(item => definitionOfDoneIds.Contains(item.Id));
-        source.PlaywrightScripts.RemoveAll(item => scriptIds.Contains(item.Id));
+        source.Scripts.RemoveAll(item => scriptIds.Contains(item.Id));
         foreach (var definitionOfDone in source.DefinitionsOfDone)
             definitionOfDone.RequirementIds.RemoveAll(requirementIds.Contains);
 

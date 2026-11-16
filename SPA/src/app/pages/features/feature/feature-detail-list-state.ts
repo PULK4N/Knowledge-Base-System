@@ -25,7 +25,7 @@ export type FeatureTab =
   | 'reviewers'
   | 'requirements'
   | 'definitions-of-done'
-  | 'playwright-scripts'
+  | 'scripts'
   | 'history';
 export type FeaturePlanSort = 'updatedAt' | 'createdAt' | 'title';
 export type FeaturePlanFilter = 'All' | 'Markdown' | 'Html';
@@ -54,7 +54,7 @@ const FEATURE_TABS: readonly FeatureTab[] = [
   'reviewers',
   'requirements',
   'definitions-of-done',
-  'playwright-scripts',
+  'scripts',
   'history',
 ];
 const SORT_DIRECTIONS: readonly ListSortDirection[] = [

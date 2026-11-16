@@ -3,7 +3,7 @@ using FeatureModule.Domain.Models;
 namespace FeatureModule.Domain.Events;
 
 /// <summary>New snapshot code of a script; null removes the snapshot.</summary>
-public sealed record PlaywrightScriptSnapshotEntry(
-    PlaywrightScriptId Id,
+public sealed record ScriptSnapshotEntry(
+    ScriptId Id,
     string? Content
 );

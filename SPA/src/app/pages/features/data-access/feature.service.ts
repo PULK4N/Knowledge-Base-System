@@ -44,7 +44,7 @@ import {
   UpdateFeatureReviewNoteRequest,
   EMPTY_SPECIFICATION,
   PlanReviewAction,
-  PlaywrightScriptSnapshot,
+  ScriptSnapshot,
   SpecificationAction,
 } from './feature.models';
 
@@ -349,10 +349,10 @@ export class FeatureService {
     id: string,
     planId: string | null,
     scriptId: string,
-  ): Observable<PlaywrightScriptSnapshot> {
+  ): Observable<ScriptSnapshot> {
     const scope = planId === null ? '' : `${this.planPath(planId)}/`;
-    return this.http.get<PlaywrightScriptSnapshot>(
-      `${this.featurePath(id)}/${scope}playwright-scripts/${encodeURIComponent(scriptId)}/snapshot`,
+    return this.http.get<ScriptSnapshot>(
+      `${this.featurePath(id)}/${scope}scripts/${encodeURIComponent(scriptId)}/snapshot`,
     );
   }
 
@@ -448,12 +448,12 @@ function specificationRequest(action: SpecificationAction): readonly [string, ob
         { targetPlanId: action.targetPlanId, definitionOfDoneIds: action.definitionOfDoneIds },
       ];
     case 'add-scripts':
-      return ['playwright-scripts', { scripts: action.scripts }];
+      return ['scripts', { scripts: action.scripts }];
     case 'update-scripts':
-      return ['playwright-scripts/update', { scripts: action.scripts }];
+      return ['scripts/update', { scripts: action.scripts }];
     case 'remove-scripts':
-      return ['playwright-scripts/remove', { scriptIds: action.scriptIds }];
+      return ['scripts/remove', { scriptIds: action.scriptIds }];
     case 'set-snapshots':
-      return ['playwright-scripts/snapshots', { snapshots: action.snapshots }];
+      return ['scripts/snapshots', { snapshots: action.snapshots }];
   }
 }

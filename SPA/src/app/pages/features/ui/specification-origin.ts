@@ -53,7 +53,7 @@ function describePlanItem(
   if (requirement) return { label: requirement.label, tab: 'plan' };
   const definitionOfDone = specification.definitionsOfDone.find(item => item.id === itemId);
   if (definitionOfDone) return { label: definitionOfDone.label, tab: 'plan' };
-  const script = specification.playwrightScripts.find(item => item.id === itemId);
+  const script = specification.scripts.find(item => item.id === itemId);
   if (script) return { label: script.path, tab: 'plan' };
   const reviewNote = plan.reviewNotes.find(item => item.id === itemId);
   if (reviewNote) return { label: reviewNote.title, tab: 'review-notes' };

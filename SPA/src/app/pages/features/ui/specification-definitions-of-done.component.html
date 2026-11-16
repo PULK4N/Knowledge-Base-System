@@ -166,7 +166,7 @@
               @for (path of confirmedBy().get(definitionOfDone.id) ?? []; track $index) {
                 <span class="link-chip code-path">{{ path }}</span>
               } @empty {
-                <span class="muted">no Playwright script</span>
+                <span class="muted">no script</span>
               }
             </div>
           </div>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.AI;
 namespace FeatureModule.MCP;
 
 /// <summary>
-/// Tools for requirements, definitions of done and Playwright scripts. With
+/// Tools for requirements, definitions of done and scripts. With
 /// planId they change that plan's specification; without it, the feature's.
 /// Every write takes a list so many items are saved in one call.
 /// </summary>
@@ -22,7 +22,7 @@ internal static class FeatureSpecificationMcpFunctions
         FeatureMcpFunctions.CreateFunction(
             (Func<IServiceProvider, Guid, Task<SpecificationDto?>>)GetFeatureSpecification,
             "feature_specification_get",
-            "Gets the feature-wide specification: requirements, definitions of done and Playwright scripts copied from completed plans or added on the feature, each copy with its origin plan and item ID, plus warnings about missing links. A plan's specification comes with feature_plan_get."
+            "Gets the feature-wide specification: requirements, definitions of done and scripts copied from completed plans or added on the feature, each copy with its origin plan and item ID, plus warnings about missing links. A plan's specification comes with feature_plan_get."
         ),
         FeatureMcpFunctions.CreateFunction(
             (Func<IServiceProvider, Guid, List<RequirementInput>, Guid?, Guid?, Guid?, Task<FeatureSpecificationItemsCreatedCommandResult>>)AddRequirements,
@@ -52,7 +52,7 @@ internal static class FeatureSpecificationMcpFunctions
         FeatureMcpFunctions.CreateFunction(
             (Func<IServiceProvider, Guid, List<Guid>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveDefinitionsOfDone,
             "feature_dod_remove",
-            "Removes definitions of done and their Playwright script links. Their numbers are never reused."
+            "Removes definitions of done and their script links. Their numbers are never reused."
         ),
         FeatureMcpFunctions.CreateFunction(
             (Func<IServiceProvider, Guid, List<DefinitionOfDoneStateInput>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)SetDefinitionOfDoneStates,
@@ -62,30 +62,30 @@ internal static class FeatureSpecificationMcpFunctions
         FeatureMcpFunctions.CreateFunction(
             (Func<IServiceProvider, Guid, Guid, Guid, List<Guid>, Guid?, Guid?, Task<FeatureSpecificationItemsMovedCommandResult>>)MoveDefinitionsOfDone,
             "feature_dod_move",
-            "Moves definitions of done from one plan to another plan of the same feature that is not completed, for example ones that cannot be confirmed in this plan. The requirements they link and the Playwright scripts that link them move too. Moved items keep their IDs, get the next numbers of the target plan (returned as previous and new labels) and are removed from the source plan; items left behind lose their links to moved items."
+            "Moves definitions of done from one plan to another plan of the same feature that is not completed, for example ones that cannot be confirmed in this plan. The requirements they link and the scripts that link them move too. Moved items keep their IDs, get the next numbers of the target plan (returned as previous and new labels) and are removed from the source plan; items left behind lose their links to moved items."
         ),
         FeatureMcpFunctions.CreateFunction(
-            (Func<IServiceProvider, Guid, List<PlaywrightScriptInput>, Guid?, Guid?, Guid?, Task<FeatureSpecificationItemsCreatedCommandResult>>)AddPlaywrightScripts,
+            (Func<IServiceProvider, Guid, List<ScriptInput>, Guid?, Guid?, Guid?, Task<FeatureSpecificationItemsCreatedCommandResult>>)AddScripts,
             "feature_script_add",
-            "Adds Playwright script paths with the IDs of the definitions of done each confirms (same plan or feature). Paths need not be unique. snapshotContent optionally saves the script code."
+            "Adds script paths with the IDs of the definitions of done each confirms (same plan or feature). Paths need not be unique. snapshotContent optionally saves the script code."
         ),
         FeatureMcpFunctions.CreateFunction(
-            (Func<IServiceProvider, Guid, List<PlaywrightScriptChangeInput>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdatePlaywrightScripts,
+            (Func<IServiceProvider, Guid, List<ScriptChangeInput>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)UpdateScripts,
             "feature_script_update",
             "Updates script paths and definition-of-done links by ID; omitted values are kept and an empty definitionOfDoneIds list removes every link. Snapshots change only with feature_script_snapshot_set."
         ),
         FeatureMcpFunctions.CreateFunction(
-            (Func<IServiceProvider, Guid, List<Guid>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)RemovePlaywrightScripts,
+            (Func<IServiceProvider, Guid, List<Guid>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)RemoveScripts,
             "feature_script_remove",
-            "Removes Playwright scripts."
+            "Removes scripts."
         ),
         FeatureMcpFunctions.CreateFunction(
-            (Func<IServiceProvider, Guid, List<PlaywrightScriptSnapshotInput>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)SetPlaywrightScriptSnapshots,
+            (Func<IServiceProvider, Guid, List<ScriptSnapshotInput>, Guid?, Guid?, Guid?, Task<FeatureCommandResult>>)SetScriptSnapshots,
             "feature_script_snapshot_set",
             "Saves script code snapshots by script ID, stamped with the save time; null content removes a snapshot."
         ),
         FeatureMcpFunctions.CreateFunction(
-            (Func<IServiceProvider, Guid, Guid, Guid?, Task<PlaywrightScriptSnapshotDto?>>)GetPlaywrightScriptSnapshot,
+            (Func<IServiceProvider, Guid, Guid, Guid?, Task<ScriptSnapshotDto?>>)GetScriptSnapshot,
             "feature_script_snapshot_get",
             "Gets one script's saved code and its save time. Returns null when the script has no snapshot."
         )
@@ -146,33 +146,33 @@ internal static class FeatureSpecificationMcpFunctions
                 command.DefinitionOfDoneIds = definitionOfDoneIds;
             });
 
-    private static Task<FeatureSpecificationItemsCreatedCommandResult> AddPlaywrightScripts(IServiceProvider services,
-        Guid featureId, List<PlaywrightScriptInput> scripts, [Description(PlanIdDescription)] Guid? planId = null,
+    private static Task<FeatureSpecificationItemsCreatedCommandResult> AddScripts(IServiceProvider services,
+        Guid featureId, List<ScriptInput> scripts, [Description(PlanIdDescription)] Guid? planId = null,
         Guid? sessionId = null, Guid? memoryAggregateId = null) =>
-        Run<AddFeaturePlaywrightScriptsCommand, FeatureSpecificationItemsCreatedCommandResult>(services, featureId, planId,
+        Run<AddFeatureScriptsCommand, FeatureSpecificationItemsCreatedCommandResult>(services, featureId, planId,
             sessionId, memoryAggregateId, command => command.Scripts = scripts);
 
-    private static Task<FeatureCommandResult> UpdatePlaywrightScripts(IServiceProvider services,
-        Guid featureId, List<PlaywrightScriptChangeInput> scripts, [Description(PlanIdDescription)] Guid? planId = null,
+    private static Task<FeatureCommandResult> UpdateScripts(IServiceProvider services,
+        Guid featureId, List<ScriptChangeInput> scripts, [Description(PlanIdDescription)] Guid? planId = null,
         Guid? sessionId = null, Guid? memoryAggregateId = null) =>
-        Run<UpdateFeaturePlaywrightScriptsCommand, FeatureCommandResult>(services, featureId, planId,
+        Run<UpdateFeatureScriptsCommand, FeatureCommandResult>(services, featureId, planId,
             sessionId, memoryAggregateId, command => command.Scripts = scripts);
 
-    private static Task<FeatureCommandResult> RemovePlaywrightScripts(IServiceProvider services,
+    private static Task<FeatureCommandResult> RemoveScripts(IServiceProvider services,
         Guid featureId, List<Guid> scriptIds, [Description(PlanIdDescription)] Guid? planId = null,
         Guid? sessionId = null, Guid? memoryAggregateId = null) =>
-        Run<RemoveFeaturePlaywrightScriptsCommand, FeatureCommandResult>(services, featureId, planId,
+        Run<RemoveFeatureScriptsCommand, FeatureCommandResult>(services, featureId, planId,
             sessionId, memoryAggregateId, command => command.ScriptIds = scriptIds);
 
-    private static Task<FeatureCommandResult> SetPlaywrightScriptSnapshots(IServiceProvider services,
-        Guid featureId, List<PlaywrightScriptSnapshotInput> snapshots, [Description(PlanIdDescription)] Guid? planId = null,
+    private static Task<FeatureCommandResult> SetScriptSnapshots(IServiceProvider services,
+        Guid featureId, List<ScriptSnapshotInput> snapshots, [Description(PlanIdDescription)] Guid? planId = null,
         Guid? sessionId = null, Guid? memoryAggregateId = null) =>
-        Run<SetFeaturePlaywrightScriptSnapshotsCommand, FeatureCommandResult>(services, featureId, planId,
+        Run<SetFeatureScriptSnapshotsCommand, FeatureCommandResult>(services, featureId, planId,
             sessionId, memoryAggregateId, command => command.Snapshots = snapshots);
 
-    private static Task<PlaywrightScriptSnapshotDto?> GetPlaywrightScriptSnapshot(IServiceProvider services,
+    private static Task<ScriptSnapshotDto?> GetScriptSnapshot(IServiceProvider services,
         Guid featureId, Guid scriptId, [Description("The plan holding the script; omit it for a feature-wide script.")] Guid? planId = null) =>
-        FeatureMcpActionExecutor.ExecuteQuery<GetFeaturePlaywrightScriptSnapshotQuery, PlaywrightScriptSnapshotDto?>(
+        FeatureMcpActionExecutor.ExecuteQuery<GetFeatureScriptSnapshotQuery, ScriptSnapshotDto?>(
             services,
             query =>
             {

@@ -8,7 +8,7 @@ namespace FeatureModule.Domain.Events;
 public interface IFeaturePlanCopiedToFeature : IEvent;
 
 /// <summary>
-/// Copies a completed plan's requirements, definitions of done, Playwright
+/// Copies a completed plan's requirements, definitions of done,
 /// scripts, review notes and reviewers to the feature. Each copy has its own ID
 /// and an origin pointing to the plan item; the plan keeps its items.
 /// </summary>
@@ -16,7 +16,7 @@ public sealed record FeaturePlanCopiedToFeatureV1(
     FeaturePlanId PlanId,
     ImmutableArray<CopiedRequirementEntry> Requirements,
     ImmutableArray<CopiedDefinitionOfDoneEntry> DefinitionsOfDone,
-    ImmutableArray<CopiedPlaywrightScriptEntry> Scripts,
+    ImmutableArray<CopiedScriptEntry> Scripts,
     ImmutableArray<CopiedReviewNoteEntry> ReviewNotes,
     ImmutableArray<CopiedReviewerEntry> Reviewers,
     Guid SessionId,
@@ -59,7 +59,7 @@ public sealed record FeaturePlanCopiedToFeatureV1(
             specification.UseDefinitionOfDoneNumber(entry.Number);
         }
         foreach (var entry in Scripts)
-            specification.PlaywrightScripts.Add(new PlaywrightScript
+            specification.Scripts.Add(new Script
             {
                 Id = entry.Id,
                 Path = entry.Path,

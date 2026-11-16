@@ -29,7 +29,7 @@ public sealed record FeaturePlanDto
     /// </summary>
     public required IReadOnlyCollection<Guid> RecordIds { get; init; }
 
-    /// <summary>Requirements, definitions of done and Playwright scripts, always read with the plan.</summary>
+    /// <summary>Requirements, definitions of done and scripts, always read with the plan.</summary>
     public required SpecificationDto Specification { get; init; }
 
     public IReadOnlyCollection<FeatureReviewNoteDto> ReviewNotes { get; init; } = [];

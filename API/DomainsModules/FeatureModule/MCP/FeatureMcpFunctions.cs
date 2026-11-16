@@ -31,7 +31,7 @@ public static class FeatureMcpFunctions
         CreateFunction(
             (Func<IServiceProvider, Guid, Guid, uint, Task<FeatureMcpPlanDto?>>)GetPlan,
             "feature_plan_get",
-            "Gets one feature plan with its content by feature ID and plan ID, plus the ID, title, and type of each record it links; load those records with feature_record_get when needed. Also returns the plan's specification: requirements (labels such as FR-3), definitions of done (DOD-n with state and linked requirement IDs), Playwright scripts (path, linked definition-of-done IDs, snapshot time without code; read code with feature_script_snapshot_get), and warnings about missing links."
+            "Gets one feature plan with its content by feature ID and plan ID, plus the ID, title, and type of each record it links; load those records with feature_record_get when needed. Also returns the plan's specification: requirements (labels such as FR-3), definitions of done (DOD-n with state and linked requirement IDs), scripts (path, linked definition-of-done IDs, snapshot time without code; read code with feature_script_snapshot_get), and warnings about missing links."
         ),
         CreateFunction(
             (Func<IServiceProvider, string, List<string>, int, Task<FeatureRecordSearchResultsDto>>)SearchRecords,

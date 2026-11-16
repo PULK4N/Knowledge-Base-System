@@ -1,7 +1,7 @@
 namespace FeatureModule.Domain.Models;
 
 /// <summary>
-/// Requirements, definitions of done and Playwright scripts of one plan or of
+/// Requirements, definitions of done and scripts of one plan or of
 /// the feature. Links point only to items of the same specification.
 /// </summary>
 public sealed class Specification
@@ -10,7 +10,7 @@ public sealed class Specification
 
     public List<DefinitionOfDone> DefinitionsOfDone { get; set; } = [];
 
-    public List<PlaywrightScript> PlaywrightScripts { get; set; } = [];
+    public List<Script> Scripts { get; set; } = [];
 
     /// <summary>Highest number ever used per type; removed numbers stay retired.</summary>
     public Dictionary<RequirementType, int> LastRequirementNumbers { get; set; } = [];
@@ -36,7 +36,7 @@ public sealed class Specification
     public void RemoveDefinitionsOfDone(IReadOnlyCollection<DefinitionOfDoneId> ids)
     {
         DefinitionsOfDone.RemoveAll(definitionOfDone => ids.Contains(definitionOfDone.Id));
-        foreach (var script in PlaywrightScripts)
+        foreach (var script in Scripts)
             script.DefinitionOfDoneIds.RemoveAll(ids.Contains);
     }
 }

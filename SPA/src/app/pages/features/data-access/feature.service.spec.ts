@@ -137,7 +137,7 @@ describe('FeatureService', () => {
     ['plan-1', { kind: 'move-definitions-of-done', targetPlanId: 'plan-2', definitionOfDoneIds: ['d1'] },
       'plans/plan-1/definitions-of-done/move', { targetPlanId: 'plan-2', definitionOfDoneIds: ['d1'] }],
     [null, { kind: 'set-snapshots', snapshots: [{ id: 's1', content: null }] },
-      'playwright-scripts/snapshots', { snapshots: [{ id: 's1', content: null }] }],
+      'scripts/snapshots', { snapshots: [{ id: 's1', content: null }] }],
   ] as const)('posts a %s specification change to its path and refreshes', async (planId, action, path, body) => {
     const result = firstValueFrom(service.changeSpecification(feature.id, planId, action as SpecificationAction));
     const mutation = http.expectOne(`/api/features/${feature.id}/${path}`);
@@ -161,7 +161,7 @@ describe('FeatureService', () => {
 
   it('reads a plan script snapshot', async () => {
     const result = firstValueFrom(service.getScriptSnapshot(feature.id, 'plan-1', 's1'));
-    http.expectOne(`/api/features/${feature.id}/plans/plan-1/playwright-scripts/s1/snapshot`)
+    http.expectOne(`/api/features/${feature.id}/plans/plan-1/scripts/s1/snapshot`)
       .flush({ scriptId: 's1', path: 'a.spec.ts', content: 'test()', updatedAt: '2026-11-13' });
     expect((await result).content).toBe('test()');
   });

@@ -12,8 +12,8 @@ namespace FeatureModule.Application.Queries;
 /// Reads one script's snapshot code, which plan and feature reads leave out.
 /// Null when the feature, plan, script or snapshot does not exist.
 /// </summary>
-public sealed class GetFeaturePlaywrightScriptSnapshotQuery(StateMachineHandler stateMachineHandler)
-    : Query<PlaywrightScriptSnapshotDto?>
+public sealed class GetFeatureScriptSnapshotQuery(StateMachineHandler stateMachineHandler)
+    : Query<ScriptSnapshotDto?>
 {
     public required Guid FeatureId { get; set; }
 
@@ -27,15 +27,15 @@ public sealed class GetFeaturePlaywrightScriptSnapshotQuery(StateMachineHandler 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(FeatureId != Guid.Empty && ScriptId != Guid.Empty);
 
-    protected override async Task<PlaywrightScriptSnapshotDto?> ExecuteInternal(Executor executor)
+    protected override async Task<ScriptSnapshotDto?> ExecuteInternal(Executor executor)
     {
         var stateInfo = await stateMachineHandler.GetByAggregateId(AggregateId.FromDatabaseGuid(FeatureId));
         var planId = PlanId is { } id && id != Guid.Empty ? FeaturePlanId.FromDatabaseGuid(id) : (FeaturePlanId?)null;
-        var scriptId = PlaywrightScriptId.FromDatabaseGuid(ScriptId);
+        var scriptId = Domain.Models.ScriptId.FromDatabaseGuid(ScriptId);
         var script = (stateInfo?.StateData as FeatureStateData)?.FindSpecification(planId)?
-            .PlaywrightScripts.SingleOrDefault(item => item.Id == scriptId);
+            .Scripts.SingleOrDefault(item => item.Id == scriptId);
         return script?.Snapshot is { } snapshot
-            ? new PlaywrightScriptSnapshotDto(ScriptId, script.Path, snapshot.Content, snapshot.UpdatedAt)
+            ? new ScriptSnapshotDto(ScriptId, script.Path, snapshot.Content, snapshot.UpdatedAt)
             : null;
     }
 }

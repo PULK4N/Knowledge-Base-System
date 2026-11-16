@@ -7,7 +7,7 @@ using FeatureModule.Domain.Models;
 
 namespace FeatureModule.Application.Commands;
 
-public sealed class RemoveFeaturePlaywrightScriptsCommand(StateMachineHandler stateMachineHandler)
+public sealed class RemoveFeatureScriptsCommand(StateMachineHandler stateMachineHandler)
     : FeatureSpecificationCommand(stateMachineHandler)
 {
     public List<Guid> ScriptIds { get; set; } = [];
@@ -18,7 +18,7 @@ public sealed class RemoveFeaturePlaywrightScriptsCommand(StateMachineHandler st
     protected override async Task<object> ExecuteInternal(Executor executor)
     {
         var memoryAggregateId = await ResolveMemoryAggregateId();
-        return await ExecuteEvent(executor, new FeaturePlaywrightScriptsRemovedV1(ScopePlanId,
-            [.. ScriptIds.Select(PlaywrightScriptId.FromDatabaseGuid)], SessionId, memoryAggregateId), memoryAggregateId);
+        return await ExecuteEvent(executor, new FeatureScriptsRemovedV1(ScopePlanId,
+            [.. ScriptIds.Select(ScriptId.FromDatabaseGuid)], SessionId, memoryAggregateId), memoryAggregateId);
     }
 }

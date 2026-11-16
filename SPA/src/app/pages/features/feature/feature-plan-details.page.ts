@@ -34,7 +34,7 @@ import {
   SetFeaturePlanBranchSourcesRequest,
   FeatureRecord,
   PlanReviewAction,
-  PlaywrightScriptSnapshot,
+  ScriptSnapshot,
   SpecificationAction,
   UpdateFeaturePlanBranchRequest,
 } from '../data-access/feature.models';
@@ -85,7 +85,7 @@ interface FeaturePlanDetailsView {
   readonly describeSources: (branch: FeaturePlanBranch) => string;
   /** Other plans of the feature, not completed, that definitions of done can move to. */
   readonly moveTargets: readonly MoveTargetOption[];
-  readonly loadSnapshot: (scriptId: string) => Observable<PlaywrightScriptSnapshot>;
+  readonly loadSnapshot: (scriptId: string) => Observable<ScriptSnapshot>;
 }
 
 /** The tab and item the page was opened with, for example from an origin link. */

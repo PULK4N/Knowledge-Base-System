@@ -13,8 +13,8 @@ import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { LoadState, toUserMessage } from '../../../core/http/load-state';
 import {
   Feature,
-  PlaywrightScript,
-  PlaywrightScriptSnapshot,
+  Script,
+  ScriptSnapshot,
   Specification,
   SpecificationAction,
 } from '../data-access/feature.models';
@@ -30,7 +30,7 @@ type ScriptEditor =
   | { readonly mode: 'snapshot'; readonly id: string };
 
 /**
- * Shows Playwright script paths with the definitions of done they confirm and
+ * Shows script paths with the definitions of done they confirm and
  * their snapshots, and emits add, update, remove and snapshot changes.
  */
 @Component({
@@ -55,7 +55,7 @@ export class SpecificationScriptsComponent {
   readonly saving = input(false);
   readonly fragment = input<string | null>(null);
   /** Reads a script's snapshot code, which the specification leaves out. */
-  readonly loadSnapshot = input.required<(scriptId: string) => Observable<PlaywrightScriptSnapshot>>();
+  readonly loadSnapshot = input.required<(scriptId: string) => Observable<ScriptSnapshot>>();
 
   readonly action = output<SpecificationAction>();
 
@@ -72,7 +72,7 @@ export class SpecificationScriptsComponent {
   );
 
   /** The open snapshot, loaded again whenever another script is opened. */
-  protected readonly snapshot$: Observable<LoadState<PlaywrightScriptSnapshot> | null> =
+  protected readonly snapshot$: Observable<LoadState<ScriptSnapshot> | null> =
     toObservable(this.openSnapshotId).pipe(
       switchMap(scriptId =>
         scriptId === null
@@ -85,7 +85,7 @@ export class SpecificationScriptsComponent {
       ),
     );
 
-  protected definitionOfDoneLabels(script: PlaywrightScript): readonly string[] {
+  protected definitionOfDoneLabels(script: Script): readonly string[] {
     return labelsOf(script.definitionOfDoneIds, this.specification().definitionsOfDone);
   }
 
@@ -99,7 +99,7 @@ export class SpecificationScriptsComponent {
     this.adding.set(!this.adding());
   }
 
-  protected startEditing(script: PlaywrightScript): void {
+  protected startEditing(script: Script): void {
     this.pickedDefinitionOfDoneIds.set(script.definitionOfDoneIds);
     this.editor.set({ mode: 'edit', id: script.id });
   }

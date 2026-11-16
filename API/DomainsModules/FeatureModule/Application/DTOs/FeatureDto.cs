@@ -26,7 +26,7 @@ public sealed record FeatureDto
 
     public required IReadOnlyCollection<FeaturePlanDto> Plans { get; init; }
 
-    /// <summary>Feature-wide requirements, definitions of done and Playwright scripts.</summary>
+    /// <summary>Feature-wide requirements, definitions of done and scripts.</summary>
     public required SpecificationDto Specification { get; init; }
 
     public FeatureBranchDto? Branch { get; init; }

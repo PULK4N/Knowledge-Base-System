@@ -30,7 +30,7 @@ public sealed class FeaturePlanCopyToFeatureValidator : IPreEventValidator
         var feature = state.Specification;
         var copiedOrigins = feature.Requirements.Select(item => item.Origin?.PlanItemId)
             .Concat(feature.DefinitionsOfDone.Select(item => item.Origin?.PlanItemId))
-            .Concat(feature.PlaywrightScripts.Select(item => item.Origin?.PlanItemId))
+            .Concat(feature.Scripts.Select(item => item.Origin?.PlanItemId))
             .Concat(state.ReviewNotes.Select(item => item.Origin?.PlanItemId))
             .Concat(state.Reviewers.Select(item => item.Origin?.PlanItemId))
             .OfType<Guid>()
@@ -52,7 +52,7 @@ public sealed class FeaturePlanCopyToFeatureValidator : IPreEventValidator
             .ToList();
         var existingIds = feature.Requirements.Select(item => item.Id.Value)
             .Concat(feature.DefinitionsOfDone.Select(item => item.Id.Value))
-            .Concat(feature.PlaywrightScripts.Select(item => item.Id.Value))
+            .Concat(feature.Scripts.Select(item => item.Id.Value))
             .Concat(state.ReviewNotes.Select(item => item.Id.Value))
             .Concat(state.Reviewers.Select(item => item.Id.Value))
             .ToHashSet();
