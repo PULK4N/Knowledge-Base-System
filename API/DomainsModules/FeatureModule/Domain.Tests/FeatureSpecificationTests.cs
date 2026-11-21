@@ -178,29 +178,6 @@ public sealed class FeatureSpecificationTests
             new FeatureScriptsAddedV1(planId, [new(ScriptId.FromDatabaseGuid(Guid.NewGuid()), path, [dod])], Guid.Empty, MemoryId)));
     }
 
-    [Theory]
-    [InlineData(FeaturePlanStatus.Completed, new DefinitionOfDoneState[0], true)]
-    [InlineData(FeaturePlanStatus.Completed, new[] { DefinitionOfDoneState.Confirmed }, true)]
-    [InlineData(FeaturePlanStatus.Completed, new[] { DefinitionOfDoneState.Confirmed, DefinitionOfDoneState.NotConfirmed }, false)]
-    [InlineData(FeaturePlanStatus.Completed, new[] { DefinitionOfDoneState.Failed }, false)]
-    [InlineData(FeaturePlanStatus.Completed, new[] { DefinitionOfDoneState.Postponed }, false)]
-    [InlineData(FeaturePlanStatus.InProgress, new[] { DefinitionOfDoneState.Failed }, true)]
-    public void Plan_completes_only_when_every_definition_of_done_is_confirmed(
-        FeaturePlanStatus status, DefinitionOfDoneState[] states, bool expected)
-    {
-        var (state, planId) = NewState(true);
-        foreach (var (dodState, index) in states.Select((item, index) => (item, index)))
-            state.SpecificationOf(planId).DefinitionsOfDone.Add(new DefinitionOfDone
-            {
-                Id = DefinitionOfDoneId.FromDatabaseGuid(Guid.NewGuid()), Number = index + 1, State = dodState
-            });
-        var validator = new FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator();
-
-        Assert.Equal(expected, Validate(validator, state, new FeaturePlanStatusChangedV1(planId!.Value, status, Guid.Empty, MemoryId)));
-        Assert.Equal(expected, Validate(validator, state, new FeaturePlanUpdatedV1(planId.Value, "Plan", "", FeaturePlanContentType.Markdown,
-            "", status, Guid.Empty, MemoryId)));
-    }
-
     [Fact]
     public void Moving_definitions_of_done_carries_linked_requirements_and_scripts_and_renumbers_them()
     {

@@ -442,7 +442,6 @@ public sealed class FeatureStateMachineDefinitionTests
         typeof(FeatureRequirementsValidator),
         typeof(FeatureDefinitionsOfDoneValidator),
         typeof(FeatureScriptsValidator),
-        typeof(FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator),
         typeof(FeatureDefinitionsOfDoneMoveValidator),
         typeof(FeaturePlanReviewNoteValidator),
         typeof(FeaturePlanReviewerValidator),

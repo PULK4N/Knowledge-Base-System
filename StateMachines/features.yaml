@@ -176,12 +176,10 @@ events:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
-      - FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator
   FeaturePlanStatusChangedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
       - FeaturePlanMustExistValidator
-      - FeaturePlanDefinitionsOfDoneMustBeConfirmedValidator
   FeaturePlanBranchAddedV1:
     preEventValidators:
       - FeatureMustBeActiveValidator
