@@ -93,10 +93,10 @@ a.nav-item:hover,
   box-shadow: 0 6px 18px rgb(31 45 82 / 8%);
 }
 
-/* In dark mode the bar uses the sidebar's navy, so the two read as one frame around the page. */
+/* In dark mode the bar uses the page background with a thin line, clearly apart from the navy sidebar. */
 :host-context([data-theme="dark"]) .top-bar {
-  border-bottom-color: transparent;
-  background: #041734;
+  border-bottom-color: #263247;
+  background: #111827;
   box-shadow: none;
 }
 
