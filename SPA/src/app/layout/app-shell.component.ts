@@ -17,6 +17,7 @@ import {
   startWith,
 } from 'rxjs';
 import { SettingsService } from '../core/settings/settings.service';
+import { ChangePasswordDialogComponent } from '../pages/account/feature/change-password-dialog.component';
 
 type ThemeToggleState =
   | { readonly status: 'idle' }
@@ -25,7 +26,7 @@ type ThemeToggleState =
 
 @Component({
   selector: 'app-shell',
-  imports: [AsyncPipe, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [AsyncPipe, ChangePasswordDialogComponent, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

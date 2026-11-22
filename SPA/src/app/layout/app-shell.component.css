@@ -76,6 +76,13 @@ a.nav-item:hover,
   stroke-width: 1.6;
 }
 
+.sidebar-footer {
+  position: absolute;
+  right: 15px;
+  bottom: 32px;
+  left: 15px;
+}
+
 .workspace {
   position: relative;
   min-height: 100vh;
@@ -192,6 +199,11 @@ a.nav-item:hover,
   .nav-item svg {
     width: 21px;
     height: 21px;
+  }
+
+  .sidebar-footer {
+    position: static;
+    margin-top: 4px;
   }
 
   .workspace {
