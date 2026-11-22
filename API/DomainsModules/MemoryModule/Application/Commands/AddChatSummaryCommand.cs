@@ -13,7 +13,7 @@ namespace MemoryModule.Application.Commands;
 
 public sealed class AddChatSummaryCommand(
     StateMachineHandler stateMachineHandler
-) : Command<MemoryCommandResult>
+) : MemoryCommand
 {
     public required ThreadId ThreadId { get; set; }
     public required string Summary { get; set; }

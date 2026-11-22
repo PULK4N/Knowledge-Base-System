@@ -12,7 +12,7 @@ namespace MemoryModule.Application.Commands;
 
 public sealed class SetCodexPromptUsageCommand(
     StateMachineHandler stateMachineHandler
-) : Command<MemoryCommandResult>
+) : MemoryCommand
 {
     public required ThreadId ThreadId { get; set; }
     public required PromptId PromptId { get; set; }

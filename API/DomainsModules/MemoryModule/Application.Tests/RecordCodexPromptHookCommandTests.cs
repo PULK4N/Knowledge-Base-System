@@ -1,3 +1,4 @@
+using IdentityModule.Shared;
 using System.Text.Json;
 using ActionModule.Shared.Models;
 using AttachmentsModule.Application;
@@ -36,7 +37,8 @@ public sealed class RecordCodexPromptHookCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.MemoryWrite]
         };
 
     static RecordCodexPromptHookCommandTests()

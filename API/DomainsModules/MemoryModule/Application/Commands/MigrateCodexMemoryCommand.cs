@@ -12,7 +12,7 @@ namespace MemoryModule.Application.Commands;
 
 public sealed class MigrateCodexMemoryCommand(
     StateMachineHandler stateMachineHandler
-) : Command<MemoryCommandResult>
+) : MemoryCommand
 {
     public required ThreadId ThreadId { get; set; }
     public required string RawMemory { get; set; }

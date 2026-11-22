@@ -11,7 +11,7 @@ namespace MemoryModule.Application.Commands;
 
 public sealed class SetPromptModelCommand(
     StateMachineHandler stateMachineHandler
-) : Command<MemoryCommandResult>
+) : MemoryCommand
 {
     public required ThreadId ThreadId { get; set; }
     public required PromptId PromptId { get; set; }
