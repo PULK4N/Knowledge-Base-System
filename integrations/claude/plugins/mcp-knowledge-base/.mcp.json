@@ -2,7 +2,10 @@
   "mcpServers": {
     "mcp-knowledge-base": {
       "type": "http",
-      "url": "http://localhost:5231/mcp"
+      "url": "http://localhost:5231/mcp",
+      "headers": {
+        "Authorization": "Bearer ${KB_API_KEY:-}"
+      }
     }
   }
 }
