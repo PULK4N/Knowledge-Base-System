@@ -50,6 +50,20 @@ IMAGE_EXTENSIONS = {
 }
 
 
+API_KEY_VARIABLE = "KB_API_KEY"
+
+
+def _add_api_key(request: urllib.request.Request) -> None:
+    """Sends the agent's session key from KB_API_KEY as a Bearer token.
+
+    Without the variable the request goes out without it, so the hook keeps
+    working against an API that does not require a login.
+    """
+    api_key = os.environ.get(API_KEY_VARIABLE, "").strip()
+    if api_key:
+        request.add_header("Authorization", f"Bearer {api_key}")
+
+
 class MemoryHookError(RuntimeError):
     pass
 
@@ -74,6 +88,7 @@ class MemoryApiClient:
             method="POST",
         )
         request.add_header("Content-Type", "application/json")
+        _add_api_key(request)
 
         try:
             with urllib.request.urlopen(
@@ -82,9 +97,11 @@ class MemoryApiClient:
                 response.read()
         except urllib.error.HTTPError as error:
             details = error.read().decode("utf-8", errors="replace")
+            # A missing or rejected session key is fixed by setting KB_API_KEY,
+            # so keep those records queued instead of setting them aside.
             failure = (
                 MemoryHookRejected
-                if 400 <= error.code < 500
+                if 400 <= error.code < 500 and error.code not in (401, 403)
                 else MemoryHookError
             )
             raise failure(
