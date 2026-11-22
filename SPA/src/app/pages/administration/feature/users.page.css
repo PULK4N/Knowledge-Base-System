@@ -29,6 +29,14 @@
   line-height: 1.5;
 }
 
+.heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 .primary-action {
   flex: 0 0 auto;
   min-height: 44px;

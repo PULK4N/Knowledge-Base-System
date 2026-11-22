@@ -10,15 +10,15 @@
 <nav class="administration-tabs" role="tablist" aria-label="Administration">
   <a
     role="tab"
-    id="agents-tab"
+    id="users-tab"
     aria-controls="administration-panel"
-    routerLink="agents"
+    routerLink="users"
     routerLinkActive="active"
-    #agentsLink="routerLinkActive"
+    #usersLink="routerLinkActive"
     [routerLinkActiveOptions]="{ exact: true }"
-    [attr.aria-selected]="agentsLink.isActive"
+    [attr.aria-selected]="usersLink.isActive"
   >
-    Agents
+    Users
   </a>
   <a
     role="tab"

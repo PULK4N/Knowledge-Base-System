@@ -19,6 +19,7 @@ import { Agent, AgentDraft } from '../data-access/agents.models';
 import { AgentsService } from '../data-access/agents.service';
 import { AgentFormComponent } from '../ui/agent-form.component';
 import { AgentListComponent } from '../ui/agent-list.component';
+import { ChangePasswordDialogComponent } from './change-password-dialog.component';
 import { AgentsEvent, initialAgentsState, reduceAgents } from './agents-state';
 
 interface SaveRequest {
@@ -27,13 +28,13 @@ interface SaveRequest {
 }
 
 @Component({
-  selector: 'app-agents-page',
-  imports: [AsyncPipe, AgentFormComponent, AgentListComponent],
-  templateUrl: './agents.page.html',
-  styleUrl: './agents.page.css',
+  selector: 'app-users-page',
+  imports: [AsyncPipe, AgentFormComponent, AgentListComponent, ChangePasswordDialogComponent],
+  templateUrl: './users.page.html',
+  styleUrl: './users.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AgentsPage {
+export class UsersPage {
   private readonly agents = inject(AgentsService);
   private readonly reloadRequests = new Subject<void>();
   private readonly editorEvents = new Subject<AgentsEvent>();

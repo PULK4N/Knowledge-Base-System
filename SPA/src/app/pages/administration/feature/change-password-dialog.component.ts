@@ -22,7 +22,7 @@ import {
   reduceChangePassword,
 } from './change-password-state';
 
-/** The top bar button that opens a dialog for changing the administrator's password. */
+/** The Users page button that opens a dialog for changing the administrator's password. */
 @Component({
   selector: 'app-change-password-dialog',
   imports: [AsyncPipe, ChangePasswordFormComponent],

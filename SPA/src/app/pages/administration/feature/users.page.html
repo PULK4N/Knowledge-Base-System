@@ -1,13 +1,16 @@
 <section class="settings-panel surface-card">
   <div class="panel-heading">
     <div>
-      <h2>Agents</h2>
+      <h2>Users</h2>
       <p>
         Agents are accounts that Claude and Codex use to call the REST API and MCP. Each agent only gets
         the permissions ticked here.
       </p>
     </div>
-    <button type="button" class="primary-action" (click)="openCreate()">Create agent</button>
+    <div class="heading-actions">
+      <app-change-password-dialog />
+      <button type="button" class="primary-action" (click)="openCreate()">Create agent</button>
+    </div>
   </div>
 
   @if (vm$ | async; as vm) {
