@@ -36,7 +36,7 @@ public sealed partial class ProjectCommandTests
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             ),
-            Permissions = [Permissions.SkillsWrite, Permissions.PoliciesWrite]
+            Permissions = [Permissions.SkillsWrite, Permissions.PoliciesWrite, Permissions.ProjectsWrite]
         };
 
     public ProjectCommandTests()
@@ -828,6 +828,25 @@ public sealed partial class ProjectCommandTests
             );
             _typesRegistered = true;
         }
+    }
+
+    [Theory]
+    [InlineData(false, null, false)]
+    [InlineData(false, "projects.read", false)]
+    [InlineData(false, "projects.write", true)]
+    [InlineData(true, null, true)]
+    public async Task ProjectCommands_RequireProjectsWrite(bool isAdministrator, string? permission, bool expected)
+    {
+        // IsAuthorized only looks at the executor, so the command needs no dependencies here.
+        var command = new CreateProjectCommand(null!) { ProjectName = "project", ProjectDescription = "Description" };
+        var executor = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()),
+            IsAdministrator = isAdministrator,
+            Permissions = permission is null ? [] : [new Permission(permission)]
+        };
+
+        Assert.Equal(expected, await command.IsAuthorized(executor));
     }
 
     private sealed class CapturingEventStoreWithOutbox

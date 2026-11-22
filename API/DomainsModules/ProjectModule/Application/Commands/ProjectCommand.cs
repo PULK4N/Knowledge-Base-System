@@ -1,3 +1,4 @@
+using IdentityModule.Shared;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -25,6 +26,9 @@ public abstract class ProjectCommand(
 
     public Guid SessionId { get; set; }
     public Guid MemoryAggregateId { get; set; }
+
+    public override Task<bool> IsAuthorized(Executor executor) =>
+        Task.FromResult(executor.Has(Permissions.ProjectsWrite));
 
     protected async Task<AggregateId> ResolveMemoryAggregateId()
     {
