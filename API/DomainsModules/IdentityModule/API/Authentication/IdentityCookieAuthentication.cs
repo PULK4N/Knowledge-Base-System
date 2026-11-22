@@ -14,15 +14,11 @@ public static class IdentityCookieAuthentication
 {
     public const string Scheme = CookieAuthenticationDefaults.AuthenticationScheme;
     public const string CookieName = "kb.session";
-    public const string AccountIdClaim = ClaimTypes.NameIdentifier;
 
     private static readonly TimeSpan Lifetime = TimeSpan.FromDays(14);
 
-    public static IServiceCollection AddIdentityCookieAuthentication(this IServiceCollection services)
-    {
-        services
-            .AddAuthentication(Scheme)
-            .AddCookie(Scheme, options =>
+    public static AuthenticationBuilder AddIdentityCookie(this AuthenticationBuilder builder) =>
+        builder.AddCookie(Scheme, options =>
             {
                 options.Cookie.Name = CookieName;
                 options.Cookie.HttpOnly = true;
@@ -44,12 +40,10 @@ public static class IdentityCookieAuthentication
                 };
             });
 
-        return services;
-    }
-
     public static Task SignInAccount(this HttpContext httpContext, Guid accountId)
     {
-        var identity = new ClaimsIdentity([new Claim(AccountIdClaim, accountId.ToString())], Scheme);
+        var identity = new ClaimsIdentity(
+            [new Claim(IdentityAuthentication.AccountIdClaim, accountId.ToString())], Scheme);
         // Persistent, so the cookie outlives a browser restart for its sliding lifetime.
         return httpContext.SignInAsync(Scheme, new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = true });

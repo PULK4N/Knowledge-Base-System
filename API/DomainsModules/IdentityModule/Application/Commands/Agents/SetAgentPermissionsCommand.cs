@@ -8,7 +8,7 @@ using IdentityModule.Domain.Events;
 
 namespace IdentityModule.Application.Commands;
 
-/// <summary>Replaces an agent's permissions. Session keys generated earlier keep their old permissions.</summary>
+/// <summary>Replaces an agent's permissions. They apply to the agent's next request, whatever key it uses.</summary>
 public sealed class SetAgentPermissionsCommand(StateMachineHandler handler) : Command<AgentDto>
 {
     public Guid AgentId { get; set; }

@@ -39,4 +39,24 @@ public sealed class AgentsController(IExecutorProvider executorProvider) : Actio
         command.Permissions = request.Permissions;
         return Ok(await Execute(command));
     }
+
+    [HttpPost("{agentId:guid}/session-keys")]
+    public async Task<ActionResult<SessionKeyDto>> GenerateSessionKey(
+        Guid agentId,
+        [FromServices] GenerateSessionKeyCommand command)
+    {
+        command.AgentId = agentId;
+        try
+        {
+            return Ok(await Execute(command));
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return NotFound();
+        }
+    }
 }

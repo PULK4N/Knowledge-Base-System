@@ -25,6 +25,7 @@ using IdentityModule.API.Authentication;
 using IdentityModule.API.Controllers;
 using IdentityModule.API.Executors;
 using IdentityModule.Application.Executors;
+using IdentityModule.Application.SessionKeys;
 using IdentityModule.Application.Commands;
 using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
@@ -65,10 +66,10 @@ builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
     Path.Combine(AppContext.BaseDirectory, "StateMachines");
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddIdentityCookieAuthentication();
-// Every endpoint requires a logged-in user unless it is marked [AllowAnonymous].
+builder.Services.AddIdentityAuthentication();
+// Every endpoint requires a logged-in user (cookie or session key) unless it is marked [AllowAnonymous].
 builder.Services.AddAuthorization(options =>
-    options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityCookieAuthentication.Scheme)
+    options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityAuthentication.Scheme)
         .RequireAuthenticatedUser()
         .Build());
 builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
@@ -142,6 +143,7 @@ builder.Services.AddSingleton<
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
 builder.Services.AddSingleton<TemporaryExecutorProvider>();
 builder.Services.AddScoped<AccountExecutorReader>();
+builder.Services.AddSingleton<SessionKeyProtector>();
 builder.Services.AddScoped<IExecutorProvider, AccountExecutorProvider>();
 
 builder.Services.RegisterOutboxProcessing(builder.Configuration);
