@@ -80,16 +80,44 @@ a.nav-item:hover,
   position: relative;
   min-height: 100vh;
   margin-left: 250px;
-  padding: 42px clamp(28px, 3.2vw, 52px) 64px;
 }
 
-.theme-switcher {
-  position: fixed;
-  top: 20px;
-  right: clamp(28px, 3.2vw, 52px);
+/* Holds the theme and logout buttons in their own row, so they never cover page content. */
+.top-bar {
+  position: sticky;
+  top: 0;
   z-index: 20;
+  padding: 10px clamp(28px, 3.2vw, 52px);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(31 45 82 / 8%);
+}
+
+/* In dark mode the bar uses the sidebar's navy, so the two read as one frame around the page. */
+:host-context([data-theme="dark"]) .top-bar {
+  border-bottom-color: transparent;
+  background: #041734;
+  box-shadow: none;
+}
+
+:host-context([data-theme="dark"]) .theme-toggle {
+  border-color: rgb(255 255 255 / 14%);
+  color: #c9d4ea;
+  background: rgb(255 255 255 / 6%);
+}
+
+/* Same centred column as the pages, so the buttons line up with the right edge of the content. */
+.top-bar-content {
+  position: relative;
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
+  max-width: 1205px;
+  margin: 0 auto;
+}
+
+.page-content {
+  padding: 32px clamp(28px, 3.2vw, 52px) 64px;
 }
 
 .theme-toggle {
@@ -101,8 +129,7 @@ a.nav-item:hover,
   border: 1px solid var(--line);
   border-radius: 50%;
   color: var(--navy);
-  background: var(--surface);
-  box-shadow: 0 8px 22px rgb(31 45 82 / 14%);
+  background: var(--surface-soft);
   cursor: pointer;
   transition:
     border-color 150ms ease,
@@ -198,11 +225,14 @@ a.nav-item:hover,
 
   .workspace {
     margin-left: 0;
-    padding: 28px 18px 48px;
   }
 
-  .theme-switcher {
-    top: 14px;
-    right: 18px;
+  .top-bar {
+    padding: 8px 18px;
   }
+
+  .page-content {
+    padding: 24px 18px 48px;
+  }
+
 }
