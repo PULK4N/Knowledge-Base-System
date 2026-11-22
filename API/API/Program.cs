@@ -19,6 +19,7 @@ using FeatureModule.API.Controllers;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using IdentityModule.API.Authentication;
 using IdentityModule.API.Controllers;
@@ -65,6 +66,11 @@ builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddIdentityCookieAuthentication();
+// Every endpoint requires a logged-in user unless it is marked [AllowAnonymous].
+builder.Services.AddAuthorization(options =>
+    options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityCookieAuthentication.Scheme)
+        .RequireAuthenticatedUser()
+        .Build());
 builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
 builder.Services
     .AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
@@ -185,8 +191,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
-app.MapMcp("/mcp");
+// Open until agents log in with session keys.
+app.MapMcp("/mcp").AllowAnonymous();
 
 app.Run();
 

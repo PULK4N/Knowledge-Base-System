@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
 using ActionModule.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectModule.Application.Commands;
 using ProjectModule.Application.DTOs;
@@ -35,6 +36,8 @@ public sealed class ProjectPoliciesController(
         return Ok(await Execute(query));
     }
 
+    // Open until agents log in with session keys: the plugin hooks call it without a login.
+    [AllowAnonymous]
     [HttpGet("by-repository")]
     public async Task<ActionResult<PolicyProjectDetailsDto>> GetByRepository(
         [FromQuery, Required] string repositoryPath,

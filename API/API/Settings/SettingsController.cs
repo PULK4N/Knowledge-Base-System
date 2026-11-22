@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Settings;
@@ -7,6 +8,8 @@ namespace Api.Settings;
 public sealed class SettingsController(SettingsRepository repository)
     : ControllerBase
 {
+    // The login page reads the theme before anyone is logged in.
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<Settings>> Get(
         CancellationToken cancellationToken

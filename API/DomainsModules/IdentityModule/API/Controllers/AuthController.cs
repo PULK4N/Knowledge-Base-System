@@ -6,6 +6,7 @@ using IdentityModule.Application;
 using IdentityModule.Application.Commands;
 using IdentityModule.Application.DTOs;
 using IdentityModule.Application.Queries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityModule.API.Controllers;
@@ -18,6 +19,7 @@ namespace IdentityModule.API.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(IExecutorProvider executorProvider) : ActionController(executorProvider)
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResultDto>> Login(
         [FromBody] LoginRequest request,
@@ -35,6 +37,7 @@ public sealed class AuthController(IExecutorProvider executorProvider) : ActionC
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -42,6 +45,9 @@ public sealed class AuthController(IExecutorProvider executorProvider) : ActionC
         return NoContent();
     }
 
+    // The first password change happens before the administrator has a login cookie; the command
+    // checks the current password itself.
+    [AllowAnonymous]
     [HttpPost("password")]
     public async Task<IActionResult> ChangePassword(
         [FromBody] ChangePasswordRequest request,
