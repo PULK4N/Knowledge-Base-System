@@ -80,15 +80,16 @@ a.nav-item:hover,
   position: relative;
   min-height: 100vh;
   margin-left: 250px;
-  padding: 20px clamp(28px, 3.2vw, 52px) 64px;
+  padding: 42px clamp(28px, 3.2vw, 52px) 64px;
 }
 
 .theme-switcher {
-  position: relative;
+  position: fixed;
+  top: 20px;
+  right: clamp(28px, 3.2vw, 52px);
+  z-index: 20;
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 8px;
 }
 
 .theme-toggle {
@@ -197,7 +198,11 @@ a.nav-item:hover,
 
   .workspace {
     margin-left: 0;
-    padding: 14px 18px 48px;
+    padding: 28px 18px 48px;
   }
 
+  .theme-switcher {
+    top: 14px;
+    right: 18px;
+  }
 }
