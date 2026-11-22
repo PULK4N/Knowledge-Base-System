@@ -1,0 +1,23 @@
+<form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+  <fieldset [disabled]="submitting">
+    <div class="form-field">
+      <label for="login-user-name">Username</label>
+      <input id="login-user-name" type="text" autocomplete="username" formControlName="userName" />
+      @if (form.controls.userName.invalid && form.controls.userName.touched) {
+        <p class="field-error" role="alert">Enter your username.</p>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="current-password" formControlName="password" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p class="field-error" role="alert">Enter your password.</p>
+      }
+    </div>
+
+    <button type="submit" [disabled]="submitting">
+      {{ submitting ? 'Logging in…' : 'Log in' }}
+    </button>
+  </fieldset>
+</form>
