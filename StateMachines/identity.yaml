@@ -1,0 +1,10 @@
+id: identity-state-machine
+stateData: AccountStateData
+initializationEvents:
+  - AdministratorCreatedV1
+  - AgentCreatedV1
+events:
+  AdministratorCreatedV1: {}
+  AdministratorPasswordChangedV1: {}
+  AgentCreatedV1: {}
+  AgentPermissionsSetV1: {}

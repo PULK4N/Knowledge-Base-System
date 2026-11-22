@@ -19,6 +19,7 @@ using FeatureModule.API.Controllers;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
+using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
 using MemoryModule.Domain;
@@ -105,7 +106,8 @@ builder.Services.RegisterEventSourcingCore(
     typeof(MemoryStateData).Assembly,
     typeof(GeneralPoliciesStateData).Assembly,
     typeof(ProjectStateData).Assembly,
-    typeof(SettingsStateData).Assembly
+    typeof(SettingsStateData).Assembly,
+    typeof(AccountStateData).Assembly
 );
 builder.Services.RegisterActions(
     typeof(QueueProjectionReplayCommand).Assembly,
