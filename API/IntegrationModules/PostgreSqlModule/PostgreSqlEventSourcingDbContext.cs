@@ -4,6 +4,7 @@ using FeatureModule.Persistence;
 using FeatureModule.Persistence.Models;
 using IdentityModule.Persistence;
 using IdentityModule.Persistence.Models;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
@@ -23,7 +24,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
     IIdentityModuleDbContext,
     IPolicyModuleDbContext,
     IProjectModuleDbContext,
-    ISkillsModuleDbContext
+    ISkillsModuleDbContext,
+    IDataProtectionKeyContext
 {
     public DbSet<EntityRelation> EntityRelations => Set<EntityRelation>();
     public DbSet<FeatureSummaryEntry> FeatureSummaries =>
@@ -50,6 +52,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         Set<SkillListTagEntry>();
     public DbSet<AccountListEntry> AccountListEntries =>
         Set<AccountListEntry>();
+    public DbSet<DataProtectionKey> DataProtectionKeys =>
+        Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -192,6 +196,10 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                 skill.HasIndex(summary => summary.Name).IsUnique();
                 skill.Property(summary => summary.Name).IsRequired();
             }
+        );
+
+        modelBuilder.Entity<DataProtectionKey>(
+            key => key.ToTable("DataProtectionKeys")
         );
 
         modelBuilder.Entity<AccountListEntry>(

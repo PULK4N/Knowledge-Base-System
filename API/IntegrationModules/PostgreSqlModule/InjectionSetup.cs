@@ -8,6 +8,7 @@ using EventSourcing.Shared.Models;
 using FeatureModule.Persistence;
 using FeatureModule.Persistence.Interfaces;
 using IdentityModule.Persistence;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +73,18 @@ public static class InjectionSetup
                     )
             )
         );
+
+        services.AddScoped(
+            serviceProvider =>
+                (PostgreSqlEventSourcingDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
+        // Login cookies are signed with these keys. Keeping them in PostgreSQL lets cookies survive
+        // an API restart or rebuild; the fixed application name keeps them valid across deployments.
+        services
+            .AddDataProtection()
+            .PersistKeysToDbContext<PostgreSqlEventSourcingDbContext>()
+            .SetApplicationName(PostgreSqlModuleDefaults.DataProtectionApplicationName);
 
         services.AddDbContext<AttachmentsModuleDbContext>(
             options =>

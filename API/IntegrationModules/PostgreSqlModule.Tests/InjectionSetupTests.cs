@@ -15,12 +15,16 @@ using FeatureModule.Contracts;
 using FeatureModule.Persistence.Models;
 using FeatureModule.Persistence;
 using FeatureModule.Persistence.Interfaces;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MemoryModule.Persistence;
 using MemoryModule.Domain.Models;
 using MemoryModule.Persistence.Interfaces;
@@ -146,6 +150,54 @@ public sealed class InjectionSetupTests
         Assert.True(
             addedColumns.IndexOf("OutputText")
                 < addedColumns.IndexOf("OutputSearchVector")
+        );
+    }
+
+    [Fact]
+    public void DataProtectionKeysMigration_is_schema_only()
+    {
+        var migration = new PostgreSqlModule.Migrations.EventSourcing
+            .AddDataProtectionKeys();
+
+        Assert.Empty(
+            migration.UpOperations.Where(
+                operation => operation is SqlOperation
+                    or InsertDataOperation
+            )
+        );
+    }
+
+    [Fact]
+    public void RegisterPostgreSqlModuleStoresDataProtectionKeysInEventSourcingContext()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [
+                        $"ConnectionStrings:{PostgreSqlModuleDefaults.ConnectionStringName}"
+                    ] = PostgreSqlModuleDefaults.LocalDevelopmentConnectionString
+                }
+            )
+            .Build();
+        var services = new ServiceCollection();
+
+        services.RegisterPostgreSqlModule(configuration);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        Assert.IsType<EntityFrameworkCoreXmlRepository<PostgreSqlEventSourcingDbContext>>(
+            serviceProvider.GetRequiredService<IOptions<KeyManagementOptions>>()
+                .Value.XmlRepository
+        );
+        Assert.Equal(
+            PostgreSqlModuleDefaults.DataProtectionApplicationName,
+            serviceProvider.GetRequiredService<IOptions<DataProtectionOptions>>()
+                .Value.ApplicationDiscriminator
+        );
+        using var context = CreateEventSourcingContext();
+        Assert.Equal(
+            "DataProtectionKeys",
+            context.Model.FindEntityType(typeof(DataProtectionKey))?.GetTableName()
         );
     }
 
