@@ -66,12 +66,19 @@ builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
     Path.Combine(AppContext.BaseDirectory, "StateMachines");
 
 builder.Services.AddHttpContextAccessor();
+var authentication = builder.Configuration.GetSection(IdentityAuthenticationSettings.SectionName);
+builder.Services.Configure<IdentityAuthenticationSettings>(authentication);
+var authenticationEnabled = authentication.Get<IdentityAuthenticationSettings>()?.Enabled ?? true;
 builder.Services.AddIdentityAuthentication();
-// Every endpoint requires a logged-in user (cookie or session key) unless it is marked [AllowAnonymous].
 builder.Services.AddAuthorization(options =>
-    options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityAuthentication.Scheme)
-        .RequireAuthenticatedUser()
-        .Build());
+{
+    // Every endpoint requires a logged-in user (cookie or session key) unless it is marked [AllowAnonymous].
+    // Without the fallback policy, with authentication disabled, every endpoint is open.
+    if (authenticationEnabled)
+        options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityAuthentication.Scheme)
+            .RequireAuthenticatedUser()
+            .Build();
+});
 builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
 builder.Services
     .AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
@@ -181,6 +188,10 @@ builder.Services
     .WithToolErrorHandling();
 
 var app = builder.Build();
+
+if (!authenticationEnabled)
+    app.Logger.LogWarning(
+        "Authentication is disabled: every endpoint is open and requests without a login run as the administrator.");
 
 await app.Services.ApplyPostgreSqlMigrations();
 await app.Services.ApplySettingsMigration();
