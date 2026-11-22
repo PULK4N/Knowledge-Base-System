@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Observable,
   Subject,
@@ -16,6 +16,7 @@ import {
 } from 'rxjs';
 import { LoginRequest } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { safeReturnUrl } from '../../../core/auth/return-url';
 import { toUserMessage } from '../../../core/http/load-state';
 import { LoginFormComponent } from '../ui/login-form.component';
 import { NewPassword, NewPasswordFormComponent } from '../ui/new-password-form.component';
@@ -35,6 +36,7 @@ interface NewPasswordRequest extends NewPassword {
 export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly loginRequests = new Subject<LoginRequest>();
   private readonly newPasswordRequests = new Subject<NewPasswordRequest>();
 
@@ -65,7 +67,11 @@ export class LoginPage {
     scan(reduceLogin, initialLoginState),
     startWith(initialLoginState),
     tap(state => {
-      if (state.step === 'done') void this.router.navigateByUrl('/');
+      if (state.step === 'done') {
+        void this.router.navigateByUrl(
+          safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+        );
+      }
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
