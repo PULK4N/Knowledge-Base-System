@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Shared/Shared.csproj" />
     <ProjectReference Include="../../../EventSourcing/Shared/Shared.csproj" />
   </ItemGroup>
 

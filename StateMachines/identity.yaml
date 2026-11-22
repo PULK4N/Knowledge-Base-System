@@ -4,7 +4,21 @@ initializationEvents:
   - AdministratorCreatedV1
   - AgentCreatedV1
 events:
-  AdministratorCreatedV1: {}
-  AdministratorPasswordChangedV1: {}
-  AgentCreatedV1: {}
-  AgentPermissionsSetV1: {}
+  AdministratorCreatedV1:
+    preEventValidators:
+      - AccountMustNotExistValidator
+      - UserNameRequiredValidator
+  AdministratorPasswordChangedV1:
+    preEventValidators:
+      - AccountMustExistValidator
+      - AccountMustNotBeAgentValidator
+  AgentCreatedV1:
+    preEventValidators:
+      - AccountMustNotExistValidator
+      - UserNameRequiredValidator
+      - KnownPermissionsValidator
+  AgentPermissionsSetV1:
+    preEventValidators:
+      - AccountMustExistValidator
+      - AccountMustBeAgentValidator
+      - KnownPermissionsValidator
