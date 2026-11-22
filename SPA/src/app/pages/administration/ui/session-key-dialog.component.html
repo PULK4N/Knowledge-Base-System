@@ -1,0 +1,31 @@
+<div class="backdrop" (click)="closed.emit()"></div>
+<section class="dialog surface-card" role="dialog" aria-modal="true" aria-labelledby="session-key-heading"
+  (keydown.escape)="closed.emit()">
+  <h2 id="session-key-heading">Session key for {{ current.agent.displayName }}</h2>
+
+  @switch (current.status) {
+    @case ('generating') {
+      <p class="message" role="status">Generating key…</p>
+    }
+    @case ('error') {
+      <p class="result error" role="alert">{{ current.message }}</p>
+    }
+    @case ('shown') {
+      <p class="message">
+        Put this line in the agent's environment. It is shown only once; generate a new key if you lose it.
+      </p>
+      <textarea class="key" readonly rows="4" aria-label="Session key"
+        [value]="environmentLine(current.sessionKey)"></textarea>
+      @if (copied()) {
+        <p class="result success" role="status">Copied to the clipboard.</p>
+      }
+    }
+  }
+
+  <div class="actions">
+    @if (current.status === 'shown') {
+      <button type="button" class="secondary-button" (click)="copy(current.sessionKey)">Copy</button>
+    }
+    <button type="button" class="primary-action" (click)="closed.emit()">Close</button>
+  </div>
+</section>

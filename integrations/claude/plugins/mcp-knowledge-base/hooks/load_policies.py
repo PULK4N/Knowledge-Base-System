@@ -29,6 +29,29 @@ REPLACE_ATTEMPTS = 5
 REPLACE_RETRY_SECONDS = 0.1
 
 
+API_KEY_VARIABLE = "KB_API_KEY"
+
+
+def _add_api_key(request: urllib.request.Request) -> None:
+    """Sends the agent's session key from KB_API_KEY as a Bearer token.
+
+    Without the variable the request goes out without it, so the hook keeps
+    working against an API that does not require a login.
+    """
+    api_key = os.environ.get(API_KEY_VARIABLE, "").strip()
+    if api_key:
+        request.add_header("Authorization", f"Bearer {api_key}")
+
+
+def _login_hint(status_code: int) -> str:
+    if status_code != 401:
+        return ""
+    return (
+        f". Set {API_KEY_VARIABLE} to a session key generated in"
+        " Administration > Users."
+    )
+
+
 class PolicyBootstrapError(RuntimeError):
     pass
 
@@ -63,6 +86,7 @@ class PolicyHttpClient:
         )
         request = urllib.request.Request(f"{self._url}?{query}", method="GET")
         request.add_header("Accept", "application/json")
+        _add_api_key(request)
 
         try:
             with urllib.request.urlopen(
@@ -75,6 +99,7 @@ class PolicyHttpClient:
                 raise AgentFamilyMissingError(agent_family) from error
             raise PolicyBootstrapError(
                 f"Policy API returned HTTP {error.code}: {details or error.reason}"
+                f"{_login_hint(error.code)}"
             ) from error
         except (OSError, urllib.error.URLError) as error:
             raise PolicyBootstrapError(
@@ -102,6 +127,7 @@ class PolicyHttpClient:
         )
         request.add_header("Content-Type", "application/json")
         request.add_header("Accept", "application/json")
+        _add_api_key(request)
 
         try:
             urllib.request.urlopen(
@@ -122,6 +148,7 @@ class PolicyHttpClient:
             f"{self._url.rstrip('/')}/projects/by-repository?{query}", method="GET"
         )
         request.add_header("Accept", "application/json")
+        _add_api_key(request)
         try:
             with urllib.request.urlopen(
                 request, timeout=self._timeout_seconds
@@ -131,6 +158,7 @@ class PolicyHttpClient:
             details = error.read().decode("utf-8", errors="replace")
             raise PolicyBootstrapError(
                 f"Project API returned HTTP {error.code}: {details or error.reason}"
+                f"{_login_hint(error.code)}"
             ) from error
         except (OSError, urllib.error.URLError) as error:
             raise PolicyBootstrapError(f"Project API is unavailable: {error}") from error

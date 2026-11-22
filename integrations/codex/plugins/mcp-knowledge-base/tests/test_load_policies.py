@@ -3,6 +3,9 @@ import io
 import json
 import tempfile
 import unittest
+import urllib.request
+import urllib.error
+import os
 from pathlib import Path
 from unittest import mock
 
@@ -571,6 +574,29 @@ class LoadPoliciesTests(unittest.TestCase):
     @staticmethod
     def context(output):
         return output["hookSpecificOutput"]["additionalContext"]
+
+
+class ApiKeyTests(unittest.TestCase):
+    def test_sends_kb_api_key_as_a_bearer_token(self):
+        request = urllib.request.Request("http://localhost:5231/api")
+
+        with mock.patch.dict(os.environ, {"KB_API_KEY": " CfDJ8key "}):
+            load_policies._add_api_key(request)
+
+        self.assertEqual("Bearer CfDJ8key", request.get_header("Authorization"))
+
+    def test_without_kb_api_key_sends_no_authorization_header(self):
+        for value in (None, "", "   "):
+            with self.subTest(value=value):
+                request = urllib.request.Request("http://localhost:5231/api")
+                environment = {} if value is None else {"KB_API_KEY": value}
+
+                with mock.patch.dict(os.environ, environment):
+                    if value is None:
+                        os.environ.pop("KB_API_KEY", None)
+                    load_policies._add_api_key(request)
+
+                self.assertIsNone(request.get_header("Authorization"))
 
 
 if __name__ == "__main__":

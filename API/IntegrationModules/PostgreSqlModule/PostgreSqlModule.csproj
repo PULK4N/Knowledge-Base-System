@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -24,6 +25,7 @@
     <ProjectReference Include="../../DomainsModules/AttachmentsModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/FeatureModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../EmbeddingModule/EmbeddingModule.csproj" />
+    <ProjectReference Include="../../DomainsModules/IdentityModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/MemoryModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/PolicyModule/Persistence/Persistence.csproj" />
     <ProjectReference Include="../../DomainsModules/ProjectModule/Persistence/Persistence.csproj" />

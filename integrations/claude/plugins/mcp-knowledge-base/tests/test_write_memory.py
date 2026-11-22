@@ -3,6 +3,9 @@ import json
 import io
 import tempfile
 import unittest
+import urllib.request
+import urllib.error
+import os
 import uuid
 from pathlib import Path
 from unittest import mock
@@ -462,6 +465,47 @@ class WriteMemoryTests(unittest.TestCase):
             "cwd": "/home/nikola/Documents/github/Knowledge-base-system",
             **values,
         }
+
+
+class ApiKeyTests(unittest.TestCase):
+    def test_sends_kb_api_key_as_a_bearer_token(self):
+        request = urllib.request.Request("http://localhost:5231/api")
+
+        with mock.patch.dict(os.environ, {"KB_API_KEY": " CfDJ8key "}):
+            write_memory._add_api_key(request)
+
+        self.assertEqual("Bearer CfDJ8key", request.get_header("Authorization"))
+
+    def test_without_kb_api_key_sends_no_authorization_header(self):
+        for value in (None, "", "   "):
+            with self.subTest(value=value):
+                request = urllib.request.Request("http://localhost:5231/api")
+                environment = {} if value is None else {"KB_API_KEY": value}
+
+                with mock.patch.dict(os.environ, environment):
+                    if value is None:
+                        os.environ.pop("KB_API_KEY", None)
+                    write_memory._add_api_key(request)
+
+                self.assertIsNone(request.get_header("Authorization"))
+
+
+class LoginFailureTests(unittest.TestCase):
+    def test_unauthorized_records_stay_queued_instead_of_being_set_aside(self):
+        for status in (401, 403):
+            with self.subTest(status=status):
+                error = urllib.error.HTTPError(
+                    "http://localhost:5231/api", status, "denied", {}, io.BytesIO(b"")
+                )
+                client = write_memory.MemoryApiClient("http://localhost:5231/api")
+
+                with mock.patch.object(
+                    write_memory.urllib.request, "urlopen", side_effect=error
+                ):
+                    with self.assertRaises(write_memory.MemoryHookError) as raised:
+                        client.record({})
+
+                self.assertNotIsInstance(raised.exception, write_memory.MemoryHookRejected)
 
 
 if __name__ == "__main__":

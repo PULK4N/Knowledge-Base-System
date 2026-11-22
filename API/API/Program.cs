@@ -19,6 +19,15 @@ using FeatureModule.API.Controllers;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using IdentityModule.API.Authentication;
+using IdentityModule.API.Controllers;
+using IdentityModule.API.Executors;
+using IdentityModule.Application.Executors;
+using IdentityModule.Application.SessionKeys;
+using IdentityModule.Application.Commands;
+using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
 using MemoryModule.Domain;
@@ -57,6 +66,19 @@ builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
     Path.Combine(AppContext.BaseDirectory, "StateMachines");
 
 builder.Services.AddHttpContextAccessor();
+var authentication = builder.Configuration.GetSection(IdentityAuthenticationSettings.SectionName);
+builder.Services.Configure<IdentityAuthenticationSettings>(authentication);
+var authenticationEnabled = authentication.Get<IdentityAuthenticationSettings>()?.Enabled ?? true;
+builder.Services.AddIdentityAuthentication();
+builder.Services.AddAuthorization(options =>
+{
+    // Every endpoint requires a logged-in user (cookie or session key) unless it is marked [AllowAnonymous].
+    // Without the fallback policy, with authentication disabled, every endpoint is open.
+    if (authenticationEnabled)
+        options.FallbackPolicy = new AuthorizationPolicyBuilder(IdentityAuthentication.Scheme)
+            .RequireAuthenticatedUser()
+            .Build();
+});
 builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
 builder.Services
     .AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
@@ -71,6 +93,7 @@ builder.Services
     .AddApplicationPart(typeof(AdministrationController).Assembly)
     .AddApplicationPart(typeof(AttachmentsController).Assembly)
     .AddApplicationPart(typeof(FeaturesController).Assembly)
+    .AddApplicationPart(typeof(AuthController).Assembly)
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
     .AddApplicationPart(typeof(KnowledgeSearchController).Assembly)
@@ -105,7 +128,8 @@ builder.Services.RegisterEventSourcingCore(
     typeof(MemoryStateData).Assembly,
     typeof(GeneralPoliciesStateData).Assembly,
     typeof(ProjectStateData).Assembly,
-    typeof(SettingsStateData).Assembly
+    typeof(SettingsStateData).Assembly,
+    typeof(AccountStateData).Assembly
 );
 builder.Services.RegisterActions(
     typeof(QueueProjectionReplayCommand).Assembly,
@@ -116,10 +140,18 @@ builder.Services.RegisterActions(
     typeof(SearchKnowledgeQuery).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly,
     typeof(CreateProjectCommand).Assembly,
-    typeof(UpdateCodeReviewSettingsCommand).Assembly
+    typeof(UpdateCodeReviewSettingsCommand).Assembly,
+    typeof(CreateAgentCommand).Assembly
 );
+builder.Services.AddSingleton<
+    IPasswordHasher<AccountStateData>,
+    PasswordHasher<AccountStateData>
+>();
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
-builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
+builder.Services.AddSingleton<TemporaryExecutorProvider>();
+builder.Services.AddScoped<AccountExecutorReader>();
+builder.Services.AddSingleton<SessionKeyProtector>();
+builder.Services.AddScoped<IExecutorProvider, AccountExecutorProvider>();
 
 builder.Services.RegisterOutboxProcessing(builder.Configuration);
 
@@ -157,6 +189,10 @@ builder.Services
 
 var app = builder.Build();
 
+if (!authenticationEnabled)
+    app.Logger.LogWarning(
+        "Authentication is disabled: every endpoint is open and requests without a login run as the administrator.");
+
 await app.Services.ApplyPostgreSqlMigrations();
 await app.Services.ApplySettingsMigration();
 
@@ -167,6 +203,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapMcp("/mcp");
 

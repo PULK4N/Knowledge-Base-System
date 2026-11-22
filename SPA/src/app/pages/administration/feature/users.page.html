@@ -1,0 +1,59 @@
+<section class="settings-panel surface-card">
+  <div class="panel-heading">
+    <div>
+      <h2>Users</h2>
+      <p>
+        Agents are accounts that Claude and Codex use to call the REST API and MCP. Each agent only gets
+        the permissions ticked here.
+      </p>
+    </div>
+    <div class="heading-actions">
+      <app-change-password-dialog />
+      <button type="button" class="primary-action" (click)="openCreate()">Create agent</button>
+    </div>
+  </div>
+
+  @if (vm$ | async; as vm) {
+    @if (vm.state.command.status === 'saved') {
+      <p class="panel-result success" role="status">{{ vm.state.command.message }}</p>
+    }
+
+    @if (vm.state.editor.mode !== 'none') {
+      <div class="editor">
+        <h3>{{ vm.state.editor.mode === 'create' ? 'New agent' : 'Edit permissions' }}</h3>
+        <app-agent-form
+          [agent]="vm.state.editor.mode === 'edit' ? vm.state.editor.agent : null"
+          [saving]="vm.state.command.status === 'saving'"
+          (saved)="save(vm.state.editor.mode === 'edit' ? vm.state.editor.agent : null, $event)"
+          (cancelled)="closeEditor()"
+        />
+        @if (vm.state.command.status === 'error') {
+          <p class="panel-result error" role="alert">{{ vm.state.command.message }}</p>
+        }
+      </div>
+    }
+
+    @if (vm.load.status === 'loading') {
+      <p class="panel-message" role="status">Loading agents…</p>
+    } @else if (vm.load.status === 'error') {
+      <div class="panel-result error" role="alert">
+        <strong>Agents could not be loaded</strong>
+        <span>{{ vm.load.message }}</span>
+        <button type="button" class="retry-button" (click)="reload()">Try again</button>
+      </div>
+    } @else if (vm.load.data.length === 0) {
+      <p class="panel-message">No agents yet. Create one to give Claude or Codex access.</p>
+    } @else {
+      <app-agent-list
+        [agents]="vm.load.data"
+        [disabled]="vm.state.command.status === 'saving'"
+        (editRequested)="openEdit($event)"
+        (keyRequested)="generateKey($event)"
+      />
+    }
+
+    @if (vm.sessionKey.status !== 'closed') {
+      <app-session-key-dialog [state]="vm.sessionKey" (closed)="closeKeyDialog()" />
+    }
+  }
+</section>

@@ -17,4 +17,6 @@ public static class PostgreSqlModuleDefaults
     /// </summary>
     public const string AttachmentsMigrationsHistoryTable =
         "__EFMigrationsHistory_Skills";
+
+    public const string DataProtectionApplicationName = "KnowledgeBase";
 }

@@ -13,4 +13,6 @@ public static class StateDataAggregateIds
         Guid.Parse("00000000-0000-0000-0000-000000000002");
     public static Guid RepositoryToProjectMap =>
         Guid.Parse("00000000-0000-0000-0000-000000000003");
+    public static Guid AdministratorAccount =>
+        Guid.Parse("00000000-0000-0000-0000-000000000005");
 }

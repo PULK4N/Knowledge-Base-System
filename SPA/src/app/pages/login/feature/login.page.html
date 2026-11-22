@@ -1,0 +1,27 @@
+<main class="login-layout">
+  <section class="login-card surface-card" aria-labelledby="login-heading">
+    <p class="eyebrow">Knowledge Base System</p>
+    @if (state$ | async; as state) {
+      @if (state.step === 'new-password') {
+        <h1 id="login-heading">Set your password</h1>
+        <p class="login-intro">
+          You logged in with the initial password. Choose a new password to finish logging in.
+        </p>
+        <app-new-password-form
+          [submitting]="state.status === 'submitting'"
+          (passwordRequested)="saveNewPassword(state.currentPassword, $event)"
+        />
+      } @else if (state.step === 'credentials') {
+        <h1 id="login-heading">Log in</h1>
+        <app-login-form
+          [submitting]="state.status === 'submitting'"
+          (loginRequested)="login($event)"
+        />
+      }
+
+      @if (state.step !== 'done' && state.message) {
+        <p class="login-error" role="alert">{{ state.message }}</p>
+      }
+    }
+  </section>
+</main>

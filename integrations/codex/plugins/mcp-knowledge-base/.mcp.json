@@ -1,7 +1,8 @@
 {
   "mcpServers": {
     "mcp-knowledge-base": {
-      "url": "http://localhost:5231/mcp"
+      "url": "http://localhost:5231/mcp",
+      "bearer_token_env_var": "KB_API_KEY"
     }
   }
 }

@@ -1,0 +1,24 @@
+id: identity-state-machine
+stateData: AccountStateData
+initializationEvents:
+  - AdministratorCreatedV1
+  - AgentCreatedV1
+projections:
+  - AccountListProjector
+events:
+  AdministratorCreatedV1:
+    preEventValidators:
+      - AccountMustNotExistValidator
+      - UserNameRequiredValidator
+  AdministratorPasswordChangedV1:
+    preEventValidators:
+      - AccountMustNotBeAgentValidator
+  AgentCreatedV1:
+    preEventValidators:
+      - AccountMustNotExistValidator
+      - UserNameRequiredValidator
+      - KnownPermissionsValidator
+  AgentPermissionsSetV1:
+    preEventValidators:
+      - AccountMustBeAgentValidator
+      - KnownPermissionsValidator
