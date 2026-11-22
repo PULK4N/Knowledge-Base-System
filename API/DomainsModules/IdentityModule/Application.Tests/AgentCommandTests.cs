@@ -1,7 +1,10 @@
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Exceptions;
 using EventSourcing.Shared.Models;
 using IdentityModule.Application.Commands;
+using IdentityModule.Application.Queries;
 using IdentityModule.Domain.Events;
+using IdentityModule.Shared;
 
 namespace IdentityModule.Application.Tests;
 
@@ -82,6 +85,27 @@ public sealed class AgentCommandTests
             Permissions = ["features.write"]
         }.Execute(IdentityTestContext.Executor));
 
+        Assert.Empty(context.Written);
+    }
+
+    [Fact]
+    public async Task AgentActions_ByANonAdministrator_AreRejectedAndWriteNothing()
+    {
+        var context = new IdentityTestContext()
+            .With(AgentId, new AgentCreatedV1("codex", "Codex", false, ["memory.write"]));
+        var agent = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(AgentId.Value),
+            Permissions = Permissions.All.ToHashSet()
+        };
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            new CreateAgentCommand(context.Handler) { UserName = "other" }.Execute(agent));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            new SetAgentPermissionsCommand(context.Handler) { AgentId = AgentId.Value, IsAdministrator = true }
+                .Execute(agent));
+        // IsAuthorized only looks at the executor, so the query needs no repository here.
+        Assert.False(await new ListAgentsQuery(null!).IsAuthorized(agent));
         Assert.Empty(context.Written);
     }
 }

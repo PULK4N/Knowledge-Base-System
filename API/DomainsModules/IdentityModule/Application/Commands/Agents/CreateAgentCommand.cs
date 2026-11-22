@@ -15,6 +15,8 @@ public sealed class CreateAgentCommand(StateMachineHandler handler) : Command<Ag
     public bool IsAdministrator { get; set; }
     public List<string> Permissions { get; set; } = [];
 
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     protected override async Task<AgentDto> ExecuteInternal(Executor executor)
     {
         var userName = UserName.Trim();

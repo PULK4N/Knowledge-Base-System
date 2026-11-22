@@ -19,7 +19,8 @@ internal sealed class IdentityTestContext : IEventStoreWithOutbox
 {
     public static readonly Executor Executor = new()
     {
-        Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+        IsAdministrator = true
     };
 
     public static readonly PasswordHasher<AccountStateData> Hasher = new();
