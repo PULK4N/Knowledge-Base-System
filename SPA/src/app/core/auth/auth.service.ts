@@ -26,4 +26,10 @@ export class AuthService {
       .post<unknown>(`${this.path}/password`, value)
       .pipe(map(() => undefined));
   }
+
+  logout(): Observable<void> {
+    return this.http
+      .post<unknown>(`${this.path}/logout`, null)
+      .pipe(map(() => undefined));
+  }
 }

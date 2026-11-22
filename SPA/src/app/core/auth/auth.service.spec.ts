@@ -79,4 +79,14 @@ describe('AuthService', () => {
 
     await expect(resultPromise).resolves.toBeUndefined();
   });
+
+  it('posts a logout', async () => {
+    const resultPromise = firstValueFrom(service.logout());
+    const request = http.expectOne('/api/auth/logout');
+
+    expect(request.request.method).toBe('POST');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+
+    await expect(resultPromise).resolves.toBeUndefined();
+  });
 });

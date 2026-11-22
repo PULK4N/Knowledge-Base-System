@@ -83,6 +83,25 @@
         <span>Administration</span>
       </a>
     </nav>
+
+    @if (logoutState$ | async; as logoutState) {
+      <div class="sidebar-footer">
+        <button
+          class="nav-item"
+          type="button"
+          [disabled]="logoutState.status === 'logging-out'"
+          (click)="logout()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10" />
+          </svg>
+          <span>{{ logoutState.status === 'logging-out' ? 'Logging out…' : 'Log out' }}</span>
+        </button>
+        @if (logoutState.status === 'error') {
+          <p class="logout-error" role="alert">Logging out failed. Please try again.</p>
+        }
+      </div>
+    }
   </aside>
 
   <main class="workspace">
