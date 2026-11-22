@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Identity;
 
 namespace IdentityModule.Application.Commands;
 
+/// <summary>
+/// Sets the administrator's password. The first change replaces the initial password of the seeded
+/// administrator.
+/// </summary>
 public sealed class ChangeAdministratorPasswordCommand(
     StateMachineHandler handler,
     IPasswordHasher<AccountStateData> hasher)
@@ -24,8 +28,7 @@ public sealed class ChangeAdministratorPasswordCommand(
         _administrator = (await handler.GetByAggregateId(IdentityDefaults.AdministratorId))?.StateData
             as AccountStateData;
         return _administrator is not null
-               && hasher.VerifyHashedPassword(_administrator, _administrator.PasswordHash, CurrentPassword)
-               != PasswordVerificationResult.Failed
+               && IdentityDefaults.PasswordMatches(hasher, _administrator, CurrentPassword)
                && IdentityDefaults.IsValidNewPassword(NewPassword, ConfirmPassword);
     }
 

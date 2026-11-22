@@ -74,7 +74,7 @@ public sealed class AgentCommandTests
     [Fact]
     public async Task SetAgentPermissions_OnTheAdministratorAccount_IsRejectedAndWritesNothing()
     {
-        var context = new IdentityTestContext().WithAdministrator("admin", "secret");
+        var context = new IdentityTestContext().WithAdministrator();
 
         await Assert.ThrowsAsync<EventValidationException>(() => new SetAgentPermissionsCommand(context.Handler)
         {

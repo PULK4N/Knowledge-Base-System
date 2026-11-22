@@ -44,10 +44,15 @@ internal sealed class IdentityTestContext : IEventStoreWithOutbox
 
     public List<EventPayload> Written { get; } = [];
 
-    public IdentityTestContext WithAdministrator(string userName, string password)
+    /// <param name="password">The password the administrator has set; null keeps the seeded state.</param>
+    public IdentityTestContext WithAdministrator(string? password = null)
     {
+        With(IdentityDefaults.AdministratorId, new AdministratorCreatedV1(IdentityDefaults.AdministratorUserName));
+        if (password is null)
+            return this;
+
         var hash = Hasher.HashPassword(new AccountStateData(IdentityDefaults.AdministratorId), password);
-        return With(IdentityDefaults.AdministratorId, new AdministratorCreatedV1(userName, hash));
+        return With(IdentityDefaults.AdministratorId, new AdministratorPasswordChangedV1(hash));
     }
 
     public IdentityTestContext With(AggregateId accountId, params IEvent[] events)

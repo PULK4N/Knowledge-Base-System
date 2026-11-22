@@ -12,14 +12,14 @@ public sealed class AccountValidatorTests
     private static readonly AggregateId AccountId =
         AggregateId.FromDatabaseGuid(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
 
-    private static readonly AdministratorCreatedV1 Administrator = new("admin", "hash");
+    private static readonly AdministratorCreatedV1 Administrator = new("admin");
     private static readonly AgentCreatedV1 Agent = new("codex", "Codex", false, ["memory.write"]);
 
     public static TheoryData<IEvent[], IEvent, string?> Cases => new()
     {
         { [], Administrator, null },
         { [Administrator], Administrator, nameof(AccountMustNotExistValidator) },
-        { [], new AdministratorCreatedV1("  ", "hash"), nameof(UserNameRequiredValidator) },
+        { [], new AdministratorCreatedV1("  "), nameof(UserNameRequiredValidator) },
 
         { [Administrator], new AdministratorPasswordChangedV1("new-hash"), null },
         { [Agent], new AdministratorPasswordChangedV1("new-hash"), nameof(AccountMustNotBeAgentValidator) },

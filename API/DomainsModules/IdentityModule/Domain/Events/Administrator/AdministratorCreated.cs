@@ -5,7 +5,11 @@ namespace IdentityModule.Domain.Events;
 
 public interface IAdministratorCreated : IEvent;
 
-public sealed record AdministratorCreatedV1(string UserName, string PasswordHash) : IAdministratorCreated
+/// <summary>
+/// Written only by the seed migration. The administrator starts without a password hash, which
+/// means the initial password is still in use and must be changed.
+/// </summary>
+public sealed record AdministratorCreatedV1(string UserName) : IAdministratorCreated
 {
     public object Apply(object stateData, EventExecutionInfo eventExecutionInfo)
     {
@@ -14,7 +18,6 @@ public sealed record AdministratorCreatedV1(string UserName, string PasswordHash
         account.IsAdministrator = true;
         account.UserName = UserName;
         account.DisplayName = UserName;
-        account.PasswordHash = PasswordHash;
         return account;
     }
 }

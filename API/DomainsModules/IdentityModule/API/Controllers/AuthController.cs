@@ -27,25 +27,6 @@ public sealed class AuthController(IExecutorProvider executorProvider) : ActionC
         return result.Succeeded ? Ok(result) : Unauthorized();
     }
 
-    [HttpPost("initial-credentials")]
-    public async Task<ActionResult<LoginResultDto>> SetInitialCredentials(
-        [FromBody] SetInitialCredentialsRequest request,
-        [FromServices] SetInitialCredentialsCommand command)
-    {
-        command.CurrentPassword = request.CurrentPassword;
-        command.NewUserName = request.NewUserName;
-        command.NewPassword = request.NewPassword;
-        command.ConfirmPassword = request.ConfirmPassword;
-        try
-        {
-            return Ok(await Execute(command));
-        }
-        catch (InvalidOperationException)
-        {
-            return BadRequest();
-        }
-    }
-
     [HttpPost("password")]
     public async Task<IActionResult> ChangePassword(
         [FromBody] ChangePasswordRequest request,

@@ -6,35 +6,32 @@ namespace IdentityModule.Application.Tests;
 public sealed class LoginQueryTests
 {
     [Theory]
-    [InlineData("admin", "123", true, true)]
-    [InlineData(" ADMIN ", "123", true, true)]
-    [InlineData("admin", "wrong", false, false)]
-    [InlineData("other", "123", false, false)]
-    public async Task BeforeAdministratorExists_AcceptsOnlyInitialCredentialsAndAsksToChangeThem(
-        string userName, string password, bool succeeded, bool mustChangePassword)
+    [InlineData(null, "admin", "123", true, true)]
+    [InlineData(null, " ADMIN ", "123", true, true)]
+    [InlineData(null, "admin", "wrong", false, false)]
+    [InlineData(null, "other", "123", false, false)]
+    [InlineData("secret", "admin", "secret", true, false)]
+    [InlineData("secret", "Admin", "secret", true, false)]
+    [InlineData("secret", "admin", "wrong", false, false)]
+    [InlineData("secret", "admin", "123", false, false)]
+    [InlineData("secret", "other", "secret", false, false)]
+    public async Task Login_ChecksAdministratorAndAsksToChangeTheInitialPassword(
+        string? storedPassword, string userName, string password, bool succeeded, bool mustChangePassword)
     {
-        var context = new IdentityTestContext();
+        var context = new IdentityTestContext().WithAdministrator(storedPassword);
 
         var result = await Login(context, userName, password);
 
         Assert.Equal(new LoginResultDto(succeeded, mustChangePassword), result);
+        Assert.Empty(context.Written);
     }
 
-    [Theory]
-    [InlineData("owner", "secret", true)]
-    [InlineData("Owner", "secret", true)]
-    [InlineData("owner", "wrong", false)]
-    [InlineData("admin", "123", false)]
-    [InlineData("other", "secret", false)]
-    public async Task AfterAdministratorExists_ChecksStoredUserNameAndPasswordHash(
-        string userName, string password, bool succeeded)
+    [Fact]
+    public async Task Login_WithoutSeededAdministrator_Fails()
     {
-        var context = new IdentityTestContext().WithAdministrator("owner", "secret");
+        var result = await Login(new IdentityTestContext(), "admin", "123");
 
-        var result = await Login(context, userName, password);
-
-        Assert.Equal(new LoginResultDto(succeeded, MustChangePassword: false), result);
-        Assert.Empty(context.Written);
+        Assert.Equal(LoginResultDto.Failed, result);
     }
 
     private static Task<LoginResultDto> Login(IdentityTestContext context, string userName, string password) =>

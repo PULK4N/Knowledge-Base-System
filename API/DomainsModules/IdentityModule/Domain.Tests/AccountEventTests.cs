@@ -11,8 +11,16 @@ public sealed class AccountEventTests
 
     public static TheoryData<IEvent[], string> AdministratorHistories => new()
     {
-        { [new AdministratorCreatedV1("admin", "hash-1")], "hash-1" },
-        { [new AdministratorCreatedV1("admin", "hash-1"), new AdministratorPasswordChangedV1("hash-2")], "hash-2" }
+        { [new AdministratorCreatedV1("admin")], "" },
+        { [new AdministratorCreatedV1("admin"), new AdministratorPasswordChangedV1("hash-1")], "hash-1" },
+        {
+            [
+                new AdministratorCreatedV1("admin"),
+                new AdministratorPasswordChangedV1("hash-1"),
+                new AdministratorPasswordChangedV1("hash-2")
+            ],
+            "hash-2"
+        }
     };
 
     [Theory]

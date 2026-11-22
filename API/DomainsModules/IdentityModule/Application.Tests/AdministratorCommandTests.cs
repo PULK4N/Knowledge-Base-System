@@ -1,5 +1,4 @@
 using IdentityModule.Application.Commands;
-using IdentityModule.Application.DTOs;
 using IdentityModule.Domain;
 using IdentityModule.Domain.Events;
 using Microsoft.AspNetCore.Identity;
@@ -9,72 +8,40 @@ namespace IdentityModule.Application.Tests;
 public sealed class AdministratorCommandTests
 {
     [Theory]
-    [InlineData(null, "admin")]
-    [InlineData("  ", "admin")]
-    [InlineData(" owner ", "owner")]
-    public async Task SetInitialCredentials_CreatesAdministratorWithHashedNewPassword(
-        string? newUserName, string expectedUserName)
+    [InlineData(null, "123")]
+    [InlineData("old-secret", "old-secret")]
+    public async Task ChangePassword_WritesNewHashForTheAdministrator(string? storedPassword, string currentPassword)
     {
-        var context = new IdentityTestContext();
+        var context = new IdentityTestContext().WithAdministrator(storedPassword);
 
-        var result = await InitialCredentials(context, "123", newUserName, "secret", "secret")
-            .Execute(IdentityTestContext.Executor);
-
-        Assert.Equal(new LoginResultDto(true, MustChangePassword: false), result);
-        var payload = Assert.Single(context.Written);
-        Assert.Equal(IdentityDefaults.AdministratorId, payload.EventExecutionInfo.AggregateId);
-        Assert.Equal(IdentityTestContext.Executor.Id, payload.EventExecutionInfo.EventExecutor);
-        var created = Assert.IsType<AdministratorCreatedV1>(payload.EventData);
-        Assert.Equal(expectedUserName, created.UserName);
-        Assert.DoesNotContain("secret", created.PasswordHash);
-        AssertPasswordMatches(created.PasswordHash, "secret");
-    }
-
-    [Theory]
-    [InlineData("wrong", "secret", "secret", false)]
-    [InlineData("123", "secret", "other", false)]
-    [InlineData("123", "123", "123", false)]
-    [InlineData("123", " ", " ", false)]
-    [InlineData("123", "secret", "secret", true)]
-    public async Task SetInitialCredentials_RejectsInvalidPasswordsOrAnExistingAdministrator(
-        string currentPassword, string newPassword, string confirmPassword, bool administratorExists)
-    {
-        var context = administratorExists
-            ? new IdentityTestContext().WithAdministrator("admin", "existing")
-            : new IdentityTestContext();
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            InitialCredentials(context, currentPassword, null, newPassword, confirmPassword)
-                .Execute(IdentityTestContext.Executor));
-
-        Assert.Empty(context.Written);
-    }
-
-    [Fact]
-    public async Task ChangePassword_WritesNewHashForTheAdministrator()
-    {
-        var context = new IdentityTestContext().WithAdministrator("admin", "old-secret");
-
-        Assert.True(await ChangePassword(context, "old-secret", "new-secret", "new-secret")
+        Assert.True(await ChangePassword(context, currentPassword, "new-secret", "new-secret")
             .Execute(IdentityTestContext.Executor));
 
         var payload = Assert.Single(context.Written);
         Assert.Equal(IdentityDefaults.AdministratorId, payload.EventExecutionInfo.AggregateId);
-        AssertPasswordMatches(Assert.IsType<AdministratorPasswordChangedV1>(payload.EventData).PasswordHash,
-            "new-secret");
+        Assert.Equal(IdentityTestContext.Executor.Id, payload.EventExecutionInfo.EventExecutor);
+        var changed = Assert.IsType<AdministratorPasswordChangedV1>(payload.EventData);
+        Assert.DoesNotContain("new-secret", changed.PasswordHash);
+        AssertPasswordMatches(changed.PasswordHash, "new-secret");
     }
 
     [Theory]
-    [InlineData("wrong", "new-secret", "new-secret", true)]
-    [InlineData("old-secret", "new-secret", "other", true)]
-    [InlineData("old-secret", "123", "123", true)]
-    [InlineData("old-secret", "", "", true)]
-    [InlineData("old-secret", "new-secret", "new-secret", false)]
+    [InlineData(true, null, "wrong", "new-secret", "new-secret")]
+    [InlineData(true, null, "123", "new-secret", "other")]
+    [InlineData(true, null, "123", "123", "123")]
+    [InlineData(true, null, "123", " ", " ")]
+    [InlineData(true, "old-secret", "wrong", "new-secret", "new-secret")]
+    [InlineData(true, "old-secret", "123", "new-secret", "new-secret")]
+    [InlineData(true, "old-secret", "old-secret", "new-secret", "other")]
+    [InlineData(true, "old-secret", "old-secret", "123", "123")]
+    [InlineData(true, "old-secret", "old-secret", "", "")]
+    [InlineData(false, null, "123", "new-secret", "new-secret")]
     public async Task ChangePassword_RejectsWrongCurrentPasswordInvalidNewPasswordOrMissingAdministrator(
-        string currentPassword, string newPassword, string confirmPassword, bool administratorExists)
+        bool administratorExists, string? storedPassword, string currentPassword, string newPassword,
+        string confirmPassword)
     {
         var context = administratorExists
-            ? new IdentityTestContext().WithAdministrator("admin", "old-secret")
+            ? new IdentityTestContext().WithAdministrator(storedPassword)
             : new IdentityTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -83,16 +50,6 @@ public sealed class AdministratorCommandTests
 
         Assert.Empty(context.Written);
     }
-
-    private static SetInitialCredentialsCommand InitialCredentials(IdentityTestContext context,
-        string currentPassword, string? newUserName, string newPassword, string confirmPassword) =>
-        new(context.Handler, IdentityTestContext.Hasher)
-        {
-            CurrentPassword = currentPassword,
-            NewUserName = newUserName,
-            NewPassword = newPassword,
-            ConfirmPassword = confirmPassword
-        };
 
     private static ChangeAdministratorPasswordCommand ChangePassword(IdentityTestContext context,
         string currentPassword, string newPassword, string confirmPassword) =>
