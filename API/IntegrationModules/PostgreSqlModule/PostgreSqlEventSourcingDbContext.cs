@@ -2,6 +2,8 @@ using EventSourcing.Persistence;
 using EventSourcing.Persistence.Models;
 using FeatureModule.Persistence;
 using FeatureModule.Persistence.Models;
+using IdentityModule.Persistence;
+using IdentityModule.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
 using PolicyModule.Persistence;
 using PolicyModule.Persistence.Models;
@@ -18,6 +20,7 @@ internal sealed class PostgreSqlEventSourcingDbContext(
 ) : EventSourcingDbContext(options),
     IEntityRelationDbContext,
     IFeatureModuleDbContext,
+    IIdentityModuleDbContext,
     IPolicyModuleDbContext,
     IProjectModuleDbContext,
     ISkillsModuleDbContext
@@ -45,6 +48,8 @@ internal sealed class PostgreSqlEventSourcingDbContext(
         Set<SkillListEntry>();
     public DbSet<SkillListTagEntry> SkillListTags =>
         Set<SkillListTagEntry>();
+    public DbSet<AccountListEntry> AccountListEntries =>
+        Set<AccountListEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -186,6 +191,17 @@ internal sealed class PostgreSqlEventSourcingDbContext(
                     .IsUnique();
                 skill.HasIndex(summary => summary.Name).IsUnique();
                 skill.Property(summary => summary.Name).IsRequired();
+            }
+        );
+
+        modelBuilder.Entity<AccountListEntry>(
+            account =>
+            {
+                account.ToTable("AccountList");
+                account.HasKey(entry => entry.AccountId);
+                account.Property(entry => entry.UserName).IsRequired();
+                account.Property(entry => entry.DisplayName).IsRequired();
+                account.Property(entry => entry.Permissions).IsRequired();
             }
         );
 

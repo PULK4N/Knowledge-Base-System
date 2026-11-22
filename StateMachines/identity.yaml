@@ -3,6 +3,8 @@ stateData: AccountStateData
 initializationEvents:
   - AdministratorCreatedV1
   - AgentCreatedV1
+projections:
+  - AccountListProjector
 events:
   AdministratorCreatedV1:
     preEventValidators:

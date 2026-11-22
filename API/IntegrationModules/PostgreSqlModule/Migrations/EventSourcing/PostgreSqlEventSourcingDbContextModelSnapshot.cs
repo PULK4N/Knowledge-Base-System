@@ -260,6 +260,41 @@ namespace PostgreSqlModule.Migrations.EventSourcing
                     b.ToTable("FeatureSummaries");
                 });
 
+            modelBuilder.Entity("IdentityModule.Persistence.Models.AccountListEntry", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsAdministrator")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAgent")
+                        .HasColumnType("boolean");
+
+                    b.Property<List<string>>("Permissions")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<long>("ProjectedOrderNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("AccountId");
+
+                    b.ToTable("AccountList", (string)null);
+                });
+
             modelBuilder.Entity("PolicyModule.Persistence.Models.AgentFamilyPolicyText", b =>
                 {
                     b.Property<int>("Id")

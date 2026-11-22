@@ -7,6 +7,7 @@ using EventSourcing.Persistence;
 using EventSourcing.Shared.Models;
 using FeatureModule.Persistence;
 using FeatureModule.Persistence.Interfaces;
+using IdentityModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -105,6 +106,12 @@ public static class InjectionSetup
         services.AddScoped<IProjectModuleDbContext>(
             serviceProvider =>
                 (IProjectModuleDbContext)serviceProvider
+                    .GetRequiredService<EventSourcingDbContext>()
+        );
+        services.RegisterIdentityModulePersistence();
+        services.AddScoped<IIdentityModuleDbContext>(
+            serviceProvider =>
+                (IIdentityModuleDbContext)serviceProvider
                     .GetRequiredService<EventSourcingDbContext>()
         );
         services.AddScoped<IFeatureModuleDbContext>(
