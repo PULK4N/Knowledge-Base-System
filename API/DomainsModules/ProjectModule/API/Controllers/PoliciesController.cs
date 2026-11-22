@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ActionModule.API;
 using ActionModule.Shared;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectModule.Application.Models;
 using ProjectModule.Application.Queries;
@@ -14,8 +13,6 @@ public sealed class PoliciesController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
-    // Open until agents log in with session keys: the plugin hooks call it without a login.
-    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<GetPoliciesByRepositoryResult>> GetByRepository(
         [FromQuery, Required] string repositoryPath,

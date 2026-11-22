@@ -195,8 +195,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-// Open until agents log in with session keys.
-app.MapMcp("/mcp").AllowAnonymous();
+app.MapMcp("/mcp");
 
 app.Run();
 

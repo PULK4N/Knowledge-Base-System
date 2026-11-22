@@ -6,7 +6,6 @@ using MemoryModule.API.Requests;
 using MemoryModule.Application.Commands;
 using MemoryModule.Application.Models;
 using MemoryModule.Domain.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MemoryModule.API.Controllers;
@@ -17,8 +16,6 @@ public sealed class MemoryController(
     IExecutorProvider executorProvider
 ) : ActionController(executorProvider)
 {
-    // Open until agents log in with session keys: the plugin hooks call it without a login.
-    [AllowAnonymous]
     [HttpPost("codex/prompt-hooks")]
     public async Task<ActionResult<MemoryCommandResult>> RecordPromptHook(
         [FromBody] JsonElement payload,
@@ -30,8 +27,6 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
-    // Open until agents log in with session keys: the plugin hooks call it without a login.
-    [AllowAnonymous]
     [HttpPost("codex/tool-calls")]
     public async Task<ActionResult<MemoryCommandResult>> RecordToolCall(
         [FromBody] JsonElement payload,
@@ -43,8 +38,6 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
-    // Open until agents log in with session keys: the plugin hooks call it without a login.
-    [AllowAnonymous]
     [HttpPost("claude/prompt-hooks")]
     public async Task<ActionResult<MemoryCommandResult>> RecordClaudePromptHook(
         [FromBody] JsonElement payload,
@@ -56,8 +49,6 @@ public sealed class MemoryController(
         return Ok(await Execute(command));
     }
 
-    // Open until agents log in with session keys: the plugin hooks call it without a login.
-    [AllowAnonymous]
     [HttpPost("claude/tool-calls")]
     public async Task<ActionResult<MemoryCommandResult>> RecordClaudeToolCall(
         [FromBody] JsonElement payload,
