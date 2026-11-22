@@ -10,7 +10,6 @@ events:
       - UserNameRequiredValidator
   AdministratorPasswordChangedV1:
     preEventValidators:
-      - AccountMustExistValidator
       - AccountMustNotBeAgentValidator
   AgentCreatedV1:
     preEventValidators:
@@ -19,6 +18,5 @@ events:
       - KnownPermissionsValidator
   AgentPermissionsSetV1:
     preEventValidators:
-      - AccountMustExistValidator
       - AccountMustBeAgentValidator
       - KnownPermissionsValidator
