@@ -20,6 +20,7 @@ using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
 using Microsoft.AspNetCore.Identity;
+using IdentityModule.API.Controllers;
 using IdentityModule.Application.Commands;
 using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
@@ -74,6 +75,7 @@ builder.Services
     .AddApplicationPart(typeof(AdministrationController).Assembly)
     .AddApplicationPart(typeof(AttachmentsController).Assembly)
     .AddApplicationPart(typeof(FeaturesController).Assembly)
+    .AddApplicationPart(typeof(AuthController).Assembly)
     .AddApplicationPart(typeof(SkillsController).Assembly)
     .AddApplicationPart(typeof(MemoryController).Assembly)
     .AddApplicationPart(typeof(KnowledgeSearchController).Assembly)
