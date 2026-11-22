@@ -76,54 +76,19 @@ a.nav-item:hover,
   stroke-width: 1.6;
 }
 
-.sidebar-footer {
-  position: absolute;
-  right: 15px;
-  bottom: 32px;
-  left: 15px;
-}
-
-button.nav-item {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 18px;
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-button.nav-item:hover:not(:disabled) {
-  background: rgb(74 116 184 / 33%);
-}
-
-button.nav-item:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.logout-error {
-  margin: 8px 0 0;
-  padding: 7px 10px;
-  border-radius: 8px;
-  color: #ffd7dc;
-  background: rgb(158 47 60 / 45%);
-  font-size: 13px;
-}
-
 .workspace {
   position: relative;
   min-height: 100vh;
   margin-left: 250px;
-  padding: 42px clamp(28px, 3.2vw, 52px) 64px;
+  padding: 20px clamp(28px, 3.2vw, 52px) 64px;
 }
 
 .theme-switcher {
-  position: fixed;
-  top: 20px;
-  right: clamp(28px, 3.2vw, 52px);
-  z-index: 20;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .theme-toggle {
@@ -230,22 +195,9 @@ button.nav-item:disabled {
     height: 21px;
   }
 
-  .sidebar-footer {
-    position: static;
-    margin-top: 4px;
-  }
-
-  button.nav-item {
-    font-size: 14px;
-  }
-
   .workspace {
     margin-left: 0;
-    padding: 28px 18px 48px;
+    padding: 14px 18px 48px;
   }
 
-  .theme-switcher {
-    top: 14px;
-    right: 18px;
-  }
 }

@@ -84,24 +84,6 @@
       </a>
     </nav>
 
-    @if (logoutState$ | async; as logoutState) {
-      <div class="sidebar-footer">
-        <button
-          class="nav-item"
-          type="button"
-          [disabled]="logoutState.status === 'logging-out'"
-          (click)="logout()"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10" />
-          </svg>
-          <span>{{ logoutState.status === 'logging-out' ? 'Logging out…' : 'Log out' }}</span>
-        </button>
-        @if (logoutState.status === 'error') {
-          <p class="logout-error" role="alert">Logging out failed. Please try again.</p>
-        }
-      </div>
-    }
   </aside>
 
   <main class="workspace">
@@ -130,6 +112,24 @@
         </button>
         @if (toggleState.status === 'error') {
           <span class="theme-error" role="alert">Could not save theme.</span>
+        }
+      }
+      @if (logoutState$ | async; as logoutState) {
+        <button
+          class="theme-toggle"
+          type="button"
+          aria-label="Log out"
+          title="Log out"
+          [disabled]="logoutState.status === 'logging-out'"
+          (click)="logout()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M14 16l4-4-4-4M18 12H8" />
+          </svg>
+          <span class="sr-only">Log out</span>
+        </button>
+        @if (logoutState.status === 'error') {
+          <span class="theme-error" role="alert">Logging out failed. Please try again.</span>
         }
       }
     </div>
