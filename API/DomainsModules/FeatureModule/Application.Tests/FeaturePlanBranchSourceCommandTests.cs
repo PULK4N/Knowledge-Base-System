@@ -5,6 +5,7 @@ using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
+using IdentityModule.Shared;
 
 namespace FeatureModule.Application.Tests;
 
@@ -14,7 +15,7 @@ public sealed class FeaturePlanBranchSourceCommandTests
     private static readonly AggregateId MemoryId = AggregateId.FromDatabaseGuid(Guid.NewGuid());
     private static readonly FeaturePlanId X1 = new(Guid.NewGuid());
     private static readonly FeaturePlanId X2 = new(Guid.NewGuid());
-    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) };
+    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] };
 
     private static readonly List<FeaturePlanBranchSourceDto> Sources =
     [

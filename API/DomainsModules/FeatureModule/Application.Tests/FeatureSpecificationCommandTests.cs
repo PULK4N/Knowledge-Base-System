@@ -7,6 +7,7 @@ using FeatureModule.Application.Models;
 using FeatureModule.Domain;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
+using IdentityModule.Shared;
 using UUIDNext;
 
 namespace FeatureModule.Application.Tests;
@@ -133,7 +134,7 @@ public sealed class FeatureSpecificationCommandTests
     private static async Task<object> Run(FeatureCommand command)
     {
         command.UseUserOrigin();
-        return await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) });
+        return await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] });
     }
 
     /// <summary>A feature with one plan holding FR-1 (number 2 already retired).</summary>

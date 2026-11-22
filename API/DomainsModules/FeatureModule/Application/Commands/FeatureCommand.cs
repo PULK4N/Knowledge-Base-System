@@ -4,6 +4,7 @@ using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
 using Constants = MemoryModule.Application.Constants;
+using IdentityModule.Shared;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -30,7 +31,7 @@ public abstract class FeatureCommand(StateMachineHandler stateMachineHandler)
     public Guid MemoryAggregateId { get; set; }
 
     public override Task<bool> IsAuthorized(Executor executor) =>
-        Task.FromResult(true);
+        Task.FromResult(executor.Has(Permissions.FeaturesWrite));
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(true);

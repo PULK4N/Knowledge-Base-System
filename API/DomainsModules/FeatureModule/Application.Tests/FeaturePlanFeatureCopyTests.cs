@@ -7,6 +7,7 @@ using FeatureModule.Domain;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
 using FeatureModule.Domain.Validators;
+using IdentityModule.Shared;
 using ProjectModule.Shared;
 using UUIDNext;
 
@@ -91,7 +92,7 @@ public sealed class FeaturePlanFeatureCopyTests
             Status = FeaturePlanStatus.Completed
         };
         command.UseUserOrigin();
-        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) });
+        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] });
     }
 
     private static List<IEvent> PlanHistory() =>

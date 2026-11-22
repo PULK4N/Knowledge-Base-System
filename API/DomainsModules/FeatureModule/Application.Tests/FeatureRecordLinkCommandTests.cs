@@ -4,6 +4,7 @@ using EventSourcing.Shared.Models;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
+using IdentityModule.Shared;
 
 namespace FeatureModule.Application.Tests;
 
@@ -14,7 +15,7 @@ public sealed class FeatureRecordLinkCommandTests
     private static readonly FeaturePlanId PlanId = new(Guid.NewGuid());
     private static readonly FeaturePlanId OtherPlanId = new(Guid.NewGuid());
     private static readonly FeatureRecordId ExistingRecordId = new(Guid.NewGuid());
-    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) };
+    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] };
 
     [Fact]
     public async Task Adding_a_record_with_plans_appends_it_to_each_plan_and_lowercases_the_type()

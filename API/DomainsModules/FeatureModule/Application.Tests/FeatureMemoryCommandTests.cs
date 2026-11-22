@@ -4,6 +4,7 @@ using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -57,7 +58,8 @@ public sealed class FeatureMemoryCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.FeaturesWrite]
         };
 
         var result = Assert.IsType<FeatureCreatedCommandResult>(
@@ -136,7 +138,7 @@ public sealed class FeatureMemoryCommandTests
         };
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => command.Execute(
-            new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")) }
+            new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")), Permissions = [Permissions.FeaturesWrite] }
         ));
         Assert.Equal(0, outbox.WriteCount);
     }

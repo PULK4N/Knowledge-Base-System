@@ -4,6 +4,7 @@ using FeatureModule.Application.Commands;
 using FeatureModule.Application.DTOs;
 using FeatureModule.Domain;
 using FeatureModule.Domain.Models;
+using IdentityModule.Shared;
 
 namespace FeatureModule.Application.Tests;
 
@@ -40,7 +41,7 @@ public sealed class FeatureCompositeBranchCommandTests
         };
         command.UseUserOrigin();
 
-        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) });
+        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] });
 
         Assert.Equal(1, store.WriteCount);
         Assert.Equal(kind == "set" || branchName is null ? 1 : 2, store.Written.Count);

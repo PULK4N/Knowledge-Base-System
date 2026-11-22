@@ -4,6 +4,7 @@ using EventSourcing.Shared.Models;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain.Events;
 using FeatureModule.Domain.Models;
+using IdentityModule.Shared;
 
 namespace FeatureModule.Application.Tests;
 
@@ -37,7 +38,7 @@ public sealed class RemoveFeaturePlanCommandTests
         };
         command.UseUserOrigin();
 
-        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()) });
+        await command.Execute(new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [Permissions.FeaturesWrite] });
 
         Assert.Equal(1, store.WriteCount);
         Assert.IsType<FeaturePlanRemovedV2>(store.Written[0].EventData);

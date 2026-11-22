@@ -9,6 +9,7 @@ using FeatureModule.Application.Models;
 using FeatureModule.Domain;
 using FeatureModule.Domain.Events;
 using FeatureModule.Persistence.Interfaces;
+using IdentityModule.Shared;
 using Shared.Interfaces;
 using UUIDNext;
 
@@ -49,7 +50,8 @@ public sealed class AddFeatureCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.FeaturesWrite]
         };
 
         var result = Assert.IsType<FeatureCreatedCommandResult>(
@@ -115,7 +117,8 @@ public sealed class AddFeatureCommandTests
                         Guid.Parse(
                             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
                         )
-                    )
+                    ),
+                    Permissions = [Permissions.FeaturesWrite]
                 }
             )
         );
@@ -218,5 +221,30 @@ public sealed class AddFeatureCommandTests
             AggregateId aggregateId
         ) =>
             new FeatureStateData(aggregateId);
+    }
+
+    [Theory]
+    [InlineData(false, null, false)]
+    [InlineData(false, "features.read", false)]
+    [InlineData(false, "features.write", true)]
+    [InlineData(true, null, true)]
+    public async Task FeatureCommands_RequireFeaturesWrite(bool isAdministrator, string? permission, bool expected)
+    {
+        // IsAuthorized only looks at the executor, so the command needs no dependencies here.
+        var command = new AddFeatureCommand(null!, null!)
+        {
+            ProjectId = Guid.Empty,
+            Name = "feature",
+            Summary = "Summary",
+            Status = "Planned"
+        };
+        var executor = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()),
+            IsAdministrator = isAdministrator,
+            Permissions = permission is null ? [] : [new Permission(permission)]
+        };
+
+        Assert.Equal(expected, await command.IsAuthorized(executor));
     }
 }
