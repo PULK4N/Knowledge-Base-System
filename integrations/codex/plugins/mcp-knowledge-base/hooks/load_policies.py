@@ -44,7 +44,7 @@ def _login_hint(status_code: int) -> str:
     if status_code != 401:
         return ""
     return (
-        f" Set {API_KEY_VARIABLE} to a session key generated in"
+        f". Set {API_KEY_VARIABLE} to a session key generated in"
         " Administration > Users."
     )
 
