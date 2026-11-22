@@ -11,6 +11,8 @@ namespace SettingsModule.Application.Commands;
 public sealed class UpdateCodeReviewSettingsCommand(StateMachineHandler handler)
     : Command<CodeReviewSettingsDto>
 {
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     public int BatchSize { get; set; }
     public string TaskMessage { get; set; } = string.Empty;
 

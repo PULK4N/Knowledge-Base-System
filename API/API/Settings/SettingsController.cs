@@ -1,3 +1,4 @@
+using ActionModule.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,12 +26,17 @@ public sealed class SettingsController(SettingsRepository repository)
         }
     }
 
+    // Not an action, so the administrator check that actions make in IsAuthorized is made here.
     [HttpPut]
     public async Task<ActionResult<Settings>> Update(
         [FromBody] SettingsRequest request,
+        [FromServices] IExecutorProvider executorProvider,
         CancellationToken cancellationToken
     )
     {
+        if (!(await executorProvider.GetExecutor()).IsAdministrator)
+            return StatusCode(StatusCodes.Status403Forbidden);
+
         try
         {
             return Ok(

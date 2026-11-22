@@ -1,5 +1,6 @@
 using ActionModule.Shared.Models;
 using AdministrationModule.Application.Commands;
+using AdministrationModule.Application.Commands.UniqueConstraints;
 using AdministrationModule.Application.Persistence;
 using AdministrationModule.Application.Queries;
 using EventSourcing.Core;
@@ -24,7 +25,8 @@ public sealed class ProjectionAdministrationTests
                 Guid.Parse(
                     "11111111-1111-1111-1111-111111111111"
                 )
-            )
+            ),
+            IsAdministrator = true
         };
 
     [Fact]
@@ -328,6 +330,30 @@ public sealed class ProjectionAdministrationTests
             new StubEventValidatorProvider(),
             definitionProvider
         );
+
+
+    [Fact]
+    public async Task AdministrationCommands_AreForTheAdministratorOnly()
+    {
+        // IsAuthorized only looks at the executor, so the commands need no dependencies here.
+        List<Func<Executor, Task<bool>>> isAuthorized =
+        [
+            new ClearEmbeddingCacheCommand(null!).IsAuthorized,
+            new QueueProjectionReplayCommand(null!, null!, null!, null!) { StateMachineId = "skills-state-machine" }.IsAuthorized,
+            new RunProjectionCommand(null!, null!, null!, []) { ProjectionName = "projector" }.IsAuthorized,
+            new RequeueIncompleteOutboxPayloadsCommand(null!).IsAuthorized,
+            new RequeueOutboxPayloadCommand(null!) { OutboxPayloadId = 1 }.IsAuthorized,
+            new RebuildUniqueConstraintsCommand(null!, null!) { StateMachineId = "skills-state-machine" }.IsAuthorized
+        ];
+        var agent = new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [new Permission("skills.write")] };
+        var administrator = new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), IsAdministrator = true };
+
+        foreach (var check in isAuthorized)
+        {
+            Assert.False(await check(agent));
+            Assert.True(await check(administrator));
+        }
+    }
 
     private sealed class StubDefinitionProvider(
         params StateMachineDefinition[] definitions

@@ -11,6 +11,8 @@ public sealed class RebuildUniqueConstraintsCommand(
     UniqueConstraintRebuildService rebuildService
 ) : Command<UniqueConstraintRebuildResult>
 {
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     public required string StateMachineId { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>

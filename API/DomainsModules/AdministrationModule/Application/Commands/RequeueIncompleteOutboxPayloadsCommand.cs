@@ -9,6 +9,8 @@ public sealed class RequeueIncompleteOutboxPayloadsCommand(
     IOutboxAdministrationRepository repository
 ) : Command<OutboxRequeueSummaryDto>
 {
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(true);
 

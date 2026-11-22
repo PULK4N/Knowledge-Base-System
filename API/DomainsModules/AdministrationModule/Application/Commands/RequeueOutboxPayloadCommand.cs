@@ -9,6 +9,8 @@ public sealed class RequeueOutboxPayloadCommand(
     IOutboxAdministrationRepository repository
 ) : Command<OutboxPayloadDto?>
 {
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     public required long OutboxPayloadId { get; set; }
 
     public override Task<bool> CanExecute(Executor executor) =>

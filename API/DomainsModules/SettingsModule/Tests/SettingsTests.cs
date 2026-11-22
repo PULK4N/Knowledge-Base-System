@@ -27,7 +27,7 @@ namespace SettingsModule.Tests;
 public sealed class SettingsTests
 {
     private static readonly AggregateId SettingsId = AggregateId.FromDatabaseGuid(StateDataAggregateIds.Settings);
-    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")) };
+    private static readonly Executor Executor = new() { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")), IsAdministrator = true };
 
     static SettingsTests() => new ServiceCollection().RegisterEventSourcingCore(typeof(SettingsStateData).Assembly);
 
@@ -120,6 +120,17 @@ public sealed class SettingsTests
         var payload = EventPayload.Create(Executor.Id, SettingsId, "settings-state-machine", eventData);
         payload.EventExecutionInfo.OrderNumber = orderNumber;
         return payload;
+    }
+
+    [Fact]
+    public async Task UpdateCodeReviewSettings_IsForTheAdministratorOnly()
+    {
+        // IsAuthorized only looks at the executor, so the command needs no handler here.
+        var command = new UpdateCodeReviewSettingsCommand(null!);
+        var agent = new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()), Permissions = [new Permission("skills.write")] };
+
+        Assert.False(await command.IsAuthorized(agent));
+        Assert.True(await command.IsAuthorized(Executor));
     }
 
     private sealed class StateProvider : IStateDataProvider

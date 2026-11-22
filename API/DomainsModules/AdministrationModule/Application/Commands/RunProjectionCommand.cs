@@ -11,6 +11,8 @@ namespace AdministrationModule.Application.Commands;
 
 public sealed class RunProjectionCommand : Command<ProjectionRunResult?>
 {
+    public override Task<bool> IsAuthorized(Executor executor) => Task.FromResult(executor.IsAdministrator);
+
     private readonly IProjectionReplayRepository _replayRepository;
     private readonly IEventStore _eventStore;
     private readonly StateCalculator _stateCalculator;

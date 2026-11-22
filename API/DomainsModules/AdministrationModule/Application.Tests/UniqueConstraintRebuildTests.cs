@@ -25,7 +25,8 @@ public sealed class UniqueConstraintRebuildTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("11111111-1111-1111-1111-111111111111")
-            )
+            ),
+            IsAdministrator = true
         };
 
     private static readonly AggregateId FirstId = CreateId("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

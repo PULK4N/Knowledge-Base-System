@@ -15,7 +15,8 @@ public sealed class OutboxAdministrationTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("11111111-1111-1111-1111-111111111111")
-            )
+            ),
+            IsAdministrator = true
         };
 
     private static readonly Guid AggregateId =
