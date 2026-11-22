@@ -10,6 +10,18 @@
 <nav class="administration-tabs" role="tablist" aria-label="Administration">
   <a
     role="tab"
+    id="agents-tab"
+    aria-controls="administration-panel"
+    routerLink="agents"
+    routerLinkActive="active"
+    #agentsLink="routerLinkActive"
+    [routerLinkActiveOptions]="{ exact: true }"
+    [attr.aria-selected]="agentsLink.isActive"
+  >
+    Agents
+  </a>
+  <a
+    role="tab"
     id="code-reviewers-tab"
     aria-controls="administration-panel"
     routerLink="code-reviewers"

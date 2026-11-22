@@ -9,6 +9,11 @@ export const ADMINISTRATION_ROUTES: Routes = [
       ),
     children: [
       {
+        path: 'agents',
+        loadComponent: () =>
+          import('./feature/agents.page').then(module => module.AgentsPage),
+      },
+      {
         path: 'code-reviewers',
         loadComponent: () =>
           import('./feature/code-review-settings.page').then(

@@ -47,7 +47,10 @@ export class AgentsService {
 
   setPermissions(agentId: string, value: AgentPermissions): Observable<Agent> {
     return this.http
-      .put<Agent>(`${this.path}/${encodeURIComponent(agentId)}/permissions`, value)
+      .put<Agent>(`${this.path}/${encodeURIComponent(agentId)}/permissions`, {
+        isAdministrator: value.isAdministrator,
+        permissions: value.permissions,
+      })
       .pipe(tap(agent => this.store.upsert(AGENT_ENTITY_TYPE, agent)));
   }
 

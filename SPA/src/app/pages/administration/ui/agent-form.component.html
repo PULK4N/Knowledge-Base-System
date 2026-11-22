@@ -1,0 +1,66 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <fieldset [disabled]="saving">
+    @if (editedAgent; as agent) {
+      <div class="agent-identity">
+        <strong>{{ agent.displayName }}</strong>
+        <span>{{ agent.userName }}</span>
+      </div>
+      <p class="field-help">Changes apply only to session keys generated after this change.</p>
+    } @else {
+      <div class="identity-fields">
+        <div class="form-field">
+          <label for="agent-user-name">Username</label>
+          <input id="agent-user-name" type="text" autocomplete="off" formControlName="userName" />
+          @if (form.controls.userName.invalid && form.controls.userName.touched) {
+            <p class="field-error" role="alert">Enter a username.</p>
+          }
+        </div>
+        <div class="form-field">
+          <label for="agent-display-name">Display name</label>
+          <input id="agent-display-name" type="text" autocomplete="off" formControlName="displayName"
+            aria-describedby="agent-display-name-help" />
+          <p id="agent-display-name-help" class="field-help">Optional. The username is used when it is empty.</p>
+        </div>
+      </div>
+    }
+
+    <label class="administrator-option">
+      <input type="checkbox" formControlName="isAdministrator" />
+      <span>
+        <strong>Administrator</strong>
+        <small>Has every permission, including administration.</small>
+      </span>
+    </label>
+
+    <div class="permission-areas" role="group" aria-label="Permissions"
+      [class.disabled]="form.controls.isAdministrator.value">
+      @for (area of areas; track area.name) {
+        <div class="permission-area">
+          <span class="area-name">{{ area.name }}</span>
+          <div class="area-options">
+            @for (permission of area.permissions; track permission) {
+              <label class="permission-option">
+                <input type="checkbox" [checked]="isChecked(permission)"
+                  [disabled]="form.controls.isAdministrator.value || saving"
+                  [attr.aria-label]="permission"
+                  (change)="toggle(permission, $event)" />
+                <span>{{ label(permission) }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    <p class="field-help">Write includes read of the same area.</p>
+    @if (form.touched && !form.controls.isAdministrator.value && form.controls.permissions.value.length === 0) {
+      <p class="field-error" role="alert">Choose at least one permission, or make the agent an administrator.</p>
+    }
+
+    <div class="editor-actions">
+      <button type="button" class="secondary-button" (click)="cancelled.emit()">Cancel</button>
+      <button type="submit" class="primary-action" [disabled]="saving">
+        {{ saving ? 'Saving…' : editedAgent ? 'Save permissions' : 'Create agent' }}
+      </button>
+    </div>
+  </fieldset>
+</form>

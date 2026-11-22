@@ -1,0 +1,23 @@
+<ul class="agent-list">
+  @for (agent of agents; track agent.id) {
+    <li class="agent-row">
+      <div class="agent-name">
+        <strong>{{ agent.displayName }}</strong>
+        <span>{{ agent.userName }}</span>
+      </div>
+      <div class="agent-permissions">
+        @if (agent.isAdministrator) {
+          <span class="badge administrator">Administrator</span>
+        } @else {
+          @for (permission of agent.permissions; track permission) {
+            <span class="badge">{{ permission }}</span>
+          }
+        }
+      </div>
+      <button type="button" [disabled]="disabled" (click)="editRequested.emit(agent)"
+        [attr.aria-label]="'Edit permissions of ' + agent.userName">
+        Edit permissions
+      </button>
+    </li>
+  }
+</ul>
