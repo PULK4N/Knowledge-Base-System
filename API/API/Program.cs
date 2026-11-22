@@ -19,6 +19,8 @@ using FeatureModule.API.Controllers;
 using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
+using Microsoft.AspNetCore.Identity;
+using IdentityModule.Application.Commands;
 using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
 using MemoryModule.Application.Commands;
@@ -118,8 +120,13 @@ builder.Services.RegisterActions(
     typeof(SearchKnowledgeQuery).Assembly,
     typeof(AddGeneralPolicyCommand).Assembly,
     typeof(CreateProjectCommand).Assembly,
-    typeof(UpdateCodeReviewSettingsCommand).Assembly
+    typeof(UpdateCodeReviewSettingsCommand).Assembly,
+    typeof(CreateAgentCommand).Assembly
 );
+builder.Services.AddSingleton<
+    IPasswordHasher<AccountStateData>,
+    PasswordHasher<AccountStateData>
+>();
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
 builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
 
