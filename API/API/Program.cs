@@ -22,6 +22,8 @@ using FeatureModule.MCP;
 using Microsoft.AspNetCore.Identity;
 using IdentityModule.API.Authentication;
 using IdentityModule.API.Controllers;
+using IdentityModule.API.Executors;
+using IdentityModule.Application.Executors;
 using IdentityModule.Application.Commands;
 using IdentityModule.Domain;
 using MemoryModule.API.Controllers;
@@ -132,7 +134,9 @@ builder.Services.AddSingleton<
     PasswordHasher<AccountStateData>
 >();
 builder.Services.AddScoped<UniqueConstraintRebuildService>();
-builder.Services.AddScoped<IExecutorProvider, TemporaryExecutorProvider>();
+builder.Services.AddSingleton<TemporaryExecutorProvider>();
+builder.Services.AddScoped<AccountExecutorReader>();
+builder.Services.AddScoped<IExecutorProvider, AccountExecutorProvider>();
 
 builder.Services.RegisterOutboxProcessing(builder.Configuration);
 
