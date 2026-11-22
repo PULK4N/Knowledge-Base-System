@@ -1,27 +1,26 @@
+using ActionModule.Shared.Models;
+
 namespace IdentityModule.Shared;
 
-/// <summary>
-/// Permissions an agent account can be given. A <c>write</c> permission also grants the
-/// <c>read</c> permission of the same area. Administrators have every permission.
-/// </summary>
+/// <summary>Permissions an agent account can be given. Administrators have every permission.</summary>
 public static class Permissions
 {
-    public const string MemoryRead = "memory.read";
-    public const string MemoryWrite = "memory.write";
-    public const string SkillsRead = "skills.read";
-    public const string SkillsWrite = "skills.write";
-    public const string FeaturesRead = "features.read";
-    public const string FeaturesWrite = "features.write";
-    public const string PoliciesRead = "policies.read";
-    public const string PoliciesSuggest = "policies.suggest";
-    public const string PoliciesWrite = "policies.write";
-    public const string ProjectsRead = "projects.read";
-    public const string ProjectsWrite = "projects.write";
-    public const string AttachmentsRead = "attachments.read";
-    public const string AttachmentsWrite = "attachments.write";
-    public const string KnowledgeRead = "knowledge.read";
+    public static readonly Permission MemoryRead = new("memory.read");
+    public static readonly Permission MemoryWrite = new("memory.write");
+    public static readonly Permission SkillsRead = new("skills.read");
+    public static readonly Permission SkillsWrite = new("skills.write");
+    public static readonly Permission FeaturesRead = new("features.read");
+    public static readonly Permission FeaturesWrite = new("features.write");
+    public static readonly Permission PoliciesRead = new("policies.read");
+    public static readonly Permission PoliciesSuggest = new("policies.suggest");
+    public static readonly Permission PoliciesWrite = new("policies.write");
+    public static readonly Permission ProjectsRead = new("projects.read");
+    public static readonly Permission ProjectsWrite = new("projects.write");
+    public static readonly Permission AttachmentsRead = new("attachments.read");
+    public static readonly Permission AttachmentsWrite = new("attachments.write");
+    public static readonly Permission KnowledgeRead = new("knowledge.read");
 
-    public static readonly IReadOnlyList<string> All =
+    public static readonly IReadOnlyList<Permission> All =
     [
         MemoryRead, MemoryWrite,
         SkillsRead, SkillsWrite,

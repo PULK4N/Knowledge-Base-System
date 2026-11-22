@@ -22,9 +22,9 @@ public sealed class ExecutorTests
         {
             Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
             IsAdministrator = isAdministrator,
-            Permissions = [.. permissions]
+            Permissions = [.. permissions.Select(name => new Permission(name))]
         };
 
-        Assert.Equal(expected, executor.Has(permission));
+        Assert.Equal(expected, executor.Has(new Permission(permission)));
     }
 }

@@ -1,3 +1,4 @@
+using ActionModule.Shared.Models;
 using EventSourcing.Shared.Models;
 using IdentityModule.Domain.Events;
 using IdentityModule.Shared;
@@ -15,7 +16,7 @@ public sealed class KnownPermissionsValidator : IPreEventValidator
             AgentPermissionsSetV1 value => value.Permissions,
             _ => throw new InvalidCastException()
         };
-        var unknown = permissions.Where(permission => !Permissions.All.Contains(permission)).ToList();
+        var unknown = permissions.Where(permission => !Permissions.All.Contains(new Permission(permission))).ToList();
         return EventValidationResult.FromPayload(payload, nameof(KnownPermissionsValidator), unknown.Count == 0,
             unknown.Count == 0 ? null : $"Unknown permissions: {string.Join(", ", unknown)}.");
     }

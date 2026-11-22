@@ -8,4 +8,8 @@
     <RootNamespace>IdentityModule.Shared</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../../ActionModule/Shared/Shared.csproj" />
+  </ItemGroup>
+
 </Project>

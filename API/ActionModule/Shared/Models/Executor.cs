@@ -10,9 +10,9 @@ public sealed class Executor
     public bool IsAdministrator { get; init; }
 
     /// <summary>Permissions such as <c>skills.write</c>, granted to an agent account.</summary>
-    public HashSet<string> Permissions { get; init; } = [];
+    public HashSet<Permission> Permissions { get; init; } = [];
 
     /// <summary>True for the administrator and for a granted permission.</summary>
-    public bool Has(string permission) =>
+    public bool Has(Permission permission) =>
         IsAdministrator || Permissions.Contains(permission);
 }
