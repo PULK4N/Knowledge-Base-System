@@ -1,12 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
-import {
-  InitialCredentials,
-  LoginRequest,
-  LoginResult,
-  PasswordChange,
-} from './auth.models';
+import { LoginRequest, LoginResult, PasswordChange } from './auth.models';
 
 const failedLogin: LoginResult = { succeeded: false, mustChangePassword: false };
 
@@ -24,13 +19,6 @@ export class AuthService {
           : throwError(() => error),
       ),
     );
-  }
-
-  setInitialCredentials(value: InitialCredentials): Observable<LoginResult> {
-    return this.http.post<LoginResult>(`${this.path}/initial-credentials`, {
-      ...value,
-      newUserName: value.newUserName?.trim() || null,
-    });
   }
 
   changePassword(value: PasswordChange): Observable<void> {

@@ -18,16 +18,16 @@ import { LoginRequest } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { toUserMessage } from '../../../core/http/load-state';
 import { LoginFormComponent } from '../ui/login-form.component';
-import { NewCredentials, NewCredentialsFormComponent } from '../ui/new-credentials-form.component';
+import { NewPassword, NewPasswordFormComponent } from '../ui/new-password-form.component';
 import { LoginEvent, LoginState, initialLoginState, reduceLogin } from './login-state';
 
-interface NewCredentialsRequest extends NewCredentials {
+interface NewPasswordRequest extends NewPassword {
   readonly currentPassword: string;
 }
 
 @Component({
   selector: 'app-login-page',
-  imports: [AsyncPipe, LoginFormComponent, NewCredentialsFormComponent],
+  imports: [AsyncPipe, LoginFormComponent, NewPasswordFormComponent],
   templateUrl: './login.page.html',
   styleUrl: './login.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,7 +36,7 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loginRequests = new Subject<LoginRequest>();
-  private readonly newCredentialsRequests = new Subject<NewCredentialsRequest>();
+  private readonly newPasswordRequests = new Subject<NewPasswordRequest>();
 
   private readonly login$: Observable<LoginEvent> = this.loginRequests.pipe(
     exhaustMap(request => this.auth.login(request).pipe(
@@ -46,10 +46,9 @@ export class LoginPage {
     )),
   );
 
-  private readonly newCredentials$: Observable<LoginEvent> = this.newCredentialsRequests.pipe(
-    exhaustMap(request => this.auth.setInitialCredentials({
+  private readonly newPassword$: Observable<LoginEvent> = this.newPasswordRequests.pipe(
+    exhaustMap(request => this.auth.changePassword({
       currentPassword: request.currentPassword,
-      newUserName: request.newUserName,
       newPassword: request.newPassword,
       confirmPassword: request.confirmPassword,
     }).pipe(
@@ -62,7 +61,7 @@ export class LoginPage {
     )),
   );
 
-  protected readonly state$: Observable<LoginState> = merge(this.login$, this.newCredentials$).pipe(
+  protected readonly state$: Observable<LoginState> = merge(this.login$, this.newPassword$).pipe(
     scan(reduceLogin, initialLoginState),
     startWith(initialLoginState),
     tap(state => {
@@ -75,7 +74,7 @@ export class LoginPage {
     this.loginRequests.next(request);
   }
 
-  protected saveNewCredentials(currentPassword: string, value: NewCredentials): void {
-    this.newCredentialsRequests.next({ ...value, currentPassword });
+  protected saveNewPassword(currentPassword: string, value: NewPassword): void {
+    this.newPasswordRequests.next({ ...value, currentPassword });
   }
 }

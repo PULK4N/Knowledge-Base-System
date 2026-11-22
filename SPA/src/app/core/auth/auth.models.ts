@@ -5,15 +5,8 @@ export interface LoginRequest {
 
 export interface LoginResult {
   readonly succeeded: boolean;
-  /** True while the initial admin / 123 credentials are still in use. */
+  /** True while the administrator still uses the initial password 123. */
   readonly mustChangePassword: boolean;
-}
-
-export interface InitialCredentials {
-  readonly currentPassword: string;
-  readonly newUserName: string | null;
-  readonly newPassword: string;
-  readonly confirmPassword: string;
 }
 
 export interface PasswordChange {

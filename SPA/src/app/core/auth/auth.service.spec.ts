@@ -64,39 +64,6 @@ describe('AuthService', () => {
     await expect(resultPromise).rejects.toMatchObject({ status: 500 });
   });
 
-  it.each([
-    [' owner ', 'owner'],
-    ['  ', null],
-    [null, null],
-  ])(
-    'posts the initial credentials with new username %j as %j',
-    async (newUserName, expectedUserName) => {
-      const resultPromise = firstValueFrom(
-        service.setInitialCredentials({
-          currentPassword: '123',
-          newUserName,
-          newPassword: 'secret',
-          confirmPassword: 'secret',
-        }),
-      );
-      const request = http.expectOne('/api/auth/initial-credentials');
-
-      expect(request.request.method).toBe('POST');
-      expect(request.request.body).toEqual({
-        currentPassword: '123',
-        newUserName: expectedUserName,
-        newPassword: 'secret',
-        confirmPassword: 'secret',
-      });
-      request.flush({ succeeded: true, mustChangePassword: false });
-
-      await expect(resultPromise).resolves.toEqual({
-        succeeded: true,
-        mustChangePassword: false,
-      });
-    },
-  );
-
   it('posts a password change', async () => {
     const change = {
       currentPassword: 'old',

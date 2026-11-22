@@ -8,35 +8,30 @@ import {
 } from '@angular/forms';
 import { newPasswordError } from '../../../core/auth/password-rules';
 
-export interface NewCredentials {
-  readonly newUserName: string;
+export interface NewPassword {
   readonly newPassword: string;
   readonly confirmPassword: string;
 }
 
 function validNewPassword(group: AbstractControl): ValidationErrors | null {
-  const { newPassword, confirmPassword } = group.value as NewCredentials;
+  const { newPassword, confirmPassword } = group.value as NewPassword;
   const message = newPasswordError(newPassword, confirmPassword);
   return message ? { newPassword: message } : null;
 }
 
 @Component({
-  selector: 'app-new-credentials-form',
+  selector: 'app-new-password-form',
   imports: [ReactiveFormsModule],
-  templateUrl: './new-credentials-form.component.html',
-  styleUrl: './new-credentials-form.component.css',
+  templateUrl: './new-password-form.component.html',
+  styleUrl: './new-password-form.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NewCredentialsFormComponent {
+export class NewPasswordFormComponent {
   @Input() submitting = false;
-  @Input({ required: true }) set userName(value: string) {
-    this.form.controls.newUserName.setValue(value);
-  }
-  @Output() readonly credentialsRequested = new EventEmitter<NewCredentials>();
+  @Output() readonly passwordRequested = new EventEmitter<NewPassword>();
 
   protected readonly form = new FormGroup(
     {
-      newUserName: new FormControl('', { nonNullable: true }),
       newPassword: new FormControl('', { nonNullable: true }),
       confirmPassword: new FormControl('', { nonNullable: true }),
     },
@@ -48,6 +43,6 @@ export class NewCredentialsFormComponent {
       this.form.markAllAsTouched();
       return;
     }
-    this.credentialsRequested.emit(this.form.getRawValue());
+    this.passwordRequested.emit(this.form.getRawValue());
   }
 }

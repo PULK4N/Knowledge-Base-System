@@ -8,7 +8,6 @@ export type LoginState =
     }
   | {
       readonly step: 'new-password';
-      readonly userName: string;
       /** Sent again with the new password, because no session exists yet. */
       readonly currentPassword: string;
       readonly status: 'idle' | 'submitting' | 'error';
@@ -52,7 +51,6 @@ export function reduceLogin(state: LoginState, event: LoginEvent): LoginState {
       return event.result.mustChangePassword
         ? {
             step: 'new-password',
-            userName: event.userName.trim(),
             currentPassword: event.password,
             status: 'idle',
             message: null,

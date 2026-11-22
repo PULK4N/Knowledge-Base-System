@@ -7,10 +7,9 @@
         <p class="login-intro">
           You logged in with the initial password. Choose a new password to finish logging in.
         </p>
-        <app-new-credentials-form
-          [userName]="state.userName"
+        <app-new-password-form
           [submitting]="state.status === 'submitting'"
-          (credentialsRequested)="saveNewCredentials(state.currentPassword, $event)"
+          (passwordRequested)="saveNewPassword(state.currentPassword, $event)"
         />
       } @else if (state.step === 'credentials') {
         <h1 id="login-heading">Log in</h1>

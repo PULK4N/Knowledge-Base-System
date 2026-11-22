@@ -39,7 +39,6 @@ describe('reduceLogin', () => {
   it('asks for a new password and keeps the current one for the next request', () => {
     expect(reduce(submitted, loginCompleted(true, true))).toEqual({
       step: 'new-password',
-      userName: 'admin',
       currentPassword: '123',
       status: 'idle',
       message: null,
