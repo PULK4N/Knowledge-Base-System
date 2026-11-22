@@ -5,6 +5,7 @@ using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Exceptions;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.DTOs;
@@ -28,7 +29,8 @@ public sealed partial class PolicyCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.PoliciesWrite]
         };
 
     public PolicyCommandTests()
@@ -295,6 +297,29 @@ public sealed partial class PolicyCommandTests
             eventStore.LastWritten[globalAggregateId].StateData
         );
         Assert.Empty(state.AgentFamilies);
+    }
+
+    [Theory]
+    [InlineData(false, null, false)]
+    [InlineData(false, "policies.read", false)]
+    [InlineData(false, "policies.write", true)]
+    [InlineData(true, null, true)]
+    [InlineData(false, "policies.suggest", false)]
+    public async Task PolicyCommands_RequirePoliciesWrite(bool isAdministrator, string? permission, bool expected)
+    {
+        var command = new AddGeneralPolicyCommand(CreateHandler(new CapturingEventStoreWithOutbox()))
+        {
+            Title = "Title",
+            Description = "Description"
+        };
+        var executor = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()),
+            IsAdministrator = isAdministrator,
+            Permissions = permission is null ? [] : [new Permission(permission)]
+        };
+
+        Assert.Equal(expected, await command.IsAuthorized(executor));
     }
 
     private static Task<object> ExecuteAsUser(PolicyCommand command)

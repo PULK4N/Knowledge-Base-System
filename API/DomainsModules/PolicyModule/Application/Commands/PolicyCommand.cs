@@ -6,6 +6,7 @@ using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using PolicyModule.Domain.Models;
 using SharedModule.Constants;
 
@@ -26,6 +27,9 @@ public abstract class PolicyCommand(
 
     public Guid SessionId { get; set; }
     public Guid MemoryAggregateId { get; set; }
+
+    public override Task<bool> IsAuthorized(Executor executor) =>
+        Task.FromResult(executor.Has(Permissions.PoliciesWrite));
 
     protected async Task<AggregateId> ResolveMemoryAggregateId()
     {

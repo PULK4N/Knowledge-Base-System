@@ -36,7 +36,7 @@ public sealed partial class ProjectCommandTests
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             ),
-            Permissions = [Permissions.SkillsWrite]
+            Permissions = [Permissions.SkillsWrite, Permissions.PoliciesWrite]
         };
 
     public ProjectCommandTests()
