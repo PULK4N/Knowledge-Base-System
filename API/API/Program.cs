@@ -88,7 +88,7 @@ builder.Services
     );
 
 builder.Services
-    .AddControllers()
+    .AddControllers(options => options.Filters.Add<UnauthorizedActionFilter>())
     .AddApplicationPart(typeof(CodeReviewSettingsController).Assembly)
     .AddApplicationPart(typeof(AdministrationController).Assembly)
     .AddApplicationPart(typeof(AttachmentsController).Assembly)
