@@ -99,4 +99,14 @@ describe('AgentsService', () => {
     await expect(updatedPromise).resolves.toEqual(updated);
     await expect(listPromise).resolves.toEqual([[codex], [updated]]);
   });
+
+  it('posts a session key request and returns the key', async () => {
+    const resultPromise = firstValueFrom(service.generateSessionKey(codex.id));
+    const request = http.expectOne(`/api/agents/${codex.id}/session-keys`);
+
+    expect(request.request.method).toBe('POST');
+    request.flush({ sessionKey: 'secret-key' });
+
+    await expect(resultPromise).resolves.toBe('secret-key');
+  });
 });

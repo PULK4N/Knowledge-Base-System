@@ -5,7 +5,7 @@
         <strong>{{ agent.displayName }}</strong>
         <span>{{ agent.userName }}</span>
       </div>
-      <p class="field-help">Changes apply only to session keys generated after this change.</p>
+      <p class="field-help">Changes apply to the agent's next request, including requests with keys generated earlier.</p>
     } @else {
       <div class="identity-fields">
         <div class="form-field">

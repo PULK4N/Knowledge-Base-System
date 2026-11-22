@@ -48,7 +48,12 @@
         [agents]="vm.load.data"
         [disabled]="vm.state.command.status === 'saving'"
         (editRequested)="openEdit($event)"
+        (keyRequested)="generateKey($event)"
       />
+    }
+
+    @if (vm.sessionKey.status !== 'closed') {
+      <app-session-key-dialog [state]="vm.sessionKey" (closed)="closeKeyDialog()" />
     }
   }
 </section>

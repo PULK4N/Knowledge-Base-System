@@ -14,10 +14,16 @@
           }
         }
       </div>
-      <button type="button" [disabled]="disabled" (click)="editRequested.emit(agent)"
-        [attr.aria-label]="'Edit permissions of ' + agent.userName">
-        Edit permissions
-      </button>
+      <div class="agent-actions">
+        <button type="button" [disabled]="disabled" (click)="keyRequested.emit(agent)"
+          [attr.aria-label]="'Generate a session key for ' + agent.userName">
+          Generate key
+        </button>
+        <button type="button" [disabled]="disabled" (click)="editRequested.emit(agent)"
+          [attr.aria-label]="'Edit permissions of ' + agent.userName">
+          Edit permissions
+        </button>
+      </div>
     </li>
   }
 </ul>

@@ -11,4 +11,5 @@ export class AgentListComponent {
   @Input({ required: true }) agents: readonly Agent[] = [];
   @Input() disabled = false;
   @Output() readonly editRequested = new EventEmitter<Agent>();
+  @Output() readonly keyRequested = new EventEmitter<Agent>();
 }

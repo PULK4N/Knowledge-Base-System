@@ -54,6 +54,13 @@ export class AgentsService {
       .pipe(tap(agent => this.store.upsert(AGENT_ENTITY_TYPE, agent)));
   }
 
+  /** The key is returned only once; nothing about it is cached. */
+  generateSessionKey(agentId: string): Observable<string> {
+    return this.http
+      .post<{ sessionKey: string }>(`${this.path}/${encodeURIComponent(agentId)}/session-keys`, null)
+      .pipe(map(result => result.sessionKey));
+  }
+
   private refresh(): Observable<readonly Agent[]> {
     return this.http.get<Agent[]>(this.path).pipe(
       tap(agents =>

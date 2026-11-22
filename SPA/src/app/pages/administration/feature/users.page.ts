@@ -19,8 +19,10 @@ import { Agent, AgentDraft } from '../data-access/agents.models';
 import { AgentsService } from '../data-access/agents.service';
 import { AgentFormComponent } from '../ui/agent-form.component';
 import { AgentListComponent } from '../ui/agent-list.component';
+import { SessionKeyDialogComponent } from '../ui/session-key-dialog.component';
 import { ChangePasswordDialogComponent } from './change-password-dialog.component';
 import { AgentsEvent, initialAgentsState, reduceAgents } from './agents-state';
+import { SessionKeyEvent, closedSessionKey, reduceSessionKey } from './session-key-state';
 
 interface SaveRequest {
   readonly agent: Agent | null;
@@ -29,7 +31,13 @@ interface SaveRequest {
 
 @Component({
   selector: 'app-users-page',
-  imports: [AsyncPipe, AgentFormComponent, AgentListComponent, ChangePasswordDialogComponent],
+  imports: [
+    AsyncPipe,
+    AgentFormComponent,
+    AgentListComponent,
+    ChangePasswordDialogComponent,
+    SessionKeyDialogComponent,
+  ],
   templateUrl: './users.page.html',
   styleUrl: './users.page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,6 +47,8 @@ export class UsersPage {
   private readonly reloadRequests = new Subject<void>();
   private readonly editorEvents = new Subject<AgentsEvent>();
   private readonly saveRequests = new Subject<SaveRequest>();
+  private readonly keyRequests = new Subject<Agent>();
+  private readonly keyDialogClosed = new Subject<void>();
 
   private readonly load$ = this.reloadRequests.pipe(
     startWith(undefined),
@@ -75,7 +85,28 @@ export class UsersPage {
     startWith(initialAgentsState),
   );
 
-  protected readonly vm$ = combineLatest({ load: this.load$, state: this.state$ }).pipe(
+  private readonly sessionKey$ = merge(
+    this.keyRequests.pipe(
+      exhaustMap(agent => this.agents.generateSessionKey(agent.id).pipe(
+        map(sessionKey => ({ type: 'generated', sessionKey }) as SessionKeyEvent),
+        startWith({ type: 'requested', agent } as SessionKeyEvent),
+        catchError(() => of({
+          type: 'failed',
+          message: 'The session key could not be generated. Please try again.',
+        } as SessionKeyEvent)),
+      )),
+    ),
+    this.keyDialogClosed.pipe(map(() => ({ type: 'closed' }) as SessionKeyEvent)),
+  ).pipe(
+    scan(reduceSessionKey, closedSessionKey),
+    startWith(closedSessionKey),
+  );
+
+  protected readonly vm$ = combineLatest({
+    load: this.load$,
+    state: this.state$,
+    sessionKey: this.sessionKey$,
+  }).pipe(
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
@@ -84,4 +115,6 @@ export class UsersPage {
   protected openEdit(agent: Agent): void { this.editorEvents.next({ type: 'edit-opened', agent }); }
   protected closeEditor(): void { this.editorEvents.next({ type: 'editor-closed' }); }
   protected save(agent: Agent | null, draft: AgentDraft): void { this.saveRequests.next({ agent, draft }); }
+  protected generateKey(agent: Agent): void { this.keyRequests.next(agent); }
+  protected closeKeyDialog(): void { this.keyDialogClosed.next(); }
 }

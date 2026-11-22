@@ -58,6 +58,12 @@
   font-weight: 680;
 }
 
+.agent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 button {
   min-height: 40px;
   padding: 8px 14px;
@@ -85,7 +91,7 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  button {
+  .agent-actions {
     justify-self: start;
   }
 }
