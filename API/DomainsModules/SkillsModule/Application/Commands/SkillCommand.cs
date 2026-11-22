@@ -3,6 +3,7 @@ using ActionModule.Shared.Models;
 using EventSourcing.Core;
 using EventSourcing.Shared.Interfaces;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using Constants = MemoryModule.Application.Constants;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
@@ -31,7 +32,7 @@ public abstract class SkillCommand(StateMachineHandler stateMachineHandler)
     public Guid MemoryAggregateId { get; set; }
 
     public override Task<bool> IsAuthorized(Executor executor) =>
-        Task.FromResult(true);
+        Task.FromResult(executor.Has(Permissions.SkillsWrite));
 
     public override Task<bool> CanExecute(Executor executor) =>
         Task.FromResult(true);

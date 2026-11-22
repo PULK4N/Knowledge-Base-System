@@ -5,6 +5,7 @@ using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Exceptions;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using PolicyModule.Application.Commands;
 using PolicyModule.Application.Queries;
@@ -34,7 +35,8 @@ public sealed partial class ProjectCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.SkillsWrite]
         };
 
     public ProjectCommandTests()

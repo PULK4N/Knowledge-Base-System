@@ -4,6 +4,7 @@ using EventSourcing.Core.Interfaces;
 using EventSourcing.Core.Providers;
 using EventSourcing.Persistence.Interfaces;
 using EventSourcing.Shared.Models;
+using IdentityModule.Shared;
 using MemoryModule.Domain;
 using MemoryModule.Domain.Events;
 using MemoryModule.Domain.Models;
@@ -63,7 +64,8 @@ public sealed class AddSkillCommandTests
         {
             Id = EventExecutor.FromDatabaseGuid(
                 Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            )
+            ),
+            Permissions = [Permissions.SkillsWrite]
         };
 
         var result = Assert.IsType<SkillCreatedCommandResult>(
@@ -145,7 +147,11 @@ public sealed class AddSkillCommandTests
         };
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => command.Execute(
-            new Executor { Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")) }
+            new Executor
+            {
+                Id = EventExecutor.FromDatabaseGuid(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+                Permissions = [Permissions.SkillsWrite]
+            }
         ));
         Assert.Equal(0, outbox.WriteCount);
     }
@@ -247,5 +253,29 @@ public sealed class AddSkillCommandTests
 
             return state;
         }
+    }
+
+    [Theory]
+    [InlineData(false, null, false)]
+    [InlineData(false, "skills.read", false)]
+    [InlineData(false, "skills.write", true)]
+    [InlineData(true, null, true)]
+    public async Task SkillCommands_RequireSkillsWrite(bool isAdministrator, string? permission, bool expected)
+    {
+        // IsAuthorized only looks at the executor, so the command needs no handler here.
+        var command = new AddSkillCommand(null!)
+        {
+            Name = "skill-name",
+            Description = "Description",
+            Content = "Content"
+        };
+        var executor = new Executor
+        {
+            Id = EventExecutor.FromDatabaseGuid(Guid.NewGuid()),
+            IsAdministrator = isAdministrator,
+            Permissions = permission is null ? [] : [new Permission(permission)]
+        };
+
+        Assert.Equal(expected, await command.IsAuthorized(executor));
     }
 }
