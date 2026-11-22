@@ -20,6 +20,7 @@ using FeatureModule.Application.Commands;
 using FeatureModule.Domain;
 using FeatureModule.MCP;
 using Microsoft.AspNetCore.Identity;
+using IdentityModule.API.Authentication;
 using IdentityModule.API.Controllers;
 using IdentityModule.Application.Commands;
 using IdentityModule.Domain;
@@ -61,6 +62,7 @@ builder.Configuration[YamlStateMachineDefinitionProvider.ConfigurationPath] =
     Path.Combine(AppContext.BaseDirectory, "StateMachines");
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddIdentityCookieAuthentication();
 builder.Services.AddSingleton<ActionJsonTypeInfoResolver>();
 builder.Services
     .AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
@@ -178,6 +180,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.MapControllers();
 app.MapMcp("/mcp");
 
