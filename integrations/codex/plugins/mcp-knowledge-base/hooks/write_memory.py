@@ -58,10 +58,16 @@ class MemoryHookError(RuntimeError):
 
 
 def _filter_unpaired_surrogates(value: Any) -> Any:
-    """Remove orphaned UTF-16 halves while preserving valid Unicode pairs."""
+    """Remove orphaned UTF-16 halves while preserving valid Unicode pairs.
+
+    NUL characters are removed too: text passed between Windows and WSL can
+    carry them, and PostgreSQL text columns reject them.
+    """
     if isinstance(value, str):
-        return value.encode("utf-16-le", errors="surrogatepass").decode(
-            "utf-16-le", errors="ignore"
+        return (
+            value.encode("utf-16-le", errors="surrogatepass")
+            .decode("utf-16-le", errors="ignore")
+            .replace("\x00", "")
         )
     if isinstance(value, list):
         return [_filter_unpaired_surrogates(item) for item in value]

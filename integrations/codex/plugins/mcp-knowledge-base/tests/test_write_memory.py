@@ -44,13 +44,14 @@ class WriteMemoryTests(unittest.TestCase):
         with self.assertRaises(write_memory.MemoryHookError):
             write_memory.read_event(io.BytesIO(b'{"cwd": "\xff"}'))
 
-    def test_delivery_filters_invalid_unicode_including_existing_queue_records(self):
+    def test_delivery_filters_invalid_unicode_and_nul_including_existing_queue_records(self):
         cases = [
             ("before\udc9dafter", "beforeafter"),
             ("\ud800hello\udfff", "hello"),
             ("\ud800\ud83d\ude00\udc9d", "\U0001f600"),
             ("\U0001f600 caf\u00e9 \u4f60\u597d", "\U0001f600 caf\u00e9 \u4f60\u597d"),
             (r"literal \uDC9D", r"literal \uDC9D"),
+            ("nul\x00 from\x00 windows", "nul from windows"),
         ]
         for original, expected in cases:
             with self.subTest(original=repr(original)), tempfile.TemporaryDirectory() as data:
