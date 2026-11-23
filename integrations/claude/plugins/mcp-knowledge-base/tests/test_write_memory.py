@@ -370,12 +370,12 @@ class WriteMemoryTests(unittest.TestCase):
 
             self.assertEqual([], list((Path(data) / "queue").glob("*.json")))
 
-    def test_lone_surrogates_are_replaced_before_a_record_is_queued(self):
+    def test_lone_surrogates_and_nul_are_cleaned_before_a_record_is_queued(self):
         with tempfile.TemporaryDirectory() as data:
             queue, turns = self.storage(data)
 
             write_memory.process_hook(
-                self.event("UserPromptSubmit", prompt="caf\udc90 latte"),
+                self.event("UserPromptSubmit", prompt="caf\udc90 la\x00tte"),
                 queue=queue,
                 turns=turns,
                 worker_starter=lambda: None,
@@ -385,13 +385,13 @@ class WriteMemoryTests(unittest.TestCase):
                 "caf� latte", self.queued_payload(data)["prompt"]
             )
 
-    def test_a_queued_lone_surrogate_is_repaired_before_delivery(self):
+    def test_a_queued_lone_surrogate_and_nul_are_cleaned_before_delivery(self):
         with tempfile.TemporaryDirectory() as data:
             queue, _ = self.storage(data)
             self.queue_raw(
                 data,
                 '{"hook_event_name": "Stop", '
-                '"last_assistant_message": "caf\\udc90"}',
+                '"last_assistant_message": "caf\\udc90\\u0000"}',
             )
             client = FakeClient()
 

@@ -188,7 +188,7 @@ class MemoryHookQueue:
         temporary = self._root / f"{name}.tmp"
         queued = self._root / f"{name}.json"
         temporary.write_text(
-            json.dumps(_without_lone_surrogates(payload)), encoding="utf-8"
+            json.dumps(_sanitized_payload(payload)), encoding="utf-8"
         )
         temporary.chmod(0o600)
         temporary.replace(queued)
@@ -244,7 +244,7 @@ class MemoryHookQueue:
                 f"Queued hook payload '{path.name}' is not an object."
             )
 
-        return _without_lone_surrogates(payload)
+        return _sanitized_payload(payload)
 
     def record_failure(self, error: Exception) -> None:
         failure = self._failure_path()
@@ -290,26 +290,29 @@ def _release_drain_lock(lock: IO[str]) -> None:
     msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
 
 
-def _without_lone_surrogates(value: Any) -> Any:
-    """Replace unpaired surrogates anywhere in a hook payload.
+def _sanitized_payload(value: Any) -> Any:
+    """Replace unpaired surrogates and drop NUL characters anywhere in a payload.
 
     Hook input that is not valid UTF-8, such as a multi-byte character split
     across a truncation boundary, decodes to lone surrogates like U+DC90 under
     Python's surrogateescape handler. json.dumps writes those out as escaped
     surrogates, which System.Text.Json parses but then refuses either to read as
     a string or to write back out, so the Memory API answers HTTP 500.
+
+    Text passed between Windows and WSL can also carry NUL characters, which
+    PostgreSQL text columns reject, so the Memory API fails to store the record.
     """
     if isinstance(value, str):
-        return _replace_lone_surrogates(value)
+        return _replace_lone_surrogates(value).replace("\x00", "")
 
     if isinstance(value, dict):
         return {
-            _without_lone_surrogates(key): _without_lone_surrogates(item)
+            _sanitized_payload(key): _sanitized_payload(item)
             for key, item in value.items()
         }
 
     if isinstance(value, list):
-        return [_without_lone_surrogates(item) for item in value]
+        return [_sanitized_payload(item) for item in value]
 
     return value
 
